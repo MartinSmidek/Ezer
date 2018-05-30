@@ -1,0 +1,550 @@
+#pragma library
+proc the_formsave (f,b) {
+  f.same
+| f.key; f.save; { b.browse_seek; f.load | f.init }
+| f.insert; f.load;
+  b.raise('onrowclick',b.browse_seek(conc(f.id_key,'=',f.key)))
+}
+#   proc get_id() { meta.popup; meta.choose; topic.set(meta.clicked.get) }
+# =====================================================================================> Dokumentace
+panel apl [,,770,] {type:'right', title:'Dokumentace', _sys:'dok'
+  menu m {type:'left'                   // nesmí mít active
+    proc onclick(x) {
+      u.fill(ask('i_doc_show','application',x.owner._id,x._id))
+#      echo(u,apl.u)
+    }
+  }
+  use u: form f [0,0,,]
+  proc onfirstfocus() { set_apl_menu }  // nesmí být v onstart
+  proc set_apl_menu() {
+    var g: object
+    m.attach_code(ask('i_doc_menu','application','',''));
+    g.set(m.part('menu.group',1));
+    g.get; g.part('item',1); g.part('item',1).click
+  | u.fill("Dokumentace není vygenerována")
+  }
+}
+# =======================================================================================> Reference
+panel ref [,,770,] {type:'right', title:'Reference', _sys:'*', skill:'m'
+  menu m {type:'left', active:*
+    proc onclick(x) {
+      u.fill(ask('i_doc_show','reference',x.owner._id,x._id))
+    }
+  }
+  use u: form f [0,0,,]
+  proc onstart() { m.attach_code(ask('i_doc_menu','reference','','')) }
+}
+# =======================================================================================> Struktura
+panel str [,,770,] {type:'right', title:'Struktura', _sys:'*', skill:'m'
+  menu m {type:'left', active:*
+    menu stav {title:'stav',type:'group'
+      item {title:'Ezer moduly'         proc onclick () { clear; u.fill(ask('doc_ezer')) } }
+      item {title:'PHP moduly'          proc onclick () { clear; u.fill(ask('doc_php')) } }
+      item {title:'Seznam PHP funkcí'   proc onclick () { clear; u.fill(ask('doc_called')) } }
+    }
+  }
+  use u: form f [0,0,,]
+}
+# ======================================================================================> Generování
+panel gen [,,770,] {type:'right', title:'Generování', _sys:'*', skill:'m'
+  menu m {type:'left', active:*
+    menu stav {title:'stav',type:'group'
+      item {title:'přehled' proc onclick () {
+        u.fill("<h1>Přehled systémové dokumentace</h1>");
+        u.append(ask('i_doc','survay'))
+      } }
+#       item {title:'tabulka funkcí' proc onclick () { u.fill(ask('i_doc','funcs')) } }
+#       item {title:'tabulka atributů' proc onclick () { u.fill(ask('i_doc','attrs')) } }
+    }
+    menu {title:'PSPad',type:'group'
+      item a {title:'generuj Ezer.ini'
+        proc onclick () { u.fill(ask('pspad_gen')) }
+      }
+    }
+    menu refr {title:'obnovit',type:'group'
+      item {title:'systémová dokumentace'
+        proc onclick () {
+          u.fill("<h1>Reset systémové dokumentace</h1>");
+          u.append(ask('i_doc_reset','ezerscript'));
+          u.append(ask('i_doc_reset','reference'));
+          u.append(ask('i_doc','ezerscript'));
+          u.append(ask('i_doc','reference',conc(sys('version'),'/wiki/.*\.wiki')));
+          u.append(ask('i_doc','javascript','app,ezer,ezer_report,ezer_fdom1,ezer_fdom2'));
+          ref.m.attach_code(ask('i_doc_menu','reference','',''))
+      }}
+      item {title:'dokumentace aplikace'
+        proc onclick () {
+          var txt: text
+          var patt: text
+          u.fill("<h1>Reset aplikační dokumentace</h1>");
+          patt.set(conc('wiki/(',sys('root'),'|ezer)_.*\.wiki'));
+          u.append(ask('i_doc_reset','application'));
+          txt.set(ask('i_doc','application',patt));
+          txt.get;
+          u.append(txt);
+          apl.focus;
+          apl.set_apl_menu
+        | u.append(conc("Nebyly nalezeny žádné soubory nápovědy vyhovující: <b>/",patt,"/</b>"))
+      }}
+    }
+    menu dele {title:'údržba',type:'group'
+      item a {title:'smazat vše'
+        proc onclick () {
+          u.fill("<h1>Reset dokumentace</h1>");
+          u.fill(ask('i_doc_reset'));
+          ref.m.attach_code(ask('i_doc_menu','reference','',''));
+          apl.m.attach_code(ask('i_doc_menu','application','',''))
+      }}
+    }
+    proc onclick(x) { echo('menu',x._id) }
+  }
+  use u: form f [0,0,,]
+}
+# ============================================================================================> ZMĚNY
+panel nov [,,770,] {type:'right', title:'Přehled změn', _sys:'*'
+  use msg_a: form _msg_a [12,35,,] { tag:'ma', format:'n' }
+  use msg_g: form _msg_g [12,35,,] { tag:'mg', format:'n' }
+  use msg_k: form _msg_k [12,35,,] { tag:'mk', format:'n' }
+
+  menu m {type:'left', active:m.chngs.month
+    proc onstart() {
+      [ sys('options','group_db')     | has_skill('ah'); w.g.enable(0) ];
+      [ sys('options','curr_version') | has_skill('ah'); w.k.enable(0) ];
+    }
+    menu chngs {title:'Změny aplikace',type:'group'
+      item month {title:'Přehled změn za měsíc', par:°{days:30} }
+      item year {title:'Přehled změn za rok', par:°{days:365} }
+      item all {title:'Přehled uskutečněných změn', par:°{days:9999} }
+      proc onclick(i) { panel.display(0,'m'); u.fill2(ask('doc_todo2','chngs','','',i.par)) }
+    }
+    menu app {title:'Požadavky na aplikaci',type:'group', skill:'sp'
+      item nove {title:'Nově realizované' }
+      item stare {title:'Přehled realizovaných' }
+      item todo {title:'Čekající požadavky' }
+      proc onclick(i) { panel.display(0,'m'); u.fill(ask('doc_todo2',i._id,'app')) }
+    }
+    menu eze {title:'Pořadavky na jádro Ezer',type:'group', skill:'sp'
+      item nove {title:'Nově realizované' }
+      item stare {title:'Přehled realizovaných' }
+      item todo {title:'Čekající požadavky' }
+      proc onclick(i) { panel.display(0,'m'); u.fill(ask('doc_todo2',i._id,'sys')) }
+    }
+    menu w {title:'Zápis změn', type:'group', skill:'ah'
+      item a {title:'[fa-exclamation] změna aplikace',                par:°{tag:'ma',level:'a'} }
+      item g {title:'[fa-exclamation-circle] změna skupiny aplikací', par:°{tag:'mg',level:'g'} }
+      item k {title:'[fa-cog] změna jádra Ezer', skill:'m',           par:°{tag:'mk',level:'k'} }
+      proc onclick(i) {
+        u.tit(conc(i.owner.title,' - ',i.title));
+        panel.display(2,i.par.tag);
+        panel.call(conc('msg_',i.par.level,'.start'));
+      }
+    }
+  }
+  use u: form f [12,4,,]
+  # ------------------------------------------------------------------------ _msg_a
+  form _msg_a [,,*,500] {
+    var virgin= 1
+    proc start() { virgin.get; refresh; virgin.set(0) }
+    proc refresh() { s.browse_load("kind='v'") }
+    view h: table _help
+
+    // příkazy
+    label  [12,5,145,30] { css:'ae_parm'}
+    button [20,11,,] { title:"[fa-database] Nový", proc onclick() { var ver_max:number
+        form.init(2);
+        version.set(max(ask('root_svn',0),ask('root_svn',1),sys('options','curr_version')));
+        // pokud je verze=0, asi není na serveru SVN, nastav verzi o 1 větší, než maximum
+        [ eq(version.get,'NaN'); {
+            s.browse_count;
+            ver_max.set(ask('select','MAX(version)','_help',"kind='v'"));
+            version.set(sum(1,ver_max))
+            //version.set(sum(1,s.ver.get))
+          | version.set(1)
+        }];
+        version.change;
+        kind.change; datum.set(now); datum.change; topic.change; hlp.change; }}
+    button [79,11,,] { title:"[fa-trash-o] Vymazat", proc onclick() {
+      confirm("Opravdu vymazat zprávu ",s.topic.get,"?");
+      _help.delete_record(conc("id_help=",s.id_help.get)); refresh }}
+
+    label  [240,5,123,30] { css:'ae_parm'}
+    button [250,11,,] { title:"[fa-save] Ulož",  proc onclick() { the_formsave(form,s) }}
+    button [306,11,,] { title:"[fa-undo] Zpět", proc onclick() { form.key(s.id_help.get); form.load}}
+
+    // nová změna
+    field kind { data:h.kind, value:'v' }
+    field datum [12,45,79,] { type:'date', data:h.datum, format:'r' }
+    field version [98,45,41,] { data:h.version, format:'r' }
+    field name  { data:h.name }
+    field topic [152,45,116,] { data:h.topic, format:'' }
+      button [272,47,16,16] { title:"[fa-tree]", style:"padding:0 1px", proc onclick() {
+        topic.set(replace(meta.modal,'^[^\.]+\.','')); topic.change;
+        name.set(replace(meta.name.get,'<[^>]+>','','^[^\|]+\|','')); name.change; }}
+    field wrk [698,20,32,] { title:'pracnost:', data:h.work, format:'r:e', skill:'m|mw' }
+    field hlp [239+60,45,431,] { data:h.help, format:'' }
+    // seznam změn
+    browse s [0,75,150,100] { rows:20, qry_rows:1
+      show id_help { data:h.id_help }
+      show [,,72,] { title:'datum', data:h.datum, format:'s-q*rt' }
+      show ver [,,60,] { title:'rev.SVN', data:h.version, format:'s-q*rt' }
+      show topic [,,150,] { title:'topic', data:h.topic, format:'sq*t' }
+      show [,,419,] { title:'help', data:h.help, format:'sq*t' }
+      proc onrowclick() {
+        form.key(id_help.get); form.load;
+      }
+    }
+  }
+  # ------------------------------------------------------------------------ _msg_g
+  form _msg_g [,,*,500] {
+    var virgin= 1
+    proc start() { virgin.get; refresh; virgin.set(0) }
+    proc refresh() { s.browse_load("kind='v'") }
+    view h: table group._help
+
+    // příkazy
+    label  [12,5,145,30] { css:'ae_parm'}
+    button [20,11,,] { title:"[fa-database] Nový", proc onclick() {
+        form.init(2); version.set(sys('options','curr_version')); version.change;
+        kind.change; datum.set(now); datum.change; topic.change; hlp.change; }}
+    button [79,11,,] { title:"[fa-trash-o] Vymazat", proc onclick() {
+      confirm("Opravdu vymazat zprávu ",s.topic.get,"?");
+      group._help.delete_record(conc("id_help=",s.id_help.get)); refresh }}
+
+    label  [240,5,123,30] { css:'ae_parm'}
+    button [250,11,,] { title:"[fa-save] Ulož",  proc onclick() { the_formsave(form,s) }}
+    button [306,11,,] { title:"[fa-undo] Zpět", proc onclick() { form.key(s.id_help.get); form.load}}
+
+    // nová změna
+    field kind { data:h.kind, value:'v' }
+    field datum [12,45,79,] { type:'date', data:h.datum, format:'r' }
+    field version [98,45,41,] { data:h.version, format:'r' }
+    field name  { data:h.name }
+    field topic [152,45,116,] { data:h.topic, format:'' }
+      button [272,47,16,16] { title:"[fa-tree]", style:"padding:0 1px", proc onclick() {
+        topic.set(replace(meta.modal,'^[^\.]+\.','')); topic.change;
+        name.set(replace(meta.name.get,'<[^>]+>','','^[^\|]+\|','')); name.change; }}
+    field hlp [239+60,45,431,] { data:h.help, format:'' }
+    // seznam změn
+    browse s [0,75,150,100] { rows:20, qry_rows:1
+      show id_help { data:h.id_help }
+      show [,,72,] { title:'datum', data:h.datum, format:'s-q*rt' }
+      show [,,60,] { title:'rev.SVN', data:h.version, format:'s-q*rt' }
+      show topic [,,150,] { title:'topic', data:h.topic, format:'sq*t' }
+      show [,,419,] { title:'help', data:h.help, format:'sq*t' }
+      proc onrowclick() {
+        form.key(id_help.get); form.load;
+      }
+    }
+  }
+  # ------------------------------------------------------------------------ _msg_k
+  form _msg_k [,,*,500] {
+    var virgin= 1
+    proc start() { virgin.get; refresh; virgin.set(0) }
+    proc refresh() { s.browse_load("kind='v'") }
+    view h: table kernel._help
+
+    // příkazy
+    label  [12,5,145,30] { css:'ae_parm'}
+    button [20,11,,] { title:"[fa-database] Nový", proc onclick() {
+        form.init(2); version.set(sys('options','curr_version')); version.change;
+        kind.change; datum.set(now); datum.change; hlp.change; }}
+    button [79,11,,] { title:"[fa-trash-o] Vymazat", proc onclick() {
+      confirm("Opravdu vymazat zprávu ",s.hlp.get,"?");
+      kernel._help.delete_record(conc("id_help=",s.id_help.get)); refresh }}
+
+    label  [240,5,123,30] { css:'ae_parm'}
+    button [250,11,,] { title:"[fa-save] Ulož",  proc onclick() { the_formsave(form,s) }}
+    button [306,11,,] { title:"[fa-undo] Zpět", proc onclick() { form.key(s.id_help.get); form.load}}
+
+    // nová změna
+    field kind { data:h.kind, value:'v' }
+    field datum [12,45,79,] { type:'date', data:h.datum, format:'r' }
+    field version [98,45,41,] { data:h.version, format:'r' }
+    field hlp [149,45,521+60,] { data:h.help, format:'' }
+    // seznam změn
+    browse s [0,75,150,100] { rows:20, qry_rows:1
+      show id_help { data:h.id_help }
+      show [,,72,] { title:'datum', data:h.datum, format:'sq*rt' }
+      show [,,60,] { title:'rev.SVN', data:h.version, format:'s-q*rt' }
+      show hlp [,,510+60,] { title:'help', data:h.help, format:'sq*t' }
+      proc onrowclick() {
+        form.key(id_help.get); form.load;
+      }
+    }
+  }
+}
+# =================================================================================> KONTEXTOVÝ HELP
+panel faq [,,770,] {type:'right', title:'Tvorba nápovědy', _sys:'*', skill:'ah'
+  use u: form _tit [12,4,,]
+
+  use hlp_a: form _hlp_a [12,35,,] { tag:'ha', format:'n' }
+  use hlp_g: form _hlp_g [12,35,,] { tag:'hg', format:'n' }
+  use hlp_k: form _hlp_k [12,35,,] { tag:'hk', format:'n' }
+
+  menu {type:'left', active:*, format:'f-'
+    proc onstart() {
+      [ sys('options','group_db')     | h.g.enable(0) ];
+      [ sys('options','curr_version') | h.k.enable(0) ];
+    }
+    menu h {title:'Editace nápovědy', type:'group'
+      item a {title:'[fa-question] nápověda aplikace',                par:°{tag:'ha',level:'a'} }
+      item g {title:'[fa-question-circle] nápověda skupiny aplikací', par:°{tag:'hg',level:'g'} }
+      item k {title:'[fa-cogs] nápověda jádra Ezer',                  par:°{tag:'hk',level:'k'} }
+      proc onclick(i) {
+        u.fill(replace_fa(conc(i.owner.title,' - ',i.title)));
+        panel.display(2,i.par.tag);
+        panel.call(conc('hlp_',i.par.level,'.start'));
+      }
+    }
+  }
+  # ---------------------------------------------------------------------==> pro aplikaci
+  form _hlp_a [,,*,500] {
+    var virgin= 1
+    proc start() { virgin.get; refresh; virgin.set(0) }
+    proc refresh() { s.browse_load("kind='h'") }
+    // seznam témat
+    view h: table _help
+    browse s [0,5,150,100] { rows:20, qry_rows:1
+      show id_help { data:h.id_help }
+      show [,,140,] { title:'název', expr:"SUBSTRING_INDEX(name,'|',-1)", format:'sq*t' }
+      show topic [,,100,] { title:'zkratka', data:h.topic, format:'sq*t' }
+      // volitelné
+      show x_znaku [,,70,] { title:'znaků', expr:"LENGTH(help)", format:'rsq*t' }
+      show x_stav [,,0,] { title:'stav', data:h.seen, format:'sq*t' }
+      show x_datum [,,0,] { title:'datum', data:h.datum, format:'rs-q*t' }
+      proc onrowclick() {
+        form.key(id_help.get); form.load;
+        hlp.set(replace_fa(f_hlp.get))
+      }
+      proc onclick() {
+        x_znaku.width; x_znaku.width(0); x_stav.width(70);
+      | x_stav.width;  x_stav.width(0);  x_datum.width(70);
+      | x_datum.width; x_datum.width(0); x_znaku.width(70);
+      }
+    }
+    // pole
+    const La=350
+    field kind { data:h.kind, value:'h' }
+    field f_hlp { data:h.help }
+    field datum [La+0,42,85,] { type:'date', data:h.datum, format:'r' }
+    field name [La+131,42,169,] { data:h.name, title:'název:'  }
+    field topic [La+358,42,133,] { data:h.topic, title:'zkratka:'
+      help:"zřetězení atributů _sys pro kontext nebo 'ezer.cokoliv' pro obecný text" }
+    button [topic.r+3,topic.t+2,16,16] { title:"[fa-tree]", style:"padding:0 1px"
+      proc onclick() { topic.set(replace(meta.modal,'^[^\.]+\.','')); topic.change;
+        name.set(replace(meta.name.get,'<[^>]+>','','^[^\|]+\|','')); name.change; }}
+    field seen [La+358,66,150,] { data:h.seen, title:'stav:', format:'d' }
+
+    // příkazy
+    label c1 [La+0,5,150,30] { css:'ae_parm'}
+    button [c1.l+10,11,,] { title:"[fa-database] Nový" proc onclick() { hlp.set('');
+      form.init(2); kind.change; name.change; topic.change; datum.set(now); datum.change; }}
+    button [c1.l+71,11,,] { title:"[fa-trash-o] Vymazat", proc onclick() {
+      confirm("Opravdu vymazat help k ",s.topic.get,"?");
+      _help.delete_record(conc("id_help=",s.id_help.get)); refresh }}
+
+    label c2 [La+300,5,213,30] { css:'ae_parm'}
+    button [c2.l+8,11,,] { title:"[fa-save] Ulož" proc onclick() { the_formsave(form,s) }}
+    button [c2.l+67,11,,] { title:"[fa-edit] Uprav text" proc onclick() {
+        help_edit.h.txt.set(f_hlp.get); help_edit.modal(50,50);
+        f_hlp.set(help_edit.h.txt.get); f_hlp.change;
+        form.save; form.load; hlp.set(f_hlp.get) }}
+    button [c2.l+157,11,,] { title:"[fa-undo] Zpět", proc onclick() { form.key(s.id_help.get); form.load}}
+
+    // plocha pro zobrazení téma
+    label [La+0,69,341,] { title:"Poznámka: prvek &lt;hr> je vkládán jako průhledný s clear=both"  }
+    label hlp [La+0,89,500,290] { css:'PanelPopup ContextHelp' }
+  }
+  # ---------------------------------------------------------------------==> pro skupinu
+  form _hlp_g [,,*,500] {
+    var virgin= 1
+    proc start() { virgin.get; refresh; virgin.set(0) }
+    proc refresh() { s.browse_load("kind='h'") }
+    // seznam témat
+    view h: table group._help
+    browse s [0,5,150,100] { rows:20, qry_rows:1
+      show id_help { data:h.id_help }
+      show [,,140,] { title:'název', expr:"SUBSTRING_INDEX(name,'|',-1)", format:'sq*t' }
+      show topic [,,100,] { title:'zkratka', data:h.topic, format:'sq*t' }
+      // volitelné
+      show x_znaku [,,70,] { title:'znaků', expr:"LENGTH(help)", format:'rsq*t' }
+      show x_stav [,,0,] { title:'stav', data:h.seen, format:'sq*t' }
+      show x_datum [,,0,] { title:'datum', data:h.datum, format:'rs-q*t' }
+      proc onrowclick() {
+        form.key(id_help.get); form.load;
+        hlp.set(replace_fa(f_hlp.get))
+      }
+      proc onclick() {
+        x_znaku.width; x_znaku.width(0); x_stav.width(70);
+      | x_stav.width;  x_stav.width(0);  x_datum.width(70);
+      | x_datum.width; x_datum.width(0); x_znaku.width(70);
+      }
+    }
+    // pole
+    const La=350
+    field kind { data:h.kind, value:'h' }
+    field f_hlp { data:h.help }
+    field datum [La+0,42,85,] { type:'date', data:h.datum, format:'r' }
+    field name [La+131,42,169,] { data:h.name, title:'název:'  }
+    field topic [La+358,42,133,] { data:h.topic, title:'zkratka:'
+      help:"zřetězení atributů _sys pro kontext nebo 'ezer.cokoliv' pro obecný text" }
+    button [topic.r+3,topic.t+2,16,16] { title:"[fa-tree]", style:"padding:0 1px"
+      proc onclick() { topic.set(replace(meta.modal,'^[^\.]+\.','')); topic.change;
+        name.set(replace(meta.name.get,'<[^>]+>','','^[^\|]+\|','')); name.change; }}
+    field seen [La+387,66,122,] { data:h.seen, title:'stav:', format:'d' }
+
+    // příkazy
+    label c1 [La+0,5,150,30] { css:'ae_parm'}
+    button [c1.l+10,11,,] { title:"[fa-database] Nový" proc onclick() { hlp.set('');
+      form.init(2); kind.change; name.change; topic.change; datum.set(now); datum.change; }}
+    button [c1.l+71,11,,] { title:"[fa-trash-o] Vymazat", proc onclick() {
+      confirm("Opravdu vymazat help k ",s.topic.get,"?");
+      group._help.delete_record(conc("id_help=",s.id_help.get)); refresh }}
+
+    label c2 [La+300,5,213,30] { css:'ae_parm'}
+    button [c2.l+8,11,,] { title:"[fa-save] Ulož" proc onclick() { the_formsave(form,s) }}
+    button [c2.l+67,11,,] { title:"[fa-edit] Uprav text" proc onclick() {
+        help_edit.h.txt.set(f_hlp.get); help_edit.modal(50,50);
+        f_hlp.set(help_edit.h.txt.get); f_hlp.change;
+        form.save; form.load; hlp.set(f_hlp.get) }}
+    button [c2.l+157,11,,] { title:"[fa-undo] Zpět", proc onclick() { form.key(s.id_help.get); form.load}}
+
+    // plocha pro zobrazení téma
+    label [La+0,69,341,] { title:"Poznámka: prvek &lt;hr> je vkládán jako průhledný s clear=both"  }
+    label hlp [La+0,89,500,290] { css:'PanelPopup ContextHelp' }
+  }
+  # ---------------------------------------------------------------------==> pro jádro
+  form _hlp_k [,,*,500] {
+    var virgin= 1
+    proc start() { virgin.get; refresh; virgin.set(0) }
+    proc refresh() { s.browse_load("kind='h'") }
+    // seznam témat
+    view h: table kernel._help
+    browse s [0,5,150,100] { rows:20, qry_rows:1
+      show id_help { data:h.id_help }
+      show [,,140,] { title:'název', expr:"SUBSTRING_INDEX(name,'|',-1)", format:'sq*t' }
+      show topic [,,100,] { title:'zkratka', data:h.topic, format:'sq*t' }
+      // volitelné
+      show x_znaku [,,70,] { title:'znaků', expr:"LENGTH(help)", format:'rsq*t' }
+      show x_stav [,,0,] { title:'stav', data:h.seen, format:'sq*t' }
+      show x_datum [,,0,] { title:'datum', data:h.datum, format:'rs-q*t' }
+      proc onrowclick() {
+        form.key(id_help.get); form.load;
+        hlp.set(replace_fa(f_hlp.get))
+      }
+      proc onclick() {
+        x_znaku.width; x_znaku.width(0); x_stav.width(70);
+      | x_stav.width;  x_stav.width(0);  x_datum.width(70);
+      | x_datum.width; x_datum.width(0); x_znaku.width(70);
+      }
+    }
+    // pole
+    const La=350
+    field kind { data:h.kind, value:'h' }
+    field f_hlp { data:h.help }
+    field datum [La+0,42,85,] { type:'date', data:h.datum, format:'r' }
+    field name [La+131,42,169,] { data:h.name, title:'název:'  }
+    field topic [La+358,42,133,] { data:h.topic, title:'zkratka:'
+      help:"zřetězení atributů _sys pro kontext nebo 'ezer.cokoliv' pro obecný text" }
+    button [topic.r+3,topic.t+2,16,16] { title:"[fa-tree]", style:"padding:0 1px"
+      proc onclick() { topic.set(replace(meta.modal,'^[^\.]+\.','')); topic.change;
+      name.set(replace(meta.name.get,'<[^>]+>','','^[^\|]+\|','')); name.change; }}
+    //field seen [La+387,66,122,] { data:h.seen, title:'stav:', format:'d' }
+
+    // příkazy
+    label c1 [La+0,5,150,30] { css:'ae_parm'}
+    button [c1.l+10,11,,] { title:"[fa-database] Nový" proc onclick() { hlp.set('');
+      form.init(2); kind.change; name.change; topic.change; datum.set(now); datum.change; }}
+    button [c1.l+71,11,,] { title:"[fa-trash-o] Vymazat", proc onclick() {
+      confirm("Opravdu vymazat help k ",s.topic.get,"?");
+      kernel._help.delete_record(conc("id_help=",s.id_help.get)); refresh }}
+
+    label c2 [La+300,5,213,30] { css:'ae_parm'}
+    button [c2.l+8,11,,] { title:"[fa-save] Ulož" proc onclick() { the_formsave(form,s) }}
+    button [c2.l+67,11,,] { title:"[fa-edit] Uprav text" proc onclick() {
+        help_edit.h.txt.set(f_hlp.get); help_edit.modal(50,50);
+        f_hlp.set(help_edit.h.txt.get); f_hlp.change;
+        form.save; form.load; hlp.set(f_hlp.get) }}
+    button [c2.l+157,11,,] { title:"[fa-undo] Zpět", proc onclick() { form.key(s.id_help.get); form.load}}
+
+    // plocha pro zobrazení téma
+    label [La+0,69,341,] { title:"Poznámka: prvek &lt;hr> je vkládán jako průhledný s clear=both"  }
+    label hlp [La+0,89,500,290] { css:'PanelPopup ContextHelp' }
+  }
+  # ================================================================================> help_edit
+  panel help_edit [0,0,645,520] { title:' Úprava textu nápovědy', type:'popup', css:'dialog'
+    use h: form _hlp [0,0,,],
+    # -------------------------------------------------------------------==> _hlp
+    form _hlp [10,10,600,460] {
+      button  [540,9,,] { title:'[fa-save] Uložit', help:'ukončit editor a uložit změny'
+        proc onclick() {panel.hide(1); }}
+      button  [600,9,,] { title:'Zpět', help:'[fa-undo] ukončit editor bez uložení změn'
+        proc onclick() { panel.hide(0); }}
+      edit txt [0,40,655,480] {type:'html', par:°{toolbar:'EzerMail'} },
+    }
+  }
+}
+# ------------------------------------------------------------------------------------------------ f
+# formuláře pro levostranné menu
+form f {
+  proc fill(txt) { hresult.set(conc("<div id='Content'>",txt,"</div>")); }
+  proc fill2(txt) { hresult.set(txt); }
+  proc tit(h) { [ h; hresult.set(replace_fa(conc("<div class='karta'>",h,"</div>"))) ]; }
+  proc append(txt) { hresult.set(conc(hresult.get,"<div id='Content'>",txt,"</div>")); }
+  label hresult [0,0,*,] { title:'--' }
+}
+# ------------------------------------------------------------------------ _tit
+form _tit [,,*,30] {
+  label head [0,0,*,31] { title:'' }
+  proc fill(h) { [ h; head.set(replace_fa(conc("<div class='karta'>",h,"</div>"))) ]; }
+}
+
+table _help {  key_id:'id_help'                     // tabulka _help je v databázi aplikace
+  number id_help { key:'primary' }
+  text kind, number version, date datum { sql_pipe:'sql_date1' },
+  text topic, text name, text seen, text help, number work
+}
+group group {
+  table _help {  key_id:'id_help', db:'ezer_group'  // význam 'ezer_group' je určen v {app}.ini
+    number id_help { key:'primary' }
+    text kind, number version, date datum { sql_pipe:'sql_date1' },
+    text topic, text name, text seen, text help
+}}
+group kernel {
+  table _help {  key_id:'id_help', db:'ezer_kernel' // 'ezer_kernel' je přímo jméno databáze
+    number id_help { key:'primary' }
+    text kind, number version, date datum { sql_pipe:'sql_date1' },
+    text topic, text name, text seen, text help
+}}
+
+# ================================================================================================== META
+# Systém Ezer - knihovní modul Meta
+
+panel meta [0,0,300,300] {type:'popup', _sys:'', title:'Struktura aplikace - menu a panely'
+  var name=''
+  proc app() { panel.popup }
+  use t: form t_ [0,0,,]
+  proc onfirstfocus() { t.a.app }
+  form t_ [,,300,300] {
+    button [-1,11,,] { type:'html', title:"[fa-refresh]", proc onclick() { a.app }}
+    use a: area a_
+    area a_ { title:"<div id='x' class='ae_work' style='overflow:auto;position:absolute;left:3px;top:10px;width:300px;height:300px'></div>"
+      proc app() { this.tree_show(meta_tree('_sys'),'x'); this.tree_expand(1) }
+      proc tree_onclick(fid,id,dat,com,x,txt,txts) { var fd:text
+        echo('tree click:',fid,'~',txt);
+        fd.set(replace(fid,'\.\.','.'));
+        name.set(txt);
+        panel.hide(fd)
+      }
+      proc tree_oncontextmenu(fid,id,dat,com,x,txt,txts) { var fd:text //, fname:text, win:object
+        //echo("tree_onclick: fid=",fid,", id=",id,", data=",dat,", x=",x,", txt=",txt,", txts=",txts);
+#         fname.set(conc(dat.pos.app,'/',dat.pos.file));
+#         win.set(function('name',
+#           "Ezer.sys.dbg.window=window.open('./ezer2.2/dbg.php?err=1&src='+name,'dbg','width=650,height=700,resizable=1,titlebar=0,menubar=0');",fname));
+#         fd.set(replace(fid,'\.\.','.'));
+        name.set(txt);
+#         panel.close(fd)
+      }
+    }
+  }
+}

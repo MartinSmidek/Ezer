@@ -1,0 +1,54 @@
+// --------------------------------------------------------------------------------------------- CMS
+//        background           color
+@activ_b: #807340;   @activ_c: #FFFFFF;
+
+.shadow-box { 
+  box-shadow:  
+    -1px  1px 0px #567, 
+     1px -1px 0px #567, 
+    -1px -1px 0px #567,
+    5px 5px 10px #567; }
+
+.disabled3 {
+  pointer-events: none; opacity:0.6; 
+  b.cms_must { 
+    color:grey; }
+}
+
+b.cms_must { 
+  color:red; }
+
+div.cms_form {
+  position: fixed; right:50px; top:50px; width:490px; background: #fff9e0; border-radius: .4em; 
+  .shadow-box; display: none; z-index: 9999;
+  & > span { // titulek
+      display: block; width:100%; text-align:center; height: 20px; padding-top: 5px;
+      background-color: @activ_b; border-radius:.4em .4em 0 0; color:@activ_c; font-weight:bold; 
+    & > div { // značka testu
+      float: right; font-size: .7em; margin-right: 1em; background: orange; color: black;}
+  }
+  & > div {
+      padding: 1em 1em 1em 1.5em;
+    & > div:first-child { // pokyny
+      min-height: 45px; }
+    div {  
+      label { 
+        position: relative; display: grid; float: left; padding: .5em .5em 0 0; color: @activ_b; }
+      button {
+        position: relative; }
+      hr { 
+        border: none; height: 0; background: none; margin: 0; clear: both; }
+      .missing {
+        outline: 2px solid red; }
+      .problem {
+        color: red; }
+    }
+    div[name="confirm"], div[name="family"] {
+      label { 
+        display: block; }
+    }
+    & > div:last-child { // save
+      padding-top: 1em; clear: both;
+    }
+  }
+}

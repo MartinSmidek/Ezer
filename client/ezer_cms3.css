@@ -1,0 +1,80 @@
+.shadow-box {
+  box-shadow: -1px 1px 0px #567, 1px -1px 0px #567, -1px -1px 0px #567, 5px 5px 10px #567;
+}
+.disabled3 {
+  pointer-events: none;
+  opacity: 0.6;
+}
+.disabled3 b.cms_must {
+  color: grey;
+}
+b.cms_must {
+  color: red;
+}
+div.cms_form {
+  position: fixed;
+  right: 50px;
+  top: 50px;
+  width: 490px;
+  background: #fff9e0;
+  border-radius: .4em;
+  box-shadow: -1px 1px 0px #567, 1px -1px 0px #567, -1px -1px 0px #567, 5px 5px 10px #567;
+  display: none;
+  z-index: 9999;
+}
+div.cms_form > span {
+  display: block;
+  width: 100%;
+  text-align: center;
+  height: 20px;
+  padding-top: 5px;
+  background-color: #807340;
+  border-radius: .4em .4em 0 0;
+  color: #FFFFFF;
+  font-weight: bold;
+}
+div.cms_form > span > div {
+  float: right;
+  font-size: .7em;
+  margin-right: 1em;
+  background: orange;
+  color: black;
+}
+div.cms_form > div {
+  padding: 1em 1em 1em 1.5em;
+}
+div.cms_form > div > div:first-child {
+  min-height: 45px;
+}
+div.cms_form > div div label {
+  position: relative;
+  display: grid;
+  float: left;
+  padding: .5em .5em 0 0;
+  color: #807340;
+}
+div.cms_form > div div button {
+  position: relative;
+}
+div.cms_form > div div hr {
+  border: none;
+  height: 0;
+  background: none;
+  margin: 0;
+  clear: both;
+}
+div.cms_form > div div .missing {
+  outline: 2px solid red;
+}
+div.cms_form > div div .problem {
+  color: red;
+}
+div.cms_form > div div[name="confirm"] label,
+div.cms_form > div div[name="family"] label {
+  display: block;
+}
+div.cms_form > div > div:last-child {
+  padding-top: 1em;
+  clear: both;
+}
+/*# sourceMappingURL=ezer_cms3.css.map */

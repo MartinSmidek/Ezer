@@ -1,0 +1,910 @@
+#pragma library
+
+// Systém Ezer - knihovní modul System
+// (c) 2008-2010 Martin Šmídek <martin@smidek.eu>*/
+
+proc the_formsave (f,b) {
+  f.same
+| f.key; f.save; { b.browse_seek; f.load | f.init }
+| f.insert; f.load;
+  b.raise('onrowclick',b.browse_seek(conc(f.id_key,'=',f.key)))
+}
+proc reaccess() { #==> reaccess - změna
+  users.refresh
+}
+
+# =======================================================================================> ČÍSELNÍKY
+panel cis [,,,*] {type:'right', title:'Číselníky', _sys:'cis', skill:'m|m'
+  use u: form _tit [12,4,,]
+  menu {type:'left', active:*, format:'f-'
+    proc onstart() {
+      [ sys('options','group_db')     | h.g.enable(0) ];
+      [ sys('options','curr_version') | h.k.enable(0) ];
+    }
+    menu h {title:'Editace nápovědy', type:'group'
+      item a {title:'[fa-question] číselník aplikace',                par:°{level:'a',db:''} }
+      item g {title:'[fa-question-circle] číselník skupiny aplikací', par:°{level:'g',db:'ezer_group'} }
+      item k {title:'[fa-cogs] číselník jádra Ezer',                  par:°{level:'k',db:'ezer_kernel'} }
+      proc onclick(i) {
+        u.fill(replace_fa(conc(i.owner.title,' - ',i.title)));
+        mklice.lst.browse_init; mklic.init;
+        klice.lst.browse_init; klic.init;
+        function('block','new_db',"return remap_fields_db(block,new_db);",mklice.lst,i.par.db);
+        function('block','new_db',"return remap_fields_db(block,new_db);",mklic,i.par.db);
+        function('block','new_db',"return remap_fields_db(block,new_db);",klice.lst,i.par.db);
+        function('block','new_db',"return remap_fields_db(block,new_db);",klic,i.par.db);
+        reload_meta;
+      }
+    }
+  }
+  var druh_cond: text
+  use mklice: form _mklice [5,35,,],
+  use mklic:  form _mklic [660,35,,],
+  use klice:  form _klice [5,172,,],
+  use klic:   form _klic [660,168,,],
+  var novy: text,
+  var cis_druh: text,
+  var cis_id: number
+  proc onstart () {
+    druh_cond.set("druh='_meta_'");
+    cis_druh.set('_meta_');
+    reload_meta }
+  proc reload_meta () {
+    mklice.lst.browse_load("druh='_meta_'");
+    mklice.lst.raise('onrowclick'); mklice.lst.browse_focus
+  | klic.key_novy;
+  }
+  proc reload_keys () {
+    klice.lst.browse_load(druh_cond.get);
+    klice.lst.raise('onrowclick'); klice.lst.browse_focus
+  | klic.key_novy;
+  }
+  proc reload_key () {
+    klic.key_load }
+  # -------------------------------------------------------------------------------------==>_mklice
+  form _mklice [0,0,200,200] {
+    label [0,0,1060,130] { css:'parm' }
+    view k: table _cis
+    browse lst [5,5,0,54] { rows:4, qry_rows:1, buf_rows:100
+      show id [,,40,] { title:'id_cis', data:k.id_cis, format:'sr' }
+      show poradi [,,20,] { title:'n.', data:k.poradi, format:'s+r' }
+      show druh [,,50,] { title:'druh', data:k.druh, format:'qs' }
+      show data [,,40,] { title:'data', data:k.data, format:'rs' }
+      show zkratka [,,120,] { title:'zkratka', data:k.zkratka, format:'qs' }
+      show hodnota [,,190,] { title:'hodnota', data:k.hodnota, format:'qs' }
+      show popis [,,150,] { title:'popis', data:k.popis, format:'qs' }
+      proc onrowclick() {
+        druh_cond.set(conc("druh='",zkratka.get,"'"));
+        mklic.load(id.get); reload_keys }
+    }
+  }
+  # --------------------------------------------------------------------------------------==>_klice
+  form _klice [0,0,200,200] {
+    label [0,0,1060,403] { css:'work' }
+    view k: table _cis,
+    browse lst [5,5,0,54] { rows:20, qry_rows:1, buf_rows:100
+      show id [,,40,] { title:'id_cis', data:k.id_cis, format:'sr' }
+      show poradi [,,20,] { title:'n.', data:k.poradi, format:'s+r' }
+      show druh [,,70,] { title:'druh', data:k.druh, format:'qs' }
+      show data [,,40,] { title:'data', data:k.data, format:'rs' }
+      show zkratka [,,137,] { title:'zkratka', data:k.zkratka, format:'qs' }
+      show hodnota [,,150,] { title:'hodnota', data:k.hodnota, format:'qs' }
+      show ikona   [,,50,] { title:'ikona', data:k.ikona, format:'qs' }
+      show barva   [,,50,] { title:'barva', data:k.barva, format:'qs' }
+      show popis   [,,50,] { title:'popis', data:k.popis, format:'qs' }
+      proc onrowclick () {
+        reload_key }
+      proc onsubmit () {
+        eq(druh.get,'_meta_');
+        mklice.lst.browse_seek(conc("zkratka='",zkratka.get,"'"));
+        mklice.lst.raise('onrowclick'); }
+    }
+  }
+  # --------------------------------------------------------------------------------------==>_mklic
+  form _mklic [0,0,200,200] {
+    # data
+    view k: table _cis,
+    edit popis [4,17,300,103] { data:k.popis, title:'^dokumentace číselníku', format:'' }
+    button [315,18,,] { title:'Uložit změnu', proc onclick () {
+      form.same; alert('nebyla provedena žádná změna');
+    | the_formsave(form,mklice.lst); }}
+    button [315,48,,] { title:'Meta číselník', proc onclick () {
+      mklice.lst.browse_seek("zkratka='_meta_'") }}
+  }
+  # ---------------------------------------------------------------------------------------==>_klic
+  form _klic [0,0,200,200] {
+    # data
+    view k: table _cis,
+    field id [4,25,64,17] { data:k.id_cis, title:'^id_cis', format:'r' }
+    field kdruh [102,25,120,17] { data:k.druh, title:'^druh', format:'d' }
+    field kdata [5,60,64,17] { data:k.data, title:'^data', format:'r' }
+    field zkratka [102,60,160,17] { data:k.zkratka, title:'^zkratka' }
+    field poradi [294,60,40,17] { data:k.poradi, title:'^pořadí', format:'r' }
+    edit hodnota [4,96,392,74] { data:k.hodnota, title:'^hodnota 1' }
+    edit ikona [4,192,190,74] { data:k.ikona, title:'^hodnota 2 (ikona)'  }
+    edit barva [205,192,190,74] { data:k.barva, title:'^hodnota 3 (barva)'  }
+    edit popis [4,285,392,77] { data:k.popis, title:'^popis (do dokumentace)' }
+    # procedury
+    proc key_novy () {
+      var count: number
+      count.set(klice.lst.browse_count);
+      form.init;
+      kdruh.set(mklice.lst.zkratka.get); cis_id.set(mklice.lst.id.get);
+      kdruh.change;
+      // návrh klíče
+      { eq(kdruh.get,'_meta_'); id.set(sum(1,ask('select','max(id_cis)','_cis')))
+      | id.set(sum(count.get,multiply(modulo(cis_id.get,100),100),1)); id.change
+      };
+      poradi.set(sum(count.get,1)); poradi.change;
+      kdata.set(poradi.get); kdata.change;
+    }
+    proc key_load () {
+      form.load(/*id_self.get.get*/klice.lst.id.get)
+    }
+    proc key_uloz () {
+      form.same; alert('nebyla provedena žádná změna'); klice.lst.browse_focus
+    | the_formsave(form,klice.lst/*brow_self.get*/); klice.lst.browse_focus
+    }
+    proc key_smaz () {
+      _cis.delete_record(conc("id_cis=",id.get)); reload_keys
+    }
+    # události
+    proc onsubmit () { key_uloz }
+    # operace
+    label [4,370,103,30] { css:'parm' }
+    button save [13,376,,] { type:'submit',_sys:'ulo', title:'Uložit', proc onclick () { key_uloz } }
+    button cancel [64,376,,] { title:'Zpět', proc onclick () { key_load } }
+    label [285,370,114,30] { css:'parm' }
+    button create [294,376,,] { title:'Nový', proc onclick () { key_novy } }
+    button delete [340,376,,] { title:'Smazat', proc onclick () { key_smaz } }
+  }
+  # ------------------------------------------------------------------------ _tit
+  form _tit [,,*,30] {
+    label head [0,0,*,31] { title:'' }
+    proc fill(h) { [ h; head.set(replace_fa(conc("<div class='karta'>",h,"</div>"))) ]; }
+  }
+}
+# =================================================================================================> AKTIVITY
+panel act [,,*,] {type:'right', title:'Aktivita', _sys:'akt', skill:'a|a;aa|aa'
+  menu left { type:'left', format:'f'
+    menu a { title:'Aktivní uživatelé',type:'group'
+      item d { title:'dnes'               par:°{s:'uzivatele',c:'dnes',short:'1'}}
+#       item { title:'... podrobně'       par:°{s:'uzivatele',c:'dnes',short:'0'}}
+      item { title:'včera'              par:°{s:'uzivatele',c:'vcera',short:'1'}}
+#       item { title:'... podrobně'       par:°{s:'uzivatele',c:'vcera',short:'0'}}
+      item { title:'týden'              par:°{s:'uzivatele',c:'dny',days:'8',short:'1'}}
+#       item { title:'... podrobně'       par:°{s:'uzivatele',c:'dny',days:'8',short:'0'}}
+      item { title:'dva týdny'          par:°{s:'uzivatele',c:'dny',days:'15',short:'1'}}
+#       item { title:'... podrobně'       par:°{s:'uzivatele',c:'dny',days:'15',short:'0'}}
+      item { title:'měsíc'              par:°{s:'uzivatele',c:'dny',days:'30',short:'1'}}
+#       item { title:'... podrobně'       par:°{s:'uzivatele',c:'dny',days:'30',short:'0'}}
+      item { title:'nastavený den'      par:°{s:'uzivatele',c:'den',short:'1'}}
+      item { title:'... podrobně'       par:°{s:'uzivatele',c:'den',short:'0'}}
+    }
+    menu ap { title:'... prostředky',type:'group',skill:'m'
+      item d { title:'dnes'             par:°{s:'uzivatele',c:'dnes',short:'2'}}
+      item { title:'včera'              par:°{s:'uzivatele',c:'vcera',short:'2'}}
+      item { title:'týden'              par:°{s:'uzivatele',c:'dny',days:'8',short:'2'}}
+      item { title:'dva týdny'          par:°{s:'uzivatele',c:'dny',days:'15',short:'2'}}
+      item { title:'měsíc'              par:°{s:'uzivatele',c:'dny',days:'30',short:'2'}}
+      item { title:'nastavený den'      par:°{s:'uzivatele',c:'den',short:'2'}}
+    }
+    menu { title:'Aktivní moduly',type:'group',skill:'a'
+      item { title:'dnes'               par:°{s:'moduly',c:'dnes',short:'1'}}
+      item { title:'... podrobně'       par:°{s:'moduly',c:'dnes',short:'0'}}
+      item { title:'včera'              par:°{s:'moduly',c:'vcera',short:'1'}}
+      item { title:'... podrobně'       par:°{s:'moduly',c:'vcera',short:'0'}}
+      item { title:'týden'              par:°{s:'moduly',c:'dny',days:'8',short:'1'}}
+      item { title:'... podrobně'       par:°{s:'moduly',c:'dny',days:'8',short:'0'}}
+      item { title:'dva týdny'          par:°{s:'moduly',c:'dny',days:'15',short:'1'}}
+      item { title:'... podrobně'       par:°{s:'moduly',c:'dny',days:'15',short:'0'}}
+      item { title:'měsíc'              par:°{s:'moduly',c:'dny',days:'30',short:'1'}}
+      item { title:'... podrobně'       par:°{s:'moduly',c:'dny',days:'30',short:'0'}}
+      item { title:'nastavený den'      par:°{s:'moduly',c:'den',days:'30',short:'1'}}
+      item { title:'... podrobně'       par:°{s:'moduly',c:'den',days:'30',short:'0'}}
+    }
+    menu err { title:'Chyby',type:'group',skill:'a'
+      item today { title:'dnes'         par:°{s:'chyby',c:'dnes'}}
+      item { title:'včera'              par:°{s:'chyby',c:'vcera'}}
+      item week { title:'týden'         par:°{s:'chyby',c:'tyden'}}
+      item { title:'měsíc'              par:°{s:'chyby',c:'mesic'}}
+      item { title:'nastavený den'      par:°{s:'chyby',c:'den'}}
+      item { title:'všechna hlášení'    par:°{s:'chyby',c:'vsechny'}}
+      item { title:'čekající BUGs'      par:°{s:'chyby',c:'BUG1'}}
+      item { title:'vyřešené BUGs'      par:°{s:'chyby',c:'BUG2'}}
+    }
+    menu { title:'Přihlášení',type:'group',skill:'a'
+      item today { title:'dnes'         par:°{s:'login',c:'dnes'}}
+      item { title:'včera'              par:°{s:'login',c:'vcera'}}
+      item { title:'týden'              par:°{s:'login',c:'tyden'}}
+      item { title:'měsíc'              par:°{s:'login',c:'mesic'}}
+      item { title:'nastavený den'      par:°{s:'login',c:'den'}}
+      item { title:'všechna hlášení'    par:°{s:'login',c:'vsechny'}}
+    }
+    menu opt { title:'Nastavení',type:'group',skill:'m'
+      item { title:'bez programátorů'    par:°{s:'skip',c:'1'}}
+      item { title:'včetně programátorů' par:°{s:'skip',c:'0'}}
+      proc onclick(i) { skip.set(i.par.c) }
+    }
+    menu sur { title:'Přehledy',type:'group',skill:'a;aa'
+      item { title:'tabulka oprávnění'}
+      proc onclick() {
+        ask('sys_user_skills','skills');
+        alert("soubor lze stáhnout <a href='docs/skills.xlsx'>zde</a>");
+      }
+    }
+    proc onclick (i) {
+      u.result.set(conc("<div id='info'>",
+        ask('sys_activity',i.par,skip.get,u.den.get,sys('options','watch_access_opt')),"</div>"))
+    }
+  }
+  use u: form _touch [12,4,,]
+  var skip: number
+  form _touch [,,*,50] {
+    field den [-20,19,85,18] { type:'date', style:'z-index:2', format:'Rrt', title:'nastavený&nbsp;den' }
+    label result [0,0,*,600] { title:'' }
+  }
+  proc onstart() { skip.set(0) }
+  proc onfirstfocus() { left.a.d.click }
+}
+# =================================================================================================> UŽIVATELÉ
+panel users [,,,543] {type:'right', title:'Uživatelé', _sys:'uzi', skill:'a|a'
+
+  const sys_users_list = 22
+  const sys_users_skills = 16
+  const sys_users_cmd = 476
+
+  var last_par: object,
+  var novy: number,
+  var new_skill: text,
+  var sel: text,
+
+  use uzivatele: form users [10,7,,],
+  use uzivatel: form user [430+180,7,,]
+  use cmd: form butt [22,sys_users_cmd,,],
+  use dskill: form desc_skills [430+180,127,,]
+
+  proc onfirstfocus() {
+    watch_css;
+#   }
+#   proc onstart () {
+    last_par.set(see.all.actives.par);
+    sel.set('use');
+    refresh;
+    uzivatel.get.display(sys('options','watch_access'),'ac');
+    uzivatel.get.display(sys('options','watch_ip'),'ip');
+    cmd.watch_key.display(sys('options','watch_key'));
+  }
+  # ==> ... uložení uživatele s kontrolou
+  proc u_uloz () {
+    uzivatel.same;
+  | uzivatel.kdo.set(sys('user','id_user')); uzivatel.kdo.change; uzivatel.kdy.set(now_sql(1));
+    uzivatel.kdy.change;
+    uzivatel.key;
+    { u_test(uzivatel.key)
+    | uzivatel.save; uzivatel.load;
+      uzivatele.lst.browse_seek;
+      cmd.get.enable(0,'c');
+    }
+  | not(uzivatel.key);
+    { u_test(0)
+    | uzivatel.insert; novy.set(uzivatel.key); uzivatel.load;
+      uzivatele.lst.browse_load; uzivatele.lst.raise('onrowclick',novy.get);
+      cmd.get.enable(0,'c');
+    }
+  }
+  # test položek před uložením
+  var msg:text
+  proc u_test(id) {
+    sys('options','watch_access');
+    msg.set(ask('sys_user_access',sys('options','watch_access'),uzivatel.org.key,uzivatel.access.key));
+    msg.get; alert(msg.get); return(1)
+  | msg.set(ask('sys_user_unique',id,uzivatel.username.get,uzivatel.znacka.get));
+    msg.get; alert(msg.get); return(1)
+  | // testy prošly - uprav změny pro uložení
+    [ uzivatel.access.changed; uzivatel.access.set(uzivatel.access.key); uzivatel.access.change ];
+    [ uzivatel.org.changed; uzivatel.org.set(uzivatel.org.key); uzivatel.org.change ];
+    [ uzivatel.password.changed; msg.set(ask('sys_hash_password', uzivatel.password.get)); uzivatel.password.set(msg.get); uzivatel.password.change ];
+    return(0)
+  }
+  # obnovení seznamu uživatelů
+  proc refresh() { var see_access:text
+    see_access.set(cconc(sys('options','watch_access_opt'),conc(" AND access&",sys('user','access')),""));
+    uzivatele.lst.browse_load(conc(last_par.get('cond'),see_access));
+    cmd.enable(1,last_par.get('on'));
+    cmd.enable(0,last_par.get('off'));
+    watch_css;
+  }
+  # kompozice obarvení z Ezer.options.watch_access_opt.css (je-li)
+  proc watch_css() { var opt:object
+    sys('options','watch_access_opt');
+    opt.set(ask('sys_user_watch_css',sys('options','watch_access_opt')));
+    uzivatele.lst.zkratka.set_attrib('css_cell',replace(opt.css_cell,'@','org'));
+    uzivatele.lst.username.set_attrib('css_cell',replace(opt.css_cell,'@','access'));
+    uzivatel.org.selects(opt.sel_org);
+    uzivatel.access.selects(opt.sel_access);
+  }
+  # ----------------------------------------------------------------==> ... menu
+  menu see { type:'left', active:*, format:'f-'
+    menu all { title:'přehled',type:'group'
+      item actives { title:'[fa-user-plus] aktivní uživatelé', par:°{on:'h',off:'u',cond:"LEFT(deleted,1)!='H'"}}
+      item         { title:'[fa-user-times] skrytí uživatelé', par:°{on:'u',off:'h',cond:"deleted LIKE 'H%'"}}
+      item         { title:'[fa-user] všichni uživatelé',      par:°{on:'h|u',off:'',cond:1}}
+    }
+    proc onclick (i) {
+      last_par.set(i.par);
+      refresh;
+    }
+  }
+  # ----------------------------------------------------------------==> ... uživatelé
+  form users [,,587,470] { css:'ae_work'
+    view u: table _user
+    view t: table _track { join_type:'NONE', join:"ON abbr=kdo" }
+    label [6,3,89,15] { title:'<h1>Uživatelé</h1>' }
+    browse lst [4,37,0,54] { rows:sys_users_list, qry_rows:1, buf_rows:100, group_by:'abbr'
+      show user [,,27,] { title:'č.', help:'jednoznačné číslo uživatele',
+        data:u.id_user, format:'rsq=' }
+      show zkratka [,,35,] { title:'značka', help:'jednoznačná třípísmenná zkratka',
+        data:u.abbr, format:'sq*', css_cell:'' }
+      show username [,,63,] { title:'uživatel', help:'jednoznačné přihlašovací jméno',
+        data:u.username, format:'sq*' }
+      show prijmeni [,,70,] { title:'příjmení', data:u.surname, format:'s+q*' }
+      show jmeno [,,70,] { title:'jméno', data:u.forename, format:'sq*' }
+      show org [,,0,] { title:'org.', data:u.org, format:'rtsq*' }
+      show access [,,0,] { title:'přístup', data:u.access, format:'rtsq*' }
+      show skills [,,280,] { title:'oprávnění', help:'seznam kódů funkčních oprávnění',
+        data:u.skills, format:'utsq*'
+        proc onsubmit() { this.save } }
+      show r0 [,,0,] { title:'letos',   expr:"0", format:'rtsq*' }
+      show r1 [,,0,] { title:'loni',    expr:"0", format:'rtsq*' }
+      show r2 [,,0,] { title:'předloni',expr:"0", format:'rtsq*' }
+      show rn [,,0,] { title:'dřív',    expr:"0", format:'rtsq*' }
+      proc track(on) { on;
+        t.set_attrib('join_type','LEFT');
+        r0.set_attrib('expr',"SUM(IF(YEAR(t.kdy)=YEAR(NOW()),1,0))");
+        r1.set_attrib('expr',"SUM(IF(YEAR(t.kdy)=YEAR(NOW())-1,1,0))");
+        r2.set_attrib('expr',"SUM(IF(YEAR(t.kdy)=YEAR(NOW())-2,1,0))");
+        rn.set_attrib('expr',"SUM(IF(YEAR(t.kdy)<YEAR(NOW())-2,1,0))");
+        show_track; refresh
+      | t.set_attrib('join_type','NONE');
+        r0.set_attrib('expr',"0"); r1.set_attrib('expr',"0");
+        r2.set_attrib('expr',"0"); rn.set_attrib('expr',"0")
+      }
+      proc onclick () {
+        r0.width; // po rocích zobraz organizaci
+        r0.width(0); r1.width(0); r2.width(0); rn.width(0);
+        org.width(19); access.width(29); skills.width(230)
+      | org.width; // po organizaci zobraz skill
+        org.width(0); access.width(0); skills.width(280)
+      | // po skill zobraz roky
+        show_track
+      }
+      proc show_track() {
+        r0.width(70); r1.width(69); r2.width(69); rn.width(69);
+        skills.width(0); org.width(0); access.width(0)
+      }
+      proc onrowclick () {
+        new_skill.set('');
+        cmd.get.enable(0,'c');
+        uzivatel.load(user.get);
+        uzivatel.org.key(org.get);
+        uzivatel.access.key(access.get);
+        uzivatel.znacka.enable(0);
+        // zobrazení v seznamu vlastností jako vybraných
+        dskill.missing.set(ask('sys_skills_test',uzivatel.skills.get));
+        dskill.seznam.selected('set',ask('sys_skills2ids',uzivatel.skills.get));
+        dskill.seznam.selected(sel.get);
+        dskill.seznam.browse_load;
+      }
+    }
+  }
+  # ----------------------------------------------------------------==> ... user
+  form user [,,433,125] { css:'ae_work', style:"z-index:2"
+    view u: table _user,
+    label [5,6,89,15] { title:'<h1>Uživatel</h1>' }
+    field skills [2,46,146,] { data:u.skills, format:'n' }
+    field username [5,48,60,] { data:u.username, title:'^username' }
+    field password [74,48,42,] { data:u.password, title:'^heslo', format:'p' }
+    field znacka [124,48,34,] { data:u.abbr, title:'^zkratka' }
+    field prijmeni [5,92,152,] { data:u.surname, title:'^příjmení' }
+    field jmeno [168,92,117,] { data:u.forename, title:'^jméno' }
+    select org [168,48,66,] { tag:'ac', data:u.org, format:'w', title:'^organizace' }
+    select access [242,48,44,] { tag:'ac', data:u.access, format:'w', title:'^přístup k' }
+    edit ips [298,47,127,64] { tag:'ip', data:u.ips, title:'^povolené IP adresy' }
+    field login { data:u.login }
+    field kdo { data:u.zmena_kdo }
+    field kdy { data:u.zmena_kdy }
+    proc onchanged() { cmd.get.enable(1,'c') }
+  }
+  # ----------------------------------------------------------------==> ... desc_skills
+  form desc_skills [,,433,200] { css:'ae_work'
+    label [2,3,100,15] { title:'oprávnění' }
+    label missing [60,3,360,15]
+    browse seznam [2,20,180,198] { rows:sys_users_skills, qry_rows:1, buf_rows:100
+      show id { data:_skill.id_skill }
+      show abb [,,50,] { data:_skill.skill_abbr, title:'kód', format:'utsq*', skill:'a|m'
+        proc onsubmit() { this.save } }
+      show dsc [,,345,] { data:_skill.skill_desc, title:'popis oprávnění', format:'uts+q$', skill:'a|m'
+        proc onsubmit() { this.save } }
+      # ----------------------------------------------==> ... kontext.menu
+      menu { type:'context'
+        item { title:'zobrazit roční aktivitu'
+          proc onclick() { uzivatele.lst.track(1) } }
+        item { title:'odebrat všechna oprávnění'
+          proc onclick() { seznam.selected("clear"); cmd.enable(1,'c'); } }
+        item { title:'-přidat nový řádek', skill:'m|m'
+          proc onclick() {
+            eq(sel.get,'ignore');
+            seznam.browse_seek(conc('id_skill=',
+              _skill.insert_record(
+                object('skill_abbr',conc(abb.get,'?'),'skill_desc',conc(dsc.get,'.?')))));
+          | confirm('Pro přidávání musí seznam opravnění zobrazovat všechny položky. Přepnout?');
+            seznam.selected("ignore"); sel.set('ignore'); seznam.browse_load
+        } }
+        item { title:'odebrat běžný řádek', skill:'m|m'
+          proc onclick() { confirm('opravdu odebrat oprávnění ',abb.get,':',dsc.get,'?');
+            _skill.delete_record(conc('id_skill=',id.get));
+            seznam.browse_load } }
+        item { title:'-zobrazit vybrané'
+          proc onclick() { seznam.selected("use"); sel.set('use'); seznam.browse_load } }
+        item { title:'zobrazit vše'
+          proc onclick() { seznam.selected("ignore"); sel.set('ignore'); seznam.browse_load } }
+        item { title:'-zkontrolovat konzistentnost'
+          proc onclick() { alert(ask('sys_user_skills')) } }
+        item { title:'exportovat přehledovou tabulku'
+          proc onclick() { ask('sys_user_skills','skills');
+            alert("soubor lze stáhnout <a href='docs/skills.xlsx'>zde</a>"); } }
+        item { title:'nositelé nastaveného oprávnění'
+          proc onclick() {
+            uzivatele.lst.selected('clear');
+            uzivatele.lst.selected('set',ask('sys_user_skilled',abb.get))
+          } }
+        item { title:'-zobrazit user.options'
+          proc onclick() { alert(ask('sys_user_options',uzivatele.lst.user.get)) } }
+        item { title:'-zobrazit historii změn'
+          proc onclick() { Track.back_show('_user',uzivatele.lst.user.get) } }
+      }
+      proc onchoice() {
+#         // pokud je přihlášený administrátor, zablokujeme mu možnost změnit si oprávnění
+#         eq(uzivatele.lst.user.get,sys('user','id_user'));
+#         contains(uzivatele.lst.user.get,sys('ezer','options','admins'));
+#         warning('Administrátor si nemůže měnit svoje práva');
+#       |
+        uzivatel.skills.set(ask('sys_ids2skills',this.selected('get')));
+        uzivatel.skills.change;
+        cmd.get.enable(1,'c');
+      }
+    }
+  }
+  # ----------------------------------------------------------------==> ... cmd
+  form butt [,,852,39] {
+    # -------------------------------- úpravy uživatelů
+    label  [0,6,561,30] { css:'ae_parm' }
+    button zrus_clena [11,12,,] { tag:'h', type:'html', title:'[fa-plug fa-rotate-180 fa-red] Skrýt'
+      proc onclick() { confirm("Opravdu znemožnit přihlášení uživateli ",uzivatel.username.get,'?');
+        alert(ask('sys_user_hide',uzivatele.lst.user.get,1)); refresh
+    }}
+    button obnov_clena [71,12,,] { tag:'u', type:'html', title:'[fa-plug] Obnovit'
+      proc onclick() { confirm("Opravdu obnovit uživatele ",uzivatel.username.get,'?');
+        alert(ask('sys_user_hide',uzivatele.lst.user.get,0)); refresh
+    }}
+    button watch_key [195,12,,] { title:'Vygenerovat klíč', format:'n'
+      proc onclick() {
+        confirm("Vygenerování nového klíče znemožní přístup současným uživatelům. Pokračovat?");
+        watch_ref.set(ask('sys_watch_key'))
+      }
+    }
+    label watch_ref [316,15,250,15]
+    # -------------------------------- změny uživatele
+    label  [636,6,292,30] { css:'ae_parm' }
+    button uloz_clena [649,12,,] { tag:'c', type:'html', title:'[fa-save] Uložit'
+      proc onclick () { u_uloz
+    } }
+    button zpet_clena [715,12,,] { tag:'c', type:'html', title:'[fa-undo] Zpět'
+      proc onclick () {
+        uzivatel.key; uzivatel.load;
+        cmd.get.enable(0,'c');
+    } }
+    button vytvor_clena [851,12,,] { type:'html', title:'[fa-heart] Vytvořit'
+      proc onclick () {
+        cmd.get.enable(0,'c');
+        dskill.seznam.selected('clear');
+        uzivatele.lst.blur; uzivatel.init; uzivatel.kdo.set(sys('user','id_user'));
+        uzivatel.kdy.set(now);
+        uzivatel.znacka.enable(1);
+    } }
+  }
+}
+# =================================================================================================> POŽADAVKY
+# v {root}.ini je možné mít řádky
+#   $EZER->todo->cond_browse= "{skill}:{SQL cond};..."; // např. "p:data IN (2,3)";
+#   $EZER->todo->cond_select= "{skill}:{SQL cond};..."; // např. "data IN (2,3)";
+#   $EZER->todo->notify= "new";  // poslat mail o novém požadavku na adresu z osobního nastavení
+#   $EZER->todo->notify= "none"; // neposílat žádné notifikační maily
+# ovlivňující zobrazení řádků v u.todo a nabídku v u.cast pro různé uživatele aplikace root
+panel needs [,,770,] {type:'right', title:'Požadavky', _sys:'poz', skill:'sp'
+  const sys_needs_todo = 10
+  var global_cond: text
+  var do_notify: number                         // zasílat notifikační maily
+  proc get_conds() {
+    var conds: object
+    conds.set(ask('sys_todo_conds'));
+    global_cond.set(conds.cond_browse);
+    u.cast.selects(0,conds.cond_select);
+  }
+  proc onstart() {
+    get_conds;
+    left.over.news.click;
+    u.kdo_zadal.enable(has_skill('spk'));       // oprávnění změnit zadavatele (pochopitelně se souhlasem)
+    u.kdo_kontrola.enable(has_skill('spk'));    // oprávnění zadat kontrolujícícho (třeba potvrzení mailem)
+    do_notify.set(not(eq(sys('ezer','todo','notify'),'none')));
+    u.get.display(do_notify.get,'notify')       // povol/potlač notifikační maily
+  }
+  proc onfirstfocus() { left.over.news.click }
+  menu left { type:'left'
+    menu over { title:'Celkové přehledy',type:'group',par:°{cond:""}
+      item news { title:"všechny požadavky"       par:°{cond:''}}
+      item   { title:"bez starých Novinek"        par:°{cond:'AND wiki=0'} skill:'!f'}
+      item   { title:"s otevřenou diskusí"        par:°{cond:'AND je_diskuse=1'}}
+      item   { title:"se ukončenou diskusí"       par:°{cond:"AND je_diskuse=0 AND diskuse!=''"}}
+    }
+    menu { title:'Požadavky oprav a úprav',type:'group',par:°{cond:"AND NOT wiki AND typ!=3 AND kdy_kontrola='0000-00-00'"}
+      item   { title:'požadované opravy a úpravy' par:°{cond:""}}
+      item   { title:'... čekající na zahájení'   par:°{cond:"AND kdy_zacal='0000-00-00'"}}
+      item   { title:'... ve fázi realizace'      par:°{cond:"AND kdy_zacal!='0000-00-00' AND kdy_skoncil='0000-00-00'"}}
+      item   { title:'... hotové bez kontroly'    par:°{cond:"AND kdy_skoncil!='0000-00-00'"}}
+    }
+    menu { title:'Požadavky změn vlastností',type:'group',par:°{cond:"AND NOT wiki AND typ=3 AND kdy_kontrola='0000-00-00'"}
+      item   { title:'požadované vlastnosti'      par:°{cond:""}}
+      item   { title:'... ještě neodhadnuté'      par:°{cond:"AND odhad_hodin=0"}}
+      item   { title:'... ještě neschválené'      par:°{cond:"AND odhad_hodin>0 AND kdy_schvalil='0000-00-00'"}}
+      item   { title:'... čekající na zahájení'   par:°{cond:"AND odhad_hodin>0 AND kdy_schvalil!='0000-00-00' AND kdy_zacal='0000-00-00'"}}
+      item   { title:'... ve fázi realizace'      par:°{cond:"AND kdy_zacal!='0000-00-00' AND kdy_skoncil='0000-00-00'"}}
+      item   { title:'... hotové bez kontroly'    par:°{cond:"AND kdy_skoncil!='0000-00-00'"}}
+    }
+    menu { title:'Hotové změny',type:'group',par:°{cond:"AND kdy_kontrola!='0000-00-00'"} skill:'!f'
+      item { title:'opravy a úpravy po květnu 2010' par:°{cond:'AND wiki=0 AND typ!=3'}}
+      item { title:'vlastnosti po květnu 2010'    par:°{cond:'AND wiki=0 AND typ=3'}}
+      item { title:"změny před květnem 2010"      par:°{cond:'AND wiki=1'}}
+    }
+    proc onclick (i) {
+      u.fill(conc(i.owner.title,' - ',i.title),''); u.drop_init;
+      u.todo.browse_load(conc(global_cond.get,' ',i.owner.par.cond,' ',i.par.cond));
+   }
+  }
+  use u: form pozadavek [12,4,,],
+  # ---------------------------------------------------------------------------------------------==>pozadavek
+  # editace_požadavku
+  form pozadavek [,,740,565] {   //565 770
+    const T= 330
+    const Tc= 580
+    label head [0,0,747,50] { title:'' }
+    label note [1,50,747,500] { title:'' }
+    view t: table _todo
+    browse todo [0,50,300,200] { buf_rows:100, rows:sys_needs_todo, qry_rows:1,
+      css_rows:'barva,1:blue,2:grey,3:yellow,4:green,5:green2,6:yellow2,999:red2'
+      show id           [,,25,] { title:'id', data:t.id_todo, format:'qsr' }
+      show stav                { data:t.stav }
+      show barva               { expr:"CASE WHEN stav=1 THEN 1 WHEN stav=2 THEN 2
+                                            WHEN typ=0 OR (cast=0 AND wiki=0) OR kdy_zadal='0000-00-00' THEN 999
+                                            WHEN kdy_zacal!='0000-00-00' AND kdy_skoncil='0000-00-00' THEN 3
+                                            WHEN kdy_skoncil!='0000-00-00' AND kdy_kontrola='0000-00-00' THEN 4
+                                            WHEN kdy_kontrola!='0000-00-00' THEN 5 ELSE 0 END" }
+      show barva2   [0,0,10,]           { expr:"CASE WHEN je_diskuse THEN 1 WHEN diskuse='' THEN 0 ELSE 2 END"}
+      show typ          [,,54,] { title:'typ', data:t.typ, map_pipe:cis_s_todo_typ.zkratka, format:'q#s' }
+      show cast         [,,60,] { title:'část', data:t.cast, map_pipe:cis_s_todo_cast.zkratka, format:'q#s' }
+      show zadani       [,,261,] { title:'zadání', data:t.zadani, format:'tqs', css_cell:'barva2,1:yellow2' }
+      show diskuse      [,,12,] { title:'D', expr:"CASE WHEN je_diskuse THEN 'D' WHEN diskuse='' THEN '' ELSE 'd' END",
+                                  css_cell:'barva2,1:yellow2,2:yellow2' , format:'s' }
+      show kdy_zmena    [,,65,] { title:'změna', format:'rqs-', sql_pipe:'sql_date1',
+        expr:"GREATEST(t.kdy_zadal,t.kdy_odhadl,t.kdy_schvalil,t.kdy_zacal,t.kdy_skoncil,t.kdy_kontrola,t.kdy_diskuse)" }
+      show kdy_zadal    [,,65,] { title:'žádáno', data:t.kdy_zadal, format:'rqs' }
+      show kdo_zadal    [,,45,] { title:'ž.', data:t.kdo_zadal, map_pipe:user.abbr, format:'oq#s' }
+      show kdy_odhadl   [,,0,] { title:'odhad', data:t.kdy_odhadl, format:'rqs' }
+      show odhad_hodin  [,,0,] { title:'hod.', data:t.odhad_hodin, format:'rqs' }
+      show kdy_schvalil [,,0,] { title:'schválil', data:t.kdy_schvalil, format:'rqs' }
+      show kdo_schvalil [,,0,] { title:'s.', data:t.kdo_schvalil, map_pipe:user.abbr, format:'q#s' }
+      show kdy_zacal    [,,0,] { title:'zahájení', data:t.kdy_zacal, format:'rqs' }
+      show kdy_skoncil  [,,0,] { title:'konec', data:t.kdy_skoncil, format:'rqs' }
+      show prace_hodin  [,,0,] { title:'hod.', data:t.prace_hodin, format:'drqs' }
+      show kdo_dela     [,,0,] { title:'r.', data:t.kdo_dela, map_pipe:user.abbr, format:'q#s' }
+      show kdy_kontrola [,,65,] { title:'kontrola', data:t.kdy_kontrola, format:'rqs' }
+      show kdo_kontrola [,,45,] { title:'k.', data:t.kdo_kontrola, map_pipe:user.abbr, format:'q#s' }
+      proc onrowclick () {
+        form.key(id.get); form.load; nono.init;
+        { attach.get; drop.set(ask('sys_todo_refs',attach.get)) | drop.set('') };
+        { email.get | email.set(sys('ezer','options','mail')) };
+        { eq(typ.get,'vlastnost'); // je to vlastnost
+          vlastnosti(1);
+          form.odhad_hodin.enable(not(form.kdy_schvalil.get));
+        | vlastnosti(0); // je to oprava nebo úprava
+        };
+        show_diskuse(je_diskuse.get);
+        form.prace_hodin.enable(not(kdy_skoncil.get));
+      }
+      proc onclick () {
+        eq(zadani.width,261);
+        zadani.width(225);      kdy_zadal.width(0);     kdo_zadal.width(0);     // proces schvalování
+        odhad_hodin.width(40);  /*kdy_schvalil.width(65); kdo_schvalil.width(45);*/
+        kdy_zacal.width(65);    kdy_skoncil.width(65);  prace_hodin.width(40);  kdo_dela.width(45);
+        kdy_kontrola.width(0);  kdo_kontrola.width(0);
+      | zadani.width(261);      kdy_zadal.width(65);    kdo_zadal.width(45);    // základní
+        odhad_hodin.width(0);   /*kdy_schvalil.width(0);  kdo_schvalil.width(0);*/
+        kdy_zacal.width(0);     kdy_skoncil.width(0);   prace_hodin.width(0);   kdo_dela.width(0);
+        kdy_kontrola.width(65); kdo_kontrola.width(45);
+      }
+    }
+    proc vlastnosti (ok) {
+      v1.display(ok); v2.display(ok); v3.display(ok); /*v4.display(ok);*/
+      odhad_hodin.display(ok); /*prace_hodin.display(ok);*/
+      kdy_schvalil.display(ok); kdo_schvalil.display(ok);
+    }
+    // tiché položky
+    field  stav {data:t.stav }
+    // legenda
+    label [345,284,63,] {title:'zahájeno', format:'c', help:'práce je započata a není ukončena', css:'yellow'}
+    label [412,284,53,] {title:'diskuse', format:'c', help:'zadání nebo předanou práci je třeba upřesnit', css:'yellow2'}
+    label [472,284,59,] {title:'připraveno', format:'c', help:'hotovo ale nezkontrolováno', css:'green'}
+    label [537,284,37,] {title:'hotovo', format:'c', help:'hotovo a zkontrolováno', css:'green2'}
+    label [579,284,52,] {title:'odloženo', format:'c', help:'požadavek je odložen', css:'blue'}
+    label [636,284,45,] {title:'zrušeno', format:'c', help:'požadavek je zrušen', css:'grey'}
+    label [685,284,45,] {title:'chyba', format:'c', help:'požadavek má chybné údaje', css:'red2'}
+    
+    // zahájení
+    label [5,283,100,] {title:'<h1>Požadavek</h1>'}
+    field id_todo [100,284,40,] { data:t.id_todo, format:'o', style:"font-size:12pt;font-weight:bold;color:#445566" }
+    label [0,328,732,85] {title:' ', css:'ae_work' }
+    label [5,T+0,300,] {title:'kategorie a modul'}
+    select typ  [5,T+15,72,] { type:'map', data:t.typ, map_pipe:cis_s_todo_typ.zkratka,
+      options:cis_s_todo_typ.zkratka }
+    select cast [83,T+15,60,] { type:'map', data:t.cast, map_pipe:cis_s_todo_cast.zkratka,
+      options:cis_s_todo_cast.zkratka }
+    label [5,T+40,137,] {title:'kdy a kdo vznesl'}
+    field  kdy_zadal [5,T+55,83,] { type:'date', data:t.kdy_zadal, sql_pipe:'sql_date1', format:'r' }
+    select kdo_zadal [93,T+55,50,] { type:'map', format:'d', data:t.kdo_zadal, map_pipe:user.abbr,
+      options:user.abbr }
+    label [158,T+0,406,] {title:'stručný popis, případně odkaz na email či soubor'}
+    edit  zadani [155,T+15,473,60] { data:t.zadani }
+
+    // přílohy
+    label [640,T+0,60,] {title:'přílohy'}
+    field attach {data:t.attach}
+    label drop [640,T+15,83,60] { style:'overflow:hidden' }
+    proc ondrop(fileinfo) {
+      drop.set_css('','drop_area drop_area_hover');
+      drop.set(ask('sys_todo_attach',form.key,fileinfo));
+      drop.set_css('','drop_area drop_area_hover drop_area_run');
+      [ nono.get | do_notify.get; ask('sys_todo_notify','att',form.key,form.json(1)) ];
+      drop_init;
+    }
+    proc drop_init() {
+      ask('set_limits',10,300);                           // max=10MB,300sec
+      form.file_drop(drop,°{css_hover:'drop_area_hover',css_run:'drop_area_run',transfer:'base64'});
+    }
+
+    // notifikační maily - pokud není $EZER->todo->notify=="none"
+    label [260,308,80,] {tag:'notify', title:'poslat mail na', format:'n' }
+    field email [344,305,181,] {tag:'notify', data:t.email, format:'n' }
+    label [533,308,41,] {tag:'notify', title:'bude-li', format:'n' }
+    select notify [577,305,91,]  {tag:'notify', type:'map0', data:t.email_kdyz, format:'n',
+      map_pipe:cis_s_todo_email.hodnota, options:cis_s_todo_email.hodnota
+      proc onchange() { email.change // aby se zapsala adresa
+    }}
+    check nono [668,303,77,] {tag:'notify', title:'ale teď ne', format:'nt', value:'0'}
+
+    // schvalovací doložka
+    label v1 [216,T+87,450,] {title:'<i>schvalovací doložky pro realizaci požadavků na změnu vlastností systému</i>'}
+    label v2 [252,T+107,75,] {title:'odhad hodin:'}
+    field odhad_hodin [334,T+104,30,] { data:t.odhad_hodin, format:'r' }
+    label v3 [388,T+107,60,] {title:'schváleno:'}
+    field kdy_schvalil [452,T+104,80,] { type:'date', data:t.kdy_schvalil, sql_pipe:'sql_date1',
+        format:'r', skill:'sp|spv'
+      proc onchanged () {
+        { this.get; kdo_schvalil.key(sys('user','id_user')) | kdo_schvalil.key(0) };
+        kdo_schvalil.change;
+      }
+    }
+    select kdo_schvalil [542,T+104,50,] { type:'map', format:'d', data:t.kdo_schvalil,
+      map_pipe:user.abbr, options:user.abbr }
+
+    // Řešení s případnou diskusí
+    label [5,T+100,100,] {title:'<h1>Řešení</h1>'}
+    check je_diskuse [60,T+98,100,] {title:'s diskusí', data:t.je_diskuse, value:'0'
+      proc onchange() { show_diskuse(this.get); }
+    }
+    label [0,T+128,732,115] {title:' ', css:'ae_work' }
+    // zahájení
+    label [5,T+130,139,] {title:'zahájení realizace'}
+    field  kdy_zacal [5,T+145,83,] { type:'date', data:t.kdy_zacal, sql_pipe:'sql_date1', format:'r'
+      proc onchanged () {
+        { this.get; kdo_dela.key(sys('user','id_user')) | kdo_dela.key(0) };
+        kdo_dela.change;
+      }
+    }
+    select kdo_dela [93,T+145,50,] { type:'map', format:'d', data:t.kdo_dela, map_pipe:user.abbr, options:user.abbr }
+    // předání
+    label [5,T+165,139,] {title:'předáno ke kontrole'}
+    field  kdy_skoncil [5,T+180,83,] { type:'date', data:t.kdy_skoncil, sql_pipe:'sql_date1', format:'r'}
+    field prace_hodin [93,T+180,30,] { data:t.prace_hodin, format:'r' }
+    label v4 [127,T+184,50,] {title:'hod.'}
+    // kontrola
+    label [5,T+200,100,] {title:'zkontrolováno'}
+    field  kdy_kontrola [5,T+215,83,] { type:'date', data:t.kdy_kontrola, sql_pipe:'sql_date1', format:'r'
+      proc onchanged () {
+        { this.get; kdo_kontrola.key(sys('user','id_user')) | kdo_kontrola.key(0) };
+        kdo_kontrola.change;
+      }
+    }
+    select kdo_kontrola [93,T+215,50,] { type:'map', format:'d', data:t.kdo_kontrola,
+      map_pipe:user.abbr, options:user.abbr }
+    label [155,T+130,472,] {title:'popis do Novinek pro hotové požadavky, případně poznámky pro rozpracované'}
+    edit  zprava [155,T+145,565,90] { data:t.zprava }
+
+    //  příkazy
+    button [150,280,,] {title:'Nový požadavek', proc onclick() {
+      form.init(1); drop.set('');
+      email.set(sys('ezer','options','mail')); email.change; // z osobního nastavení
+      [ do_notify.get; notify.key(2); notify.change ]; // změna stavu
+      typ.key(1); typ.change; cast.key(1); cast.change; zadani.change; show_diskuse(je_diskuse.get);
+      kdy_zadal.set(now); kdy_zadal.change; kdo_zadal.key(sys('user','id_user')); kdo_zadal.change;
+    }}
+    button[150,Tc,,] {type:'submit', title:'Uložit změny', proc onclick() {
+      var fields: object
+      var old_notify: number
+      old_notify.set(not(nono.get));
+      form.same
+    | form.key;
+      // změna požadavku
+      form.save; form.key(todo.browse_seek); form.load;
+      [ do_notify; old_notify; ask('sys_todo_notify','upd',form.key,form.json(1)) ];
+    | // nový požadavek
+      fields.set(form.json(1)); form.insert; form.load;
+      todo.raise('onrowclick',todo.browse_seek(conc(form.id_key,'=',form.key)));
+      [ do_notify; notify; ask('sys_todo_notify','new',form.key,fields) ]
+    }}
+    button [461,Tc,,] {title:'Smazat', skill:'m|m', proc onclick() {
+      confirm("opravdu smazat požadavek č.",form.key);
+      _todo.delete_record(conc("id_todo=",form.key));
+      left.over.news.click
+    }}
+    button [535,Tc,,] {title:'Odložit', proc onclick() {
+      stav.set(1); stav.change; the_formsave (form,todo);
+    }}
+    button [603,Tc,,] {title:'Zrušit', proc onclick() {
+      stav.set(2); stav.change; the_formsave (form,todo);
+    }}
+    button [663,Tc,,] {title:'Obnovit', proc onclick() {
+      stav.set(0); stav.change; the_formsave (form,todo);
+    }}
+    // Případná diskuse
+    label [5,Tc+5,100,] {tag:'d', format:'n', title:'<h1>Diskuse</h1>'}
+    label [0,Tc+30,732,193] {tag:'d', format:'n', title:' ', css:'ae_work' }
+    field kdy_diskuse {data:t.kdy_diskuse}
+    chat diskuse [7,Tc+37,714,176] {tag:'d', format:'n', divide:70, data:t.diskuse
+      proc onchanged() {
+        kdy_diskuse.set(now_sql); kdy_diskuse.change;
+    }}
+    // fce
+    proc fill(h,n) {
+      [ h; head.set(conc("<div class='karta'>",h,"</div>")) ];
+      [ n; note.set(n) ]
+    }
+    proc append(n) {
+      note.set(conc(note.get,n))
+    }
+    proc show_diskuse (on) {
+      form.display(on,'d'); /*[ on; panel.property(°{height:'*',min_height:770}) ]*/
+    }
+  }
+}
+# =================================================================================================> POPUPS
+# -----------------------------------------------------------------------------------------------==> Track
+# přehled provedených změn
+panel Track [,,540,276] { title:'Historie oprav', type:'popup', css:'dialog'
+  use back: form _back [0,16,,] { tabindex:20 },
+  proc back_show(kde,klic) {
+    panel.popup(0,1);
+    back.list.browse_load(
+      conc("(kde='",kde,"' AND klic=",klic,")"),"kdy DESC");
+    back.list.raise('onrowclick')
+  }
+  # ----------------------------------------------------------==> _back
+  # id_track,kdy,kdo,kde,klic,zmena:fld,op,val,old
+  form _back [,,255,250] {
+    browse list [0,0,150,100] { rows:12,
+      show kdy [,,90,] { title:'kdy', data:_track.kdy, sql_pipe:'sql_time1' },
+      show kdn [,,30,] { title:'kdn', data:_track.kdo },
+      show op [,,12,] { title:'?', data:_track.op },
+      show fld [,,60,] { title:'položka', data:_track.fld },
+      show old [,,200,] { title:'původní hodnota', data:_track.old, format:'t' },
+      show val [,,120,] { title:'změněná hodnota', data:_track.val, format:'t' },
+      show id_track [,,0,] { data:_track.id_track },
+    },
+    label [0,250,545,] { title:'ÚDAJE: i=vložení (insert), u=úprava, <br>ZÁZNAM: x=smazano, o=obnoveno' }
+  }
+}
+# =================================================================================================> MAPY,TABULKY
+table _todo { key_id:'id_todo'
+  number id_todo      { key:'primary' }
+  number typ          { help:"_cis:s_todo_typ (1:oprava,2:úprava,3:vlastnost)" }
+  number stav         { help:"_cis:s_todo_stav (odloženo)" }
+  number cast         { help:"_cis:s_todo_cast" }
+  text   zprava       { help:"popis řešení, případně s odkazem na mail či dokumentaci" }
+  date   kdy_zadal    { help:'kdy zadáno', sql_pipe:'sql_date1' }
+  number kdo_zadal    // id_user
+  text   zadani       { help:"stručný popis požadavku, případně s odkazem na mail" }
+  number kdo_dela     // id_user
+  date   kdy_odhadl   { help:'kdy odhadnuto', sql_pipe:'sql_date1' } // jen pro vlastnost
+  number odhad_hodin  // jen pro vlastnost
+  date   kdy_schvalil { help:'kdy schváleno', sql_pipe:'sql_date1' } // jen pro vlastnost
+  number kdo_schvalil // jen pro vlastnost = id_user
+  date   kdy_zacal    { help:'kdy zahájeno', sql_pipe:'sql_date1' }
+  number prace_hodin
+  date   kdy_skoncil  { help:'kdy skončeno', sql_pipe:'sql_date1' }
+  date   kdy_kontrola { help:'kdy zkontrolováno', sql_pipe:'sql_date1' }
+  number kdo_kontrola // id_user
+  number je_diskuse   { help:'ukázat diskusi nad řešením' }
+  text   diskuse      { help:'diskuse o průběhu řešení' }
+  date   kdy_diskuse  { help:'kdy byl nejnovější příspěvek' }
+  text   email        { help:'emailová adresa pro upozornění' }
+  number email_kdyz   { help:'zasílat email když' } //_cis:s_todo_email (0:nikdy,1:při změně,2:při změně stavu)
+  text   attach       { help:"seznam příloh v docs/todo" }
+}
+
+map user_level:      table _cis  { where:"druh='user_level'"}
+map druhy:           table _cis  { where:"druh='_meta_'", order:"zkratka"}
+map cis_s_todo_typ:  table _cis  { where:"druh='s_todo_typ'", order:'poradi', key_id:'data' }
+map cis_s_todo_stav: table _cis  { where:"druh='s_todo_stav'", order:'poradi', key_id:'data' }
+map cis_s_todo_cast: table _cis  { where:"druh='s_todo_cast'", order:'poradi', key_id:'data' }
+map cis_s_todo_email:table _cis  { where:"druh='s_todo_email'", order:'poradi', key_id:'data' }
+map user:            table _user { where:'1', order:'surname', key_id:'id_user', db:'ezer_system'}
+
+table _cis { key_id:'id_cis'
+  number id_cis
+  text druh,
+  text data,
+  text zkratka,
+  number poradi,
+  text hodnota,
+  text popis,
+  text barva,
+  text ikona
+}
+table _user { key_id:'id_user', db:'ezer_system'
+  number id_user
+  text deleted,
+  text abbr,
+  text skills  { help:'seznam procedurálních oprávnění' }
+  text org     { help:'příslušnost k organizaci' } // 2**n
+  text access  { help:'povolený přístup k datům organizací' }  // součet povolených org
+  text ips     { help:'čárkami oddělený seznam IP adres ze kterých se uživatel smí přihlásit' }
+  text options { help:'privátní nastavení|ve formátu JSON' }
+  text username,
+  text password,
+  number state,
+  text forename,
+  text surname,
+  text login,
+  text history,
+  text sess_id,
+  text sess_time,
+  text sess_data,
+  number zmena_kdo,
+  date zmena_kdy {  }
+}
+table _skill { key_id:'id_skill', db:'ezer_system'
+  number id_skill
+  text skill_abbr
+  text skill_desc
+}
+table _track { key_id:'id_track'
+  number id_track { key:'primary' }
+  date kdy { help:'datum změny' }
+  text kdo { help:'pachatel' }
+  text kde { help:'tabulka' }
+  number klic { help:'klíč' }
+  text fld { help:'položka' }
+  text op { help:'operace' }
+  text old { help:'původní hodnota' }
+  text val { help:'původní hodnota' }
+}

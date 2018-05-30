@@ -1,0 +1,155 @@
+#pragma library,test
+
+# Systém Ezer2 - panel osobního nastavení
+# (c) 2010-2017 Martin Šmídek <martin@smidek.eu>
+
+var the_user: number
+var last_item: object
+
+use rp: form right [12,4,,]
+use ch: form _chng [12,70,,]
+use msg: form _msg [12,70,,]
+
+proc onfirstfocus () {
+  echo('ONFIRSTFOCUS'); the_user.set(sys('user','id_user')); m.g.i.click; }
+
+proc onstart() {
+  echo('ONSTART'); the_user.set(sys('user','id_user'));
+  has_skill('a'); rp.id_user.key(the_user.get); }
+
+menu m {type:'left',
+  menu g { title:"Přehled osobních nastavení", type:'group'
+    item i { title:"osobní záznam"              ,par:°{typ:'oso'} }
+    item   { title:"m: zobrazení funkce sys"    ,par:°{typ:'sys'}, skill:'m' }
+    item   { title:"m: zobrazení Ezer.options"  ,par:°{typ:'opt'}, skill:'m' }
+    item   { title:"m: zobrazení _SESSION"      ,par:°{typ:'ses'}, skill:'m' }
+    item   { title:"m: zobrazení USER"          ,par:°{typ:'use'}, skill:'m' }
+    item   { title:"m: zobrazení EZER"          ,par:°{typ:'eze'}, skill:'m' }
+    proc onclick(i) {
+      last_item.set(i);
+      rp.fill(conc(i.owner.title,' - ',i.title),' ');
+      ch.get.display(0); msg.get.display(1);
+      switch(i.par.typ,
+      'oso',{msg.txt.set(ask('sys_user_record',the_user.get))},
+      'foo',{msg.txt.set(ask('sys_user_record',the_user.get))},
+      'sys',{msg.txt.set(debug(sys))},
+      'opt',{msg.txt.set(debug(javascript('Ezer.options')))},
+      'use',{msg.txt.set(ask('sys_user'))},
+      'eze',{msg.txt.set(ask('sys_ezer'))},
+      'ses',{msg.txt.set(ask('sys_session'))}) }
+  }
+  menu {title:"Změna osobního nastavení", type:'group', _sys:'jm'
+    item { title:"změna emailové adresy"      ,par:°{typ:'opt',fld:'email'} }
+    item { title:"změna emailové patičky"     ,par:°{typ:'txt',fld:'email_foot'} }
+    item { title:"změna textu 'vyřizuje'"     ,par:°{typ:'opt',fld:'vyrizuje'} }
+    item { title:"změna textu 'potvrzuje'"    ,par:°{typ:'opt',fld:'potvrzuje'} }
+    item { title:"m: změna options 'to_trace'",par:°{typ:'oop',fld:'to_trace'}, skill:'m' }
+    item { title:"změna stylu zobrazení"      ,par:°{typ:'opt',fld:'css'} }
+    item { title:"změna hesla"                ,par:°{typ:'pas'} }
+    item { title:"změna přihlašovacího jména" ,par:°{typ:'fld',fld:'username'} }
+    item { title:"m: změna položky 'state'"   ,par:°{typ:'fld',fld:'state'}, skill:'m' }
+  }
+  proc onclick (i) {
+    last_item.set(i);
+    ch.get.display(1); msg.get.display(0);
+    rp.fill(conc(i.owner.title,' - ',i.title),' ');
+    ch._load(i,i.par);
+  }
+}
+
+# -------------------------------------------------------------------------------------------------- _msg
+# formulář pro zprávu
+form _msg [,,700,500] {
+  label txt [0,0,690,500]
+}
+# -------------------------------------------------------------------------------------------------- _chng
+# formulář pro změnu jedné položky
+form _chng [,,700,120] { style:'z-index:2'
+  var the_itm: object
+  var the_par: object
+  proc onchanged () { _form_state('bc','bn') }
+  field ops [110,0,200,]  { tag:'p', title:'stará hodnota:', format:'pnt' }
+  field old [110,0,200,]  { tag:'o', title:'stará hodnota:', format:'o' }
+  field new [110,30,200,] { tag:'o', title:'nová hodnota:', format:'' }
+  field nps [110,30,200,] { tag:'p', title:'nová hodnota:', format:'np' }
+  field rep [390,30,200,] { tag:'p', title:'opakovaně:', format:'np' }
+  label     [0,0,157,15]  { tag:'f', title:'stará patička:', format:'r' }
+  label fo1 [170,0,400,100]  { tag:'f', format:'o' }
+  label     [0,141,100,14]  { tag:'f', title:'nová patička:', format:'r' }
+  edit  fo2 [110,142,500,183] { tag:'f', type:'html' }
+# procedury
+  proc _form_state(on,off) { form.enable(1,on); form.enable(0,off); }
+  proc _form_show(on,off) { form.display(1,on); form.display(0,off); }
+  proc _init() { _form_state('bn','bc'); new.init }
+  proc _load(i,par) {
+    the_itm.set(i); _init;
+    the_par.set(par);
+    switch(par.typ,
+    'fld',{ _form_show('o','p|f'); old.set(ask('sys_user_get',the_user.get,par.typ,par.fld)) },
+    'opt',{ _form_show('o','p|f'); old.set(ask('sys_user_get',the_user.get,par.typ,par.fld)) },
+    'oop',{ _form_show('o','p|f'); old.set(ask('sys_user_get',the_user.get,par.typ,par.fld)) },
+    'txt',{ _form_show('f','p|o'); fo1.set(ask('sys_user_get',the_user.get,par.typ,par.fld)); fo2.set(fo1.get) },
+    'pas',{ _form_show('p','o|f') },
+    {stop}) }
+  # tlačítka
+  proc _init() { _form_state('bn','bc'); form.init }
+  button    [20,70,,]  { tag:'bc', title:'Uložit změnu',
+    help:'zapsat novou hodnotu do osobního nastavení'
+    proc onclick () {
+      var t: text var f: text
+      t.set(the_par.get('typ')); f.set(the_par.get('fld'));
+      switch(t,
+      'fld',{ _form_show('o','p|f'); rp.fill('',ask('sys_user_change',the_user.get,t,f,new.get)); new.plain },
+      'opt',{ _form_show('o','p|f'); rp.fill('',ask('sys_user_change',the_user.get,t,f,new.get)); new.plain },
+      'oop',{ _form_show('o','p|f'); rp.fill('',ask('sys_user_change',the_user.get,t,f,new.get)); new.plain },
+      'txt',{ _form_show('f','p|o'); rp.fill('',ask('sys_user_change',the_user.get,t,f,fo2.get)); fo2.plain },
+      'pas',{ _form_show('p','o|f'); rp.fill('',ask('sys_user_change',the_user.get,t,'',nps.get,ops.get,rep.get));
+              _init });
+  } }
+  button    [110,70,,] { tag:'bc', title:' Zpět ',
+    help:'ponechat starou hodnotu osobního nastavení'
+    proc onclick () { the_itm.click } }
+}
+# -------------------------------------------------------------------------------------------------- rightf
+# formulář pro levostranné menu s postupným zápisem
+form right [,,*,50] {
+  label head [0,0,*,50]  { title:' ' }
+  select id_user [-20,5,100,20] { type:'map', options:user.surname, format:'xt', skill:'a|a'
+    help:'výběr uživatele'
+    proc onchange () {
+      echo('vybráno:',id_user.get,',',id_user.key);
+      the_user.set(id_user.key);
+      last_item.click
+  } }
+  label note [0,170,*,550] { title:' ' }
+  proc fill(h,n) {
+    [ h; head.set(conc("<div class='karta'>",h,"</div>")) ];
+    [ n; note.set(n) ]
+  }
+  proc append(n) {
+    note.set(conc(note.get,n))
+  }
+}
+
+map user:  table _user { where:'1', order:'surname', key_id:'id_user', db:'ezer_system'}
+
+table _user { key_id:'id_user', db:'ezer_system'
+  number id_user
+  text deleted,
+  text abbr,
+  text skills,
+  text options { help:'privátní nastavení|ve formátu JSON' }
+  text username,
+  text password,
+  number state,
+  text forename,
+  text surname,
+  text login,
+  text history,
+  text sess_id,
+  text sess_time,
+  text sess_data,
+  number zmena_kdo,
+  date zmena_kdy {  },
+}
+
