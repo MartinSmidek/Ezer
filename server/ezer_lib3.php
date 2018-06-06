@@ -115,9 +115,10 @@ __EOD;
     // promítnutí nastavení do SESSION
     $gc_maxlifetime= isset($pars->gc_maxlifetime) ? $pars->gc_maxlifetime : 12*60*60;
     $session= "php";                      // standardní práce se SESSION
-    ini_set('session.gc_maxlifetime',$gc_maxlifetime);
-    if ( !isset($_SESSION) ) session_start();
-    $_SESSION['gc_maxlifetime']= $gc_maxlifetime;
+    //You cannot change the session module's ini settings at this time i                      //TODO
+//    ini_set('session.gc_maxlifetime',$gc_maxlifetime);
+//    if ( !isset($_SESSION) ) session_start();
+//    $_SESSION['gc_maxlifetime']= $gc_maxlifetime;
     if ( isset($_GET['session']) ) {             // zobraz stav session hned po startu
       $info= $_SESSION;
     }
@@ -323,7 +324,7 @@ __EOD
   $chngs= "";
   $css_login= "";
   $kontakt= '';
-  if ( $pars->contact ) {
+  if ( isset($pars->contact) ) {
     $kontakt= $pars->contact;
   }
   else {
@@ -786,7 +787,7 @@ function ezer_connect ($db0='.main.',$even=false,$initial=0) {
 //    }
 //  }
   // ------------------------------------------- připojení PDO - return vrací PDO objekt!
-  if ( !$ezer_db[$db][6] ) {
+  if ( !isset($ezer_db[$db][6]) ) {
     // vlastní připojení, pokud nebylo ustanoveno
     $db_name= (isset($ezer_db[$db][5]) && $ezer_db[$db][5]!='') ? $ezer_db[$db][5] : $db;
     $dsn= "mysql:host={$ezer_db[$db][1]};dbname=$db_name;charset={$ezer_db[$db][4]}";
@@ -848,8 +849,8 @@ function ezer_qry ($op,$table,$cond_key,$zmeny,$key_id='') {
     // provedení INSERT
     $key_val= 0;
     $qry= "INSERT INTO $table ($flds) VALUES ($vals)";
-    $res= mysql_qry($qry);
-    $result= $tab=="_cis" ?  $id_cis : mysql_insert_id();
+    $n= $pdo->exec($qry);
+    $result= $tab=="_cis" ?  $id_cis : $n;
     $keys= $result;
     break;
   case 'UPDATE':
@@ -902,9 +903,9 @@ function ezer_qry ($op,$table,$cond_key,$zmeny,$key_id='') {
     // provedení UPDATE pro jeden záznam s kontrolou starých hodnot položek
     $key_val= $cond_key;
     $qry= "SELECT $key_id FROM $table WHERE $key_id=$key_val $and ";
-    if ( mysql_qry($qry,1) )  {
+    if ( pdo_qry($qry,1) )  {
       $qry= "UPDATE $table SET $set WHERE $key_id=$key_val $and ";
-      mysql_qry($qry);
+      $pdo->exec($qry);
       $result= 1;
     }
     $keys= $key_val;
@@ -1104,6 +1105,25 @@ function reimport_jmena() {
   pdo_qry("DROP TABLE IF EXISTS `_jmena`");
   pdo_qry("CREATE TABLE `_jmena` LIKE `copy__jmena`");
   pdo_qry("INSERT INTO `_jmena` SELECT * FROM `copy__jmena`");
+}
+}
+# ========================================================================================= EZER 3.0
+else { // EZER_version==3
+function pdo_qry($qry,$pocet=null,$err=null,$to_throw=false,$db='.main.') {
+  return mysql_qry($qry,$pocet,$err,$to_throw,$db);
+}
+function pdo_fetch_assoc($rs) {
+  return mysql_fetch_assoc($rs);
+}
+function pdo_fetch_object($rs) {
+  return mysql_fetch_object($rs);
+  return $row;
+}
+function pdo_result($rs,$cnum) {
+  return mysql_result($rs,$cnum);
+}
+function pdo_num_rows($rs) {
+  return mysql_num_rows($rs);
 }
 }
 ?>

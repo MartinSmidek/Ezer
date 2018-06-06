@@ -288,12 +288,12 @@ $keywords= array();                                 // pomocné pole - sjednocen
 # definice povolených omezovačů
 $dels= '{[(|)]};:,*';                   // specifickou roli má tečka, apostrof, uvozovka
 // úpravy od PHP
-if (!defined('T_OLD_FUNCTION'))  define('T_OLD_FUNCTION', T_FUNCTION);
-if (!defined('T_ML_COMMENT'))    define('T_ML_COMMENT', T_COMMENT);
-else                             define('T_DOC_COMMENT', T_ML_COMMENT);
+if (!defined('T_OLD_FUNCTION'))  define('T_OLD_FUNCTION', 'T_FUNCTION');
+if (!defined('T_ML_COMMENT'))    define('T_ML_COMMENT',   'T_COMMENT');
+else                             define('T_DOC_COMMENT',  'T_ML_COMMENT');
 
 $tok2lex= array(
-  T_AND_EQUAL => 'del', T_ARRAY => 'id', T_ARRAY_CAST => 'x', T_AS => 'id', T_BAD_CHARACTER => 'x',
+  T_AND_EQUAL => 'del', T_ARRAY => 'id', T_ARRAY_CAST => 'x', T_AS => 'id', //T_BAD_CHARACTER => 'x',
   T_BOOL_CAST => 'x', T_BOOLEAN_AND => 'x', T_BOOLEAN_OR => 'x', T_BREAK => 'id', T_CASE => 'id',
   T_CLASS => 'id', T_CLASS_C => 'x', T_CLOSE_TAG => 'x', T_COMMENT => 'cmnt', T_CONCAT_EQUAL => 'x',
   T_CONST => 'id', T_CONSTANT_ENCAPSED_STRING => 'str', T_CONTINUE => 'id', T_CURLY_OPEN => 'del',
@@ -303,7 +303,7 @@ $tok2lex= array(
   T_ENCAPSED_AND_WHITESPACE => 'blank', T_END_HEREDOC => 'x', T_ENDDECLARE => 'id',
   T_ENDFOR => 'id', T_ENDFOREACH => 'id', T_ENDIF => 'id', T_ENDSWITCH => 'id', T_ENDWHILE => 'id',
   T_EVAL => 'id', T_EXIT => 'id', T_EXTENDS => 'id', T_FILE => 'x', T_FOR => 'id',
-  T_FOREACH => 'id', T_FUNC_C => 'x', T_FUNCTION => 'id', T_GLOBAL => 'id', T_CHARACTER => 'del',
+  T_FOREACH => 'id', T_FUNC_C => 'x', T_FUNCTION => 'id', T_GLOBAL => 'id', //T_CHARACTER => 'del',
   T_IF => 'id', T_INC => 'x', T_INCLUDE => 'id', T_INCLUDE_ONCE => 'id', T_INLINE_HTML => 'x',
   T_INT_CAST => 'x', T_IS_EQUAL => 'x', T_IS_GREATER_OR_EQUAL => 'x', T_IS_IDENTICAL => 'x',
   T_IS_NOT_EQUAL => 'x', T_IS_NOT_IDENTICAL => 'x', T_ISSET => 'id', T_LINE => 'x', T_LIST => 'id',

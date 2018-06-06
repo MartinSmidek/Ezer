@@ -192,8 +192,7 @@
   # ------------------------------------------------------------------------------------------------ server
   # server(fce,args1, ...) -- zavolání funkce 'fce' na serveru bez navrácení výsledku
   # x: fce,args
-  case 'server':
-    chdir($ezer_path_root);
+  case 'server':    chdir($ezer_path_root);
     try {
       $answer= (object)array();
       $fce= $x->fce;
@@ -1885,7 +1884,8 @@
 //                                                 debug($obj,"block={$part->block}",0,3);
           for ($i= 0; $i<count($ids); $i++) {
 //                                                 display_(" ... {$obj->type}+{$ids[$i]}");
-            $obj= $obj->part->$ids[$i];
+            $id= $ids[$i];
+            $obj= $obj->part->$id;
 //                                                 display_("={$obj->type} ");
             if ( !$obj ) fce_error("LOAD_CODE: chybné jméno {$part->block} ve $fname");
           }

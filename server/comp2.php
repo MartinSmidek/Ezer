@@ -128,11 +128,11 @@ function comp_file ($name,$root='',$list_only='') {  #trace();
           $includes[$try]= $code;
           $level= array();
           if ( $try=='$' ) {
-            $level[]= (object)array(id=>'$','ctx'=>$code);
+            $level[]= (object)array('id'=>'$','ctx'=>$code);
             $id= '$';
           }
           elseif ( $code->library ) {
-            $level[]= (object)array(id=>'#','ctx'=>$code);
+            $level[]= (object)array('id'=>'#','ctx'=>$code);
             $id= '#';
           }
           elseif ( $k>0 ) {
@@ -252,8 +252,8 @@ function comp_file ($name,$root='',$list_only='') {  #trace();
       global $doxy_cpp, $doxy_ln; 
       $doxy_cpp= ''; $doxy_ln= 1; 
       doxygen($start);
-      $cpp= "<hr><pre>$doxy_cpp</pre><hr>";
-      display($dbg.$cpp);
+//      $cpp= "<hr><pre>$doxy_cpp</pre><hr>";
+//      display($dbg.$cpp);
       $xname= "$ezer_path_root/$root/code/$name.cpp";
       file_put_contents($xname,$doxy_cpp);
     }
@@ -279,8 +279,8 @@ function comp_file ($name,$root='',$list_only='') {  #trace();
                                                         if ($_GET['trace']==4) debug($loads,"kód");
     // informace o kódu pro informaci o struktuře aplikace
     $loads->info= (object)array('php'=>$call_php);
-    $json_loads= $json->encode($loads);
-//     $json_loads= json_encode($loads);//,JSON_HEX_AMP);
+//    $json_loads= json_encode($loads);
+    $json_loads= json_encode($loads,JSON_HEX_AMP);
     // zabezpečení přenosy vnořených uvozovek a zpětných lomítek
 //     $json_loads= strtr($json_loads,array('\\\\'=>'\\','\\"'=>'"'));
     file_put_contents($cname,$json_loads);
@@ -534,7 +534,7 @@ function xattr($x) {
       $tr.= " $i:'$o'";
     elseif ( is_object($o) ) {
       $tr.= " $i:°";
-      $tr.= $json->encode($o);
+      $tr.= json_encode($o);
     }
   }
   return $tr;
@@ -1103,7 +1103,7 @@ function gen_proc($c,&$desc,$name) {
     $c->var->{$id}= $n;
     $n++;
   }
-  if ( count($c->par) )
+  if ( count((array)$c->par) )
   foreach($c->par as $id=>$typ) {
     $c->par->{$id}+= $n;
   };
@@ -1709,7 +1709,7 @@ function gen($pars,$vars,$c,$icall=0,&$struct) { #trace();
         for ($i= 1; $i<$n-1; $i+=2) {
           $label= gen($pars,$vars,$c->par[$i],0,$struct1);
           $struct->arr[]= $struct1;
-          $test= (object)array('o'=>'S','iff'=>count($stmnt)+2);
+          $test= (object)array('o'=>'S','iff'=>count((array)$stmnt)+2);
           $struct->arr[]= (object)array('typ'=>'?','i'=>-1,'ift'=>-1,'iff'=>-1,'len'=>1);
           $stmnt= gen($pars,$vars,$c->par[$i+1],0,$struct1);
           $struct->arr[]= $struct1;
@@ -1751,7 +1751,7 @@ function gen($pars,$vars,$c,$icall=0,&$struct) { #trace();
             if ( $nfpar==1 || $nfpar==2 ) {
               $x= gen($pars,$vars,$c->par[0],0,$struct1);
               $inic= (object)array('o'=>'K');
-              $test= (object)array('o'=>'L','i'=>$nfpar,'go'=>count($f)+3);
+              $test= (object)array('o'=>'L','i'=>$nfpar,'go'=>count((array)$f)+3);
               $f= gen_name($c->par[1]->name,$pars,$vars,true,$c->par[1]);
               $f[count($f)-1]->a= $nfpar;
               $f[count($f)-1]->ift= -count($f);

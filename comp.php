@@ -1,8 +1,11 @@
 <?php # (c) 2008 Martin Smidek <martin@smidek.eu>
+  
+const EZER_version= 3.1;
 
 # screen=1 zobrazí rozměr klientské části
 
   error_reporting(E_ALL & ~E_NOTICE);
+  $pwd= getcwd();
 
   # identifikace ostrého serveru
   $ezer_local= preg_match('/^\w+\.ezer/',$_SERVER["SERVER_NAME"]);
@@ -19,51 +22,30 @@
   $option_state= $_GET['trace'];
   $option_list= $_GET['list'];
   $option_source= $_GET['source'];
+  $option_cpp= $_GET['cpp'];
   global $display, $trace, $json, $ezer_path_serv, $ezer_path_appl, $ezer_path_code, $ezer_root;
 
   list($url)= explode('?',$_SERVER['HTTP_REFERER']);
 
   require_once("server/ae_slib.php");
-  require_once("server/licensed/JSON_Ezer.php");
+//  require_once("server/licensed/JSON_Ezer.php");
 
-  $json= new Services_JSON_Ezer();
+//  $json= new Services_JSON_Ezer();
   // verze kompilátoru
   clearstatcache();
   $xname= "server/comp2.php";
   $xtime= @filemtime($xname);                   // modifikace kompilátoru
 
-  // nalezení dostupných aplikací a zřetězení souborů comp.css
-  $appls= array();
-  $css= '';
-  if ($dh= opendir('..')) {
-    while (($appl= readdir($dh)) !== false) {
-      if ( $appl[0]!='.' && is_dir("../$appl") ) {
-        if ( glob("../$appl/*.ezer") ) {
-          $appls[]= $appl;
-        }
-        if ( glob("../$appl/comp.css") ) {
-          $css.= "\n  <link rel='stylesheet' href='../$appl/comp.css' type='text/css' media='screen' charset='utf-8' />";
-        }
-      }
-    }
-    closedir($dh);
-  }
-  ksort($appls);
-  // ------------------------------------------------------------------------------------ select
-  $sel= "<select onchange='go(this.value)'>";
-  foreach ($appls as $appl) {
-    if ( !$root ) $root= $appl;
-    $jo= $appl==$root ? " selected" : '';
-    $sel.= "<option$jo>$appl</option>";
-  }
-  $sel.= "</select>";
   // ------------------------------------------------------------------------------------ options
   $checked= $option_state==1 ? 'checked' : '';
   $checks= "\n\n<input type='checkbox' $checked  onchange='set_option_trace(this.checked,1)'/> trace proc";
   $checked= $option_state==4 ? 'checked' : '';
   $checks.= "\n\n<input type='checkbox' $checked  onchange='set_option_trace(this.checked,4)'/> trace all";
   $checked= $option_source==1 ? 'checked' : '';
-  $checks.= "\n<input type='checkbox' $checked  onchange='set_option_source(this.checked)'/> zdroj";
+  $checks.= "\n<input type='checkbox' $checked  onchange='set_option_source(this.checked,1)'/> zdroj";
+  $checked= $option_cpp==1 ? 'checked' : '';
+  $checks.= "\n&nbsp; &nbsp; &nbsp; &nbsp; "
+      . "<input type='checkbox' $checked  onchange='set_option_cpp(this.checked,1)'/> C++";
   $checked= $option_state==7 ? 'checked' : '';
   $checks.= "<br>\n<input type='checkbox' $checked  onchange='set_option_trace(this.checked,7)'/> list proc";
   $checks.= "<input type='text' title='výběr trasované procedury regulárním výrazem' value='$option_list' size=7 onchange='set_option_list(this)'/>";
@@ -85,10 +67,10 @@
   // seznam složky aplikace
   $ezer_root= $root;
   $state= '';
-  $ezer_path_root= str_replace("/ezer3/comp.php","",$_SERVER['SCRIPT_FILENAME']);
+  $ezer_path_root= str_replace("/ezer3.1/comp.php","",$_SERVER['SCRIPT_FILENAME']);
   $ezer_path_appl= "$ezer_path_root/$root";
   $ezer_path_code= "$ezer_path_root/$root/code";
-  $ezer_path_serv= "$ezer_path_root/ezer3/server";
+  $ezer_path_serv= "$ezer_path_root/ezer3.1/server";
   require_once("server/comp2.php");
   require_once("server/comp2def.php");
   $files= array();
@@ -102,17 +84,47 @@
           $files[$name]= 'err';
         else
           $files[$name]= !$ctime || $ctime<$etime || $ctime<$xtime ? "old" : "ok";
+        if ( file_exists("$ezer_path_appl/comp.css") ) {
+          $css.= "\n  <link rel='stylesheet' href='../$appl/comp.css' type='text/css' media='screen' charset='utf-8' />";
+        }
       }
     }
     closedir($dh);
   }
   ksort($files);
+  // ------------------------------------------------------------------------------------ appls
+  // nalezení dostupných aplikací "o patro níž" a zřetězení souborů comp.css
+  $appls= array();
+  $css= '';
+  $downdir= substr($ezer_path_appl,0,strrpos($ezer_path_appl,'/'));
+  if (($dh= opendir($downdir))) {
+    while (($appl= readdir($dh)) !== false) {
+      if ( $appl[0]!='.' && is_dir("$downdir/$appl") ) {
+        if ( glob("$downdir/$appl/*.ezer") ) {
+          $appls[]= $appl;
+        }
+        if ( glob("$downdir/$appl/comp.css") ) {
+          $css.= "\n  <link rel='stylesheet' href='../$appl/comp.css' type='text/css' media='screen' charset='utf-8' />";
+        }
+      }
+    }
+    closedir($dh);
+  }
+  ksort($appls);
+  // ------------------------------------------------------------------------------------ select
+  $sel= "<select onchange='go(this.value)'>";
+  foreach ($appls as $appl) {
+    if ( !$root ) $root= $appl;
+    $jo= $appl==$root ? " selected" : '';
+    $sel.= "<option$jo>$appl</option>";
+  }
+  $sel.= "</select>";
   // -------------------------------------------------------------------------------- obnova tabulek
   if ( $_GET['refresh']=='tables' ) {
     require_once("server/reference.php");
-    if ( $root=='ezer3' ) {
+    if ( $root=='ezer3.1' ) {
       global $EZER;
-      $EZER= (object)array('version'=>'ezer3');
+      $EZER= (object)array('version'=>'ezer3.1');
       $ezer_comp_ezer= "app,area,ezer,ezer_report,ezer_fdom1,ezer_fdom2";
       $ezer_comp_root= "";
       $root_inc= file_exists("$ezer_path_root/$root.inc.php") ? "$root.inc.php" : "$root.inc";
@@ -202,6 +214,7 @@ echo <<<__EOF
     var option_state= '$option_state';
     var option_list= '$option_list';
     var option_source= '$option_source';
+    var option_cpp= '$option_cpp';
     var browserWidth = 0, browserHeight = 0;
     if ( location.href.match('screen=1') )  {
       GetWindowProps();
@@ -227,17 +240,23 @@ echo <<<__EOF
     function go(appl,file) {
       var url= "$url"+"?root="+appl+(file?"&file="+file:'')
        +(option_list?'&list='+option_list:'')
-       +(option_state?'&trace='+option_state:'')+(option_source?'&source=1':'');
+       +(option_state?'&trace='+option_state:'')
+       +(option_cpp?'&cpp=1':'')
+       +(option_source?'&source=1':'');
       location.href= url;
     }
     function go_all(mode) {
       var url= "$url"+"?root=$root"+"&all="+mode
-       +(option_state?'&trace='+option_state:'')+(option_source?'&source=1':'');
+       +(option_state?'&trace='+option_state:'')
+       +(option_cpp?'&cpp=1':'')
+       +(option_source?'&source=1':'');
       location.href= url;
     }
     function go_tables() {
       var url= "$url"+"?root=$root"+"&refresh=tables"
-       +(option_state?'&trace='+option_state:'')+(option_source?'&source=1':'');
+       +(option_state?'&trace='+option_state:'')
+       +(option_cpp?'&cpp=1':'')
+       +(option_source?'&source=1':'');
       location.href= url;
     }
     function go_phpinfo() {
@@ -252,6 +271,9 @@ echo <<<__EOF
     }
     function set_option_source(x) {
       option_source= x ? 1 : 0;
+    }
+    function set_option_cpp(x) {
+      option_cpp= x ? 1 : 0;
     }
   </script>
 </head>
@@ -272,7 +294,7 @@ __EOF;
 /** ************************************************************************************************ procedury */
 function comp_module($name,$root='',&$state) {
   global $display, $trace, $json, $ezer_path_appl, $ezer_path_code;
-  global $code, $option_source, $option_list;
+  global $code, $option_source, $option_list, $option_cpp, $lst;
 //   $trace= $option_state;
   $state= comp_file($name,$root,$option_list);
   $txt= '';
@@ -287,6 +309,10 @@ function comp_module($name,$root='',&$state) {
       if ( $ch=='<' ) $note= false;
       if ( !$note ) $txt.= $ch;
     }
+  }
+  if ( $option_cpp ) {
+    $src= file_get_contents("$ezer_path_appl/code/$name.cpp");
+    $lst.= nl2br($src).'<hr>';
   }
 //   debug($code,"COMPILED $name");
   display($state);

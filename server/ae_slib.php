@@ -1445,7 +1445,6 @@ __XLS;
           $wb->wb= new PHPExcel();
           $wb->name= $bid;
           $wb->active_ws= -1;
-          $wb->wb->setActiveSheetIndex($wb->active_ws);
           $wb->wb->getDefaultStyle()->getFont()->setName('Arial');
         }
       }
@@ -1497,7 +1496,6 @@ __XLS;
           foreach(explode(',',$m['def']) as $def) {
             list($co,$widthx)= explode('=',trim($def));
             list($co1,$co2)= explode(':',$co);
-            $width= 0+$widthx;
             if ( is_numeric($co1) ) {
               $x= $co1;
               $y= $co2 ? $co2 : $x;
@@ -1512,8 +1510,11 @@ __XLS;
             else {
               $x= Excel5_col2n($co1);
               $y= $co2 ? Excel5_col2n($co2) : $x;
+              if ( is_numeric($widthx) ) {
+                $width= 0+$widthx;
+              }
               if ( $x<=$y ) {
-                if ( $list ) $html.= " C-$x-$y:$width";
+                if ( $list ) $html.= " C-$x-$y:$widthx";
                 for ($i= $x; $i<= $y; $i++) {
                   if ( $ws ) {
                     if ( $widthx=='*' )
@@ -1585,7 +1586,7 @@ __XLS;
       # close
       elseif ( preg_match("/^close\s*(?<n>[0-9]*)$/",$line,$m) ) {
         $bid= $m['id'];
-        $active= $m['n'];
+        $active= $m['n'] ?: 0;
         if ( $gen ) {
           $wb->wb->setActiveSheetIndex($active);
           $objWriter= PHPExcel_IOFactory::createWriter($wb->wb, $excel=='xls' ? 'Excel5' : 'Excel2007');
