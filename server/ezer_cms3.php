@@ -61,15 +61,15 @@ function cms_server(&$y) {
       // zjisti, zda známe mail a zda je jednoznačný
       ezer_connect($SQL['mail'][0]);
       $qry= strtr($SQL['mail'][1],array('{MAIL}'=>$y->mail));
-      $res= mysql_query($qry);
-      $num= mysql_num_rows($res);
+      $res= pdo_query($qry);
+      $num= pdo_num_rows($res);
       if ( $num==0 ) {
         // mail neznáme
         $y->ido= 0;
       }
       elseif ( $num==1 ) {
         // mail je jednoznačný
-        list($y->ido)= mysql_fetch_row($res);
+        list($y->ido)= pdo_fetch_row($res);
       }
       else {
         // nejednoznačný mail
@@ -131,8 +131,8 @@ function cms_server(&$y) {
           }
         }
         $qry= strtr($SQL["select_$X"][1],array('{IDO}'=>$y->ido,'{IDA}'=>$y->par->ida,'{*}'=>$fields));
-        $res= mysql_query($qry);
-        foreach (mysql_fetch_object($res) as $name=>$value) {
+        $res= pdo_query($qry);
+        foreach (pdo_fetch_object($res) as $name=>$value) {
           $Xname= "$X$name";
           // případná transformace dat podle typu
           switch ( $ELEM[$Xname][0] ) {
@@ -251,7 +251,7 @@ function cms_server(&$y) {
     }
     // RELACE - otestování, zda na akci již není přihlášen
     $qry= strtr($SQL['select_R'][1],array('{IDO}'=>$ido,'{IDA}'=>$ida,'{*}'=>$R[1]));
-    list($idr)= mysql_fetch_array(mysql_query($qry));
+    list($idr)= pdo_fetch_array(pdo_query($qry));
     if ( $idr && count($chngs_r) ) {
       // zjisti staré údaje kvůli zápisu do _track
       $old_r= mysql_row("SELECT * FROM $R[0] WHERE $R[1]=$idr");
@@ -398,7 +398,7 @@ function cms_mail_valid($email,&$reason) {
 function cms_mail_send($address,$subject,$body,$reply_to='') { 
   global $EZER;
   $ret= (object)array('ok'=>'1','msg'=>'');
-  require 'ezer3/server/vendor/autoload.php';
+  require 'ezer3.1/server/vendor/autoload.php';
   // nastavení phpMail
   $mail= new PHPMailer(true);
   try {

@@ -63,8 +63,9 @@ function sys_user_record($id_user=0) {  trace();
   $html= "<table>";
   $qry= "SELECT * FROM $ezer_system._user WHERE id_user='$id_user' /*1*/";
   $res= mysql_qry($qry,0,0,0,'ezer_system');
-  if ( $res && ($u= mysql_fetch_object($res)) ) {
-    $opt= $json->decode($u->options);
+  if ( $res && ($u= pdo_fetch_object($res)) ) {
+//    $opt= $json->decode($u->options);
+    $opt= json_decode($u->options);
     $html.= row('přihlášení',$u->username);
     $html.= row('heslo','************');
     $html.= row('křestní jméno',$u->forename);
@@ -94,9 +95,10 @@ function sys_user_get ($id_user,$typ,$fld) {  trace();
   $qry= "SELECT * FROM $ezer_system._user WHERE id_user='$id_user'";
   $res= mysql_qry($qry,0,0,0,'ezer_system');
   if ( $res ) {
-    $u= mysql_fetch_object($res);
+    $u= pdo_fetch_object($res);
                                                 debug($u,'fetch');
-    $options= $json->decode($u->options);
+//    $options= $json->decode($u->options);
+    $options= json_decode($u->options);
     switch ($typ) {
     case 'fld':                                         // _user.fld
       $val= $u->$fld;
@@ -134,7 +136,7 @@ function sys_user_change($id_user,$typ,$fld,$val,$p1='',$p2='') {  trace();
     case 'fld':                                         // zápis do _user.fld
       $qry= "UPDATE $ezer_system._user SET $fld='$val' WHERE id_user='$id_user'";
       $res= mysql_qry($qry,0,0,0,'ezer_system');
-      if (!$res) $err.= "CHYBA:".mysql_error();
+      if (!$res) $err.= "CHYBA:".pdo_error();
       break;
     case 'opt':                                         // zápis do _user.options
     case 'txt':                                         // zápis do _user.options
@@ -142,8 +144,9 @@ function sys_user_change($id_user,$typ,$fld,$val,$p1='',$p2='') {  trace();
       $qry= "SELECT options FROM $ezer_system._user WHERE id_user='$id_user'";
       $res= mysql_qry($qry,0,0,0,'ezer_system');
       if ( $res ) {
-        $u= mysql_fetch_object($res);
-        $options= $json->decode($u->options) ?: (object)array();
+        $u= pdo_fetch_object($res);
+//        $options= $json->decode($u->options) ?: (object)array();
+        $options= json_decode($u->options) ?: (object)array();
         switch ($typ) {
         case 'txt':   // zápis do _user.options
         case 'opt':   // zápis do _user.options
@@ -159,7 +162,7 @@ function sys_user_change($id_user,$typ,$fld,$val,$p1='',$p2='') {  trace();
         $qry= "UPDATE $ezer_system._user SET options='$options_s' WHERE id_user='$id_user'";
         $res= mysql_qry($qry,0,0,0,'ezer_system');
       };
-      if (!$res) $err.= "CHYBA:".mysql_error();
+      if (!$res) $err.= "CHYBA:".pdo_error();
       break;
     case 'pas':                                         // zápis do _user.fld
       if ( $p1!=select('password','_user',"id_user='$id_user'",'ezer_system') && (!isset($hash_password) || $hash_password===false) )
@@ -174,7 +177,7 @@ function sys_user_change($id_user,$typ,$fld,$val,$p1='',$p2='') {  trace();
         $val= $hash_password===true ? password_hash($val, PASSWORD_BCRYPT) : $val;
         $qry= "UPDATE $ezer_system._user SET password='$val' WHERE id_user='$id_user'";
         $res= mysql_qry($qry,0,0,0,'ezer_system');
-        if (!$res) $err.= "CHYBA:".mysql_error();
+        if (!$res) $err.= "CHYBA:".pdo_error();
       }
       break;
     }
@@ -217,7 +220,7 @@ function sys_user_skilled($skill) {
   $qu= "SELECT GROUP_CONCAT(id_user ORDER BY id_user) AS _ids FROM $ezer_system._user
         WHERE skills RLIKE '^{$skill}[ ]|[ ]{$skill}[ ]|[ ]{$skill}\$|^{$skill}\$' ";
   $ru= mysql_qry($qu,0,0,0,'ezer_system');
-  if ( $ru && $u= mysql_fetch_object($ru) ) {
+  if ( $ru && $u= pdo_fetch_object($ru) ) {
     $ids= $u->_ids;
   }
   return $ids;
@@ -231,18 +234,18 @@ function sys_user_skills($file='') {
   $cells= $clmns= $rows= array();
   $qryu= "SELECT * FROM $ezer_system._user ORDER BY surname";
   $resu= mysql_qry($qryu,0,0,0,'ezer_system');
-  while ( $resu && $u= mysql_fetch_object($resu) ) {
+  while ( $resu && $u= pdo_fetch_object($resu) ) {
     $clmns[$u->abbr]= $u->surname;
   }
   $qrys= "SELECT * FROM $ezer_system._skill ORDER BY skill_desc";
   $ress= mysql_qry($qrys,0,0,0,'ezer_system');
-  while ( $ress && $s= mysql_fetch_object($ress) ) {
+  while ( $ress && $s= pdo_fetch_object($ress) ) {
     $skill= $s->skill_abbr;
     $cells[$skill]= array();
     $rows[$skill]= $s->skill_desc;
     $qryu= "SELECT * FROM $ezer_system._user WHERE LOCATE(' $skill ',CONCAT(' ',skills,' ')) ";
     $resu= mysql_qry($qryu,0,0,0,'ezer_system');
-    while ( $resu && $u= mysql_fetch_object($resu) ) {
+    while ( $resu && $u= pdo_fetch_object($resu) ) {
       $cells[$skill][$u->abbr]= '+';
     }
   }
@@ -644,7 +647,7 @@ function sys_skills_test($skills) {
   $dskills= array();
   $qry= "SELECT skill_abbr FROM $ezer_system._skill";
   $res= mysql_qry($qry,0,0,0,'ezer_system');
-  while ( $res && ($s= mysql_fetch_object($res)) ) {
+  while ( $res && ($s= pdo_fetch_object($res)) ) {
     $dskills[]= $s->skill_abbr;
   }
   $missed= implode(' ',array_diff(explode(' ',$skills),$dskills));
@@ -658,11 +661,11 @@ function sys_skills2ids($skills) {
   $ids= '';
   $qry= "SELECT GROUP_CONCAT(id_skill) AS _list FROM $ezer_system._skill WHERE FIND_IN_SET(skill_abbr,'$skills')";
   $res= mysql_qry($qry,0,0,0,'ezer_system');
-  if ( $res && ($s= mysql_fetch_object($res)) ) {
+  if ( $res && ($s= pdo_fetch_object($res)) ) {
     $ids= $s->_list;
   }
   else {
-    fce_warning("sys_skills2ids:".mysql_error());
+    fce_warning("sys_skills2ids:".pdo_error());
   }
   return $ids;
 }
@@ -673,11 +676,11 @@ function sys_ids2skills($ids) {
   $skills= '';
   $qry= "SELECT GROUP_CONCAT(skill_abbr) AS _list FROM $ezer_system._skill WHERE FIND_IN_SET(id_skill,'$ids')";
   $res= mysql_qry($qry,0,0,0,'ezer_system');
-  if ( $res && ($s= mysql_fetch_object($res)) ) {
+  if ( $res && ($s= pdo_fetch_object($res)) ) {
     $skills= $s->_list;
   }
   else {
-    fce_warning("sys_ids2skills:".mysql_error());
+    fce_warning("sys_ids2skills:".pdo_error());
   }
   $askills= explode(',',$skills);
   sort($askills);
@@ -872,7 +875,7 @@ function sys_day_modules($skip,$day,$short=false) {
          WHERE day='$day' AND user!='' $and
          GROUP BY module,menu,user,hour(time) ORDER BY module,menu";
   $res= mysql_qry($qry);
-  while ( $res && $row= mysql_fetch_assoc($res) ) {
+  while ( $res && $row= pdo_fetch_assoc($res) ) {
     $user_clr= $user= $row['user'];
     if ( $watch_access_opt && isset($watch_access_opt->css->{$row['org']}) ) {
       $clr= $watch_access_opt->css->{$row['org']};
@@ -909,7 +912,7 @@ function sys_days_modules($skip,$day,$ndays,$short=false) {
          WHERE day BETWEEN '$day'-INTERVAL $ndays DAY AND '$day' AND user!='' /*AND module='block'*/ $and
          GROUP BY module,menu,user,day ORDER BY module,menu";
   $res= mysql_qry($qry);
-  while ( $res && $row= mysql_fetch_assoc($res) ) {
+  while ( $res && $row= pdo_fetch_assoc($res) ) {
     $user= $row['user'];
     if ( $watch_access_opt && isset($watch_access_opt->css->{$row['org']}) ) {
       $cls= $watch_access_opt->css->{$row['org']};
@@ -949,7 +952,7 @@ function sys_day_users($skip,$day,$short=false) {  trace();
          JOIN _user ON abbr=user
          WHERE day='$day' AND user!='' $AND GROUP BY user,module,menu,hour(time) ORDER BY user,hour";
   $res= mysql_qry($qry);
-  while ( $res && $row= mysql_fetch_assoc($res) ) {
+  while ( $res && $row= pdo_fetch_assoc($res) ) {
     $user= $row['user'];
     if ( $watch_access_opt && isset($watch_access_opt->css->{$row['org']}) ) {
       $cls= $watch_access_opt->css->{$row['org']};
@@ -994,7 +997,7 @@ function sys_days_users($skip,$day,$ndays,$short=false) {
          WHERE day BETWEEN '$day'-INTERVAL $ndays DAY AND '$day' AND user!='' $AND
          GROUP BY user,module,menu,day ORDER BY user,day";
   $res= mysql_qry($qry);
-  while ( $res && $row= mysql_fetch_assoc($res) ) {
+  while ( $res && $row= pdo_fetch_assoc($res) ) {
     $user= $row['user'];
     if ( $watch_access_opt && isset($watch_access_opt->css->{$row['org']}) ) {
       $cls= $watch_access_opt->css->{$row['org']};
@@ -1055,7 +1058,7 @@ function sys_bugs($level) {
          FROM _touch WHERE msg!='' AND menu!='ip?'
          GROUP BY msg HAVING bug=$level ORDER BY day DESC";
   $res= mysql_qry($qry);
-  while ( $res && $row= mysql_fetch_assoc($res) ) {
+  while ( $res && $row= pdo_fetch_assoc($res) ) {
     $n++;
     $popis= $row['popis'];
     $id= $row['id'];
@@ -1101,7 +1104,7 @@ function sys_day_logins($skip,$day,$sign='=') {
          WHERE $cond AND msg!='' AND menu IN ('login','acount?','ip?') $and
          ORDER BY day DESC,time DESC";
   $res= mysql_qry($qry);
-  while ( $res && $t= mysql_fetch_object($res) ) {
+  while ( $res && $t= pdo_fetch_object($res) ) {
     $n++;
     $menu= $t->menu;
     $when=  $sign=='=' ? $t->time : "{$t->day} {$t->time}";
@@ -1157,7 +1160,7 @@ function sys_day_errors($skip,$day,$sign='=') {
            AND menu!='ip?' $and
          GROUP BY LEFT(msg,$group_len) ORDER BY day DESC";
   $res= mysql_qry($qry);
-  while ( $res && $row= mysql_fetch_assoc($res) ) {
+  while ( $res && $row= pdo_fetch_assoc($res) ) {
     $n++;
     $popis= $row['popis'];
     $id= $row['id'];
@@ -1207,7 +1210,7 @@ function sys_day_error($id,$akce) {
     $qry= "SELECT group_concat(id_touch) AS ids FROM _touch WHERE msg="
       . "(SELECT msg FROM _touch WHERE id_touch=$id)";
     $res= mysql_qry($qry);
-    if ( $res && $row= mysql_fetch_assoc($res) ) {
+    if ( $res && $row= pdo_fetch_assoc($res) ) {
       $ids= $row['ids'];
       $qry= "DELETE FROM _touch WHERE FIND_IN_SET(id_touch,'$ids')";
       $res= mysql_qry($qry);
@@ -1217,7 +1220,7 @@ function sys_day_error($id,$akce) {
   case 4:       // plný text
     $qry= "SELECT * FROM _touch WHERE id_touch=$id";
     $res= mysql_qry($qry);
-    if ( $res && $row= mysql_fetch_assoc($res) ) {
+    if ( $res && $row= pdo_fetch_assoc($res) ) {
       debug($row);
     }
     break;

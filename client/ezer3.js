@@ -1,4 +1,4 @@
-// Ezer3 - část nezávislá na jQuery 
+// Ezer3.1 - část nezávislá na jQuery 
 /* global Ezer, Function, google, gapi, args, CKEDITOR */ // pro práci s Netbeans
 "use strict";
 // <editor-fold defaultstate="collapsed" desc="++++++++++++++++++++++++++ EZER objekty">

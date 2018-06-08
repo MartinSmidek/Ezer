@@ -242,7 +242,7 @@ class Report extends Block {
         html+= "<html xmlns='http://www.w3.org/1999/xhtml' lang='en' xml:lang='en'>\n";
         html+= " <head><title>Náhled tisku</title>\n";
         html+= "  <meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />\n";
-        html+= "  <link type='text/css' rel='stylesheet' href='ezer3/client/report.css.css' />\n";
+        html+= "  <link type='text/css' rel='stylesheet' href='ezer3.1/client/report.css.css' />\n";
         html+= "  <script>function keyPressHandler(e) {var kC= (window.event) ? event.keyCode : e.keyCode;var Esc= (window.event) ? 27 : e.DOM_VK_ESCAPE;if ( kC==Esc ) {window.close();}}\n";
         html+= " </script></head><body onkeypress='keyPressHandler(event)'>";
         html+= "\n";

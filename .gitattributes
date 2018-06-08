@@ -34,9 +34,10 @@ server/comp2def.php -text
 server/composer.json -text
 server/composer.lock -text
 server/ezer2.php -text
-server/ezer3.php -text
 server/ezer_cms3.php -text
 server/ezer_lib3.php -text
+server/ezer_pdo.php -text
+server/ezer_pdo_1.php -text
 server/file_send.php -text
 server/get_oauth_token.php -text
 server/reference.php -text

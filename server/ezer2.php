@@ -39,8 +39,7 @@
 //  require_once("$ezer_path_serv/licensed/JSON_Ezer.php");
 //  $json= new Services_JSON_Ezer();
   ezer_connect();
-  $pdo= $ezer_db[$curr_db][6];
-  # --------------------------------------------------------------------------------------- json ...
+//  # --------------------------------------------------------------------------------------- json ...
 //  if ( !function_exists("json_encode") ) {
 //    function json_encode ($x) {
 //      global $json;
@@ -83,7 +82,7 @@
       $time= date('H:i:s');
       $qry= "INSERT _touch (day,time,hits,user,module,menu) "
         . "VALUES ('$day','$time',0,'{$x->user_abbr}','app','timeout')";
-      $res= $pdo->exec($qry);
+      $res= pdo_query($qry);
       // zruš případné sdružené aplikace
       if  ( $_SESSION['group_login'] ) {
         foreach(explode(',',$_SESSION['group_login']) as $root) {
@@ -100,19 +99,20 @@
     }
     elseif ( isset($x->path) ) {
       // zápis do _user.options
-      $pdo= ezer_connect('ezer_system');      // používá se pro _user
+      ezer_connect('ezer_system');      // používá se kvůli pdo_query
       $qry= "SELECT options FROM $ezer_system._user WHERE id_user={$x->user_id}";
       try {
-        $res= $pdo->query($qry);       // nelze použít pdo_qry - neohlásila by se chyba
+        $res= @pdo_query($qry);       // nelze použít mysql_qry - neohlásila by se chyba
         if ( $res ) {
-          $u= $res->fetch(PDO::FETCH_OBJ);
+          $u= pdo_fetch_object($res);
+//          $options= $json->decode($u->options);
           $options= json_decode($u->options);
           $root= $EZER->options->root;
           if ( !$options->context ) $options->context= (object)array();
           $options->context->$root= $x->path;
           $options_s= ezer_json_encode($options);
           $qry= "UPDATE $ezer_system._user SET options='$options_s' WHERE id_user={$x->user_id}";
-          $pdo->exec($qry);
+          $res= @pdo_query($qry);
         }
       }
       catch  (Exception $e) {  };
@@ -138,11 +138,11 @@
 //         $qry= "SELECT options FROM $ezer_system._user WHERE id_user={$x->user_id} ";
 //         $q= isset($x->path) ? '+' : '-';
 //         $text1= ",msg";
-//         $text2= ",\"$q$qry".mysql_real_escape_string($json->encode($x)).'"';
+//         $text2= ",\"$q$qry".pdo_real_escape_string($json->encode($x)).'"';
 //       }
       $qry= "INSERT _touch (day,time,hits,user,module,menu$text1) "
         . "VALUES ('$day','$time','{$x->hits}','{$x->user_abbr}','{$x->module}','{$x->menu}'$text2)";
-      $res= $pdo->exec($qry);
+      $res= pdo_query($qry);
     }
     header('Content-type: text/plain; charset=UTF-8');
     echo "-";
@@ -187,12 +187,14 @@
       break;
     }
     header('Content-type: application/json; charset=UTF-8');
+//    echo $json->encode($answer);
     echo json_encode($answer);
     exit;
   # ------------------------------------------------------------------------------------------------ server
   # server(fce,args1, ...) -- zavolání funkce 'fce' na serveru bez navrácení výsledku
   # x: fce,args
-  case 'server':    chdir($ezer_path_root);
+  case 'server':
+    chdir($ezer_path_root);
     try {
       $answer= (object)array();
       $fce= $x->fce;
@@ -205,6 +207,7 @@
       $answer->error= $e->getMessage();                         // jen pro trasování
     }
     header('Content-type: application/json; charset=UTF-8');    // jen pro trasování
+//    echo $json->encode($answer);
     echo json_encode($answer);
     exit;
   }
@@ -244,7 +247,7 @@
 //     }
 //     $qry= "INSERT _touch (day,time,hits,user,module,menu$text1) "
 //       . "VALUES ('$day','$time','{$x->hits}','$user','{$x->module}','{$x->menu}'$text2)";
-//     $res= mysql_query($qry);
+//     $res= pdo_query($qry);
 //     return;
   # ------------------------------------------------------------------------------------------------ ask
   # ask(fce,args1, ...) -- zavolání funkce 'fce' na serveru
@@ -285,7 +288,7 @@
   case 'time':
     $y->y= date('H:i:s');
     break;
-  # ---------------------------------------------------------------------------------- delete record
+  # ------------------------------------------------------------------------------------------------ delete_record
   # smaže záznam vyhovující podmínce, kontroluje, zda je právě jeden takový, jinak ohlásí chybu
   // x: table, cond, count
   // y: ok
@@ -293,75 +296,72 @@
     if ( $x->db ) ezer_connect($x->db);
     // zjištění správného počtu před smazáním
     $y->ok= 0;
-    $db= $x->db ? $x->db : $mysql_db; 
-    $table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
+    $db= $x->db ? $x->db : $mysql_db; $table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
     if ( ($count= $x->count) ) {
       $qry= "SELECT count(*) AS _pocet FROM $table WHERE {$x->cond} ";
-      $res= pdo_qry($qry);
+      $res= mysql_qry($qry);
       if ( $res ) {
         $obj= pdo_fetch_assoc($res);
         if ( $obj->_pocet<=$x->count ) {
           $qryd= "DELETE FROM $table WHERE {$x->cond} LIMIT {$x->count}";
-          $resd= pdo_qry($qryd);
+          $resd= mysql_qry($qryd);
           $y->ok= $resd ? 1 : 0;
         }
         else fce_error("delete_record: pokus o smazání {$obj->_pocet} záznamů");
       }
     }
     break;
-  # ---------------------------------------------------------------------------------- insert record
+  # ------------------------------------------------------------------------------------------------ insert_record
   # přidá záznam
   // x: table, par
   // y: vytvořený záznam
   case 'insert_record':
     if ( $x->db ) ezer_connect($x->db);
     $y->ok= 0;
-    $db= $x->db ? $x->db : $curr_db;
+    $db= $x->db ? $x->db : $mysql_db;
     $table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
-    $pdo= $ezer_db[$db][6];
     $ids= $vals= ''; $del= '';
     foreach($x->par as $id=>$val) {
       $ids.= "$del$id";
-      $vals.= $del.$pdo->quote($val);
+      $vals.= "$del\"".pdo_real_escape_string($val)."\"";
       $del= ',';
     }
     if ( $ids ) {
       $qry= "INSERT INTO $table ($ids) VALUES ($vals) ";
-      $n= $pdo->exec($qry);
-      $y->ok= $n;
+      $res= mysql_qry($qry);
+      $n= pdo_insert_id();
+      $y->ok= $res ? ($n ? $n : 1) : 0;
     }
     break;
-  # ---------------------------------------------------------------------------------- update_record
+  # ------------------------------------------------------------------------------------------------ update_record
   # provede UPDATE pro záznam vyhovující podmínce, není-li právě jeden takový, ohlásí chybu
   // x: table, cond, set
   // y: ok
   case 'update_record':
     if ( $x->db ) ezer_connect($x->db);
-    // zjištění správného počtu před úpravou
+    // zjištění správného počtu před smazáním
     $y->ok= 0;
-    $db= $x->db ? $x->db : $curr_db; 
-    $table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
-    $pdo= $ezer_db[$db][6];
+    $db= $x->db ? $x->db : $mysql_db; $table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
     $set= ''; $del= '';
     foreach ($x->set as $fld=>$val) {
-      $set= "$del$fld=".$pdo->quote($val);
+      $set= "$fld='".pdo_real_escape_string($val)."'";
       $del= ',';
     }
     if ( $set ) {
       $qry= "SELECT count(*) AS _pocet FROM $table WHERE {$x->cond} ";
-      $res= pdo_qry($qry);
+      $res= mysql_qry($qry);
       if ( $res ) {
         $obj= pdo_fetch_assoc($res);
         if ( $obj->_pocet<=$x->count ) {
           $qryu= "UPDATE $table SET $set WHERE {$x->cond} ";
-          $n= pdo_qry($qryu);
-          $y->ok= $n;
+          $resu= mysql_qry($qryu);
+          $y->ok= $resu ? 1 : 0;
         }
         else fce_error("update_record: pokus o úpravu {$obj->_pocet} záznamů");
       }
     }
     break;
-  # ------------------------------------------------------------------------------------ form_insert
+  # ------------------------------------------------------------------------------------------------ form_insert
   # úschova nových hodnot do existujícího záznamu (mode=a vyvolá připojení hodnoty ke stávající)
   // x: db,table, fields ; fields=[...{id:field,val[,pipe]...]
   // y: qry, err, key
@@ -384,7 +384,7 @@
     else
       $y->rows= 0;
     break;
-  # -------------------------------------------------------------------------------------- form_save
+  # ------------------------------------------------------------------------------------------------ form_save
   # úschova nových hodnot do existujícího záznamu (mode=a vyvolá připojení hodnoty ke stávající)
   # x: table, key_id, key, fields ; fields=[...{id:field,val,oldval[,pipe][,mode='a'}...]
   # y: qry, err, rows
@@ -419,14 +419,13 @@
     $y->rows= ezer_qry("UPDATE",$table,$x->key,$zmeny,$x->key_id);
     $y->key= $x->key;
     break;
-  # -------------------------------------------------------------------------------------- form_load
+  # ------------------------------------------------------------------------------------------------ form_load
   # x: table, key_id, key, [cond,] fields
   # y: values, key
   case 'form_load':
     $fields= ''; $del= '';
     if ( $x->db ) ezer_connect($x->db);
-    $db= $x->db ? $x->db : $mysql_db; 
-    $table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
+    $db= $x->db ? $x->db : $mysql_db; $table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
     $y->key= 0;
     foreach ($x->fields as $desc) {
       if ( $desc->expr ) { $f= $desc->id; $fields.= "$del{$desc->expr} as $f"; }
@@ -445,7 +444,7 @@
     $joins= '';
     if ( ($xjoins= $x->joins) ) foreach ( $xjoins as $join ) $joins.= " $join";
     $qry= "SELECT $fields,$key_id as the_key FROM $table $joins WHERE $xcond ";
-    $res= pdo_qry($qry,$xcond ? 0 : 1);
+    $res= mysql_qry($qry,$xcond ? 0 : 1);
     if ( $res ) {
       $row= pdo_fetch_assoc($res);
       if ( $row ) {
@@ -458,7 +457,7 @@
     }
     $y->key_id= $key_id;
     break;
-  # -------------------------------------------------------------------------------------- form_make
+  # ------------------------------------------------------------------------------------------------ form_make
   # form_make(fce,arg1, ...) -- zavolání funkce 'fce' na serveru
   # x: args -- args[0] je fce
   # y: value
@@ -476,7 +475,7 @@
     else
       $y->error= "SERVER: funkce '{$x->fce}' není implementována";
     break;
-  # ------------------------------------------------------------------------------------- browse_map
+  # ------------------------------------------------------------------------------------------------ browse_map
   # browse_map(args0,args1, ...) -- zavolání funkce 'fce' na serveru nad vybranými řádky browse
   # x.fce je fce
   # x.keys -- klíče vybraných řádků
@@ -491,7 +490,7 @@
     else fce_error("ask: funkce {$x->fce} neexistuje");
 //     $y->args= $x->args;
     break;
-  # ---------------------------------------------------------------------------------- browse_select
+  # ------------------------------------------------------------------------------------------------ browse_select
   // vrácení klíčů s podmínkou cond - browse bez JOIN a GROUP ale s ORDER
   // x: table, cond, from
   // y: count, from, rows, values[i]
@@ -499,8 +498,7 @@
     $fields= ''; $del= '';
     $x->from= $x->from ? $x->from : 0;
     $y->from= $x->from;
-    $db= $x->db ? $x->db : $mysql_db; 
-    $table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
+    $db= $x->db ? $x->db : $mysql_db; $table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
     $as= explode('AS',$x->table);
     $y->key_id= $key_id= $as[1] ? trim($as[1]).'.'.$x->key_id : $x->key_id;
 //     $cond= stripslashes(utf2win($x->cond));
@@ -515,7 +513,7 @@
     if ( $x->db ) ezer_connect($x->db);
     $qry= "SELECT $key_id AS _klice_ FROM $table $joins WHERE $cond ";
     if ( $x->order ) $qry.= " ORDER BY {$x->order}";
-    $res= pdo_qry($qry);
+    $res= mysql_qry($qry);
     $keys= ''; $del= '';
     while ( $res && $row= pdo_fetch_assoc($res) ) {
       $keys.= "$del{$row['_klice_']}";
@@ -523,11 +521,10 @@
     }
     $y->keys= $keys;
     break;
-  # ------------------------------------------------------------------------------------ browse_load
+  # ------------------------------------------------------------------------------------------------ browse_load
   // načtení polí table.fields s podmínkou cond a v pořadí order (od from v počtu maximálně rows)
   // výsledek je ve values[radek][field] - v count je celkový počet
-  // x: table, cond, order, fields, from, cursor, rows, [{joins}] [group [having]]   
-  //    -- field:{id:i, field:f|expr:s}
+  // x: table, cond, order, fields, from, cursor, rows, [{joins}] [group [having]]   -- field:{id:i, field:f|expr:s}
   // y: count, from, rows, values[i]
   case 'browse_load':
     if ( isset($x->optimize->ask) ) {
@@ -621,12 +618,12 @@
         if ( $x->having ) $qry.= " HAVING {$x->having}";
         $qry.= $order;
         if ( isset($x->rows) ) $qry.= " LIMIT {$x->from},{$x->rows}";
-        $res= pdo_qry($qry);
+        $res= mysql_qry($qry);
         $i= 0;
         if ( $res ) {
           // zjištění celkového počtu
           $qry2= "SELECT FOUND_ROWS() AS count";
-          $res2= pdo_qry($qry2);
+          $res2= mysql_qry($qry2);
           $row2= pdo_fetch_assoc($res2);
           $y->count= 0+$row2['count'];
           // projití záznamů
@@ -649,13 +646,13 @@
         // zjištění celkového počtu
         $y->count= 0;
         $qry= "SELECT count(*) as pocet $qry_base";
-        $res= pdo_qry($qry);
+        $res= mysql_qry($qry);
         if ( $res ) $y->count= pdo_result($res,0);
         if ( $y->count ) {
           // projití záznamů
           $qry= "SELECT $fields $qry_base $order";
           if ( $x->rows ) $qry.= " LIMIT {$x->from},{$x->rows}";
-          $res= pdo_qry($qry);
+          $res= mysql_qry($qry);
           $i= 0;
           while ( $res && $row= pdo_fetch_assoc($res) ) {
             $i++;
@@ -672,12 +669,11 @@
     }
     $y->ok= 1;
     break;
-  # ---------------------------------------------------------------------------------- browse_scroll
+  # ------------------------------------------------------------------------------------------------ browse_scroll
   // načtení polí table.fields s podmínkou cond a v pořadí order (od from v počtu maximálně rows)
   // tato varianta funkce je používána pouze pro posuny v browse, počet dostane parametrem count
   // výsledek je ve values[radek][field] - v count je celkový počet
-  // x: table, cond, order, fields, from, cursor, rows, [{joins}] [group [having]]   
-  //    -- field:{id:i, field:f|expr:s}
+  // x: table, cond, order, fields, from, cursor, rows, [{joins}] [group [having]]   -- field:{id:i, field:f|expr:s}
   // y: count, from, rows, values[i]
   case 'browse_scroll':
 //                                                         debug($x,"browse_scroll");
@@ -710,8 +706,7 @@
       // scroll records
       if ( $x->db ) ezer_connect($x->db);
       $fields= ''; $del= '';
-      $db= $x->db ? $x->db : $mysql_db; 
-      $table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
+      $db= $x->db ? $x->db : $mysql_db; $table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
       $atable= explode(' AS ',$table);
       $key_id= ($atable[1] ? "{$atable[1]}." : '') . $x->key_id;
       $pipe= array();
@@ -770,7 +765,7 @@
         : ($x->order ? " ORDER BY {$x->order},$key_id" : " ORDER BY $key_id");
       $qry.= $order;
       if ( $x->rows ) $qry.= " LIMIT {$x->from},{$x->rows}";
-      $res= pdo_qry($qry);
+      $res= mysql_qry($qry);
       $i= 0;
       if ( $res ) {
         // projití záznamů
@@ -788,7 +783,7 @@
     }
     $y->ok= 1;
     break;
-  # ------------------------------------------------------------------------------------ browse_seek
+  # ------------------------------------------------------------------------------------------------ browse_seek
   // stejná funkce jako browse_load, jako první bude vrácen řádek vyhovující podmínce x->seek
   // CORR: pokud je celkový počet řádků <= tmax, vrací se všechny a
   // (které obsahuje nejvýše jednu podmínku)
@@ -809,8 +804,7 @@
     $key_id= ($x->view ? "{$x->view}." : '').$x->key_id;
     $rows= $x->rows;
     $tmax= $x->tmax;
-    $db= $x->db ? $x->db : $mysql_db; 
-    $table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
+    $db= $x->db ? $x->db : $mysql_db; $table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
     $atable= explode(' AS ',$table);
     $key_id= ($atable[1] ? "{$atable[1]}." : '') . $x->key_id;
     $pipe= array();
@@ -833,7 +827,7 @@
         $joins .= " $join";
       }
     // proveď případný sql příkaz
-    if ( $x->sql ) pdo_qry($x->sql);
+    if ( $x->sql ) mysql_qry($x->sql);
     // vlastní příkaz
     $cond= stripslashes($x->cond);
     $order= $x->optimize->qry=='noseek'
@@ -869,7 +863,7 @@
     }
     if ( $x->db ) ezer_connect($x->db);
     $qry1= "SELECT $ids,$fields FROM $table $joins WHERE ($cond) AND {$x->seek} $group $order LIMIT 1";
-    $res1= pdo_qry($qry1);
+    $res1= mysql_qry($qry1);
     if ( $res1 && $row1= pdo_fetch_assoc($res1) ) {
       $key_val= $row1[$x->key_id];
       // zjištění pořadí záznamu vyhovujícího x->seek (smí obsahovat nejvýše jednu podmínku)
@@ -891,7 +885,7 @@
       // pokud je HAVING musíme nechat pole i kvůli dotazu na počet
       $qry2_fields= $x->having ? ",$fields" : '';
       $qry2= "SELECT count(*) as _pocet_ $qry2_fields FROM $table $joins WHERE $cond $scond $group $order";
-      $res2= pdo_qry($qry2);
+      $res2= mysql_qry($qry2);
       $from= pdo_num_rows($res2);
       $from= max(0,$from-1);
 //                                                         display("from(1)=$from");
@@ -901,12 +895,12 @@
         $qry3b= "SELECT SQL_CALC_FOUND_ROWS $fields FROM $table $joins
                 WHERE $cond $group $order";
         $qry3= "$qry3b LIMIT $from,$rows";
-        $res3= pdo_qry($qry3);
+        $res3= mysql_qry($qry3);
         $i= 0;
         if ( $res3 ) {
           // zjištění celkového počtu
           $qry4= "SELECT FOUND_ROWS() AS count";
-          $res4= pdo_qry($qry4);
+          $res4= mysql_qry($qry4);
           $row4= pdo_fetch_assoc($res4);
           $count= $row4['count'];
 //                                                         display("group: $count, $from, $tmax");
@@ -915,14 +909,14 @@
             $from= 0;
             $rows= $count;
             $qry3= "$qry3b LIMIT $from,$rows";
-            $res3= pdo_qry($qry3);
+            $res3= mysql_qry($qry3);
           }
           elseif ( $count-$from<$tmax ) {
             // aby byla zaplněná celá tabulka, musíme načíst znovu
             $from= $count-$tmax;
             $rows= $tmax;
             $qry3= "$qry3b LIMIT $from,$rows";
-            $res3= pdo_qry($qry3);
+            $res3= mysql_qry($qry3);
           }
           // projití záznamů
           while ( $res3 && $row3= pdo_fetch_assoc($res3) ) {
@@ -943,7 +937,7 @@
         // zjištění celkového počtu
         $y->count= 0;
         $qry= "SELECT count(*) as pocet $qry_base";
-        $res= pdo_qry($qry);
+        $res= mysql_qry($qry);
         if ( $res ) {
           $y->count= 0+pdo_result($res,0);
         }
@@ -970,7 +964,7 @@
             // varianta pro malý počet záznamů
             $from= 0;
           }
-          $res= pdo_qry($qry);
+          $res= mysql_qry($qry);
           $i= 0;
           while ( $res && $row= pdo_fetch_assoc($res) ) {
             $i++;
@@ -992,11 +986,10 @@
     $y->seek= $seek_result;
     $y->ok= 1;
     break;
-  # ---------------------------------------------------------------------------------- browse export
+  # ------------------------------------------------------------------------------------------------ browse_export
   # export polí table.fields s podmínkou cond příp. having v pořadí order
   # do souboru par.file ve formátu par.type
-  # x: db, table, key_id, cond, order, fields, rows, [{joins}] [group [having]]   
-  #   -- field:{id:i, field:f|expr:s}
+  # x: db, table, key_id, cond, order, fields, rows, [{joins}] [group [having]]   -- field:{id:i, field:f|expr:s}
   # y: par, kde par.rows=počet řádků
   # v popisu pole se může objevit (narozdíl od ostatních metod browse) popis "map" pro map_pipe
   #   map = { field:id, table:id, t_options: {db:id,...}, m_options: {where:s, order:s, key_id:id}
@@ -1017,7 +1010,7 @@
     $pipe= array();
     // výběr sloupců
     $shows= isset($x->par->show) ? explode(',',$x->par->show) : null;
-//                                                            debug($shows,"show={$x->par->show}");
+                                                                debug($shows,"show={$x->par->show}");
     // konstrukce JOIN
     $joins= '';
     if ( isset($x->joins) ) {
@@ -1101,7 +1094,7 @@
       if ( $x->having ) $qry.= " HAVING {$x->having}";
     }
     $qry.= $order;
-    $res= pdo_qry($qry);
+    $res= mysql_qry($qry);
     // projití záznamů
     $values= array();
     while ( $res && $row= pdo_fetch_assoc($res) ) {
@@ -1115,7 +1108,7 @@
     export_tail(); // naplní i $y->par->rows
     $y->ok= 1;
     break; /* browse_export */
-  # -------------------------------------------------------------------------------------- show save
+  # ------------------------------------------------------------------------------------------------ show_save
   # úschova hodnoty do existujícího záznamu
   # x: table, key_id, key, field, val, old
   # y: qry, err, ok
@@ -1123,8 +1116,7 @@
   case 'show_save':
     if ( $x->db ) ezer_connect($x->db);
     $zmeny= array();
-    $db= $x->db ? $x->db : $mysql_db; 
-    $table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
+    $db= $x->db ? $x->db : $mysql_db; $table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
     $fld= $x->field;
     $val= $x->val;
     if ( ($pipe= $desc->pipe) ) { $val= $pipe($val,1); }
@@ -1141,17 +1133,16 @@
     $y->rows= ezer_qry("UPDATE",$table,$x->key,$zmeny,$x->key_id);
     $y->key= $x->key;
     break;
-  # --------------------------------------------------------------------------------------- map_load
+  # ------------------------------------------------------------------------------------------------ map_load
   // načtení všech polí tabulky s podmínkou cond a v pořadí order
   // x :: {table:..,where:...,order:...}
   // y :: {values:[[id1:val1,...]...],rows:...}
   case 'map_load':
     if ( $x->db ) ezer_connect($x->db);
-    $db= $x->db ? $x->db : $mysql_db; 
-    $table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
+    $db= $x->db ? $x->db : $mysql_db; $table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
     $qry= "SELECT * FROM $table WHERE {$x->where} ";
     if ( $x->order ) $qry.= " ORDER BY {$x->order}";
-    $res= pdo_qry($qry);
+    $res= mysql_qry($qry);
     $i= 0;
     while ( $res && $row= pdo_fetch_assoc($res) ) {
       $i++;
@@ -1188,20 +1179,20 @@
       if ( $x->cmd=='user_prelogin' ) {
         $qry= "SELECT * FROM $ezer_system._user WHERE id_user=$ezer_user_id ";
         $res= mysql_qry($qry,0,0,0,'ezer_system');
-        $u= mysql_fetch_object($res);
+        $u= pdo_fetch_object($res);
       }
       elseif ($hash_password===true) {
         $where= " WHERE username='{$x->uname}' ";
         $qry= "SELECT * FROM $ezer_system._user $where";
         $res= mysql_qry($qry,0,0,0,'ezer_system');
-        $u= mysql_fetch_object($res);
+        $u= pdo_fetch_object($res);
         if (!password_verify($x->pword,$u->password))
           $res = false;
       } else {
         $x->pword= str_replace("'",'"',$x->pword);
         $where= " WHERE username='{$x->uname}' AND password='{$x->pword}' ";
         $qry= "SELECT * FROM $ezer_system._user $where";
-        $res= pdo_qry($qry,0,0,0,'ezer_system');
+        $res= mysql_qry($qry,0,0,0,'ezer_system');
         $u= pdo_fetch_object($res);
       }
       if ( $res && $u ) {
@@ -1224,6 +1215,7 @@
         $USER->surname= $u->surname;
         $USER->login= $u->login;
         $USER->state= $u->state;
+//        try { $options= $json->decode($u->options); } catch  (Exception $e) { $options= null; }
         try { $options= json_decode($u->options); } catch  (Exception $e) { $options= null; }
         $USER->options= $options;
         #// zapiš do historie přihlášení
@@ -1235,7 +1227,7 @@
           $qry= "INSERT {$mysql_db}._touch (day,time,hits,user,module,menu,msg)
                  VALUES ('$day','$time',0,'{$USER->abbr}','app','login','$info')";
           $_SESSION[$ezer_root]['note'].= $qry;
-          $res= $pdo->exec($qry);
+          $res= pdo_query($qry);
         }
         if ( $ezer_session!='ezer' )
           $_SESSION[$ezer_root]['USER']= $USER;
@@ -1245,7 +1237,7 @@
 //         $info= "{$x->uname}|$ip|$size|$browser|{$_SESSION['platform']}|{$_SESSION['browser']}";
 //         $qry= "INSERT {$mysql_db}._touch (day,time,user,module,menu,msg)
 //                VALUES ('$day','$time','---','login','acount?','$info')";
-//         $res= mysql_query($qry);
+//         $res= pdo_query($qry);
 //                                                 display("$res:$qry");
 //       }
     }
@@ -1266,7 +1258,7 @@
       $where= " WHERE id_user=$ezer_user_id ";
       $qry= "SELECT * FROM $ezer_system._user $where";
       $res= mysql_qry($qry,0,0,0,'ezer_system');
-      if ( $res && ($u= mysql_fetch_object($res)) ) {
+      if ( $res && ($u= pdo_fetch_object($res)) ) {
 #        sess_read('',true); // přečte informace z _user do $USER
         $_SESSION[$ezer_root]['user_start']= date("j.n.Y H:i:s");
         $_SESSION[$ezer_root]['user_abbr']= $u->abbr;
@@ -1283,6 +1275,7 @@
         $USER->surname= $u->surname;
         $USER->login= $u->login;
         $USER->state= $u->state;
+//        try { $options= $json->decode($u->options); } catch  (Exception $e) { $options= null; }
         try { $options= json_decode($u->options); } catch  (Exception $e) { $options= null; }
         $USER->options= $options;
         if ( $ezer_session!='ezer' )
@@ -1332,7 +1325,7 @@
 //     $time= date('H:i:s');
 //     $qry= "INSERT _touch (day,time,hits,user,module,menu) "
 //       . "VALUES ('$day','$time',0,'{$USER->abbr}','app','logout')";
-//     $res= mysql_query($qry);
+//     $res= pdo_query($qry);
 //     // zruš session
 //     $y->ok= session_destroy() ? 'ok' : 'ko';    // vynuluje $USER
 //     break;
@@ -1351,6 +1344,7 @@
     $fname= "$ezer_path_gen/{$x->id}.json";
     $y->exists= file_exists($fname);
     $text= @file_get_contents($fname);
+//    $y->app= $json->decode($text);
     $y->app= json_decode($text);
     break;
   # ------------------------------------------------------------------------------------------------ source_line
@@ -1455,21 +1449,21 @@
       global $ezer_root;
       // 1. pokus - help aplikace
       $db= '.main.';
-      $pdo= ezer_connect($db);
-      $rh= $pdo->query($qh);
-      if ( $rh && $rh->rowCount() ) { goto ok; }
+      ezer_connect($db);
+      $rh= pdo_query($qh);
+      if ( $rh && pdo_num_rows($rh) ) { goto ok; }
       // 2. pokus - help skupiny
       if ( isset($_SESSION[$ezer_root]['group_db']) ) {
         $db= 'ezer_group';
-        $pdo= ezer_connect($db);
-        $rh= $pdo->query($qh);
-        if ( $rh && $rh->rowCount() ) { goto ok; }
+        ezer_connect($db);
+        $rh= pdo_query($qh);
+        if ( $rh && pdo_num_rows($rh) ) { goto ok; }
       }
       // 3. pokus - help jádra
       $db= 'ezer_kernel';
-      $pdo= ezer_connect($db);
-      $rh= $pdo->query($qh);
-      if ( $rh && $rh->rowCount() ) { goto ok; }
+      ezer_connect($db);
+      $rh= pdo_query($qh);
+      if ( $rh && pdo_num_rows($rh) ) { goto ok; }
       $db= '';
     ok:
       return $rh;
@@ -1489,7 +1483,7 @@
       $key= implode('.',$akey);
       $tit= implode('|',$atit);
       $rh= $fetch_help("SELECT id_help,help,seen,name FROM _help WHERE kind='h' AND topic='$key'");
-      if ( $rh && ($h= mysql_fetch_object($rh)) ) {
+      if ( $rh && ($h= pdo_fetch_object($rh)) ) {
         $y->text= $h->help;
 //         $y->text= "$h->help<div class='foot'>$db</div>";
         $y->seen= $h->seen;
@@ -1529,7 +1523,7 @@
             ORDER BY topic";
       $rh= $fetch_help($qh);
 //                                                           display($qh);
-      while ( $rh && mysql_num_rows($rh) && $h= mysql_fetch_object($rh) ) {
+      while ( $rh && pdo_num_rows($rh) && $h= pdo_fetch_object($rh) ) {
         $but.= ",'$h->topic'";
         $ref= $h->name ? $h->name : $h->topic;
         if ( strpos($ref,$prefix)===0 ) {
@@ -1548,29 +1542,30 @@
   case 'help_save':
     $y->ok= 0;
     if ( $x->db ) ezer_connect($x->db);
-    $pdo= $ezer_db[$curr_db][6];
-    $text= mysql_real_escape_string($x->text);
+    $text= pdo_real_escape_string($x->text);
     $qh= "SELECT topic FROM _help WHERE topic='{$x->key->sys}'";
-    $rh= $pdo->query($qh);
-    if ( $rh && $rh->rowCount() ) {
+    $rh= @pdo_query($qh);
+    if ( $rh && pdo_num_rows($rh) ) {
       // help pro topic existuje - vyměň text a title
-      $h= $rh->fetch(PDO::FETCH_OBJ);
+      $h= pdo_fetch_object($rh);
       $topic= $h->topic; // ? $h->topic : $x->key->title;
       $qu= "UPDATE _help
             SET kind='h',name='{$x->key->title}',help='$text' WHERE topic='$topic'";
-      $y->ok= $pdo->exec($qu);
+      $ru= mysql_qry($qu);
+      $y->ok= $ru ? 1 : 0;
     }
-    elseif ( $rh && $rh->rowCount()==0 ) {
+    elseif ( $rh && pdo_num_rows($rh)==0 ) {
       // help pro topic neexistuje - založ jej
       $qi= "INSERT INTO _help (kind,topic,name,help)
             VALUES ('h','{$x->key->sys}','{$x->key->title}','$text') ";
-      $y->ok= $pdo->exec($qi);
+      $ri= mysql_qry($qi);
+      $y->ok= $ri ? 1 : 0;
     }
     break;
   # ------------------------------------------------------------------------------------- help_force
   # zapíše do tabulky _help značku vynucující alepoň jedno zobrazení
   case 'help_force':
-    $text= mysql_real_escape_string($x->text);
+    $text= pdo_real_escape_string($x->text);
     $qh= "UPDATE _help SET seen='*' WHERE topic='{$x->key->sys}' ";
     $rh= mysql_qry($qh);
     $y->ok= $rh ? 1 : 0;
@@ -1580,18 +1575,18 @@
   case 'help_ask':
     global $path_url;
     $help= "";
-    $pdo= $ezer_db[$curr_db][6];
     $qh= "SELECT help FROM _help WHERE topic='{$x->key->sys}'";
-    $rh= $pdo->query($qh);
-    if ( $rh && $rh->rowCount() && $h= $rh->fetch(PDO::FETCH_OBJ) ) {
+    $rh= @pdo_query($qh);
+    if ( $rh && pdo_num_rows($rh) && $h= pdo_fetch_object($rh) ) {
       $help= "<hr>{$h->help}";
     }
     $abbr= $_SESSION[$ezer_root]['user_abbr'];
     $href= "<a href=\"$path_url?menu={$x->key->sys}\">$abbr</a>";
-    $text= mysql_real_escape_string("[$abbr ".date('j/n/Y H:i')."] {$x->text}");
+    $text= pdo_real_escape_string("[$abbr ".date('j/n/Y H:i')."] {$x->text}");
     $msg= "[$href ".date('j/n/Y H:i')."] {$x->text}";
     $qh= "REPLACE INTO _help (topic,name,help) VALUES ('{$x->key->sys}','{$x->key->title}','$text$help') ";
-    $y->ok= $pdo->exec($qh);
+    $rh= mysql_qry($qh);
+    $y->ok= $rh ? 1 : 0;
     $y->mail= '?';
     $y->text= "<div title='{$y->ok}'>$text</div>$help";
     // pošli mail
@@ -1884,8 +1879,8 @@
 //                                                 debug($obj,"block={$part->block}",0,3);
           for ($i= 0; $i<count($ids); $i++) {
 //                                                 display_(" ... {$obj->type}+{$ids[$i]}");
-            $id= $ids[$i];
-            $obj= $obj->part->$id;
+            $id= $ids[$i];                         // !!! PHP7 má odlišné precedence operátorů
+            $obj= $obj->part->$id;                 //
 //                                                 display_("={$obj->type} ");
             if ( !$obj ) fce_error("LOAD_CODE: chybné jméno {$part->block} ve $fname");
           }
@@ -1979,7 +1974,8 @@ end_switch:
 
   // nový konec - zvlášť pro trasování, kvůli odchytu non UTF-8
   if ( $x->totrace ) {
-    $yjson= json_encode($y);          // pomalejší ale předá i non UTF-8
+//    $yjson= $json->encode($y);          // pomalejší ale předá i non UTF-8
+    $yjson= json_encode($y);
   }
   else {
     $yjson= json_encode($y);
@@ -1998,7 +1994,7 @@ function help_keys() {
       // zjištění seznamu klíčů z $db
       ezer_connect($db,1);
       $qh= "SELECT topic FROM _help WHERE kind='h' ";
-      $rh= pdo_qry($qh);
+      $rh= pdo_query($qh);
       while ( $rh && ($h= pdo_fetch_object($rh)) ) {
         $x= trim($h->topic);
         if ( !in_array($x,$keys) )
@@ -2016,8 +2012,8 @@ function help_keys() {
 //   // zjištění seznamu klíčů s vynuceným zobrazením helpu pro přihlášeného uživatele
 //   $qh= "SELECT COUNT(*) AS _pocet,GROUP_CONCAT(topic SEPARATOR ',*') AS _k FROM _help
 //         WHERE LEFT(seen,1)='*' AND NOT FIND_IN_SET('GAN',seen) ";
-//   $rh= @mysql_query($qh);
-//   if ( $rh && $h= mysql_fetch_object($rh) ) {
+//   $rh= @pdo_query($qh);
+//   if ( $rh && $h= pdo_fetch_object($rh) ) {
 //     if ( $h->_pocet ) $keys.= ",*{$h->_k}";
 //   }
   sort($keys);
@@ -2129,12 +2125,11 @@ function browse_status($x) {
 # předá informaci o aktuálně aktivních uživatelích
 function check_users($y) {
   global $EZER, $ezer_root;
-  $pdo= $ezer_db[$curr_db][6];
   $y->msg= '';
   $qry= "SELECT IFNULL(GROUP_CONCAT(DISTINCT user SEPARATOR ' '),'-') AS _users FROM _touch
          WHERE day=CURDATE() AND HOUR(time)>=HOUR(NOW())  AND module='block'";
-  $rh= $pdo->query($qry);
-  if ( $rh && ($h= $rh->fetch(PDO::FETCH_OBJ)) ) {
+  $rh=@ pdo_query($qry);
+  if ( $rh && ($h= pdo_fetch_object($rh)) ) {
     $y->msg= $h->_users;
   }
 }
@@ -2179,7 +2174,7 @@ function check_version($y) {
     }
     // verze dat, podle posledního záznamu v _track
     $qry= mysql_qry("SHOW TABLES LIKE '_track'");
-    if ( mysql_num_rows($qry) ) {
+    if ( pdo_num_rows($qry) ) {
       $y->d_version=
         select1("DATE_FORMAT(kdy,'%e.%c.%Y %H:%i')","_track","1 ORDER BY id_track DESC LIMIT 1");
     }
@@ -2233,7 +2228,7 @@ function make_get (&$set,&$select,&$fields) {
 //   }
 // //                                                         debug($ezer_db);
 //   mysql_select_db($mysql_db,$ezer_db[$mysql_db][3]);
-//   $res= mysql_query("SET NAMES 'UTF8'");
+//   $res= pdo_query("SET NAMES 'UTF8'");
 // }
 # -------------------------------------------------------------------------------------------------- stripSlashes_r
 # odstraní slashes ze superglobálních polí -- kvůli magic_quotes_gpc do PHP 5.3
@@ -2283,6 +2278,7 @@ function upload() {
   // uložení souboru
   if ( $fce= $_GET['move'] ) {
     $log.= " - USER $fce";
+//    call_user_func_array($fce,array($tmp_name,$name,$json->decode($_GET['par'])));
     call_user_func_array($fce,array($tmp_name,$name,json_decode($_GET['par'])));
   }
   else {
@@ -2540,28 +2536,28 @@ function save_file($path,$text) {
 }
 # ---------------------------------------------------------------------------------------- item_help
 function item_help($item) {
-//  global $ezer_path_serv, $ezer_root;
-//  $ret= (object)array(
-//    'html'=>$item,
-//    'item'=>$item
-//  );
-//  // prohledání php-modulů
-//  $ret->trace= $names= doc_ezer(true);
-//  if ( isset($names[$item]) && $names[$item]->typ=='php' ) {
-//    $ret->html= "$item je PHP funkce z {$names[$item]->php}";
-//    $ret->typ= 'php';
-//    $ret->php= $names[$item]->php;
-//  }
-//  else {
-//    // otevření databáze a tabulky
-//    $ezer_db= @mysql_connect('localhost','gandi','');
-//    $res= @mysql_select_db('ezer_kernel',$ezer_db);
-//    @mysql_query("SET NAMES 'utf8'");
-//    $rt= mysql_query("SELECT * FROM ezer_kernel.ezer_doc2 WHERE '$item' IN (class,part)");
-//    if ( $rt && $t= mysql_fetch_object($rt) ) {
-//      $ret->html= $t->text;
-//    }
-//  }
-//  return $ret;
+  global $ezer_path_serv, $ezer_root;
+  $ret= (object)array(
+    'html'=>$item,
+    'item'=>$item
+  );
+  // prohledání php-modulů
+  $ret->trace= $names= doc_ezer(true);
+  if ( isset($names[$item]) && $names[$item]->typ=='php' ) {
+    $ret->html= "$item je PHP funkce z {$names[$item]->php}";
+    $ret->typ= 'php';
+    $ret->php= $names[$item]->php;
+  }
+  else {
+    // otevření databáze a tabulky
+    $ezer_db= @mysql_connect('localhost','gandi','');
+    $res= @mysql_select_db('ezer_kernel',$ezer_db);
+    @pdo_query("SET NAMES 'utf8'");
+    $rt= pdo_query("SELECT * FROM ezer_kernel.ezer_doc2 WHERE '$item' IN (class,part)");
+    if ( $rt && $t= pdo_fetch_object($rt) ) {
+      $ret->html= $t->text;
+    }
+  }
+  return $ret;
 }
 ?>

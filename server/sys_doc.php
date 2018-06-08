@@ -512,7 +512,7 @@ function doc_todo_show($cond,$order="kdy_skoncil DESC") { trace();
     FROM _todo WHERE $cond
     ORDER BY $order";
   $res= mysql_qry($qry);
-  while ( $res && ($d= mysql_fetch_object($res)) ) {
+  while ( $res && ($d= pdo_fetch_object($res)) ) {
     // zobrazení
     $id= $d->id_todo;
     $typ= $typs[$d->typ];
@@ -562,7 +562,7 @@ function map_user() {
   $users= array();
   $qry= "SELECT * FROM $ezer_system._user ORDER BY id_user";
   $res= mysql_qry($qry,0,0,0,'ezer_system');
-  while ( $res && $u= mysql_fetch_object($res) ) {
+  while ( $res && $u= pdo_fetch_object($res) ) {
     $users[$u->id_user]= $u->abbr;
   }
   return $users;

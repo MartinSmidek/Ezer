@@ -51,7 +51,7 @@ function html_closure($win_name,$notes,$source,$url,$lines,$typ,$start,$backgrou
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=9" />
-    <link rel="shortcut icon" href="./ezer3/client/img/dbg.ico" />
+    <link rel="shortcut icon" href="./ezer3.1/client/img/dbg.ico" />
     <title>$win_name</title>
     <script src="client/licensed/jquery-3.2.1.min.js" type="text/javascript" charset="utf-8"></script>
     <script src="client/licensed/jquery-noconflict.js" type="text/javascript" charset="utf-8"></script>
@@ -133,7 +133,7 @@ function html_closure($win_name,$notes,$source,$url,$lines,$typ,$start,$backgrou
     ltwh= ltwh ? ltwh : '0,0,770,500';
     var x= ltwh.split(',');
     var position= 'left='+x[0]+',top='+x[1]+',width='+x[2]+',height='+x[3];
-    var path= './ezer3/dbg3.php?err=1&typ=php&start='+item+'&src='+fname;
+    var path= './ezer3.1/dbg3.php?err=1&typ=php&start='+item+'&src='+fname;
     var arg= position+',resizable=1,titlebar=0,menubar=0';
     opener.Ezer.sys.dbg.win_php= opener.open(path,'php',arg);
     opener.Ezer.sys.dbg.typ= 'php';

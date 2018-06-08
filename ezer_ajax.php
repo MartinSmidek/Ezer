@@ -30,6 +30,7 @@
 
   chdir($abs_root);//("../..");
 
+  require_once("$abs_root/ezer".EZER_version."/server/ezer_pdo.php");
   require_once("$abs_root/ezer".EZER_version."/server/ae_slib.php");
   require_once("$abs_root/ezer".EZER_version."/server/ezer_lib3.php");
 
@@ -52,18 +53,20 @@
   $ezer_ezer= array();
   
   // standardní moduly v PHP obsažené v $ezer_path_root/ezer2 - vynechané v dokumentaci
+  $server= "$abs_root/{$EZER->version}/server";
   $ezer_php_libr= array(
-    'server/ae_slib.php',
-    'server/ezer_lib3.php',
-    'server/reference.php',
+    '$server/ezer_pdo.php',
+    '$server/ae_slib.php',
+    '$server/ezer_lib3.php',
+    '$server/reference.php',
     'ezer2_fce.php',
-    'server/sys_doc.php',
-    'server/ezer2.php'
+    '$server/sys_doc.php',
+    "$server/ezer2.php"
   );
   
   // uživatelské i knihovní moduly v PHP obsažené v $ezer_path_root
   $ezer_php= array_merge(
-    array("ezer".EZER_version."/ezer2_fce.php"),
+    array("ezer3.1/ezer2_fce.php"),
     $app_php
   );
 

@@ -1,4 +1,4 @@
-<?php // ezer 3
+<?php // ezer 3.1
 /**
  * $app_name      - zobrazený název aplikace
  * $app_login     - username/password (pouze pro automatické přihlášení)
@@ -36,6 +36,7 @@
     session_start();
   }
   $_SESSION[$app]['ezer']= '3.1';
+
   $_SESSION[$app]['GET']= array();
 
   // nastavení cest
@@ -72,7 +73,7 @@
     array("$licensed/jquery-3.2.1.min.js","$licensed/jquery-noconflict.js","$client/licensed/jquery-ui.min.js"),
     // podpora dotykového ovládání
     array("$licensed/jquery.touchSwipe.min.js"),
-    // jádro Ezer3
+    // jádro Ezer3.1
     array(
       "$client/ezer_app3.js","$client/ezer3.js","$client/ezer_area3.js",
       "$client/ezer_rep3.js","$client/ezer_lib3.js","$client/ezer_tree3.js"

@@ -1,12 +1,12 @@
 /* části app.js a ezer_dom1.js portované z mootools do jQuery */
-/* Ezer3                               (C) 2017 Martin Šmídek */
-/* Ezer3        (C) 2009 Martin Šmídek */
+/* Ezer3.1                             (C) 2017 Martin Šmídek */
+/* Ezer3.1        (C) 2009 Martin Šmídek */
 /* global Ezer, Browser, gapi, Cookie, Function, args, Block, ListRow, Form, List, Browse, self, Menu, Panel, CKEDITOR, PanelPopup */
 
 "use strict";
 // <editor-fold defaultstate="collapsed" desc="++++++++++++++++++++++++++ EZER inicializace">
 //Ezer.root                     je definován v hlavním programu aplikace
-//Ezer.version                  dtto - default=ezer3
+//Ezer.version                  dtto - default=ezer3.1
 //Ezer.browser                  CH|FF|OP|IE
 Ezer.options= Ezer.options || {};
 Ezer.options.fade_speed= Ezer.options.fade_speed||0;  // rychlost fadeIn, fadeOut (0 je default) 
@@ -198,7 +198,7 @@ class Application {
     this.status= null;                            // loaded
     this.options= {
       user_record: true,                          // uživatelské údaje jsou v tabulce _user
-      server_url: Ezer.version+'/server/ezer2.php',       // URL serveru
+      server_url: 'http://'+Ezer.app_root+'/'+Ezer.version+'/server/ezer2.php',       // URL serveru
       login_interval: 60,                         // počet minut mezi obnovováním přihlášení - viz hits
       session_interval: 20,                       // počet minut mezi obnovou SESSION < login_interval
       must_log_in: true,

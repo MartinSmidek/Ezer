@@ -10,7 +10,7 @@ global $blocs2, $blocs3, $ezer_path_code, $ezer_path_root, $names;
 if ( file_exists("$ezer_path_code/comp2tab.php") )
   require_once("$ezer_path_code/comp2tab.php");
 else
-  require_once("$ezer_path_root/ezer3/code/comp2tab.php");
+  require_once("$ezer_path_root/ezer3.1/code/comp2tab.php");
 # možné události
 #   onblur  oncancel  onclick  onfocus     onchange  onchanged  onchoice
 #   onload  onready   onbusy   onrowclick  onsave    onstart    onsubmit

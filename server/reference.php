@@ -19,7 +19,7 @@ function i_doc($typ,$fnames='') {   trace();
     $qry= "SELECT * FROM $db.ezer_doc2 WHERE 1";
 //                                                 display("mysql_qry($qry)");
     $res= mysql_qry($qry);
-    while ( $res && ($row= mysql_fetch_assoc($res)) ) {
+    while ( $res && ($row= pdo_fetch_assoc($res)) ) {
       $text.= "\n{$row['text']}";
     }
 //                                                 display("=$text");
@@ -58,14 +58,14 @@ function i_doc($typ,$fnames='') {   trace();
       $qry= "SELECT class FROM $db.ezer_doc2
              WHERE chapter='reference' AND section='' GROUP BY class";
       $res= mysql_qry($qry);
-      while ( $res && ($row= mysql_fetch_assoc($res)) ) {
+      while ( $res && ($row= pdo_fetch_assoc($res)) ) {
         $class= $row['class'];
         // projdi elementy s chybějící sekcí se stejnou třídou
         $qry2= "SELECT section FROM $db.ezer_doc2
                 WHERE chapter='reference' AND elem='class' AND class='$class' AND section!='' ";
         $res2= mysql_qry($qry2);
         // zjisti sekci té třídy, jde-li to
-        if ( $res2 && ($row2= mysql_fetch_assoc($res2)) ) {
+        if ( $res2 && ($row2= pdo_fetch_assoc($res2)) ) {
           $section= $row2['section'];
           // a doplň ji, kde chybí
           $qry3= "UPDATE $db.ezer_doc2 SET section='$section'
@@ -80,7 +80,7 @@ function i_doc($typ,$fnames='') {   trace();
     $parts= array();
     $qry= "SELECT part,comp FROM $db.ezer_doc2 WHERE char_length(comp)=2 ORDER BY part";
     $res= mysql_qry($qry);
-    while ( $res && ($o= mysql_fetch_object($res)) ) {
+    while ( $res && ($o= pdo_fetch_object($res)) ) {
       list($ps,$pi)= explode('/',$o->part);
       if ( isset($parts[$ps]) ) {
         if ( $parts[$ps]!= $o->comp )
@@ -114,7 +114,7 @@ function i_doc($typ,$fnames='') {   trace();
   case 'survay':
     $qry= "SELECT chapter,COUNT(*) AS _pocet FROM $db.ezer_doc2 GROUP BY chapter";
     $res= mysql_qry($qry);
-    while ( $res && ($o= mysql_fetch_object($res)) ) {
+    while ( $res && ($o= pdo_fetch_object($res)) ) {
       $text.= "{$o->chapter} má {$o->_pocet} záznamů<br>";
     }
     $text= $text ? $text : "dokumentace je prázdná";
@@ -321,7 +321,7 @@ function i_doc_app($fnameslist,$chapter,$to_save=true) { trace();
             $qry= "SELECT * FROM {$m->db}.{$m->table} WHERE {$m->where}";
             if ( $m->order ) $qry.= " ORDER BY {$m->order}";
             $res= mysql_qry($qry);
-            while ( $res && $row= mysql_fetch_assoc($res) ) {
+            while ( $res && $row= pdo_fetch_assoc($res) ) {
               $zkratka= $row['zkratka']; $zkratka= str_replace(':','{#3A}',$zkratka);
               $datum= $row['datum'];
               $zkratka= $datum ? "$zkratka / $datum" : $zkratka;
@@ -406,7 +406,7 @@ function i_doc_app($fnameslist,$chapter,$to_save=true) { trace();
         $txt= strtr($txt,$css);
         if ( $to_save ) {
           // zápis do tabulky
-          $esc_text= mysql_real_escape_string($txt);
+          $esc_text= pdo_real_escape_string($txt);
           $class= "{$fname}_".str_pad((($i-1)/2),2,'0',STR_PAD_LEFT);
           $set= "elem='modul',class='$class',part='',file='$fname',chapter='$chapter',"
             . "section='$modul',title='$title',sorting=$sort,text=\"$esc_text\"";
@@ -615,7 +615,7 @@ function i_doc_final($class,$id,$info,$t) { #if ($t=='i') trace();
     // definice záznamu v doc_elem
     if ( $sect ) $set.= "section='$sect',";
     if ( $hist ) $set.= "history='$hist',";
-    $html= @mysql_real_escape_string($html);
+    $html= @pdo_real_escape_string($html);
     $set.= "text=\"$html\",";
     break;
   case 'Fire':         // fire (události) :: abstract (; x : y)*
@@ -625,7 +625,7 @@ function i_doc_final($class,$id,$info,$t) { #if ($t=='i') trace();
     // definice záznamu v doc_elem
     $set.= "comp=\"$t\",";
     $set.= "abstract= \"$abstract\",";
-    $html= mysql_real_escape_string($html);
+    $html= pdo_real_escape_string($html);
     $set.= "text=\"$html\",";
 //                                                         debug($x,$name);
 //                                                         display("$set");
@@ -639,7 +639,7 @@ function i_doc_final($class,$id,$info,$t) { #if ($t=='i') trace();
     // definice záznamu v doc_elem
     $set.= "comp=\"$t\",";
     $set.= "abstract= \"$abstract\",";
-    $html= mysql_real_escape_string($html);
+    $html= pdo_real_escape_string($html);
     $set.= "text=\"$html\",";
 //     if ( $id=='skill' ) { debug($x,$name); display("SKILL**$set");}
     break;
@@ -667,11 +667,11 @@ function i_doc_final($class,$id,$info,$t) { #if ($t=='i') trace();
     if ( $sect ) $set.= "section='$sect',";
     if ( $hist ) $set.= "history='$hist',";
     $set.= "comp=\"$t\",";
-    $html= mysql_real_escape_string($html);
+    $html= pdo_real_escape_string($html);
     $set.= "text=\"$html\",";
     break;
   }
-  $extd= mysql_real_escape_string($extd);
+  $extd= pdo_real_escape_string($extd);
   $set.= "class='$class',extends='$extd',part='$id',file='$i_doc_file',chapter='reference',sorting=99";
   $qry= "REPLACE $db.ezer_doc2 SET $set ";
   $res= mysql_qry($qry);
@@ -775,7 +775,7 @@ function i_doc_lang() { //trace();
     $text.= i_doc_subs_attribs($blok);
     $text.= "</div>";
   }
-  $esc_text= mysql_real_escape_string($text);
+  $esc_text= pdo_real_escape_string($text);
   $qry= "REPLACE $db.ezer_doc2 (chapter,section,elem,class,sorting,title,text)
          VALUES ('reference','ezerscript','text','language',1,'popis jazyka',\"$esc_text\") ";
   $res= mysql_qry($qry);
@@ -810,7 +810,7 @@ function i_doc_show_chapter($chapter,$section,$class) {
   $qry= "SELECT class,part,elem,text FROM $db.ezer_doc2
          WHERE chapter='$chapter' AND section='$section' AND class='$class' ";
   $res= mysql_qry($qry);
-  while ( $res && ($row= mysql_fetch_assoc($res)) ) {
+  while ( $res && ($row= pdo_fetch_assoc($res)) ) {
     $text.= $row['text'];
   }
   return $text;
@@ -827,7 +827,7 @@ function i_doc_show_lang($chapter,$section,$class) {
     $qry= "SELECT class,part,elem,text FROM $db.ezer_doc2
            WHERE chapter='$chapter' AND section='$section' AND class='$class' ";
     $res= mysql_qry($qry);
-    while ( $res && ($row= mysql_fetch_assoc($res)) ) {
+    while ( $res && ($row= pdo_fetch_assoc($res)) ) {
       $text.= $row['text'];
     }
     break;
@@ -842,7 +842,7 @@ function i_doc_show_lang($chapter,$section,$class) {
            ORDER BY part";
     $res= mysql_qry($qry);
     $n= 1;
-    while ( $res && ($row= mysql_fetch_assoc($res)) ) {
+    while ( $res && ($row= pdo_fetch_assoc($res)) ) {
       $mark= $n++%2 ? ' SMarked' : '';
       $text.= "<tr class='SDescription SIndent2$mark'>";
       $text.= "<td class='SDescription'>{$row['part']}</td>";
@@ -865,7 +865,7 @@ function i_doc_show_lang($chapter,$section,$class) {
            ORDER BY part";
     $res= mysql_qry($qry);
     $n= 1;
-    while ( $res && ($row= mysql_fetch_assoc($res)) ) {
+    while ( $res && ($row= pdo_fetch_assoc($res)) ) {
       $mark= $n++%2 ? ' SMarked' : '';
       $text.= "<tr class='SDescription SIndent2$mark'>";
       $text.= "<td class='SDescription'><b>{$row['part']}</b></td>";
@@ -888,7 +888,7 @@ function i_doc_show_lang($chapter,$section,$class) {
            ORDER BY part";
     $res= mysql_qry($qry);
     $n= 1;
-    while ( $res && ($row= mysql_fetch_assoc($res)) ) {
+    while ( $res && ($row= pdo_fetch_assoc($res)) ) {
       $mark= $n++%2 ? ' SMarked' : '';
       $text.= "<tr class='SDescription SIndent2$mark'>";
       $text.= "<td class='SDescription'><b>{$row['part']}</b></td>";
@@ -928,7 +928,7 @@ function i_doc_show($chapter,$section,$class) {
              WHERE chapter='$chapter' AND section='$section' AND class='$class'
              AND ( elem='class' OR file!='' )";
       $res= mysql_qry($qry);
-      while ( $res && ($row= mysql_fetch_assoc($res)) ) {
+      while ( $res && ($row= pdo_fetch_assoc($res)) ) {
         if ( $row['elem']=='class' ) $text.= $row['text'];
         if ( $row['elem']=='modul' ) $text.= $row['text'];
 //         else if ( $row['text'] ) $text.= $row['text'];
@@ -954,7 +954,7 @@ function i_doc_show($chapter,$section,$class) {
              WHERE chapter='$chapter' AND section='$section' AND elem='class' AND class='$class' ";
       $res= mysql_qry($qry);
       if ( !$res )   return "<div id='Content'>Chybný formát ezer_doc pro $chapter.$section.$class</div>";
-      $row= mysql_fetch_assoc($res);
+      $row= pdo_fetch_assoc($res);
       $extends= $row['extends'];
       $cond= $extends ? "(class='$class' OR FIND_IN_SET(class,'$extends'))" : "class='$class'";
       // přehled atributů se zohledněním Extends (t:)
@@ -972,7 +972,7 @@ function i_doc_show($chapter,$section,$class) {
       $sum.= "<td class='SDescription'>třída</td>";
       $sum.= "</tr>";
       $n= 1;
-      while ( $res && ($row= mysql_fetch_assoc($res)) ) {
+      while ( $res && ($row= pdo_fetch_assoc($res)) ) {
         $name= $row['part'];
         $desc= $row['abstract'].$row['text'];
         $mark= $n++%2 ? ' SMarked' : '';
@@ -1000,7 +1000,7 @@ function i_doc_show($chapter,$section,$class) {
       $sum.= "<td class='SDescription'>třída</td>";
       $sum.= "</tr>";
       $n= 1;
-      while ( $res && ($row= mysql_fetch_assoc($res)) ) {
+      while ( $res && ($row= pdo_fetch_assoc($res)) ) {
         $name= $row['part'];
         $desc= $row['abstract'].$row['text'];
         $mark= $n++%2 ? ' SMarked' : '';
@@ -1027,7 +1027,7 @@ function i_doc_show($chapter,$section,$class) {
       $sum.= "<td class='SDescription'>popis</td>";
       $sum.= "</tr>";
       $n= 1;
-      while ( $res && ($row= mysql_fetch_assoc($res)) ) {
+      while ( $res && ($row= pdo_fetch_assoc($res)) ) {
         list($name,$pi)= explode('/',$row['part']);
         $desc= $row['abstract'];
         $mark= $n++%2 ? ' SMarked' : '';
@@ -1061,7 +1061,7 @@ function i_doc_menu($chapters,$section0,$class0) {
   $qry= "SELECT DISTINCT section FROM $db.ezer_doc2
          WHERE FIND_IN_SET(chapter,'$chapters') GROUP BY sorting,section ";
   $res= mysql_qry($qry);
-  while ( $res && ($row= mysql_fetch_assoc($res)) ) {
+  while ( $res && ($row= pdo_fetch_assoc($res)) ) {
     $section= $row['section'];
     $id= $section ? $section : "...";
     $gr= (object)array('type'=>'menu.group'
@@ -1071,7 +1071,7 @@ function i_doc_menu($chapters,$section0,$class0) {
             WHERE FIND_IN_SET(chapter,'$chapters') AND section='$section'
             GROUP BY class ORDER BY sorting, class";
     $res2= mysql_qry($qry2);
-    while ( $res2 && ($row2= mysql_fetch_assoc($res2)) ) {
+    while ( $res2 && ($row2= pdo_fetch_assoc($res2)) ) {
       $class= $row2['class'];
       $title= $row2['title'] ? $row2['title'] : (
       $class=='fce' ? 'funkce' : (
@@ -1097,13 +1097,13 @@ function i_doc_table_struct($tab,$all=1) {  #trace();
   $row= 0;
   $max_note= 200;
 //   query("SET group_concat_max_len=1000000");
-  $res= @mysql_query("SHOW FULL COLUMNS FROM $tab");
+  $res= @pdo_query("SHOW FULL COLUMNS FROM $tab");
   if ( $res ) {
     $db= sql_query("SHOW TABLE STATUS LIKE '$tab'");
     $html.= $db->Comment ? "{$db->Comment}<br><br>" : '';
     $html.= "<table class='stat' style='width:100%'>";
     $joins= 0;
-    while ( $res && ($c= mysql_fetch_object($res)) ) {
+    while ( $res && ($c= pdo_fetch_object($res)) ) {
       if ( !$row ) {
         // záhlaví tabulky
         $html.= "<tr><th></th><th>Sloupec</th><th>Typ</th><th>Komentář</th></tr>";
@@ -1134,7 +1134,7 @@ function i_doc_table_struct($tab,$all=1) {  #trace();
           // nelze použít GROUP_CONCAT kvůli omezení v ORDER
           $del= '';
           $resd= mysql_qry("SELECT * FROM {$db}_cis WHERE druh='$zkratka' ORDER BY LPAD(5,'0',data)");
-          while ( (!$strip || strlen($note)<$max_note) && $resd && ($d= mysql_fetch_object($resd))){
+          while ( (!$strip || strlen($note)<$max_note) && $resd && ($d= pdo_fetch_object($resd))){
             if ( $d->hodnota != '---' ) {
               $popis= $d->hodnota ?: $d->zkratka;
               $note.= "$del{$d->data}:$popis";

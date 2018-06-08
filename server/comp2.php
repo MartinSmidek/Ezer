@@ -327,7 +327,7 @@ function dbg_context_load ($ctx) {  #trace();
   $log= "";
 //   $debugger= true;
   // části funkce comp2:comp_file
-  require_once("ezer3/server/comp2.php");
+  require_once("ezer3.1/server/comp2.php");
   global $debugger, $ezer, $json, $ezer_path_appl, $ezer_path_code, $ezer_path_root, $including,
     $code, $module, $procs, $context, $ezer_name, $ezer_app, $tree, $errors, $includes, $onloads;
   global $call_php;

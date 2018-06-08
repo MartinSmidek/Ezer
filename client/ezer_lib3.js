@@ -178,7 +178,7 @@ function dbg_onshiftclick(block) {
       var x= ltwh.split(',');
       var position= 'left='+x[0]+',top='+x[1]+',width='+x[2]+',height='+x[3];
       Ezer.sys.dbg.win_ezer= window.open(
-        `./ezer3/dbg3.php?err=1&app=${pos.app}&src=${fname}&pick=${line}`,'dbg',
+        `./ezer3.1/dbg3.php?err=1&app=${pos.app}&src=${fname}&pick=${line}`,'dbg',
         position+',resizable=1,titlebar=0,menubar=0');
       if ( Ezer.sys.dbg.win_ezer ) {
         Ezer.sys.dbg.file= pos.file;
@@ -407,7 +407,7 @@ function ask3(x,then) {
   x.root= Ezer.root;                  // název/složka aplikace
   x.app_root= Ezer.app_root;          // {root].inc.php je ve složce aplikace
   jQuery.ajax({
-    url: 'ezer3/server/ezer3.php',
+    url: 'ezer3.1/server/ezer3.php',
     method: 'POST',
     data: x
   })
