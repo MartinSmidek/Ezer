@@ -40,5 +40,7 @@ server/ezer_pdo.php -text
 server/ezer_pdo_1.php -text
 server/file_send.php -text
 server/get_oauth_token.php -text
+server/licensed/ezer_tcpdf.php -text
+server/licensed/ezer_wiki.php -text
 server/reference.php -text
 server/sys_doc.php -text

@@ -165,10 +165,14 @@ function pdo_real_escape_string($inp) {
 function pdo_query($query) {
   global $ezer_db, $curr_db;
   $pdo= $ezer_db[$curr_db][0];
-  if ( preg_match('/^\s*(SET|INSERT|UPDATE)/',$query) ) 
-    return $pdo->exec($query);
-  else
-    return $pdo->query($query);
+  if ( preg_match('/^\s*(SET|INSERT|UPDATE)/',$query) ) {
+    $res= $pdo->exec($query);
+    $res= $res === 0 ? 1 : $res;
+  }
+  else {
+    $res= $pdo->query($query);
+  }
+  return $res;
 }
 function pdo_insert_id() {              
   global $ezer_db, $curr_db;
