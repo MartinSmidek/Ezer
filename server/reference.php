@@ -228,7 +228,7 @@ function i_glob($mask) {
 # převod z formátu wiki, používaného pro dokumentaci do html kódu
 function wiki2html ($wiki) {
   global $ezer_path_serv;
-  require_once("$ezer_path_serv/licensed/class_WikiParser.php");
+  require_once("$ezer_path_serv/licensed/ezer_wiki.php");
   $css= array (
     '<h1>'  => "<div class='CModule'><h3 class='CTitle'>",
     '</h1>' => "</h3 ></div>",
@@ -245,7 +245,7 @@ function wiki2html ($wiki) {
     '<dd>'  => "<td class='CDLDescription'>",
     '</dd>' => "</td></tr>",
   );
-  $parser= new WikiParser();
+  $parser= new EzerWiki();
   $parser->reference_wiki = '';
   $parser->image_uri = './';
   $parser->ignore_images = false;
@@ -261,9 +261,9 @@ function i_doc_app($fnameslist,$chapter,$to_save=true) { trace();
 //                                                 display("i_doc_app($fnameslist,$chapter,$to_save)");
   global $i_doc_info, $i_doc_class, $i_doc_id, $i_doc_ref, $i_doc_err, $i_doc_n, $i_doc_file;
   global $i_doc_text, $form, $map, $ezer_path_root,$ezer_path_serv;
-  require_once("$ezer_path_serv/licensed/class_WikiParser.php");
+  require_once("$ezer_path_serv/licensed/ezer_wiki.php");
   global $mysql_db; $db= $mysql_db;
-  $parser= new WikiParser();
+  $parser= new EzerWiki();
   $parser->reference_wiki = '';
   $parser->image_uri = './';
   $parser->ignore_images = false;
@@ -451,7 +451,7 @@ function i_doc_line($ln) {
 //                                         if ( $t[0]=='i' ) display("=$i_doc_ref");
     $info= trim(str_replace("\r",'',$ln[4]));
     $t= substr($typ,0,strpos($typ,':'));
-    if ( strstr('oifc',$t[0]) ) {
+    if ( $t[0] && strstr('oifc',$t[0]) ) {
       // zpracování začátku popisu elementu tj.
       //c: třída [ popis]
       //i: [třída.]událost [ popis]
@@ -740,8 +740,8 @@ function i_doc_lang() { //trace();
   require_once("$ezer_path_serv/comp2def.php");
   require_once("$ezer_path_serv/comp2.php");
   compiler_init();
-  require_once("$ezer_path_serv/licensed/class_WikiParser.php");
-  $parser= new WikiParser();
+  require_once("$ezer_path_serv/licensed/ezer_wiki.php");
+  $parser= new EzerWiki();
   $parser->reference_wiki = '';
   $parser->image_uri = './';
   $parser->ignore_images = false;

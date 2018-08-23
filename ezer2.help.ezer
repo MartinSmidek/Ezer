@@ -20,7 +20,7 @@ panel apl [,,770,] {type:'right', title:'Dokumentace', _sys:'dok'
     var g: object
     m.attach_code(ask('i_doc_menu','application','',''));
     g.set(m.part('menu.group',1));
-    g.get; g.part('item',1); g.part('item',1).click
+    g.get; g.part('item',1); g.part('item',1).click(1)
   | u.fill("Dokumentace není vygenerována")
   }
 }
@@ -32,7 +32,15 @@ panel ref [,,770,] {type:'right', title:'Reference', _sys:'*', skill:'m'
     }
   }
   use u: form f [0,0,,]
-  proc onstart() { m.attach_code(ask('i_doc_menu','reference','','')) }
+//  proc onstart() { m.attach_code(ask('i_doc_menu','reference','','')) }
+  proc onfirstfocus() { set_apl_menu }  // nesmí být v onstart
+  proc set_apl_menu() {
+    var g: object
+    m.attach_code(ask('i_doc_menu','reference','',''));
+    g.set(m.part('menu.group',1));
+    g.get; g.part('item',1); g.part('item',1).click(1)
+  | u.fill("Reference není vygenerována")
+  }
 }
 # =======================================================================================> Struktura
 panel str [,,770,] {type:'right', title:'Struktura', _sys:'*', skill:'m'

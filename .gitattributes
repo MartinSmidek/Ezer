@@ -34,6 +34,8 @@ client/wiki.css -text
 /ezer2_fce.php -text
 /ezer_ajax.php -text
 /ezer_main.php -text
+/mysql.inc.php -text
+/pdo.inc.php -text
 server/ae_slib.php -text
 server/comp2.php -text
 server/comp2def.php -text

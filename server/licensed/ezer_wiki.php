@@ -34,7 +34,7 @@
  *
  */
 
-class WikiParser {
+class EzerWiki {
 	
 	function WikiParser() {
 		$this->reference_wiki = '';

@@ -35,9 +35,22 @@
     session_unset();
     session_start();
   }
+  $_SESSION[$app]['GET']= $_GET;
   $_SESSION[$app]['ezer']= '3.1';
 
-  $_SESSION[$app]['GET']= array();
+  // přepínač pro fáze migrace pod PDO - const EZER_PDO_PORT=1|2|3
+  session_start();
+  if ( isset($_GET['pdo']) && $_GET['pdo']==2 ) {
+    require_once("pdo.inc.php");
+    $_SESSION[$app]['pdo']= 2;
+  }
+  else {
+    require_once("mysql.inc.php");
+    $_SESSION[$app]['pdo']= 1;
+  }
+  
+  // doplnění jména aplikace o verzi ezer a db
+  $app_name.=  " 3.1.".EZER_PDO_PORT;
 
   // nastavení cest
   $abs_root= $abs_roots[$ezer_local];
@@ -99,6 +112,7 @@
   // nastavení jádra
   $options= (object)array(              // přejde do Ezer.options...
     'curr_version' => 0,                // při přihlášení je nahrazeno nejvyšší ezer_kernel.version
+    'curr_users' => 1,                  // zobrazovat v aktuální hodině aktivní uživatele
     'path_files_href' => "'$path_files_href'",  // relativní cesta do složky docs/{root}
     'path_files_s' => "'$path_files_s'",        // absolutní cesta do složky docs/{root}
     'path_files_h' => "'$path_files_h'",        // absolutní cesta do složky ../files/{root}

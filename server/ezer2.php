@@ -4,6 +4,7 @@
   # globální objekty ($json bude v PHP6 zrušeno)
   global $app_root, $ezer_root, $ezer_path_serv, $ezer_path_appl, $ezer_path_root, $ezer_db, $ezer_system, $hash_password;
   global $json, $USER, $EZER, $ezer_user_id;
+  date_default_timezone_set("Europe/Prague");
 //   if ( $_POST['app_root'] ) chdir("..");
   # --------------------------------------------------------------------------------------- requires
   # vložení a inicializace balíků

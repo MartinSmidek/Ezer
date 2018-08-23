@@ -12,6 +12,14 @@
   
   global $ezer_root;
 
+  // přepínač pro fáze migrace pod PDO !!! tentýž musí být v $app.php
+  if ( $_SESSION[$ezer_root]['pdo']==2 ) {
+    require_once("pdo.inc.php");
+  }
+  else {
+    require_once("mysql.inc.php");
+  }
+
   // nastavení zobrazení PHP-chyb klientem při &err=1
   if ( isset($_GET['err']) && $_GET['err'] ) {
     error_reporting(E_ALL ^ E_NOTICE);
@@ -47,7 +55,7 @@
   // specifické cesty
 
   // moduly interpreta zahrnuté do aplikace - budou zpracovány i reference.i_doc pro tabulky kompilátoru
-  $ezer_comp_ezer= "ezer_app3,ezer3,ezer_area3,ezer_rep3,ezer_fdom3";
+  $ezer_comp_ezer= "ezer_app3,ezer3,ezer_area3,ezer_rep3,ezer_lib3,ezer_tree3";
   
   // moduly v Ezerscriptu mimo složku aplikace
   $ezer_ezer= array();
