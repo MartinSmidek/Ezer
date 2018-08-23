@@ -804,7 +804,7 @@ class Application {
       : '';
     var hm= ae_time();
     if ( zbyva )
-      this.domUser.html(" ... <span title='minut do odhlášení'>"
+      this.domUser.html(hm+' '+abbr+" ... <span title='minut do odhlášení'>"
         +(Ezer.App.options.login_interval-this.clock_tics)+' min</span> ... &nbsp;');
     else
       this.domUser.html(hm+' '+abbr);
@@ -3240,10 +3240,10 @@ Ezer.fce.set_cookie= function (id,val='',form=null,refs=null) {
 //   val - hodnota
 //s: funkce
 Ezer.fce.get_cookie= function (id,val,form,refs) {
-//   var ret= Cookie.read(id)||String(val)||'';
   let escapeRE= id.replace(/([-.*+?^${}()|[\]\/\\])/g,'\\$1'),
       ret= document.cookie.match('(?:^|;)\\s*' + escapeRE + '=([^;]*)');
   ret= ret ? decodeURIComponent(ret[1]) : null;
+  if ( !ret) ret= String(val)||'';
   if ( ret && form ) {
     if ( form.type=='var' ) form= form.value;
     Ezer.assert(form.type=='form','get_cookie 2.typu musí mít jako 3.parametr formulář');
@@ -3332,7 +3332,7 @@ Ezer.fce.strip_tags= function (input,allowed) {
 Ezer.fce.contains= function (x,list,sep) {
   var ok= 0;
   if ( Array.isArray(list) )
-    ok= list.includes(x) ? 1 : 0;
+    ok= list.includes(x) ? 1 : (list.includes(Number(x)) ? 1 : 0);
   else if ( typeof(list)=='string' )
     ok= contains(list,x,sep) ? 1 : 0;
   return ok;
@@ -3602,7 +3602,9 @@ Ezer.fce.fdate= function (format,datetime) {
     case 'n':  y= d.getMonth()+1; break;
     case 'j':  y= d.getDate(); break;
     case 'w':  y= d.getDay(); break;
-    case 'W':  y= d.get('week'); break;
+    case 'W':  var j1 = new Date(d.getFullYear(),0,1);
+               y= Math.ceil((((d.getTime() - j1.getTime()) / 86400000) + j1.getDay()+1)/7);
+               break;
     case 't':  y= d.get('LastDayOfMonth'); break;
     case 'H':  y= padNum(d.getHours(),2); break;
     case 'i':  y= padNum(d.getMinutes(),2); break;
@@ -4177,8 +4179,10 @@ Ezer.fce.confirm= function (...msgs) {
 Ezer.fce._confirm= function (res) {
   // konec modálního dialogu - jeho hodnotu (pro confirm 0/1) dej na zásobník
   var x= Ezer.modal_fce.pop();
-  x.stack[++x.top]= res;
-  x.eval.apply(x,[x.step,true]);
+  if ( x ) {
+    x.stack[++x.top]= res;
+    x.eval.apply(x,[x.step,true]);
+  }
   return 1;
 };
 // -------------------------------------------------------------------------------------- prompt2
@@ -4446,7 +4450,7 @@ Ezer.fce.touch= function (type,block,args) {
  server_write:
   if ( Ezer.sys.user.id_user ) {
     var to_send= false, to_logout= false;
-    var x= {cmd:'touch',user_id:Ezer.sys.user.id_user,user_abbr:Ezer.sys.user.abbr};
+    var x= {cmd:'touch',user_id:Ezer.sys.user.id_user,user_abbr:Ezer.sys.user.abbr,menu:'$'};
     x.root= Ezer.root;                  // název/složka aplikace
     x.app_root= Ezer.app_root;          // {root].inc je ve složce aplikace
     x.session= Ezer.options.session;    // způsob práce se SESSION
@@ -4495,17 +4499,19 @@ Ezer.fce.touch= function (type,block,args) {
         // čitelná cesta ke kořenu zapamatovaného bloku
         var id= Ezer.App.hits_block.self_sys().sys;
         Ezer.App.hits_block= block_sys;
-        Ezer.App.hits_block_id= id;
+        Ezer.App.hits_block_id= id||'$';
         to_send= true;
       }
       // nebo po Ezer.sys.ezer.activity.touch_limit počtu dotyků
       else if ( Ezer.App.hits > Ezer.sys.ezer.activity.touch_limit ) {
         to_send= true;
       }
-      if ( !Ezer.App.hits_block )
+      if ( !Ezer.App.hits_block ) {
         Ezer.App.hits_block= block_sys;
+        to_send= true;
+      }
       x.module= type;
-      x.menu= Ezer.App.hits_block_id;
+      x.menu= Ezer.App.hits_block_id||'$';
       break;
     case 'error':
       x.module= type;
@@ -4527,7 +4533,7 @@ Ezer.fce.touch= function (type,block,args) {
       else {
         // zapiš přechozí blok
         x.module= 'block';
-        x.menu= Ezer.App.hits_block_id;
+        x.menu= Ezer.App.hits_block_id||'$';
       }
       x.hits= Ezer.App.hits-1;                    // zapiš hits (poslední patřil dalšímu)
       Ezer.App.hits= 1;                           // zapomeň je
@@ -4546,7 +4552,11 @@ Ezer.fce.touch= function (type,block,args) {
         x.logout ? function() {
           window.location.reload(true);
         }
-        : null});
+          : null,
+        error: function(xhr) {
+          Ezer.fce.echo('unable to hit')
+        }
+      });
     }
   }
   return true;
@@ -5013,7 +5023,7 @@ Ezer.fce.DOM.confirm= function (str,continuation,butts,options) {
       };
   popup.find('div.pop_head').text(options && options.heading||'Upozornění');
   popup.find('div.pop_body').html(str);
-  if ( options.input ) {
+  if ( options.input!==undefined ) {
     // add input field
     var input= jQuery(`<input type="text" value="${options.input}"></input>`)
       .appendTo('#popup3 div.pop_tail');

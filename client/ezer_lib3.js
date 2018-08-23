@@ -307,7 +307,7 @@ function ae_datum(time,sql) {
 // ---------------------------------------------------------------------------------------- time2ymd
 // převede datum typu "d.m.y h:m:s" na pole [y,m,d,h,m,s]
 function ae_time2ymd (dmy) {
-  var y, m, d, s= [];
+  var y, yh, m, d, s= [];
   if ( dmy.length > 0 ) {
     dmy= dmy.split('.');
     // den může být předeslán jménem dne v týdnu
@@ -315,16 +315,17 @@ function ae_time2ymd (dmy) {
     d= parseInt(d[d.length-1],10);
     m= parseInt(dmy[1],10);
     // rok může být následován časem
-    y= dmy[2].split(' ');
-    if (y[1]) {
-      var hms= y[1].split(':');
+    yh= dmy[2].split(' ');
+    y= parseInt(yh[0]);
+    if (yh[1]) {
+      var hms= yh[1].split(':');
       if ( hms.length==3 )
-        s= [y[0],m,d,hms[0],hms[1],hms[2]];
+        s= [y,m,d,parseInt(hms[0]),parseInt(hms[1]),parseInt(hms[2])];
       else
-        s= [y[0],m,d,hms[0],hms[1]];
+        s= [y,m,d,parseInt(hms[0]),parseInt(hms[1])];
     }
     else
-      s= [y[0],m,d];
+      s= [y,m,d];
   }
   return s;
 }

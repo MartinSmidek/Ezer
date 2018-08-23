@@ -1,8 +1,6 @@
 // Ezer3.1 - část nezávislá na jQuery 
 /* global Ezer, Function, google, gapi, args, CKEDITOR */ // pro práci s Netbeans
 "use strict";
-// <editor-fold defaultstate="collapsed" desc="++++++++++++++++++++++++++ EZER objekty">
-// Tento modul abstrahuje od konkrétní DOM-reprezentace
 // 'DOM' je vlastnost se kterou se smí pracovat jen jako s celkem
 // (aby v některé implementaci mohla být objektem)
 // ====================================================================================> Dokumentace
@@ -217,7 +215,7 @@ class Block {
         break;
       if ( o.options._sys ) {
         id= (o.options._sys=='*'?o.id:o.options._sys)+(id ? '.'+id : '');
-        tit= (Ezer.fce.strip_tags(o.options.title)||'') + (tit ? '|'+tit : '');
+        tit= (Ezer.fce.strip_tags(o.options.title||'')) + (tit ? '|'+tit : '');
         tit= Ezer.fce.replace(tit,"\\[fa-[^\\]]+\\]",'');
       }
     }
@@ -1750,7 +1748,7 @@ class MenuLeft extends Menu {
       // remember menu status
       this.owner._folded= this.awesome==2;
       // add folding icon for format:'f' (foldable + font icons)
-      this.fold= jQuery('<i class="fa fa-caret-square-o-left"></i>')
+      this.fold= jQuery('<i class="fa fa-caret-square-o-right"></i>')
         .appendTo(this.DOM_Block)
         .click( e => {
           this.DOM_click(this.awesome==2 ? 1 : 2);
@@ -2143,8 +2141,11 @@ class Tabs extends Block {
   _addPanel (panel) {
     var href= make_url_menu([panel.owner.id,panel.id]); 
     var title= panel.options.title||panel.id;
+    var key= panel.owner.id+'.'+panel.id, sub;
     title= title.replace(/\[fa-([^\]]+)\]/g,"<i class='fa fa-$1'></i>");
-    panel.DOM_li= jQuery(`<li class='Pasive'><a>${title}</a></li>`)
+    sub= key && Ezer.sys.ezer.help_keys.split(',').includes(key)
+      ? "<sub> ?</sub>" : '';
+    panel.DOM_li= jQuery(`<li class='Pasive'><a>${title}${sub}</a></li>`)
       .appendTo(this.DOM_Block)
       .click( el => {
         if ( el.shiftKey ) return dbg_onshiftclick(panel); /* panel */
@@ -2303,7 +2304,7 @@ class Panel extends Block {
 
   }
 // ------------------------------------------------------------------- DOM add2
-DOM_add2 () {
+  DOM_add2 () {
     if ( this.options.css )
       jQuery(this.DOM_Block).addClass(this.options.css);
     if ( this.options.style ) {
@@ -2328,6 +2329,8 @@ DOM_add2 () {
   _show (l,t,noevent) {
     this.DOM.show();
     if ( this.DOM_li ) this.DOM_li.addClass('Active').removeClass('Pasive');
+    if ( l!==undefined ) this.DOM.css('left',l);
+    if ( t!==undefined ) this.DOM.css('top',t);
     if ( !noevent && this.part ) {
       // rozhodneme, zda volat onfirstfocus nebo onfocus
       if ( this.virgin ) {
@@ -6556,26 +6559,28 @@ class Select extends Elem {
 
     this.DOM_Input
       .focus ( event => {
-        if ( this.options.par && this.options.par.subtype=='browse' && this.Items[0]=='?' )
-          this.owner._start2();         // owner obsahuje Show pokud je do něj vnořeno
-        Ezer.fce.touch('block',this,'focus');   // informace do _touch na server
-        event.target.select();
-        this.DOM_usedkeys= false;
-        this.DOM_drop_show(true);
-        this.DOM_Block.css('zIndex',999);
-        if ( this.multi ) {     // multiselect
-          for (let li of this.DOM_DropList.find('li')) {
-            li= jQuery(li);
-            if ( this._key.indexOf(li.prop('value'))!=-1 )
-              li.addClass('li-sel');
-            else {
-              li.removeClass('li-sel');
+        if ( this.DOM_DropList.css('display')=='none') {
+          if ( this.options.par && this.options.par.subtype=='browse' && this.Items[0]=='?' )
+            this.owner._start2();         // owner obsahuje Show pokud je do něj vnořeno
+          Ezer.fce.touch('block',this,'focus');   // informace do _touch na server
+          event.target.select();
+          this.DOM_usedkeys= false;
+          this.DOM_drop_show(true);
+          this.DOM_Block.css('zIndex',999);
+          if ( this.multi ) {     // multiselect
+            for (let li of this.DOM_DropList.find('li')) {
+              li= jQuery(li);
+              if ( this._key.indexOf(li.prop('value'))!=-1 )
+                li.addClass('li-sel');
+              else {
+                li.removeClass('li-sel');
+              }
             }
           }
+          this.DOM_focus(true);
+          this.fire('onfocus',[]);
+          this.value= this._value= this.DOM_Input.val();  // pro změny klávesnicí
         }
-        this.DOM_focus(true);
-        this.fire('onfocus',[]);
-        this.value= this._value= this.DOM_Input.val();  // pro změny klávesnicí
       })
       .blur (event => {
         if ( !this.multi && this._drop_status==1 ) {
@@ -6834,6 +6839,7 @@ class Select extends Elem {
             this.DOM_Input.focus();
             if ( event.ctrlKey ) {
               this._drop_status= 2;
+              this.DOM_changed(0);
               li.toggleClass('li-sel');
               this.DOM_seekItems(true);
             }
@@ -9980,5 +9986,4 @@ class Show extends Elem {
       : this.DOM_qry[i].val('');
   }
 }
-// </editor-fold>
 

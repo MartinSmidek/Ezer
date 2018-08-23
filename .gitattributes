@@ -19,6 +19,12 @@ client/img/ezer.gif -text
 client/img/mootree.gif -text
 client/img/mootree_white.gif -text
 client/img/spinner.gif -text
+client/licensed/jquery-ui.min.css -text
+client/licensed/jquery-ui.min.js -text
+client/licensed/jquery.touchSwipe.min.js -text
+client/licensed/pikaday/pikaday.css -text
+client/licensed/pikaday/pikaday.js -text
+client/wiki.css -text
 /comp.css -text
 /comp.php -text
 /dbg3.php -text
