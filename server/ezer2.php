@@ -720,7 +720,7 @@
       }
       // seznam čtených polí
       foreach ($x->fields as $desc) {
-        if ( $desc->expr ) {
+        if ( isset($desc->expr) ) {
           $f= $desc->id;
           $fields.= "$del{$desc->expr} as {$desc->id}";
         }
