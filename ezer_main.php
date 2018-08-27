@@ -39,7 +39,6 @@
   $_SESSION[$app]['ezer']= '3.1';
 
   // přepínač pro fáze migrace pod PDO - const EZER_PDO_PORT=1|2|3
-  session_start();
   if ( isset($_GET['pdo']) && $_GET['pdo']==2 ) {
     require_once("pdo.inc.php");
     $_SESSION[$app]['pdo']= 2;
@@ -116,6 +115,7 @@
     'path_files_href' => "'$path_files_href'",  // relativní cesta do složky docs/{root}
     'path_files_s' => "'$path_files_s'",        // absolutní cesta do složky docs/{root}
     'path_files_h' => "'$path_files_h'",        // absolutní cesta do složky ../files/{root}
+    'server_url'   => "'$http_rel_root/{$EZER->version}/server/ezer2.php'"
   );
 
   $pars= (object)array(
@@ -124,6 +124,7 @@
     'dbg' => $dbg,                                              
     'watch_ip' => false,
     'watch_key' => false,
+    'log_login' => true,        // jádro standardně zapisuje login do _touch (jako ve verzi 2.2)
     'CKEditor' => "{
       version:'$CKEditor',
       EzerHelp2:{
