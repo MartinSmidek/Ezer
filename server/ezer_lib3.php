@@ -35,6 +35,7 @@
 #     no_local             -- bool: nezohledňovat lokální přístup pro watch_key,watch_ip
 #     watch_key            -- bool: povolit přístup jen po vložení klíče
 #     watch_ip             -- bool: povolit přihlášení pouze z IP adres v tabulce _user (default false)
+#     log_login            -- bool: zapisovat přihlašování do _touch (default true)
 #     autologin            -- string: dvojice uname/pword použitá pro automatické přihlášení
 #     contact              -- string: alternativní kontaktní údaje při přihlášení
 #     news_days            -- int: počet dnů pro novinky (default 12)

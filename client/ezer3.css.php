@@ -482,15 +482,15 @@ div.BrowseSmart div.BrowsePosuv3 {
 div.BrowseSmart div.BrowsePosuv3 span.BrowseHandle3 {
   width:14px; padding:0; margin:0; border:none; left:1px;
   background:
-    url(./skins/default/browse_handle_dn.png) bottom no-repeat,
-    url(./skins/default/browse_handle_up.png) top no-repeat,
-    url(./skins/default/browse_handle_mi.png) repeat;
+    url($path/browse_handle_dn.png) bottom no-repeat,
+    url($path/browse_handle_up.png) top no-repeat,
+    url($path/browse_handle_mi.png) repeat;
  }
 div.BrowseSmart div.BrowsePosuv3 span.BrowseHandle3:hover {
   background:
-    url(./skins/default/browse_handle_dn.png) bottom no-repeat,
-    url(./skins/default/browse_handle_up.png) top no-repeat,
-    url(./skins/default/browse_handle_act_mi.png) repeat;
+    url($path/browse_handle_dn.png) bottom no-repeat,
+    url($path/browse_handle_up.png) top no-repeat,
+    url($path/browse_handle_act_mi.png) repeat;
 }
 div.BrowseSmart td.BrowsePosuv3 { padding:0; }
 
