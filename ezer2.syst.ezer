@@ -45,7 +45,7 @@ panel cis [,,,*] {type:'right', title:'Číselníky', _sys:'cis', skill:'m|m'
   var novy: text,
   var cis_druh: text,
   var cis_id: number
-  proc onstart () {
+  proc onfirstfocus () {
     druh_cond.set("druh='_meta_'");
     cis_druh.set('_meta_');
     reload_meta }
