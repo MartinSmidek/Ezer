@@ -11,7 +11,7 @@
  * $rel_roots     - [server,local]
  * $add_pars      - (array) doplní resp. přepíše obsah $pars
  */
-  global $ezer_root;
+  global $ezer_local, $ezer_root;
   $ezer_root= $app_root;
   
   // nastavení zobrazení PHP-chyb klientem při &err=1
@@ -20,8 +20,8 @@
     ini_set('display_errors', 'On');
   }
 
-  // rozlišení lokální a ostré verze
-  $ezer_local= preg_match('/^\w+\.bean$/',$_SERVER["SERVER_NAME"])?1:0;
+//  // rozlišení lokální a ostré verze
+//  $ezer_local= preg_match('/^\w+\.bean$/',$_SERVER["SERVER_NAME"])?1:0;
 
   // parametry aplikace
   $app= $app_root;

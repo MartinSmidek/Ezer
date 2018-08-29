@@ -10,7 +10,7 @@
  
   const EZER_version= 3.1;
   
-  global $ezer_root;
+  global $ezer_local, $ezer_root;
 
   // přepínač pro fáze migrace pod PDO !!! tentýž musí být v $app.php
   if ( $_SESSION[$ezer_root]['pdo']==2 ) {
@@ -29,8 +29,8 @@
   // test přístupu z jádra
   if ( $_POST['root']!=$ezer_root ) die('POST PROBLEM'); 
 
-  // identifikace ladícího serveru
-  $ezer_local= preg_match('/^\w+\.bean$/',$_SERVER["SERVER_NAME"])?1:0;
+//  // identifikace ladícího serveru
+//  $ezer_local= preg_match('/^\w+\.bean$/',$_SERVER["SERVER_NAME"])?1:0;
 
   // cesty
   $abs_root= $_SESSION[$ezer_root]['abs_root'];

@@ -2063,8 +2063,8 @@ class Tabs extends Block {
           Ezer.assert(panel instanceof Panel,'"'+ids[0]+'.'+id+'" v parametru menu neoznačuje panel');
         }
       }
-      else if ( this.options.active && this.active ) {
-        let panel= null, path;
+      else if ( this.options.active /*&& this.active*/ ) {
+        let path;
         if ( this.options.active=='*' ) {
           if ( Ezer.sys.user.options && Ezer.sys.user.options.context &&
             (path= Ezer.sys.user.options.context[Ezer.root]) ) {
