@@ -1675,7 +1675,7 @@ class Eval {
 
     Ezer.evals++;                       // zahájené volání
     this.process= ++Ezer.process;       // číslo vlákna
-    Ezer.fce.DOM.warning();             // konec případného warningu
+
     this.context= context;
 //                                                 Ezer.trace('T','eval    '+context.type);
     if ( context && context.oneval ) {
@@ -5048,7 +5048,8 @@ Ezer.fce.DOM.alert= function (str,continuation,options) {
   return Ezer.fce.DOM.confirm(str,continuation,[{tit:'Ok',val:1}],options);
 };
 // -------------------------------------------------------------------------------------- warning
-// zobrazí varovnou hlášku místo případné staré
+// zobrazí varovnou hlášku na cca 10 sec, případně ji připojí nad ještě zobrazenou starší
+Ezer.obj.DOM.warning= {interval:10000,wait:null};
 Ezer.fce.DOM.warning= function (str) {
   if ( !str ) {
     if ( Ezer.App.mooWarn ) {
@@ -5061,9 +5062,18 @@ Ezer.fce.DOM.warning= function (str) {
     if ( !Ezer.App.mooWarn )
       alert(str);
     else {
+      if ( Ezer.obj.DOM.warning.wait ) {
+        clearTimeout(Ezer.obj.DOM.warning.wait);
+        if ( Ezer.App.mooWarn.html() ) {
+          str+= '<hr>'+Ezer.App.mooWarn.html();
+        }
+      }
       Ezer.App.mooWarn
         .html(str)
         .slideDown();
+      Ezer.obj.DOM.warning.wait= setTimeout(function(){
+        Ezer.App.mooWarn.html('').slideUp();
+      }, Ezer.obj.DOM.warning.interval);
     }
   }
 };
