@@ -6489,7 +6489,7 @@ class Select extends Elem {
          <div>
            <input type="text" style="width:${this._w-(img ? 20 : 0)}px;height:${this._h-4}px" />
          </div>
-         <ul style="display:none"></ul>
+         <ul style="display:none" ${this.multi ? "title='použij CTRL pro změnu'" : ''}></ul>
        </div>`)
       .css(this.coord())
       .appendTo(this.owner.DOM_Block ? this.owner.DOM_Block : this.owner.value.DOM_Block)
@@ -6583,11 +6583,11 @@ class Select extends Elem {
         }
       })
       .blur (event => {
-        if ( !this.multi && this._drop_status==1 ) {
+//        if ( !this.multi && this._drop_status==1 ) {
           this.blur();
           this.DOM_drop_hide();
           this.DOM_blur();
-        }
+//        }
       })
       .change ( () => {
         if ( this._fc('t') )

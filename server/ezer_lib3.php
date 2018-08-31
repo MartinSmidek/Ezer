@@ -118,10 +118,10 @@ __EOD;
     // promítnutí nastavení do SESSION
     $gc_maxlifetime= isset($pars->gc_maxlifetime) ? $pars->gc_maxlifetime : 12*60*60;
     $session= "php";                      // standardní práce se SESSION
-    //You cannot change the session module's ini settings at this time i                      //TODO
-//    ini_set('session.gc_maxlifetime',$gc_maxlifetime);
-//    if ( !isset($_SESSION) ) session_start();
-//    $_SESSION['gc_maxlifetime']= $gc_maxlifetime;
+    ini_set('session.gc_maxlifetime',$gc_maxlifetime);
+    if ( !isset($_SESSION) ) session_start();
+    $_SESSION['gc_maxlifetime']= $gc_maxlifetime;
+
     if ( isset($_GET['session']) ) {             // zobraz stav session hned po startu
       $info= $_SESSION;
     }
