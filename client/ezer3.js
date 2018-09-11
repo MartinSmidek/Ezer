@@ -6583,11 +6583,9 @@ class Select extends Elem {
         }
       })
       .blur (event => {
-//        if ( !this.multi && this._drop_status==1 ) {
-          this.blur();
+          this.blur();              // metoda Elem, vyvolá onblur, případně onchanged
           this.DOM_drop_hide();
           this.DOM_blur();
-//        }
       })
       .change ( () => {
         if ( this._fc('t') )
@@ -6608,9 +6606,12 @@ class Select extends Elem {
           this.DOM_usedkeys= true;
           switch (event.keyCode) {
           case 45: // 'insert':
+            if ( this.multi ) {
             this._drop_status= 2;
+              this.DOM_changed(1,this._fc('t')); // když není format:'t' se zvýrazněním změny
             li.toggleClass('li-sel');
             this.DOM_seekItems(true);
+            }
             break;
           case 38:                      // ----- up
             li= li.prev();
@@ -6618,7 +6619,8 @@ class Select extends Elem {
               li0.removeClass('selected');
               li.addClass('selected');
               li.Ezer_scrollIntoView();
-              this.DOM_showItem(li);
+              if ( !this.multi )
+                this.DOM_showItem(li);
             }
             else if (!li0.length) {
               let lis= this.DOM_DropList.find('li');
@@ -6634,7 +6636,8 @@ class Select extends Elem {
               li0.removeClass('selected');
               li.addClass('selected');
               li.Ezer_scrollIntoView();
-              this.DOM_showItem(li);
+              if ( !this.multi )
+                this.DOM_showItem(li);
             }
             else if (!li0.length) {
               let lis= this.DOM_DropList.find('li');
@@ -6680,7 +6683,7 @@ class Select extends Elem {
               this._key= 0;
             this.change();
           }
-          else {
+          else if ( !this.multi ) {
             this.DOM_changed(0);     // když byla změna vrácena
           }
           if ( this._value!=this.DOM_Input.val() ) {
@@ -6708,9 +6711,7 @@ class Select extends Elem {
     this._drop_status= 1;
     this._drop_changed= false;
     // zobrazení vybraných položek
-    if ( this.multi ) {
-    }
-    else {
+    if ( !this.multi ) {
       this.DOM_DropList.find(`li`).removeClass('selected');
       this.DOM_DropList.find(`li[value=${this._key}]`).addClass('selected');
       let li= this.DOM_DropList.find('li.selected');
@@ -6719,7 +6720,7 @@ class Select extends Elem {
       }
     }
   }
-// ------------------------------------------------------------------------------------ DOM drop_hide
+// ----------------------------------------------------------------------------------- DOM drop_hide
 // skrytí seznamu a případný signál změny
   DOM_drop_hide (nochange) {
     this.DOM_Block.css('zIndex',1);
@@ -6839,18 +6840,18 @@ class Select extends Elem {
             this.DOM_Input.focus();
             if ( event.ctrlKey ) {
               this._drop_status= 2;
-              this.DOM_changed(0);
+              this.DOM_changed(1,this._fc('t')); // když není format:'t' se zvýrazněním změny
               li.toggleClass('li-sel');
               this.DOM_seekItems(true);
             }
             else {
               this.DOM_seekItems();
-              this.fire('onchanged');
             }
           }
           else {
             this.DOM_seekItem(li);
-            this.fire('onchanged');
+            if ( this._changed )
+              this.fire('onchanged');
           }
           return false;
         })
@@ -6883,7 +6884,6 @@ class Select extends Elem {
 //      které u select vzniká už při výběru alternativy
   DOM_blur () {
     if ( this.DOM_Input ) {
-      this.DOM_Input.blur();
       if ( this.multi ) {    // schová roletu vyvolanou jen klikem na ikonu bez dalšího doteku
         this.DOM_seekItems();
       }
