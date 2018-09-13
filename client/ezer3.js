@@ -4494,7 +4494,7 @@ class LabelMap extends Label {
 // pokud mapy google nejsou dostupné vrací 0
   init (type,options) {
     this.map= null;
-    this.clustering= options && options.clustering ? true : false;
+    this.clustering= options && options.clustering==1 ? true : false;
     var ok= typeof google!="undefined" && google.maps ? 1 : 0;
     if ( ok ) {
       var stredCR= new google.maps.LatLng(49.8, 15.6);
