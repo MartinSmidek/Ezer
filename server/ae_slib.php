@@ -765,9 +765,9 @@ function ezer_browser(&$abbr,&$version,&$platform,$agent=null ) {
   else { $abbr='?'; $version= '?/?'; }
   // identifikace platformy prohlížeče: Android => Ezer.client == 'A'
   $platform=          // x11 hlásí Chrome při vzdáleném ladění (chrome://inspect/#devices)
+    preg_match('/Linux/i',$agent)                  ? 'L' : (
     preg_match('/android|x11/i',$agent)            ? 'A' : (
     preg_match('/iPad/i',$agent)                   ? 'I' : (
-    preg_match('/linux/i',$agent)                  ? 'L' : (
     preg_match('/macintosh|mac os x/i',$agent)     ? 'M' : (
     preg_match('/windows|win32/i',$agent)          ? 'W' : '?'
   ))));
