@@ -346,7 +346,7 @@ class Application {
   }
   // ----------------------------------------------------------------------------- loginDomClose
   loginDomClose  () {
-    jQuery('#login').css('display','none');
+    jQuery('#login').empty(); // místo .css('display','none') m.j. kvůli správci hesel FF
   }
   // ----------------------------------------------------------------------------- bodyClick
   // nastane při kliknutí na html.body
@@ -4470,7 +4470,12 @@ Ezer.fce.touch= function (type,block,args) {
       x.cmd= 'server';
       x.fce= block;
       x.args= args;
-      jQuery.ajax({method:'POST', data:x, url:Ezer.App.options.server_url, success:null});
+      jQuery.ajax({method:'POST', data:x, url:Ezer.App.options.server_url, 
+        success: function(y){
+          if ( y.value )
+            Ezer.fce.echo(y.value)
+        }
+      });
       break;
     case 'logout':
       // odhlásí uživatele

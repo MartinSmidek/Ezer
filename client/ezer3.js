@@ -6392,6 +6392,7 @@ class Select extends Elem {
 //a: init_values : >0 nastaví hodnotu podle atributu value, ==2 označí jako změněné
   init  (init_values) {
     this._key= this.multi ? [] : 0;
+    this.DOM_drop_hide();
     this.DOM_addItems();
     super.init(init_values);
     return true;
@@ -6580,6 +6581,11 @@ class Select extends Elem {
           this.DOM_focus(true);
           this.fire('onfocus',[]);
           this.value= this._value= this.DOM_Input.val();  // pro změny klávesnicí
+          // vytvoření možností autoselect musí být na konci
+          if ( this instanceof SelectAuto ) {
+            this.ask({cmd:'ask',fce:this.options.par.fce,
+              args:[this.DOM_Input.val(),this.options.par],nargs:2},'DOM_newItems');
+          }
         }
       })
       .blur (event => {
@@ -6700,6 +6706,10 @@ class Select extends Elem {
               }
             }
           }
+        }
+        if ( this instanceof SelectAuto && ![38,40,13,27].includes(event.keyCode) ) { //up,down,enter,esc
+          this.ask({cmd:'ask',fce:this.options.par.fce,
+            args:[this.DOM_Input.val(),this.options.par],nargs:2},'DOM_newItems');
         }
       });
   }
@@ -6850,8 +6860,9 @@ class Select extends Elem {
           }
           else {
             this.DOM_seekItem(li);
-            if ( this._changed )
-              this.fire('onchanged');
+//            if ( this._changed ) { -- to by mělo nastat až při blur
+//              this.fire('onchanged');
+//            }
           }
           return false;
         })
@@ -6908,11 +6919,11 @@ class SelectAuto extends Select {
 //                 resp. klíč resp. klíč a ponechat text vyplněného vzoru
 //      ; 'subtype' : rezervované jméno
 //   }
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  initialize
-  constructor (owner,desc,DOM,id,skill) {
-    super(owner,desc,DOM,id,skill);
-    this.DOM_add2();
-  }
+//// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  initialize
+//  constructor (owner,desc,DOM,id,skill) {
+//    super(owner,desc,DOM,id,skill);
+//    this.DOM_add2();
+//  }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  _save
 // interní hodnota uschovávaná na serveru je klíč zobrazené hodnoty nebo zobrazená hodnota
 // v závislosti na hodnotě atributu par.save='key'|'value'. Defaultní je 'value'
@@ -6968,30 +6979,24 @@ class SelectAuto extends Select {
     this.fire('onchanged');
     return 1;
   }
-// =====================================================================================> SelectAuto
-//c: SelectAuto-DOM ([options])
-//      výběrový element formuláře definovaný mapou (blok 'select' typ 'map' atribut 'options')
-//t: Block-DOM,Elem-DOM,Select-DOM
-//s: Block-DOM
-//-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  DOM initialize
   DOM_initialize () {
     this._patt= '';                                    // hodnota zadaná jako vzor
   }
-  DOM_add2 () {
-      this.DOM_Input
-        .focus ( event => {
-          this.fire('onfocus',[]);
-          this.ask({cmd:'ask',fce:this.options.par.fce,
-            args:[this.DOM_Input.val(),this.options.par],nargs:2},'DOM_newItems');
-        })
-        .keyup ( event => {
-          if ( ![38,40,13,27].includes(event.keyCode) ) { //up,down,enter,esc
-            this.ask({cmd:'ask',fce:this.options.par.fce,
-              args:[this.DOM_Input.val(),this.options.par],nargs:2},'DOM_newItems');
-          }
-        });
-  }
+//  DOM_add2 () { -- přesunuto do Select.DOM_add 
+//      this.DOM_Input
+//        .focus ( event => {
+//          this.fire('onfocus',[]);
+//          this.ask({cmd:'ask',fce:this.options.par.fce,
+//            args:[this.DOM_Input.val(),this.options.par],nargs:2},'DOM_newItems');
+//        })
+//        .keyup ( event => {
+//          if ( ![38,40,13,27].includes(event.keyCode) ) { //up,down,enter,esc
+//            this.ask({cmd:'ask',fce:this.options.par.fce,
+//              args:[this.DOM_Input.val(),this.options.par],nargs:2},'DOM_newItems');
+//          }
+//        });
+//  }
 // ------------------------------------------------------------------------------------ DOM showItem
 //      konec select bez zvolené hodnoty
   DOM_showItem (li) {
@@ -7043,6 +7048,7 @@ class SelectAuto extends Select {
   DOM_newItems (y) {
     this.Items= y.value;
     this.DOM_addItems();
+    this.DOM_drop_show();
   }
 }
 

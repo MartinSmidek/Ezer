@@ -1078,8 +1078,8 @@ function sys_bugs($level) {
         ['BUG je opravený',function(el){
             el.style.backgroundColor='#6f6';Ezer.fce.touch('server','sys_day_error',[$id,2]);}],
         ['smazat toto hlášení',function(el){
-            el.style.backgroundColor='#eee';Ezer.fce.touch('server','sys_day_error',[$id,3]);}]
-      ],arguments[0]);return false;">
+            el.style.textDecoration='line-through';Ezer.fce.touch('server','sys_day_error',[$id,3]);}]
+      ],arguments[0],null,null,this);return false;">
       $mark $popis $module $menu</dt><dd>$msg</dd>
 __JS
     ;                                           //<dd>$msg</dd>
@@ -1181,10 +1181,10 @@ function sys_day_errors($skip,$day,$sign='=') {
         ['BUG je opravený',function(el){
             el.style.backgroundColor='#6f6';Ezer.fce.touch('server','sys_day_error',[$id,2]);}],
         ['smazat toto hlášení',function(el){
-            el.style.backgroundColor='#eee';Ezer.fce.touch('server','sys_day_error',[$id,3]);}],
+            el.style.textDecoration='line-through';Ezer.fce.touch('server','sys_day_error',[$id,3]);}],
         ['ukázat plný text v trace',function(el){
-            el.style.backgroundColor='#eee';Ezer.fce.touch('server','sys_day_error',[$id,4]);}]
-      ],arguments[0]);return false;">
+            Ezer.fce.touch('server','sys_day_error',[$id,4]);}]
+      ],arguments[0],null,null,this);return false;">
       $mark $popis $module $menu</dt><dd>$msg</dd>
 __JS
     ;                                           //<dd>$msg</dd>
@@ -1195,8 +1195,10 @@ __JS
 }
 # ------------------------------------------------------------------------------------ sys_day_error
 # callback funkce ze sys_day_errors
+# pro akce=4 vrátí vše o chybě
 function sys_day_error($id,$akce) {
 //                                                 display("sys_day_error($id,$akce)");
+  $y= '';
   switch ( $akce ) {
   case 1:       // označit jako BUG
     $qry= "UPDATE _touch SET level=1 WHERE id_touch=$id";
@@ -1221,11 +1223,11 @@ function sys_day_error($id,$akce) {
     $qry= "SELECT * FROM _touch WHERE id_touch=$id";
     $res= mysql_qry($qry);
     if ( $res && $row= pdo_fetch_assoc($res) ) {
-      debug($row);
+      $y= debugx($row,'vše o chybě');
     }
     break;
   }
-  return '';
+  return $y;
 }
 # ---------------------------------------------------------------------------------------- sys_table
 # zobrazí přehled aktivit pro daný den, pokud není uvedeno $color, použije se definice barev

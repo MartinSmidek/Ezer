@@ -565,18 +565,17 @@ jQuery.fn.contextPopup = function(menuData,e) {
     var menu = jQuery('<ul class="' + options.menuClass + '"></ul>')
       .appendTo(document.body);
     options.focus= options.focus || e.target;
-//     options.items.forEach( item => {
-    for (let item of options.items) {
-      if ( !item ) continue;
+    options.items.forEach( item => {
+      if ( !item ) return;
       var del= item[0].match(/^[-=]/) ? item[0][0] : '',
           label= del ? item[0].substr(1) : item[0];
       jQuery('<li>'+label+'</li>')
         .appendTo(menu)
         .css({borderTop: del ? (del=='-' ? "1px solid #AAAAAA" : "3px double #AAAAAA") : ''})
-        .click( e => {
-          item[1](e); return false;
-        });
-    }
+        .click( () => {
+          item[1](options.focus); return false;
+        })
+    })
     return menu;
   }
   // On contextmenu event (right click)

@@ -199,8 +199,8 @@
     try {
       $answer= (object)array();
       $fce= $x->fce;
-      if ( function_exists($fce) )
-        call_user_func_array($fce,(array)$x->args);
+      if ( function_exists($fce) ) 
+        $answer->value= call_user_func_array($fce,(array)$x->args);
       else
         $answer->error= "SERVER: funkce '$fce' neexistuje";     // jen pro trasování
     }
