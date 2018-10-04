@@ -346,7 +346,7 @@ class Application {
   }
   // ----------------------------------------------------------------------------- loginDomClose
   loginDomClose  () {
-    jQuery('#login').empty(); // místo .css('display','none') m.j. kvůli správci hesel FF
+    jQuery('#login').remove(); // místo .css('display','none') m.j. kvůli správci hesel FF
   }
   // ----------------------------------------------------------------------------- bodyClick
   // nastane při kliknutí na html.body
