@@ -1244,20 +1244,29 @@ class Block {
         }) )
           return;
       }
-      if ( Ezer.to_trace )
-      Ezer.trace('e','EVENT:'+event_type+'.'+id+'.'+event_name+' in '+Ezer.App.block_info(fce),fce);
+      if ( Ezer.to_trace ) {
+        let from= '';
+        if ( Ezer.is_trace['*'] ) {
+          // pokud je trasováno *e zobraz i odkud je v ezer3.js událost spuštěna
+          // UGLY a jen pro FireFox ... ale jinak to asi nejde
+          let x= new Error().stack.split("\n"), re= /@.*\.js|:\d*$/g;
+          from+= ' from '+x[2].replace(re,'');
+          from+= ' from '+x[3].replace(re,'');
+        }
+        Ezer.trace('e',(fce? 'EVENT:' : 'event ')+event_type+'.'+id+'.'+event_name
+          +(fce ? ' in '+Ezer.App.block_info(fce) : '')+from
+        ,fce);
+      }
     }
 
     args= args||[];
     var fce= null, res= true, v;
+    if ( Ezer.to_trace && Ezer.is_trace['*'] && Ezer.is_trace['e'] ) {
+      trace_event(this.type,this.id,event_name);
+    }
     if ( this.part ) {
       if ( (fce= this.part[event_name]) ) {
-//         if ( el && el.control ) {
-//           Ezer.fce.source(fce);
-//         }
-//         else {
           trace_event(this.type,this.id,event_name,fce);
-          //Ezer.trace('e','EVENT:'+this.type+'.'+this.id+'.'+event_name+' in '+Ezer.App.block_info(fce),fce);
           v= new Eval([{o:'c',i:fce.desc._init||event_name,a:args.length}],
             fce.context||this,args,event_name,false,false,fce);
           res= v.simple ? v.value : false;
@@ -6367,7 +6376,6 @@ class Select extends Elem {
       del1= delimiters[0]||',';
       del2= delimiters[1]||':';
     }
-//     list.split(del1).each(function(val,i) {
     for (let [i,val] of list.split(del1).entries()) {
       var desc= val.split(del2);
       if ( desc.length==3 ) {
@@ -6394,6 +6402,7 @@ class Select extends Elem {
     this._key= this.multi ? [] : 0;
     this.DOM_drop_hide();
     this.DOM_addItems();
+    this.plain();
     super.init(init_values);
     return true;
   }
@@ -6412,7 +6421,6 @@ class Select extends Elem {
         this._key= [];
         this.value= '';
         if ( key ) {
-//           key.split(',').each(function(k){
           for (let k of key.split(',')) {
             k= Number(k);
             this._key.push(k);
@@ -6466,9 +6474,8 @@ class Select extends Elem {
   }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  DOM initialize
   DOM_initialize () {
-    this._value= '';                                   // pomocná hodnota iniciovaná při focus
-    this._drop_status= 0;                              // 0=skrytý, 1=viditelný, 2=měněný (jen multi)
-    this._drop_changed= false;                         // mezi DOM_drop_show a DOM_drop_hide byla změna
+    this._value= '';            // pomocná hodnota iniciovaná při focus
+    this._drop_status= 0;       // 0=skrytý, 1=viditelný, 2=změněný (multi i single)
   }
 // ------------------------------------------------------------------------------------ DOM add
 //f: Select-DOM.DOM_add ()
@@ -6544,20 +6551,6 @@ class Select extends Elem {
       }
     }
 
-    // definice obsluhy událostí
-    this._drop_focus= false;
-    this.DOM_DropList
-//       .on('mousewheel DOMMouseScroll', function(e) { viz ezer_lib3
-//       .mousewheel (event => {
-//         return false;
-//       })
-      .mouseenter (event => {
-        this._drop_focus= true;
-      })
-      .mouseleave (event => {
-        this._drop_focus= false;
-      });
-
     this.DOM_Input
       .focus ( event => {
         if ( this.DOM_DropList.css('display')=='none') {
@@ -6568,16 +6561,6 @@ class Select extends Elem {
           this.DOM_usedkeys= false;
           this.DOM_drop_show(true);
           this.DOM_Block.css('zIndex',999);
-          if ( this.multi ) {     // multiselect
-            for (let li of this.DOM_DropList.find('li')) {
-              li= jQuery(li);
-              if ( this._key.indexOf(li.prop('value'))!=-1 )
-                li.addClass('li-sel');
-              else {
-                li.removeClass('li-sel');
-              }
-            }
-          }
           this.DOM_focus(true);
           this.fire('onfocus',[]);
           this.value= this._value= this.DOM_Input.val();  // pro změny klávesnicí
@@ -6589,9 +6572,8 @@ class Select extends Elem {
         }
       })
       .blur (event => {
-          this.blur();              // metoda Elem, vyvolá onblur, případně onchanged
-          this.DOM_drop_hide();
-          this.DOM_blur();
+        this.DOM_drop_hide();
+        this.DOM_blur();
       })
       .change ( () => {
         if ( this._fc('t') )
@@ -6605,69 +6587,80 @@ class Select extends Elem {
           this.DOM_drop_hide();
       })
       .keyup (event => {
+        event.preventDefault();
+        event.stopPropagation();
         // up down enter insert
         if ([38,40,13,45].includes(event.keyCode) ) {
           let li, li0= this.DOM_DropList.find('li.selected');
           li= li0;
           this.DOM_usedkeys= true;
           switch (event.keyCode) {
-          case 45: // 'insert':
-            if ( this.multi ) {
-            this._drop_status= 2;
-              this.DOM_changed(1,this._fc('t')); // když není format:'t' se zvýrazněním změny
-            li.toggleClass('li-sel');
-            this.DOM_seekItems(true);
+            case 45: {                    // 'insert':
+              if ( this.multi ) {
+                this._drop_status= 2;
+                  this.DOM_changed(1,this._fc('t')); // když není format:'t' se zvýrazněním změny
+                li.toggleClass('li-sel');
+                this.DOM_seekItems(true);
+              }
+              break;
             }
-            break;
-          case 38:                      // ----- up
-            li= li.prev();
-            if (li0.length && li.length /*&& (li.prev().value!=0 || this.options.typ=='map+')*/ ) {
-              li0.removeClass('selected');
-              li.addClass('selected');
-              li.Ezer_scrollIntoView();
-              if ( !this.multi )
-                this.DOM_showItem(li);
-            }
-            else if (!li0.length) {
-              let lis= this.DOM_DropList.find('li');
-              if ( lis.length ) {
-                li= jQuery(lis[lis.length-1]).addClass('selected');
+            case 38: {                    // ----- up
+              li= li.prev();
+              if (li0.length && li.length /*&& (li.prev().value!=0 || this.options.typ=='map+')*/ ) {
+                li0.removeClass('selected');
+                li.addClass('selected');
                 li.Ezer_scrollIntoView();
               }
-            }
-            break;
-          case 40:                      // ----- down
-            li= li.next();
-            if (li0.length && li.length /*&& li.next().value!=0*/ ) {
-              li0.removeClass('selected');
-              li.addClass('selected');
-              li.Ezer_scrollIntoView();
-              if ( !this.multi )
+              else if (!li0.length) {
+                let lis= this.DOM_DropList.find('li');
+                if ( lis.length ) {
+                  li= jQuery(lis[lis.length-1]).addClass('selected');
+                  li.Ezer_scrollIntoView();
+                }
+              }
+              if ( this instanceof SelectAuto )
                 this.DOM_showItem(li);
+              else if ( !this.multi )
+                this.DOM_seekItem(li,0);
+              break;
             }
-            else if (!li0.length) {
-              let lis= this.DOM_DropList.find('li');
-              if ( lis.length ) {
-                li= jQuery(lis[0]).addClass('selected');
+            case 40: {                     // ----- down
+              li= li.next();
+              if (li0.length && li.length /*&& li.next().value!=0*/ ) {
+                li0.removeClass('selected');
+                li.addClass('selected');
                 li.Ezer_scrollIntoView();
               }
+              else if (!li0.length) {
+                let lis= this.DOM_DropList.find('li');
+                if ( lis.length ) {
+                  li= jQuery(lis[0]).addClass('selected');
+                  li.Ezer_scrollIntoView();
+                }
+              }
+              if ( this instanceof SelectAuto )
+                this.DOM_showItem(li);
+              else if ( !this.multi )
+                this.DOM_seekItem(li,0);
+              break;
             }
-            break;
-          case 13:                      // ----- enter
-            if ( this.multi ) {
-              this.DOM_drop_hide();
-            }
-            else {
-              if (li)
-                this.DOM_seekItem(li);
+            case 13: {                     // ----- enter
+              if ( this.multi ) {
+                this.DOM_drop_hide();
+              }
               else {
-                this.value= this._value;
-                this._key=  0;
-                this.DOM_noneItem();
+                if (li)
+                  this.DOM_seekItem(li);
+                else {
+                  this.value= this._value;
+                  this._key=  0;
+                  this.DOM_noneItem();
+                }
+  //              this.fire('onchanged');
+                this._changed= false;
               }
-              this.fire('onchanged');
+              break;
             }
-            break;
           }
         }
         else if ( event.keyCode==9 ) {  // ----- tab
@@ -6675,41 +6668,28 @@ class Select extends Elem {
             this.DOM_drop_hide();
         }
         else if ( event.keyCode==27 ) { // ----- esc navrať původní hodnoty
-          this.DOM_drop_hide();
-          if ( this instanceof SelectAuto ) {
-            this.value= this.original.value;
+          this.value= this.original.value;
+          if ( this.multi ) {
+            this.key(this.original.key);
+          }
+          else {
             this.DOM_Input.val(this.value);
             this._key= this.original.key;
+            this.DOM_changed(0);     
           }
+          this._drop_status= 1;
+          this.DOM_drop_hide();
           this.DOM_Input.trigger('blur');
         }
-        else {
-          if ( event.target.value!=this.value ) {
-            if ( this instanceof SelectAuto )  // při změně klávesnicí zruš klíč
-              this._key= 0;
-            this.change();
-          }
-          else if ( !this.multi ) {
-            this.DOM_changed(0);     // když byla změna vrácena
-          }
+        else if ( this instanceof SelectAuto ) { // ----- znaky pro SelectAuto
           if ( this._value!=this.DOM_Input.val() ) {
+            // uprav vzor a získej nový droplist
+            this._key= 0;
             this._value= this.DOM_Input.val();
-            if ( this instanceof SelectAuto )
-              this._patt= this._value;
-            for (let li of this.DOM_DropList.find('li')) {
-              li= jQuery(li);
-              if ( li.text().substr(0,this._value.length)==this._value ) {
-                this.DOM_DropList.find('li.selected').removeClass('selected');
-                li.addClass('selected');
-                li.Ezer_scrollIntoView();
-                break;
-              }
-            }
+            this._patt= this._value;
+            this.ask({cmd:'ask',fce:this.options.par.fce,
+              args:[this._value,this.options.par],nargs:2},'DOM_newItems');
           }
-        }
-        if ( this instanceof SelectAuto && ![38,40,13,27].includes(event.keyCode) ) { //up,down,enter,esc
-          this.ask({cmd:'ask',fce:this.options.par.fce,
-            args:[this.DOM_Input.val(),this.options.par],nargs:2},'DOM_newItems');
         }
       });
   }
@@ -6719,13 +6699,22 @@ class Select extends Elem {
     this.DOM_DropList.css('display','block');
     Ezer.DOM_currMulti= this.multi ? this : null;
     this._drop_status= 1;
-    this._drop_changed= false;
     // zobrazení vybraných položek
-    if ( !this.multi ) {
+    if ( this.multi ) {     // multiselect
+      for (let li of this.DOM_DropList.find('li')) {
+        li= jQuery(li);
+        if ( this._key.indexOf(li.prop('value'))!=-1 )
+          li.addClass('li-sel');
+        else {
+          li.removeClass('li-sel');
+        }
+      }
+    }
+    else {
       this.DOM_DropList.find(`li`).removeClass('selected');
-      this.DOM_DropList.find(`li[value=${this._key}]`).addClass('selected');
-      let li= this.DOM_DropList.find('li.selected');
+      let li= this.DOM_DropList.find(`li[value=${this._key}]`);
       if ( li.length ) {
+        li.addClass('selected');
         li.Ezer_scrollIntoView();
       }
     }
@@ -6733,16 +6722,16 @@ class Select extends Elem {
 // ----------------------------------------------------------------------------------- DOM drop_hide
 // skrytí seznamu a případný signál změny
   DOM_drop_hide (nochange) {
-    this.DOM_Block.css('zIndex',1);
     this.DOM_DropList.css('display','none');
-      if ( !nochange && (!this.multi || this._drop_status==2) ) {
-        if ( this._drop_changed )
-          this.change();
-      }
+    if ( !nochange && this._drop_status==2 ) {
       this._drop_status= 0;
+      this.fire('onchanged');
+      this.change(1);
+    }
+    this._drop_status= 0;
   }
 // ------------------------------------------------------------------------------------ DOM showItem
-//      konec select bez zvolené hodnoty
+// změní input podle droplist, pro nemulti poznačí změnu
   DOM_showItem (li) {
     if ( li ) {
       if ( this.options.par && this.options.par.subtype=='keys' ) {
@@ -6751,6 +6740,7 @@ class Select extends Elem {
       else {
         this.DOM_Input.val(this.Items[li.prop('value')]);
       }
+      this._drop_status= 2;
     }
   }
 // ------------------------------------------------------------------------------------ DOM noneItem
@@ -6772,16 +6762,11 @@ class Select extends Elem {
       del= ',';
     });
     this.DOM_set();
-    this._drop_changed= true;
-    if ( !while_changing ) {
-      this.DOM_drop_hide();
-      this._drop_focus= true;
-    }
+    this._drop_status= 2;
   }
 // ------------------------------------------------------------------------------------ DOM seekItem
-//f: Select-DOM.DOM_seekItem
 //      konec select výběrem hodnoty
-  DOM_seekItem (sel) {
+  DOM_seekItem (sel,hide=1) {
     if ( this.options.par && this.options.par.subtype=='keys' ) {
       let txt= sel.prop('ivalue');
       this.value= txt;
@@ -6801,8 +6786,10 @@ class Select extends Elem {
       this._key=  val==999998 ? 0 : sel.val();
     }
     this.DOM_setCss();
-    this._drop_changed= true;
-    this.DOM_drop_hide();
+    this.DOM_Input.addClass('changed');
+    this._drop_status= 2;
+    if ( hide ) 
+      this.DOM_drop_hide();
   }
 // ------------------------------------------------------------------------------------ DOM setCss
 // upraví CSS podle klíče - jen v součinnosti s fcí selects
@@ -6831,6 +6818,7 @@ class Select extends Elem {
       css= this.Css && this.Css[key] ? this.Css[key] : '';
       let name= this.options.par && this.options.par.subtype=='info' ? item.name : item;
       let li= jQuery(`<li class="${css}" name="${name}">`)
+        .appendTo(this.DOM_DropList)
         .mouseover ( event => {
           if (this.DOM_usedkeys) {
             // po použití klávesnice odstraň zvýraznění
@@ -6854,19 +6842,12 @@ class Select extends Elem {
               li.toggleClass('li-sel');
               this.DOM_seekItems(true);
             }
-            else {
-              this.DOM_seekItems();
-            }
           }
           else {
             this.DOM_seekItem(li);
-//            if ( this._changed ) { -- to by mělo nastat až při blur
-//              this.fire('onchanged');
-//            }
           }
           return false;
-        })
-        .appendTo(this.DOM_DropList);
+        });
       if ( this.options.par && this.options.par.subtype=='keys' )
         li.prop({ivalue:key}).text(key+' : '+name);
       else if ( this.options.par && this.options.par.subtype=='info' )
@@ -6894,11 +6875,7 @@ class Select extends Elem {
 //      odznačení focus elementu formuláře (s uvážením prázdnosti) - bez onchanged
 //      které u select vzniká už při výběru alternativy
   DOM_blur () {
-    if ( this.DOM_Input ) {
-      if ( this.multi ) {    // schová roletu vyvolanou jen klikem na ikonu bez dalšího doteku
-        this.DOM_seekItems();
-      }
-    }
+    this.fire('onblur');
   }
 }
 
@@ -6919,11 +6896,6 @@ class SelectAuto extends Select {
 //                 resp. klíč resp. klíč a ponechat text vyplněného vzoru
 //      ; 'subtype' : rezervované jméno
 //   }
-//// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  initialize
-//  constructor (owner,desc,DOM,id,skill) {
-//    super(owner,desc,DOM,id,skill);
-//    this.DOM_add2();
-//  }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  _save
 // interní hodnota uschovávaná na serveru je klíč zobrazené hodnoty nebo zobrazená hodnota
 // v závislosti na hodnotě atributu par.save='key'|'value'. Defaultní je 'value'
@@ -6945,7 +6917,7 @@ class SelectAuto extends Select {
     return vmo;
   }
 // ------------------------------------------------------------------------------------ select_set
-//fx: SelectAuto.select_set (val)
+// SelectAuto.select_set (val)
 //      nastaví hodnotu na val, provede dotaz na server a nastaví i klíč a případně info;
 //      způsobí onchanged
 //e: onchanged
@@ -6979,32 +6951,18 @@ class SelectAuto extends Select {
     this.fire('onchanged');
     return 1;
   }
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  DOM initialize
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  SelectMap DOM initialize
   DOM_initialize () {
     this._patt= '';                                    // hodnota zadaná jako vzor
   }
-//  DOM_add2 () { -- přesunuto do Select.DOM_add 
-//      this.DOM_Input
-//        .focus ( event => {
-//          this.fire('onfocus',[]);
-//          this.ask({cmd:'ask',fce:this.options.par.fce,
-//            args:[this.DOM_Input.val(),this.options.par],nargs:2},'DOM_newItems');
-//        })
-//        .keyup ( event => {
-//          if ( ![38,40,13,27].includes(event.keyCode) ) { //up,down,enter,esc
-//            this.ask({cmd:'ask',fce:this.options.par.fce,
-//              args:[this.DOM_Input.val(),this.options.par],nargs:2},'DOM_newItems');
-//          }
-//        });
-//  }
-// ------------------------------------------------------------------------------------ DOM showItem
+// ------------------------------------------------------------------------- SelectAuto DOM showItem
 //      konec select bez zvolené hodnoty
   DOM_showItem (li) {
     if ( li ) {
       this.DOM_Input.val(li.val()>999990 ? this._patt : li.text());
     }
   }
-// ------------------------------------------------------------------------------------ DOM seekItem
+// ------------------------------------------------------------------------- SelectAuto DOM seekItem
 //      konec select výběrem hodnoty
   DOM_seekItem (sel) {
       this.value= !sel.val() || sel.val()>999990 ? '' : sel.text();
@@ -7012,16 +6970,17 @@ class SelectAuto extends Select {
       if ( this.options.par && this.options.par.save!='key_only') {
         this.DOM_set();
       }
+      this._drop_status= 2;
       this.DOM_drop_hide();
   }
-// ------------------------------------------------------------------------------------ DOM addItems
+// ------------------------------------------------------------------------- SelectAuto DOM addItems
 //f: SelectAuto-DOM.DOM_addItems
 //      zobrazí hodnoty z this.Items a nastaví _empty=true pokud je jen jedna a to s nulovým klíčem
   DOM_addItems () {
     this.__proto__.__proto__.DOM_addItems.call(this); // aka super.DOM_addItems()
     this._empty= this.Items[0]!==undefined;
   }
-// ------------------------------------------------------------------------------------ DOM changed
+// -------------------------------------------------------------------------- SelectAuto DOM changed
 //f: SelectAuto-DOM.DOM_changed (on[,quiet=0))
 //      označení příznaku změny elementu formuláře, pokud je quiet=0
 //      pokud má element klíč (tzn. byl nalezen na serveru) je příznak zelený
@@ -7042,7 +7001,7 @@ class SelectAuto extends Select {
       }
     }
   }
-// ------------------------------------------------------------------------------------ DOM newItems
+// ------------------------------------------------------------------------- SelectAuto DOM newItems
 //f: SelectAuto-DOM.DOM_newItems
 //      zobrazí hodnoty podle informace ze serveru
   DOM_newItems (y) {
@@ -7109,7 +7068,7 @@ class SelectMap extends Select {
   _check  () {
     Ezer.assert(this.options.options,"Blok select typu map musí obsahovat atribut options",this);
   }
-// ------------------------------------------------------------------------------------ selects
+// -------------------------------------------------------------------------- SelectMap selects
 //fm: SelectMap.selects ([key,[cond]])
 //      obnoví seznam volitelných hodnot z mapy uvedené v options, pokud je definován
 //      argument key bude select nastaveno na tuto hodnotu, jinak bude mít hodnotu 0;
@@ -7130,7 +7089,7 @@ class SelectMap extends Select {
     new Eval(code,this,[this,null,null,null,null,-1],'selects');
     return true;
   }
-// ------------------------------------------------------------------------------------ set
+// -------------------------------------------------------------------------- SelectMap set
 //fm: SelectMap.set (val)
 //a: val - hodnota
   set  (val) {
@@ -7139,7 +7098,6 @@ class SelectMap extends Select {
       // nalezení klíčů k hodnotám
       this._key= [];
       var values= this.value.split(',');
-//       values.each(function(value){
       for (let value of values) {
         for (var key in this.Items) {
           if ( this.Items[key]==value ) {
@@ -7163,7 +7121,7 @@ class SelectMap extends Select {
     this.DOM_changed(0);
     return 1;
  }
-// ------------------------------------------------------------------------------------ get
+// -------------------------------------------------------------------------- SelectMap get
 //fm: SelectMap.get ([options=0])
 //      vrátí hodnotu podle nastavení map_pipe, pokud je options=1 tak podle options
 //a: options - 0|1
@@ -7181,7 +7139,7 @@ class SelectMap extends Select {
     }
     return val;
  }
-// ------------------------------------------------------------------------------------ init
+// -------------------------------------------------------------------------- SelectMap init
 //fm: SelectMap.init ([init_values=0])
 //      nastaví hodnotu na prázdnou nebo pro init_values==1 na defaultní hodnotu
 //      nebo pro init_values==2 na defaultní s nastavením elementu jako change bez onchange;
@@ -7190,7 +7148,6 @@ class SelectMap extends Select {
   init  (init_values) {
     this.value= '';
     if ( init_values ) {
-//       this.empty= false;
       if ( this.owner._option && this.owner._option.x && this.owner._option.x==1
         && this._f('x')>=0 ) {
         this._key= this.fixed_value;
@@ -7207,7 +7164,6 @@ class SelectMap extends Select {
     }
     else {
       this._key= this.multi ? [] : 0;
-//       this.empty= true;
       this.DOM_empty(true);
       if ( this._changed ) {
         this.plain();
@@ -7217,7 +7173,7 @@ class SelectMap extends Select {
     this.original.key= null;
     return 1;
   }
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  _load
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  SelectMap _load
 // interní hodnota uschovávaná na serveru je klíč zobrazené hodnoty
   _load  (val,key) {
     this.original.value= val;
@@ -7226,7 +7182,7 @@ class SelectMap extends Select {
     this._changed= false;
     this.DOM_changed(0);
   }
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  _save
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  SelectMap _save
 // interní hodnota uschovávaná na serveru je klíč zobrazené hodnoty
   _save  () {
     var vmo= {val: this.multi ? this._key.join(',') : this._key};
@@ -7235,12 +7191,12 @@ class SelectMap extends Select {
     }
     return vmo;
   }
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  _fixed_save
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  SelectMap _fixed_save
 // uschovej klíč do fixed_value
   _fixed_save () {
     this.fixed_value= this.key();
   }
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  _fixed_load
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  SelectMap _fixed_load
 // vrať fixovaný klíč
   _fixed_load () {
     this.key(this.fixed_value);

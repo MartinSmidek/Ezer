@@ -5018,8 +5018,10 @@ Ezer.fce.DOM.clipboard= function (msg) {
   div.remove();
 };
 // -------------------------------------------------------------------------------------- confirm
-// podobu alertu lze modifikovat pomoví nepovinných částí options
-// options = {heading:hlavička}
+// obecné řešení jednoduchých dialogů
+// podobu dialogu lze modifikovat pomocí nepovinných částí options
+//     options = {heading:hlavička}
+// klávesnicí lze ovládat volby: Enter je první volba, Esc poslední
 Ezer.fce.DOM.confirm= function (str,continuation,butts,options) {
   butts= butts || [];
   options= options || {};
@@ -5033,7 +5035,7 @@ Ezer.fce.DOM.confirm= function (str,continuation,butts,options) {
       },
       stop= function (ok) {
         mask.fadeOut(Ezer.options.fade_speed).off("click");
-        jQuery(document).off("keyup");
+        jQuery(document).off('keyup');
         popup.fadeOut(dele.bind({ok}));
       };
   popup.find('div.pop_head').text(options && options.heading||'Upozornění');
@@ -5044,17 +5046,31 @@ Ezer.fce.DOM.confirm= function (str,continuation,butts,options) {
       .appendTo('#popup3 div.pop_tail');
   }
   // add buttons
-  var last_val= 0;
+  var first_val= null, last_val= null, first_but= null;
   for (let butt of butts) {
-    last_val= options.input ? '' : butt.val;
-    jQuery(`<button>${butt.tit}</button>`)
+    var but= jQuery(`<button>${butt.tit}</button>`)
       .appendTo('#popup3 div.pop_tail')
-      .click(  e => stop(options.input ? (butt.val ? input[0].value : '') : butt.val) );
+      .click( e => 
+          stop(options.input ? (butt.val ? input[0].value : '') : butt.val) );
+    if ( first_val===null ) {
+      first_val= options.input ? '' : butt.val;
+      first_but= but;
+    }
+    last_val= options.input ? '' : butt.val;
   }
   // show dialog
   mask.fadeIn(Ezer.options.fade_speed);
   popup.fadeIn(Ezer.options.fade_speed);
-  jQuery(document).keyup( e => { if (e.keyCode == 27) stop(last_val); });
+  first_but.trigger('focus');
+  jQuery(document)
+    .keyup( e => { 
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.keyCode == 13) stop(first_val); 
+      else if (e.keyCode == 27) stop(last_val); 
+      return false;
+    })
+    ;
   return true;
 };
 // -------------------------------------------------------------------------------------- alert
