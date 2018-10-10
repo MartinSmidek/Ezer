@@ -6212,8 +6212,6 @@ class Chat extends Elem {
     }
     return vmo;
   }
-// ===========================================================================================> Chat
-// zobrazení elementu chat
 // ------------------------------------------------------------------------------------ DOM add
 // zobrazí prvek chat
   DOM_add () {
@@ -6492,10 +6490,11 @@ class Select extends Elem {
       ? this.options.par.width : this._w-1;
     var hlp= this.options.help||this.help;
     if (hlp && hlp.indexOf("|")<0) hlp = hlp+'|'+hlp;
+    let ro= this instanceof SelectAuto ? '' : 'readonly ';
     this.DOM= this.DOM_Block= jQuery(
       `<div class="Select3">
          <div>
-           <input type="text" style="width:${this._w-(img ? 20 : 0)}px;height:${this._h-4}px" />
+           <input type="text" ${ro}style="width:${this._w-(img ? 20 : 0)}px;height:${this._h-4}px"/>
          </div>
          <ul style="display:none" ${this.multi ? "title='použij CTRL pro změnu'" : ''}></ul>
        </div>`)
@@ -6552,6 +6551,9 @@ class Select extends Elem {
     }
 
     this.DOM_Input
+      .click ( event => {
+        this.DOM_Input.trigger('focus');
+      })
       .focus ( event => {
         if ( this.DOM_DropList.css('display')=='none') {
           if ( this.options.par && this.options.par.subtype=='browse' && this.Items[0]=='?' )
@@ -6573,6 +6575,7 @@ class Select extends Elem {
       })
       .blur (event => {
         this.DOM_drop_hide();
+        this.DOM_Block.css('zIndex',2);
         this.DOM_blur();
       })
       .change ( () => {
@@ -6786,7 +6789,7 @@ class Select extends Elem {
       this._key=  val==999998 ? 0 : sel.val();
     }
     this.DOM_setCss();
-    this.DOM_Input.addClass('changed');
+    this.DOM_changed(1,this._fc('t')); // když není format:'t' se zvýrazněním změny
     this._drop_status= 2;
     if ( hide ) 
       this.DOM_drop_hide();
