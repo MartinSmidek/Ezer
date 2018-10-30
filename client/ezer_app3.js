@@ -3139,7 +3139,7 @@ Ezer.fce.copy_by_name= function (x,y,delimiters,par4) {
 //     $each(x.part,function(field,id) {
     for (const id in x.part) { const field= x.part[id];
       if ( par4 && (!field.changed || !field.changed()) ) // od 7.6.2017, Gándí ... par4 = only_changed
-        return 1;
+        continue;
       if ( id[0]!='$' && field.key ) {          // přednost má definice klíče
         y[id]= field.key();
       }
@@ -4951,8 +4951,8 @@ Ezer.drag= {
         // prázdná hodnota na místě width nebo height
         if ( change && change[x] && (x=='_w'||x=='_h')) {
           // pokud proběhla změna musí být nahrazena skutečnou hodnotou
-          var c= block.DOM_Block.getCoordinates(block.owner.DOM_Block);
-          coord[x]= change[x]+(x=='_w'?c.width:c.height);
+          let c= jQuery(block.DOM_Block);
+          coord[x]= change[x]+(x=='_w'?c.width():c.height());
         }
       }
       else {

@@ -5279,14 +5279,16 @@ class Elem extends Block {
             // pokud byl Enter a pole bylo změněno, vznikne událost onchanged
             this.fire('onchanged');
           }
-          for (let field of this.owner.part) {
+          for (let ifield in this.owner.part) {
+            let field= this.owner.part[ifield];
             if ( field instanceof Button && field.type=='button.submit' ) {
               field.fire('onclick');
             }
           }
           break;
         case 27: // Esc
-          for (let field of this.owner.part) {
+          for (let ifield in this.owner.part) {
+            let field= this.owner.part[ifield];
             if ( field instanceof Button && field.type=='button.reset' ) {
               field.fire('onclick');
             }
@@ -5332,6 +5334,7 @@ class Elem extends Block {
         this.DOM_Input.prop('readonly','readonly');
     }
     if ( this._fc('r') && this.DOM_Input ) this.DOM_Input.css('text-align','right');
+    if ( this._fc('c') && this.DOM_Input ) this.DOM_Input.css('text-align','center');
   }
 }
 

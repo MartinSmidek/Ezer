@@ -101,8 +101,8 @@ function html_closure($win_name,$notes,$source,$url,$lines,$typ,$start,$backgrou
 // ----------------------------------------------------------------------------------==> . ON unload
   if ( window.MooTools!==undefined )
   window.addEvent('unload', function() {
-    var pos= window.getCoordinates();
-    var p= window.screenX+','+window.screenY+','+pos.width+','+pos.height;
+    var w= jQuery(window);
+    var p= window.screenX+','+window.screenY+','+w.width()+','+w.height();
     opener.dbg_onunload(typ,p);
 //     if ( typ=='php' ) {
 //       Cookie.write('ezer_dbg_win2',p,{duration:100});
