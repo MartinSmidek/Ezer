@@ -427,6 +427,7 @@ __EOD;
     if ( $browser!='IE' ) {
       foreach($js as $x) {
         $x= trim($x);
+        if ( !$x ) continue;
         $head.= substr($x,0,1)=='<'
           ? "\n  $x\n"
           : "\n  <script src='$x' type='text/javascript' charset='utf-8'></script>";

@@ -32,7 +32,7 @@ div#popup3 { position: absolute; left: 0; right: 0; bottom: 40%; margin:auto; wi
 #popup3 div.pop_head { position: absolute; top: 0; left: 0; width: 100%; text-align: center;
   line-height: 24px; height: 24px; background: $b_group; border-radius: 5px 5px 0 0;
   color: $c_group; font-weight: bold; }
-#popup3 div.pop_body { padding: 5px; }
+#popup3 div.pop_body { padding: 5px; width:100%; height:calc(100% - 44px); }
 #popup3 div.pop_tail { text-align:center; padding: 0px 10px 0px 5px; }
 #popup3 div.pop_tail input { width:100%; display:block; margin-bottom: 7px; }
 #popup3 div.pop_tail button { position: inherit; margin:0 5px 5px 5px;
@@ -276,7 +276,7 @@ div.Popup3 div.pop_head { position: absolute; top: 0; left: 0; width: 100%;
 div.Popup3 div.pop_head button { float:right; }
 div.Popup3 div.pop_close { position: absolute; right: 0; top: 0; cursor: pointer;
   margin: 5px; width: 13px; height: 13px; background: url(img/closebtn.gif) no-repeat; }
-div.Popup3 div.pop_body { position: absolute; overflow: auto;
+div.Popup3 div.pop_body { position: absolute; overflow: auto; width:100%; height:calc(100% - 44px); 
 }
 
 /* --------------------------------------------------------------------------------------==> Help */

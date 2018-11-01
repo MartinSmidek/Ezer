@@ -47,7 +47,8 @@
     require_once("mysql.inc.php");
     $_SESSION[$app]['pdo']= 1;
   }
-  
+  require_once("/server/ezer_pdo.php");
+
   // doplnění jména aplikace o verzi ezer a db
   $app_name.=  " 3.1.".EZER_PDO_PORT;
 

@@ -2531,7 +2531,7 @@ class PanelPopup extends Panel {
       .drags({handle:'div.pop_head',top:min_top})
       .hide();
     this.DOM_Block= this.DOM.find('div.pop_body')
-      .css({width:this._w,height:this._h})
+//      .css({width:this._w,height:this._h})
       ;
     this.DOM_optStyle(this.DOM);
   }
@@ -2557,7 +2557,7 @@ class PanelPopup extends Panel {
     }
     this.DOM.fadeIn(Ezer.options.fade_speed);
     // event when wanted
-    if ( !noevent ) {
+    if ( !noevent && this.part ) {
       if ( this.virgin ) {
         this.virgin= false;
         Ezer.app.onfirstfocus(this);
