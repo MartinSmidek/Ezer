@@ -47,7 +47,6 @@
     require_once("mysql.inc.php");
     $_SESSION[$app]['pdo']= 1;
   }
-  require_once("/server/ezer_pdo.php");
 
   // doplnění jména aplikace o verzi ezer a db
   $app_name.=  " 3.1.".EZER_PDO_PORT;
@@ -69,6 +68,8 @@
 
   set_include_path(get_include_path().PATH_SEPARATOR.$abs_root);
   $_POST['root']= $ezer_root;
+
+  require_once("$abs_root/ezer3.1/server/ezer_pdo.php");
   require_once("$app.inc.php");
   
   $cms= "$http://$rel_root/$ezer_root";
