@@ -764,13 +764,14 @@ function ezer_browser(&$abbr,&$version,&$platform,$agent=null ) {
   elseif ( preg_match('/Safari\/([\d\.])*/', $agent,$m) ) { $abbr='SF'; $version= $m[0]; }
   else { $abbr='?'; $version= '?/?'; }
   // identifikace platformy prohlížeče: Android => Ezer.client == 'A'
-  $platform=          // x11 hlásí Chrome při vzdáleném ladění (chrome://inspect/#devices)
-    preg_match('/Linux/i',$agent)                  ? 'L' : (
-    preg_match('/android|x11/i',$agent)            ? 'A' : (
-    preg_match('/iPad/i',$agent)                   ? 'I' : (
-    preg_match('/macintosh|mac os x/i',$agent)     ? 'M' : (
-    preg_match('/windows|win32/i',$agent)          ? 'W' : '?'
-  ))));
+  $platform =          // x11 hlásí Chrome při vzdáleném ladění (chrome://inspect/#devices)
+	preg_match('/Windows Phone|Windows Mobile/i',$agent)      ? 'P' : (
+	preg_match('/Android/i',$agent)                           ? 'A' : (
+	preg_match('/iPad|iPhone/i',$agent)                       ? 'I' : (
+	preg_match('/linux/i',$agent)                             ? 'L' : (
+	preg_match('/macintosh|Mac OS X|Power_PC|PPC/i',$agent)   ? 'M' : (
+	preg_match('/Windows|win32|Windows NT/i',$agent)          ? 'W' : '?'
+  )))));
 }
 # ----------------------------------------------------------------------------------- doc chngs_show
 # type = a-aplikace, g-group, k-kernel
