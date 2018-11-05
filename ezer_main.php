@@ -78,6 +78,7 @@
 
   // -------------------------------------------------------------------------------------- Ezer 3
   $api_key= "AIzaSyAq3lB8XoGrcpbCKjWr8hJijuDYzWzImXo"; // Google Maps JavaScript API 'answer-test'
+  $app_js= array_values(array_filter($app_js)); // vynechání všech false
   $js= array_merge(
     // ckeditor 
     array("$licensed/ckeditor$CKEditor/ckeditor.js"),
@@ -102,6 +103,7 @@
 //    $app_js
       array_map(function($x){global $http_rel_root; return $http_rel_root.$x;},$app_js)
   );
+  $css= array_values(array_filter($css)); // vynechání všech false
   $css= array_merge(
     array("$client/ezer3.css.php=skin",      
     "$client/licensed/font-awesome/css/font-awesome.min.css",

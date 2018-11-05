@@ -9,6 +9,7 @@
 //Ezer.version                  dtto - default=ezer3.1
 //Ezer.browser                  CH|FF|OP|IE
 Ezer.options= Ezer.options || {};
+Ezer.options.clock_off= Ezer.options.clock_off||0;    // vypnout hodiny tj. chat se serverem
 Ezer.options.fade_speed= Ezer.options.fade_speed||0;  // rychlost fadeIn, fadeOut (0 je default) 
 Ezer.parm= Ezer.parm || {};     // parametry z nadřazené aplikace
 Ezer.code= {};                  // kód modulů stažený ze serveru jako celkový strom
@@ -734,6 +735,8 @@ class Application {
   //   zobrazování času v ae_bar.time
   //   odhlášení při nečinnosti
   bar_clock  (quiet) {
+    if ( Ezer.options.clock_off )
+      return false;
     var wait= 5;              // minuty na zobrazení výzvy k prodloužení sezení přes nečinnost
     if ( Ezer.sys.user.id_user && !quiet ) {
       // pokud je někdo přihlášený, podíváme se na změny během uplynulé minuty
@@ -768,7 +771,7 @@ class Application {
       }
       else {
         // uživatel neaktivní ale nepřekročen limit NEBO čekáme
-        this.bar_chat({op:'message?'});
+//        this.bar_chat({op:'message?'});  *****************************************************************
       }
       var hm= this.bar_clock_show(true);
       if ( hm.substr(-2)==='59' )
@@ -783,6 +786,8 @@ class Application {
   // ----------------------------------------------------------------------------- bar_clock_show
   // zobrazování času a stavu v ae_bar.time
   bar_clock_show  (zbyva) {
+    if ( Ezer.options.clock_off )
+      return false;
     var org= Ezer.sys.user.org, access= Ezer.sys.user.access, has= Ezer.sys.user.has_access;
     if ( Ezer.options.watch_access_opt && Ezer.options.watch_access_opt.abbr ) {
       org=    Ezer.options.watch_access_opt.abbr[org];
@@ -813,7 +818,7 @@ class Application {
   // ----------------------------------------------------------------------------- bar_clock_hour
   // akce na konci hodiny - zápis speed za hodinu do _TOUCH a vynulování hodinových čitačů
   bar_clock_hour  () {
-    if ( Ezer.sys.user.id_user ) {
+    if ( Ezer.sys.user.id_user && !Ezer.options.clock_off ) {
       var speeds= Ezer.fce.speed('hour');
       // informace do _touch na server
       var x= {cmd:'touch',user_id:Ezer.sys.user.id_user,user_abbr:Ezer.sys.user.abbr,root:Ezer.root,
@@ -833,6 +838,8 @@ class Application {
   // ----------------------------------------------------------------------------- bar_chat
   // udržuje se serverem konverzaci
   bar_chat  (x,test,next) {
+    if ( Ezer.options.clock_off )
+      return false;
     x.cmd= 'chat';
     x.root= Ezer.root;                  // název/složka aplikace
     x.app_root= Ezer.app_root;          // {root].inc je ve složce aplikace

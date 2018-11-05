@@ -1757,7 +1757,8 @@ class MenuLeft extends Menu {
       // remember menu status
       this.owner._folded= this.awesome==2;
       // add folding icon for format:'f' (foldable + font icons)
-      this.fold= jQuery('<i class="fa fa-caret-square-o-right"></i>')
+      this.fold= jQuery('<i></i>')
+        .addClass(this.awesome==2 ? 'fa fa-caret-square-o-right' : 'fa fa-caret-square-o-left')
         .appendTo(this.DOM_Block)
         .click( e => {
           this.DOM_click(this.awesome==2 ? 1 : 2);

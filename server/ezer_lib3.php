@@ -450,6 +450,7 @@ __EOD;
   $html_base= $app_root ? "\n  <base href=\"$http://$app_root/\">" : '';
   $html_header= '';
 //   $html_header.= "\xEF\xBB\xBF";    // DOM pro UTF-8
+  $app_name= strip_tags($app_name);
   $html_header.= <<<__EOD
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en" dir="ltr">
@@ -683,7 +684,8 @@ __EOD;
     break;
   }
   echo $template;
-  return 1;
+  exit;
+//  return 1;
 //   echo nl2br(htmlentities($template));
 }
 # ----------------------------------------------------------------------------------------- root_inc
