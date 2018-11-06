@@ -103,7 +103,7 @@
 //    $app_js
       array_map(function($x){global $http_rel_root; return $http_rel_root.$x;},$app_js)
   );
-  $css= array_values(array_filter($css)); // vynechání všech false
+  $app_css= array_values(array_filter($app_css)); // vynechání všech false
   $css= array_merge(
     array("$client/ezer3.css.php=skin",      
     "$client/licensed/font-awesome/css/font-awesome.min.css",
