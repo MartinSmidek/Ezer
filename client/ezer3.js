@@ -8860,9 +8860,8 @@ class Browse extends Block {
         }
         return false;
       });
-    // dvojklik na datovém řádku vyvolá onsubmit
     this.DOM_table
-      .dblclick( el => {
+      .dblclick( el => { // dvojklik na datovém řádku vyvolá onsubmit
         el.stopPropagation();
         if ( this.enabled ) {
           Ezer.fce.touch('block',this,'dblclick');     // informace do _touch na server
@@ -8874,6 +8873,20 @@ class Browse extends Block {
             this.DOM_focus();
             this.DOM_hi_row(this.t+i-1,1);
             this.fire('onsubmit',[this.keys[this.t+i-1-this.b],el.ctrlKey?1:0]);
+          }
+        }
+      })
+      .contextmenu( el => { // kliknutí pravým tlačítkem na datovém řádku označí řádek a zobrazí contextmenu
+        if ( this.enabled ) {
+          Ezer.fce.touch('block',this,'dblclick');     // informace do _touch na server
+          var tr= el.target.tagName=='TD' ? el.target.parentNode : el.target;
+          var i= jQuery(tr).data('i');
+          if ( i && i <= this.tlen ) {
+            // right click na datovém řádku
+            this.tact= i;
+            this.DOM_focus();
+			this.DOM_clear_focus(1)
+            this.DOM_hi_row(this.t+i-1,1);
           }
         }
       });
