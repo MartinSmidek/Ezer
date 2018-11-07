@@ -18,6 +18,8 @@ const EZER_version= 3.1;
     exit;
   }
 
+  session_start();
+
   $root= $_GET['root'];
   $option_state= $_GET['trace'];
   $option_list= $_GET['list'];
