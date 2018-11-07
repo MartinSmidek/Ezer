@@ -8,7 +8,7 @@ const EZER_version= 3.1;
   $pwd= getcwd();
 
   # identifikace ostrého serveru
-  $ezer_local= preg_match('/^\w+\.ezer/',$_SERVER["SERVER_NAME"]);
+  //$ezer_local= preg_match('/^\w+\.ezer/',$_SERVER["SERVER_NAME"]);
   $favicon= $ezer_local ? "comp_local.png" : "comp.png";
 
   if ( $_GET['spec'] ) {
@@ -121,6 +121,7 @@ const EZER_version= 3.1;
   $sel.= "</select>";
   // -------------------------------------------------------------------------------- obnova tabulek
   if ( $_GET['refresh']=='tables' ) {
+    if (!isset($_SESSION[$ezer_root]['abs_root'])) { die("Je třeba nastartovat session pro aplikaci {$root}"); }
     require_once("server/reference.php");
     if ( $root=='ezer3.1' ) {
       global $EZER;

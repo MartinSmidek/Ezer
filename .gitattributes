@@ -97,6 +97,8 @@ client/skins/default/tree.png -text
 client/wiki.css -text
 /comp.css -text
 /comp.php -text
+/comp.png -text
+/comp_local.png -text
 /dbg3.php -text
 /ezer2.help.ezer -text
 /ezer2.pers.ezer -text
