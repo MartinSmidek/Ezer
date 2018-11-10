@@ -2339,9 +2339,11 @@ class Eval {
             // K - inicializace pro foreach iterující objekt, na zásobník přidá
             //     pole klíčů objektu nebo počet prvků pole
             case 'K':
-              obj= this.stack[this.top];                  // objekt nebo pole
+              obj= this.stack[this.top];                  // objekt nebo pole nebo form
               if ( Array.isArray(obj) )
                 this.stack[++this.top]= 0;                // první index pole
+              else if ( obj instanceof Form )
+                this.stack[++this.top]= Object.keys(obj.part); // pole form.part
               else if ( typeof(obj)=='object' )
                 this.stack[++this.top]= Object.keys(obj); // pole klíčů objektu
               else
@@ -2372,6 +2374,20 @@ class Eval {
                   c-= cc.go-1;                            // a eliminuj příkaz skoku
                 }
               }
+              else if ( obj instanceof Form ) {
+                if ( !keys.length ) {                     // pokud je pole klíčů prázdné
+                  this.top-= 2;                           // tak je i objekt odstraň ze zásobníku
+                  Ezer.eval_jump= '*';                    // a skonči cyklus skokem za foreach
+                }
+                else {                                    // jinak
+                  val= keys.shift();                      // získej nový klíč
+                  this.stack[++this.top]= obj.part[val];  // a dej na vrchol jeho hodnotu
+                  if ( cc.i==2 ) {                        // pokud má procedura 2 parametry
+                    this.stack[++this.top]= val;          // přidej klíč
+                  }
+                  c-= cc.go-1;                            // a eliminuj příkaz skoku
+                }
+              }
               else if ( typeof(obj)=='object' ) {
                 if ( !keys.length ) {                     // pokud je pole klíčů prázdné
                   this.top-= 2;                           // tak je i objekt odstraň ze zásobníku
@@ -2379,7 +2395,7 @@ class Eval {
                 }
                 else {                                    // jinak
                   val= keys.shift();                      // získej nový klíč
-                  this.stack[++this.top]= obj[val];       // a dej na vrcho jeho hodnotu
+                  this.stack[++this.top]= obj[val];       // a dej na vrchol jeho hodnotu
                   if ( cc.i==2 ) {                        // pokud má procedura 2 parametry
                     this.stack[++this.top]= val;          // přidej klíč
                   }
@@ -3826,10 +3842,15 @@ Ezer.fce.castka_slovy= function (castka,platidlo,platidla,platidel,drobnych) {
 //s: funkce
 Ezer.fce.eq= function (x) {
   var ok= 0;
-  for (var i= 1; i<arguments.length; i++) {
-    if ( x==arguments[i] ) {
-      ok= 1;
-      break;
+  if ( arguments.length==1 ) {
+    ok= x ? 1 : 0;
+  }
+  else {
+    for (var i= 1; i<arguments.length; i++) {
+      if ( x==arguments[i] ) {
+        ok= 1;
+        break;
+      }
     }
   }
   return ok;

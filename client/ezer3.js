@@ -9787,27 +9787,31 @@ class Show extends Elem {
           }
           if ( !this.owner.first_query )
             this.owner.first_query= this.DOM_qry[i];
-          if ( this.DOM_qry[i] )
-          this.DOM_qry[i]
-            .focus( event => {
-                this.owner.DOM_table.addClass('changed');
-            })
-            .blur(event => {
-                this.owner.DOM_table.removeClass('changed');
-            })
-            // ovládání pásu dotaz; klávesnicí
-            .keypress( event => {
-                switch (event.keyCode) {
-                case 27:   // Esc - zrušit hledací vzory
-                  event.stopPropagation();
-                  this.owner.init_queries();
-                  break;
-                case 13: // Enter - provést hledání
-                  event.stopPropagation();
-                  this.owner._ask_queries(0,0,event.shiftKey);
-                  break;
-                }
-             });
+          if ( this.DOM_qry[i] ) {
+            this.DOM_qry[i]
+              .click( event => {
+                  event.target.focus(); // kvůli Chrome - FF focus vyvolává i při neošetřeném click
+              })
+              .focus( event => {
+                  this.owner.DOM_table.addClass('changed');
+              })
+              .blur(event => {
+                  this.owner.DOM_table.removeClass('changed');
+              })
+              // ovládání pásu dotaz; klávesnicí
+              .keypress( event => {
+                  switch (event.keyCode) {
+                  case 27:   // Esc - zrušit hledací vzory
+                    event.stopPropagation();
+                    this.owner.init_queries();
+                    break;
+                  case 13: // Enter - provést hledání
+                    event.stopPropagation();
+                    this.owner._ask_queries(0,0,event.shiftKey);
+                    break;
+                  }
+               });
+          }
         }
       }
     }
