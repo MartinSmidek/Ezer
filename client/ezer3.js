@@ -8699,9 +8699,10 @@ class Browse extends Block {
               <div style="display:block;text-align:center">
                 <span>-</span></div></th></tr></tfoot>
             <tbody></tbody>
-          </table>
-          <input class="BrowseFocus" type="text">
-        `)
+          </table>` + 
+          //pro odchytávání událostí klávesnice (ovládání browse klávesnicí, na mobilních zařízeních ale stále vyskakovala sw klávesnice)
+          (Ezer.platform!=='A'&&Ezer.platform!=='I'&&Ezer.platform!=='P' ? `<input class="BrowseFocus" type="text">` : ``)
+        )
         .css(this.coord())
         .appendTo(this.owner.DOM_Block)
         .data('ezer',this);
@@ -9759,7 +9760,7 @@ class Show extends Elem {
             var sel_desc= {type:'select.map0',options:{_w:this._w,par:{noimg:1,subtype:'browse'},
                 format:'wt',map_pipe:this.options.map_pipe,options:this.options.map_pipe,
                 help:'výběr z číselníkových hodnot'},
-              part:{onchange:{type:'proc',par:{},code:code}}};
+              part:{onchanged:{type:'proc',par:{},code:code}}};
             var sel_owner= {DOM_Block:td,_option:{}};
             var sel= new SelectMap0(sel_owner,sel_desc,td,'','');
             sel.Items[0]= '?';
