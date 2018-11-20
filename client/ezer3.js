@@ -872,6 +872,7 @@ class Block {
 //               case 'edit.html':     part= new Ezer.EditHtml(this,desc,DOM,id,skill); break;
               case 'edit':          part= new Edit(this,desc,DOM,id,skill); break;
               case 'edit.html':     part= new EditHtml(this,desc,DOM,id,skill); break;
+              case 'edit.auto':     part= new EditAuto(this,desc,DOM,id,skill); break;
 //               case 'field':         part= new Ezer.Field(this,desc,DOM,id,skill); break;
               case 'field':         part= new Field(this,desc,DOM,id,skill); break;
 //               case 'field.date':    part= new Ezer.FieldDate(this,desc,DOM,id,skill); break;
@@ -5654,8 +5655,13 @@ class Edit extends Elem {
     let corr= Ezer.browser=='CH' ? {height:this._h-2,width:this._w-2} : {height:this._h-2};
     var hlp= this.options.help||this.help;
     if (hlp && hlp.indexOf("|")<0) hlp = hlp+'|'+hlp;
+    const props= {
+      id: this.options.id,
+      tabindex: this.options.tabindex,
+      placeholder: hlp.slice(0,hlp.indexOf("|"))
+    };
     this.DOM_Block= this.DOM_Input= jQuery(`<textarea class="Edit3">`)
-      .prop('placeholder',hlp.slice(0,hlp.indexOf("|")));
+      .prop(props);
     if ( this.options.title ) {
       this.DOM_Block= jQuery(`<div class="Element3">`)  // div na obal a návěští
         .append(this.DOM_Input);
@@ -5880,6 +5886,56 @@ class EditHtml extends Elem {
         this.value= this.DOM_Input.hasClass('empty') ? '' : this.DOM_Input.value;
       }
     }
+  }
+}
+
+// =======================================================================================> EditAuto
+//c: EditAuto ()
+//      Textarea s našeptávačem
+//t: Block,Elem,Edit
+//s: Block
+class EditAuto extends Edit {
+//   options: {}
+// ------------------------------------------------------------------------------------ changed
+// -- fm: EditAuto.change ()
+//      při změně vyvolá nabídku našeptávače
+// =======================================================================================> EditHtml
+// prvek nesoucí dlouhou textovou hodnotu s našeptávačem
+// ------------------------------------------------------------------------------------ init
+//fm: EditAuto.init ([array])
+//      inicializuje našeptávač pro element edit
+  init (init_values) {
+    function split( val ) {
+      return val.split( /,\s*/ );
+    }
+    function extractLast( term ) {
+      return split( term ).pop();
+    }
+    jQuery(`#`+this.options.id)
+      .autocomplete({
+        minLength: 0,
+        source: function( request, response ) {
+          // delegate back to autocomplete, but extract the last term
+          response( jQuery.ui.autocomplete.filter(
+            init_values, extractLast( request.term ) ) );
+          },
+        focus: function() {
+          // prevent value inserted on focus
+          return false;
+          },
+        select: function( event, ui ) {
+          var terms = split( this.value );
+          // remove the current input
+          terms.pop();
+          // add the selected item
+          terms.push( ui.item.value );
+          // add placeholder to get the comma-and-space at the end
+          terms.push( "" );
+          this.value = terms.join( ", " );
+          return false;
+        }
+      });
+    return 1;
   }
 }
 

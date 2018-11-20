@@ -420,7 +420,9 @@ div.Element3 .Label3, div.Select3 .Label3, div.FieldDate3 .Label3 {
   border:1px solid #aaa; overflow-y:scroll; width:100%; height:100%; resize:none; }
 .EditHtml3 { position:absolute;
 }
-
+.ui-autocomplete {
+  z-index: 9999;
+}
 /* -------------------------------------------------------------------------------------==> Check */
 
 .Check3 { position:absolute; display:block; z-index:1; }
