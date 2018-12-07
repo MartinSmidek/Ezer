@@ -237,17 +237,17 @@ __EOD;
   }
   // klíčová slova pro debugger
   $head_jush= '';
-  if ( isset($pars->dbg) && $pars->dbg ) {
-    require_once("$ezer_path_serv/sys_doc.php");
-    pspad_keys($res,$key1,$key2,$key3);
-    $k= strtr(substr($key2,0,-1),array("="=>'|',"\n"=>''));
-    $head_jush= <<<__EOD
-  <script type="text/javascript">
-//     if ( jush )
-//       jush.links2.sql=/(\b)(($k))\b(\s*)/g;
-  </script>
-__EOD;
-  }
+//  if ( isset($pars->dbg) && $pars->dbg ) {
+//    require_once("$ezer_path_serv/sys_doc.php");
+//    pspad_keys($res,$key1,$key2,$key3);
+//    $k= strtr(substr($key2,0,-1),array("="=>'|',"\n"=>''));
+//    $head_jush= <<<__EOD
+//  <script type="text/javascript">
+////     if ( jush )
+////       jush.links2.sql=/(\b)(($k))\b(\s*)/g;
+//  </script>
+//__EOD;
+//  }
 
   // SLEDOVÁNÍ IP ADRESY
   $ip_ok= true;

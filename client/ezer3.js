@@ -5205,8 +5205,11 @@ class Elem extends Block {
           this.DOM_Input.addClass('changed');
         this._changed= true;
       }
-      else if ( !quiet )
-        this.DOM_Input.removeClass('changed');
+      else {
+        if ( !quiet )
+          this.DOM_Input.removeClass('changed');
+        this._changed= false;
+      }
     }
   }
 // ------------------------------------------------------------------------------------ DOM fixed

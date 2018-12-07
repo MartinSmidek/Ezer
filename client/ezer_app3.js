@@ -3093,8 +3093,8 @@ Ezer.fce.object= function () {
 //      (musí být ovšem definován klíč formuláře) a
 //      po ukončení kopírování nastane událost onload na formulář.
 //      Pro kombinaci of lze použít 4. parametr, vnucující přepsání originálních hodnot (použít _load místo set)
-//      Pro kombinaci fo lze použít 4. parametr, který omezí kopírování pouze na změněné položky
-// Pozn.: implementovány jsou tyto kombinace parametrů: fb, bf, of, fo, sf, lo.
+//      Pro kombinace fo,lo lze použít 4. parametr, který omezí kopírování pouze na změněné položky
+// Pozn.: implementovány jsou tyto kombinace parametrů: fb, bf, of, fo, sf, lo, ol.
 //s: funkce
 Ezer.fce.copy_by_name= function (x,y,delimiters,par4) {
   if ( x.type=='var' ) x= x.value;
@@ -3102,7 +3102,7 @@ Ezer.fce.copy_by_name= function (x,y,delimiters,par4) {
   var key= y instanceof Form ? y._key : 0;
   var typ_x= x instanceof Browse ? 'b' : x instanceof Form ? 'f' : x instanceof List ? 'l' :
     typeof(x)=='string' ? 's' : typeof(x)=='object' ? 'o' : '?';
-  var typ_y= y instanceof Browse ? 'b' : y instanceof Form ? 'f' :
+  var typ_y= y instanceof Browse ? 'b' : y instanceof Form ? 'f' : y instanceof List ? 'l' :
     typeof(y)=='string' ? 's' : typeof(y)=='object' ? 'o' : '?';
   if ( typ_x=='s' && typ_y=='f' ) {             // string --> form
     if ( x ) {
@@ -3111,7 +3111,6 @@ Ezer.fce.copy_by_name= function (x,y,delimiters,par4) {
         del1= delimiters[0]||'|';
         del2= delimiters[1]||':';
       }
-//       x.split(del1).each(function(pair,i) {
       for (let pair of x.split(del1)) {
         var d= pair.indexOf(del2);
         var id= pair.substr(0,d);
@@ -3124,7 +3123,6 @@ Ezer.fce.copy_by_name= function (x,y,delimiters,par4) {
     }
   }
   else if ( typ_x=='f' && typ_y=='b' ) {        // form --> browse
-//     $each(y.part,function(field,id) {
     for (const id in y.part) { const field= y.part[id];
       if ( x.part[id] && x.part[id].get ) {
         field.let(x.part[id].get());
@@ -3132,7 +3130,6 @@ Ezer.fce.copy_by_name= function (x,y,delimiters,par4) {
     }
   }
   else if ( typ_x=='b' && typ_y=='f' ) {        // browse --> form
-//     $each(y.part,function(field,id) {
     for (const id in y.part) { const field= y.part[id];
       if ( field._load && x.part[id] && x.part[id].get ) {
         field._load(x.part[id].get(),key);
@@ -3141,10 +3138,9 @@ Ezer.fce.copy_by_name= function (x,y,delimiters,par4) {
     y.fire('onload');                           // proveď akci formuláře po naplnění daty
   }
   else if ( typ_x=='o' && typ_y=='f' ) {        // object --> form
-//     Object.each(x,function(value,id) {
     for (const id in x) { const value= x[id];
       var field= y.part[id];
-      if ( field ) { // instanceof Ezer.Elem ) {
+      if ( field ) { 
         if ( field.key ) {
           field.key(x[id],key);
         }
@@ -3159,7 +3155,6 @@ Ezer.fce.copy_by_name= function (x,y,delimiters,par4) {
     y.fire('onload');                           // proveď akci formuláře po naplnění daty
   }
   else if ( typ_x=='f' && typ_y=='o' ) {        // form --> object
-//     $each(x.part,function(field,id) {
     for (const id in x.part) { const field= x.part[id];
       if ( par4 && (!field.changed || !field.changed()) ) // od 7.6.2017, Gándí ... par4 = only_changed
         continue;
@@ -3172,16 +3167,38 @@ Ezer.fce.copy_by_name= function (x,y,delimiters,par4) {
     }
   }
   else if ( typ_x=='l' && typ_y=='o' ) {        // list --> object
-//     $each(x.part,function(row,i) {
     for (const i in x.part) { const row= x.part[i];
       y[i]= {};
-//       $each(row.part,function(field,id) {
       for (const id in row.part) { const field= row.part[id];
-        if ( id[0]!='$' && field.key ) {          // přednost má definice klíče
+        if ( par4 && (!field.changed || !field.changed()) )
+        continue;
+        if ( id[0]!='$' && field.key ) {        // přednost má definice klíče
           y[i][id]= field.key();
         }
         else if ( id[0]!='$' && field.get ) {
           y[i][id]= field.get();
+        }
+      }
+    }
+  }
+  else if ( typ_x=='o' && typ_y=='l' ) {        // object[0:n] of object --> list
+    y.init();
+    for (let i= 0; i<x.length; i++) { 
+      const xi= x[i];
+      y.add();
+      let yi= y.part[i];
+      for (const id in xi) { const value= xi[id];
+        var field= yi.part[id];
+        if ( field ) { 
+          if ( field.key ) {
+            field.key(xi[id],key);
+          }
+          else if ( par4 && field._load ) { 
+            field._load(xi[id],key);
+          }
+          else if ( field.set ) {
+            field.set(xi[id],value);
+          }
         }
       }
     }
