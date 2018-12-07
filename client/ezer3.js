@@ -5896,42 +5896,39 @@ class EditHtml extends Elem {
 //s: Block
 class EditAuto extends Edit {
 //   options: {}
-// ------------------------------------------------------------------------------------ changed
-// -- fm: EditAuto.change ()
-//      při změně vyvolá nabídku našeptávače
-// =======================================================================================> EditHtml
+// =======================================================================================> EditAuto
 // prvek nesoucí dlouhou textovou hodnotu s našeptávačem
 // ------------------------------------------------------------------------------------ init
-//fm: EditAuto.init ([array])
-//      inicializuje našeptávač pro element edit
-  init (init_values) {
-    function split( val ) {
-      return val.split( /,\s*/ );
-    }
-    function extractLast( term ) {
-      return split( term ).pop();
-    }
-    jQuery(`#`+this.options.id)
+//fm: EditAuto.init (init_values=array|string, [delimiter=', '])
+//      inicializuje našeptávač pro element edit, našeptávané hodnoty jsou předány buďto v poli,
+//      nebo ve stringu odděleny čárkami. Delimiter je oddělovač hodnot vkládaným výběrem 
+//      z našeptaných hodnot
+  init (init_values,delimiter) {
+    this.keywords= 
+      typeof init_values=='array' ? init_values :(
+      typeof init_values=='string' ? init_values.split( /,\s*/ ) : []);
+    delimiter= delimiter||', ';
+    jQuery(this.DOM_Input)
       .autocomplete({
         minLength: 0,
-        source: function( request, response ) {
+        source: function (request, response) {
           // delegate back to autocomplete, but extract the last term
           response( jQuery.ui.autocomplete.filter(
-            init_values, extractLast( request.term ) ) );
-          },
-        focus: function() {
+            this.keywords, request.term.split(/,\s*/).pop()));
+        }.bind(this),
+        focus: function () {
           // prevent value inserted on focus
           return false;
-          },
-        select: function( event, ui ) {
-          var terms = split( this.value );
+        },
+        select: function (event, ui) {
+          var terms= this.value.split(/,\s*/);
           // remove the current input
           terms.pop();
           // add the selected item
-          terms.push( ui.item.value );
+          terms.push(ui.item.value);
           // add placeholder to get the comma-and-space at the end
-          terms.push( "" );
-          this.value = terms.join( ", " );
+          terms.push("");
+          this.value= terms.join(delimiter);
           return false;
         }
       });
