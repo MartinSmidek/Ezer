@@ -379,7 +379,7 @@ div.LabelDrop3 .ContextFocus3 {
 .fa {
   font-family:FontAwesome,sans-serif !important; }
 .Button3 i.fa-red, a i.fa-red  { color:red }
-button.Button3:disabled i.fa-red { color:grey }
+button.Button3:disabled3 i.fa-red { color:grey }
     
 /* korekce Mozilla */
 @-moz-document url-prefix() {
@@ -523,7 +523,7 @@ td.BrowseNoClmn img.sort {
 .BrowseSmart td img.resize {
   float:right !important; padding:0; cursor: w-resize; z-index:200;
   margin-bottom:-10px; height:10px; width:5px; }
-.BrowseSmart.disabled td {
+.BrowseSmart.disabled3 td {
   color:#545454; }
 /* dotazy */
 .BrowseSmart td.BrowseNoQry {

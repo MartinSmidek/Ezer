@@ -549,8 +549,8 @@ Ezer.fce.contextmenu= function (menu,event,id,up) {
 .ContextMenu3 li { display:block; padding:2px 2px 0px 25px; width:173px; text-decoration:none; }
 .ContextMenu3 li i { margin-left:-15px; }
 .ContextMenu3 li:hover { background-color:#b2b4bf; }
-.ContextMenu3 li.disabled { color:#ccc; font-style:italic; }
-.ContextMenu3 li.disabled:hover { background-color:#eee; }
+.ContextMenu3 li.disabled3 { color:#ccc; font-style:italic; }
+.ContextMenu3 li.disabled3:hover { background-color:#eee; }
 .ContextFocus3 { background-color:#ffa !important;
 }
 /*
@@ -565,9 +565,9 @@ Ezer.fce.contextmenu= function (menu,event,id,up) {
         display:block; padding:2px 2px 0px 25px; width:173px; text-decoration:none; color:#000; }
       .ContextMenu li a:hover   {
         background-color:#b2b4bf; }
-      .ContextMenu li a.disabled {
+      .ContextMenu li a.disabled3 {
         color:#ccc; font-style:italic; }
-      .ContextMenu li a.disabled:hover {
+      .ContextMenu li a.disabled3:hover {
         background-color:#eee; }
       .ContextFocus {
         background-color:#ffa !important; }

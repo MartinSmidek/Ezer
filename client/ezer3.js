@@ -1275,7 +1275,7 @@ class Block {
       }
     }
     if ( this instanceof Elem ) {
-      var form= this.owner;
+      var form= this.owner instanceof ListRow ? this.owner.owner.owner : this.owner;
       if ( event_name=='onchanged' || !form._changed && event_name=='onchange' ) {
         // některá přerušení se z elementu přenášejí do formuláře: elem.onchange => form.onchanged
         if ( !this._fc('T') ) {
@@ -1689,9 +1689,9 @@ class MenuLeft extends Menu {
   enable (enabled) {
     this.enabled= enabled=="0" ? 0 : enabled;
     if ( this.enabled )
-      this.DOM_Block.removeClass('disabled');
+      this.DOM_Block.removeClass('disabled3');
     else
-      this.DOM_Block.addClass('disabled');
+      this.DOM_Block.addClass('disabled3');
     return true;
   }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  excite
@@ -9068,9 +9068,9 @@ class Browse extends Block {
   DOM_enabled (on) {
     this.enabled= on;
     if ( this.enabled )
-      this.DOM_Block.removeClass('disabled');
+      this.DOM_Block.removeClass('disabled3');
     else
-      this.DOM_Block.addClass('disabled');
+      this.DOM_Block.addClass('disabled3');
   }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  DOM slider
   DOM_slider () {
