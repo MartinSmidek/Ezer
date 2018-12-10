@@ -5908,8 +5908,8 @@ class EditAuto extends Edit {
 //      z našeptaných hodnot
   init (init_values,delimiter) {
     this.keywords= 
-      typeof init_values=='array' ? init_values :(
-      typeof init_values=='string' ? init_values.split( /,\s*/ ) : []);
+      typeof init_values==='object' ? init_values :(
+      typeof init_values==='string' ? init_values.split( /,\s*/ ) : []);
     delimiter= delimiter||', ';
     jQuery(this.DOM_Input)
       .autocomplete({
