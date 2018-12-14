@@ -5486,6 +5486,7 @@ class FieldDate extends Field {
 // ------------------------------------------------------------------------------------ DOM enabled
 // ovládá css pro button
   DOM_enabled (on) {
+    super.DOM_enabled(on);
     if ( !on ) {
       jQuery(this.DOM_Button).addClass('disabled3');
     }
@@ -5656,6 +5657,7 @@ class FieldList extends Elem {
 // ------------------------------------------------------------------------------------ DOM enabled
 // ovládá css pro button
   DOM_enabled (on) {
+    super.DOM_enabled(on);
     if ( !on ) {
       jQuery(this.DOM_Button).addClass('disabled3');
     }
@@ -6965,6 +6967,7 @@ class Select extends Elem {
 // ------------------------------------------------------------------------------------ DOM enabled
 // ovládá css pro button
   DOM_enabled (on) {
+    super.DOM_enabled(on);
     if ( !on ) {
       jQuery(this.DOM_Button).addClass('disabled3');
     }
