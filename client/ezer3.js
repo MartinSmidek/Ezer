@@ -1824,12 +1824,14 @@ class MenuGroup extends Menu {
   DOM_initialize () {
     this._enabled= 1;
   }
+// ------------------------------------------------------------------------------------ DOM add
   DOM_add1 () {
     Ezer.assert(this.owner.type=='menu.left','chybné menu - group mimo accordion');
     var title= this.options.title||this.id;
     this.DOM_Block= jQuery(`<div class="MenuGroup3"><a>${title}</a><ul></ul></div>`)
       .appendTo(this.owner.DOM_Block)
-      .data('ezer',this)
+      .data('ezer',this);
+    this.DOM_Block.find('a')
       .click(e => { this.DOM_Block.find('ul').slideToggle(); return false; });
   }
 // MenuGroup.prototype.DOM_add2= null;
