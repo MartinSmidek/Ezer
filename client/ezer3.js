@@ -4900,7 +4900,7 @@ class Button extends Block {
       this.DOM_enabled(0);
   }
 // ------------------------------------------------------------------------------------ DOM enabled
-// zobrazí this.value v DOM
+// ovládá css pro button
   DOM_enabled (on) {
     if ( !on ) {
       jQuery(this.DOM_Block).addClass('disabled3');
@@ -5166,7 +5166,7 @@ class Elem extends Block {
 //o: Elem-DOM.DOM_Input - DOM element INPUT
 //   DOM_Input: null,                      // prvek <input ...>
 // ------------------------------------------------------------------------------------ DOM enabled
-// zobrazí this.value v DOM
+// ovládá html-atribut disabled ve vloženém input
   DOM_enabled (on) {
     if ( !on ) {
       jQuery(this.DOM_Input)
@@ -5481,8 +5481,17 @@ class FieldDate extends Field {
     this.picker= new Pikaday(options);
     return this.picker;
   }
+// ------------------------------------------------------------------------------------ DOM enabled
+// ovládá css pro button
+  DOM_enabled (on) {
+    if ( !on ) {
+      jQuery(this.DOM_Button).addClass('disabled3');
+    }
+    else if ( this.skill!=1 ) {
+      jQuery(this.DOM_Button).removeClass('disabled3');
+    }
+  }
 }
-
 // ======================================================================================> FieldList
 //c: FieldList ()
 //      vstupní část formuláře - rozbalení obsahu podle oddělovače
@@ -5640,6 +5649,16 @@ class FieldList extends Elem {
     for (let li of this._values) {
       this.DOM_Input.val(this.DOM_Input.val() + del + li.val());
       del= this.options.par ? this.options.par.delim||',' : ',';
+    }
+  }
+// ------------------------------------------------------------------------------------ DOM enabled
+// ovládá css pro button
+  DOM_enabled (on) {
+    if ( !on ) {
+      jQuery(this.DOM_Button).addClass('disabled3');
+    }
+    else if ( this.skill!=1 ) {
+      jQuery(this.DOM_Button).removeClass('disabled3');
     }
   }
 }
@@ -6940,6 +6959,16 @@ class Select extends Elem {
 //      které u select vzniká už při výběru alternativy
   DOM_blur () {
     this.fire('onblur');
+  }
+// ------------------------------------------------------------------------------------ DOM enabled
+// ovládá css pro button
+  DOM_enabled (on) {
+    if ( !on ) {
+      jQuery(this.DOM_Button).addClass('disabled3');
+    }
+    else if ( this.skill!=1 ) {
+      jQuery(this.DOM_Button).removeClass('disabled3');
+    }
   }
 }
 
