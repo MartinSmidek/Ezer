@@ -234,7 +234,7 @@ class Block {
     }
     return '$.'+id;
   }
-// ------------------------------------------------------------------------------------ set_attrib
+// ------------------------------------------------------------------------------------ set attrib
 //fm: Block.set_attrib (name,val[,desc=])       nedokumentováno, může být změněno
 //      změní hodnotu atributu 'name' na 'val'
 //      name může být složeným jménem
@@ -263,9 +263,12 @@ class Block {
     if ( name=='title' && this instanceof PanelPopup ) {
       this.DOM.find('div.pop_head span').first().html(val);
     }
+    else if ( name=='title' && this.DOM_Label ) {
+      this.DOM_Label.html(val);
+    }
     return 1;
   }
-// ------------------------------------------------------------------------------------ add_attrib
+// ------------------------------------------------------------------------------------ add attrib
 //fm: Block.add_attrib (name,val)
 //      pokud val není objekt, je funkce stejná jako set_attrib;
 //      pokud je val objekt, budou jeho položky přidány k dosavadním,
@@ -7527,7 +7530,7 @@ class Browse extends Block {
         slen:this.slen,b:this.b,blen:this.blen,bmax:this.bmax,t:this.t,r:this.r,tlen:this.tlen,
         tmax:this.tmax});
   }
-// ------------------------------------------------------------------------------------ set_attrib
+// ------------------------------------------------------------------------------------ set attrib
 //fm: Browse.set_attrib (name,val[,desc=])       nedokumentováno, může být změněno
 //      pokud name='rows' změní počet řádků browse, pro jiná jména volá Block.set_atrib
 //a: name - 'rows'
