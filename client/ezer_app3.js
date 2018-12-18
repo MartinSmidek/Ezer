@@ -3092,7 +3092,8 @@ Ezer.fce.object= function () {
 //      Hodnoty zkopírované do formuláře jsou nastaventy jako originální
 //      (musí být ovšem definován klíč formuláře) a
 //      po ukončení kopírování nastane událost onload na formulář.
-//      Pro kombinaci of lze použít 4. parametr, vnucující přepsání originálních hodnot (použít _load místo set)
+//      Pro kombinaci of lze použít 4. parametr, vnucující přepsání originálních hodnot 
+//        >0 vynutí použití _load místo set; =2 způsobí vyvolání události change
 //      Pro kombinace fo,lo lze použít 4. parametr, který omezí kopírování pouze na změněné položky
 // Pozn.: implementovány jsou tyto kombinace parametrů: fb, bf, of, fo, sf, lo, ol.
 //s: funkce
@@ -3146,6 +3147,10 @@ Ezer.fce.copy_by_name= function (x,y,delimiters,par4) {
         }
         else if ( par4 && field._load ) {       // od 7.4.2016, Gándí ... par4 = set_original
           field._load(x[id],key);
+          if ( par4==2 && field.DOM_Input ) {
+            // pro par=4 vyvolej událost change
+            field.DOM_Input.trigger('change');  
+          }
         }
         else if ( field.set ) {
           field.set(x[id],value);
