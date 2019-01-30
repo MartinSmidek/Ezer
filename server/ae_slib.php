@@ -435,7 +435,7 @@ __EOD;
 //   $html_header.= "\xEF\xBB\xBF";    // DOM pro UTF-8
   $html_header.= <<<__EOD
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en" dir="ltr">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="cs" dir="ltr">
 <head>$html_base
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=9" /> $meta_link
@@ -1041,11 +1041,11 @@ function call_stack($act,$n,$hloubka=2,$show_call=1) { #$this->debug($act,'call_
 function debug($gt,$label=false,$options=null) {
   global $trace, $debug_level;
   $debug_level= 0;
-  $html= ($options && $options->html) ? $options->html : 0;
-  $depth= ($options && $options->depth) ? $options->depth : 64;
-  $length= ($options && $options->length) ? $options->length : 64;
-  $win1250= ($options && $options->win1250) ? $options->win1250 : 0;
-  $gettype= ($options && $options->gettype) ? 1 : 0;
+  $html= ($options && isset($options->html)) ? $options->html : 0;
+  $depth= ($options && isset($options->depth)) ? $options->depth : 64;
+  $length= ($options && isset($options->length)) ? $options->length : 64;
+  $win1250= ($options && isset($options->win1250)) ? $options->win1250 : 0;
+  $gettype= ($options && isset($options->gettype)) ? 1 : 0;
   if ( is_array($gt) || is_object($gt) ) {
     $x= debugx($gt,$label,$html,$depth,$length,$win1250,$gettype);
   }

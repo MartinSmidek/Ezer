@@ -77,6 +77,8 @@ function sys_user_record($id_user=0) {  trace();
     $html.= row('vyřizuje',$opt->vyrizuje);
     $html.= row('telefon',$opt->telefon);
     $html.= row('potvrzuje',$opt->potvrzuje);
+    $html.= row('email',$opt->email);
+    $html.= row('SMTP key',$opt->smtp);
     $html.= row('zvláštní styl',$opt->css);
     $html.= row('state',$u->state,'m');
     $html.= row('patička mailu',$opt->email_foot);
@@ -120,6 +122,7 @@ function sys_user_get ($id_user,$typ,$fld) {  trace();
 # $typ='pas' -- _user->password=$val pokud stávající _user->password==$p1 a $val==$p2
 #               fis_user_change(t,nps,ops,rep)
 function sys_user_change_me($typ,$fld,$val,$p1='',$p2='') {  trace();
+  global $ezer_root;  
   $id_user= $_SESSION[$ezer_root]['user_id'];
   sys_user_change($id_user,$typ,$fld,$val,$p1,$p2);
 }

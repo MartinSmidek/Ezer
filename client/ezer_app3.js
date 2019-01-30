@@ -1,7 +1,7 @@
 /* části app.js a ezer_dom1.js portované z mootools do jQuery */
 /* Ezer3.1                             (C) 2017 Martin Šmídek */
 /* Ezer3.1        (C) 2009 Martin Šmídek */
-/* global Ezer, Browser, gapi, Cookie, Function, args, Block, ListRow, Form, List, Browse, self, Menu, Panel, CKEDITOR, PanelPopup */
+/* global Object, Ezer, Browser, gapi, Cookie, Function, args, Block, ListRow, Form, List, Browse, self, Menu, Panel, CKEDITOR, PanelPopup */
 
 "use strict";
 // <editor-fold defaultstate="collapsed" desc="++++++++++++++++++++++++++ EZER inicializace">
@@ -241,6 +241,7 @@ class Application {
     Object.assign(this.options,options); // moo: this.setOptions(options);
 //     Ezer.Shield= new Mask('shield',{hideOnClick:false,
 //       style:{opacity:0.2,backgroundColor:'#333',zIndex:2}});
+    Ezer.Shield= jQuery('#form_mask3');
     this.DOM_add();
     if ( options._oninit ) {
       eval(options._oninit+'()');
@@ -4061,7 +4062,7 @@ Ezer.fce.prints= function (width,height,css_file) {
     pw.document.open();
     html+= "<!DOCTYPE html PUBLIC '-//W3C//DTD XHTML 1.0 Transitional//EN' ";
     html+= "'http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd'>\n";
-    html+= "<html xmlns='http://www.w3.org/1999/xhtml' lang='en' xml:lang='en'>\n";
+    html+= "<html xmlns='http://www.w3.org/1999/xhtml' lang='cs' xml:lang='en'>\n";
     html+= " <head><title>Náhled tisku</title>\n";
     html+= "  <meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />\n";
     html+= "  <link type='text/css' rel='stylesheet' href='"+css_file+"' />\n";

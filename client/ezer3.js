@@ -1,5 +1,5 @@
 // Ezer3.1 - část nezávislá na jQuery 
-/* global Ezer, Function, google, gapi, args, CKEDITOR */ // pro práci s Netbeans
+/* global Ezer, Object, Function, google, gapi, args, CKEDITOR */ // pro práci s Netbeans
 "use strict";
 // 'DOM' je vlastnost se kterou se smí pracovat jen jako s celkem
 // (aby v některé implementaci mohla být objektem)
@@ -954,7 +954,7 @@ class Block {
 //               case 'table':         part= new Ezer.Table(this,desc,null,id); break;
               case 'table':         part= new Table(this,desc,null,id); break;
 //               case 'map':           part= new Ezer.Map(this,desc,null,id); break;
-              case 'map':           part= new Map(this,desc,null,id); break;
+              case 'map':           part= new EzerMap(this,desc,null,id); break;
 //               case 'proc':          part= new Ezer.Proc(this,desc,this); break;
               case 'proc':          part= new Proc(this,desc,this); break;
               // přeskakované (informace dostupné přes Ezer.code)
@@ -1499,7 +1499,7 @@ class BlockMain extends Block {
         case 'panel.main':part= new PanelMain(this,idesc,null,id); break;
         case 'panel.popup':part= new PanelPopup(this,idesc,null,id); break;
         case 'table':     part= new Table(this,idesc,null,id);    break;
-        case 'map':       part= new Map(this,idesc,null,id);      break;
+        case 'map':       part= new EzerMap(this,idesc,null,id);      break;
         // s potenciální vizualizací
         case 'var':       part= new Var(this,idesc,null,id);      break;
         // objekt bez vizualizace (ale vložený jako part)
@@ -2885,7 +2885,7 @@ class Table extends Block {
 //      zpřístupnění obsahu tabulky v klientovi, používá se zpravidla pro číselníky
 //t: Block
 //s: Block
-class Map extends Block {
+class EzerMap extends Block {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  initialize
   initialize () {
     super.initialize();

@@ -19,10 +19,12 @@ echo <<<__EOD
 
 .mask3 { position:absolute; left:0; top:0; width:100%; height:100%; z-index:2000; display:none; }
 
-#wait_mask, div#popup_mask3, #top_mask3 { position:absolute; left:0; top:0; width:100%; height:100%;
+#wait_mask, div#popup_mask3, #top_mask3, #form_mask3 { 
+  position:absolute; left:0; top:0; width:100%; height:100%;
   z-index:1000; display:none; background-color: rgba(51,51,51,0.2); }
 #wait { position: absolute; left: 0; right: 0; top: 0; bottom: 0; margin:auto; width:64px;
   height:64px; z-index:997; background-color:transparent; background-image:url(img/spinner.gif); }
+#form_mask3 { z-index:2; }
 #top_mask3 { z-index:2000;
 }
 
