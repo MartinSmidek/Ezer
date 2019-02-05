@@ -2551,7 +2551,7 @@ class PanelPopup extends Panel {
   _show (l,t,noevent,title) {
     // panel position
     if ( l!==undefined && t!==undefined )
-      this.DOM.css({left:l,top:t,marginLeft:0,marginTop:0});
+      this.DOM.css({left:Number(l),top:Number(t),marginLeft:0,marginTop:0});
     else
       this.DOM.css({left:'50%',top:'50%',marginLeft:-this._w/2-5,marginTop:-this._h/2-15});
     // panel title
@@ -7597,7 +7597,8 @@ class Browse extends Block {
     switch ( op ) {
       case 'refresh': { // obnoví označení výběru
         for (let i= 1; i<=this.tlen; i++) {
-          this.DOM_selected(i,this.keys_sel.includes(this.keys[this.t+i-1-this.b]));
+          let key_i= Number(this.keys[this.t+i-1-this.b]);
+          this.DOM_selected(i,this.keys_sel.includes(key_i));
         }
         this._set_css_rows();
         this.DOM_show_status();
@@ -7967,21 +7968,23 @@ class Browse extends Block {
     return y.value;
   }
 // ------------------------------------------------------------------------------------ browse select+
-//fx: Browse.browse_select (cond)
+//fx: Browse.browse_select (cond[,quiet=false)
 //      nastavení všech vybraných řádků do keys_sel
 //a: cond - MySQL podmínka umístěná za WHERE
-  browse_select  (cond) {
+  browse_select  (cond,quiet) {
     // zapomeň podmínku
     var selected_op= this.selected_op;          // vypni nastavené selected
     this.selected_op= 'ignore';
     var x= this._params({cmd:'browse_select'},cond,null,null,null,null,1);
+    x.quiet= quiet||0;
     this.selected_op= selected_op;
     return x;
   }
   browse_select_  (y) {
     this.keys_sel= y.keys ? y.keys.split(',').map(Number) : [];
     this.selected('refresh');
-    this.fire('onchoice');
+    if ( !y.quiet )
+      this.fire('onchoice',[0]);
     return true;
   }
 // ------------------------------------------------------------------------------------- browse keys
@@ -8033,7 +8036,7 @@ class Browse extends Block {
     var di= first, dn= d.length, count= 0;
     this._browse_init1('fill');                 // inicializace bufferu
     while (di<dn) {
-      this.keys[count]= d[di];
+      this.keys[count]= Number(d[di]);
       this.buf[count]= {};
       for (var vi in this.part) {               // vi je identifikátor show
         if ( this.part[vi] instanceof Show ) {
@@ -8177,7 +8180,7 @@ class Browse extends Block {
           if ( asked ) {
             if ( vi==y.key_id ) {
               // klíč je zapsán podle stejnojmenné položky
-              this.keys[bi]= this.buf[bi][vi];
+              this.keys[bi]= Number(this.buf[bi][vi]);
               if ( rec!=-1 )                      // pokud není blokováno
                 this.owner._key= this.keys[bi];   // změň běžný klíč
             }
@@ -8185,7 +8188,7 @@ class Browse extends Block {
           else if ( this.keys[bi]===undefined
             && this.part[vi].data && this.part[vi].data.id==y.key_id ) {
             // klíč je zapsán jen podle první položky, která jej má v data.id
-            this.keys[bi]= this.buf[bi][vi];
+            this.keys[bi]= Number(this.buf[bi][vi]);
             if ( rec!=-1 )                      // pokud není blokováno
               this.owner._key= this.keys[bi];   // změň běžný klíč
           }
@@ -8206,7 +8209,7 @@ class Browse extends Block {
     return this.blen;
   }
 // --------------------------------------------------------------------------------==> . browse_seek
-//fx: Browse.browse_seek ([seek_cond [,cond[,having[,sql]]]])
+//fx: Browse.browse_seek ([seek_cond [,cond[,having[,sql[,quiet]]]]])
 //      naplnění browse daty z tabulky;
 //      pro správnou funkci musí browse obsahovat show s klíčem řídící tabulky
 //    1.pokud není definováno seek_cond, zopakuje předchozí browse_load včetně nastavení záznamu
@@ -8439,7 +8442,7 @@ class Browse extends Block {
           buf[bi][vi]= this.part[vi]._load(y.values[bi+1][vi]);
           if ( keys[bi]===undefined && this.part[vi].data && this.part[vi].data.id==y.key_id ) {
             // klíč je zapsán jen podle první položky, která jej má v data.id
-            key= keys[bi]= buf[bi][vi];
+            key= keys[bi]= Number(buf[bi][vi]);
           }
         }
       }
@@ -8565,7 +8568,8 @@ class Browse extends Block {
         }
       }
       // obarvení řádků vybraných INS
-      if ( this.keys_sel.includes(this.keys[this.t+i-1-this.b]) )
+      let key_i= this.keys[this.t+i-1-this.b];
+      if ( this.keys_sel.includes(key_i) )
         this.DOM_row[i].addClass('tr-sel');
     }
     else {
@@ -8632,7 +8636,9 @@ class Browse extends Block {
     x.joins= {};
     for (let ic in this.part) { // načti jen zobrazené sloupce použité v browse, vybírej použitá view
       let field= this.part[ic];
-      if ( field.skill ) this.owner._fillx(field,x,to_map);
+      if ( field._load && (field.data || field.options.expr) && field.skill ) {
+        this.owner._fillx(field,x,to_map);
+      }
     }
     this._fillx2(x.cond+x.order,x); // s možnou explicitní definicí x.key_id
     // změň podmínku na "jen vybrané", pokud je požadováno

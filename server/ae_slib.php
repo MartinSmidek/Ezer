@@ -2552,8 +2552,13 @@ function mysql_qry($qry,$pocet=null,$err=null,$to_throw=false,$db='') {
       $res= null;
     }
   }
-  if ( strpos($totrace,'M')!==false )
-    $y->qry.= (isset($y->qry)?"\n":'')."$ok $time \"$myqry\" ";
+  if ( strpos($totrace,'M')!==false ) {
+    $pretty= $myqry;
+    if ( strpos($pretty,"\n")===false )
+      $pretty= preg_replace("/(FROM|LEFT JOIN|JOIN|WHERE|GROUP|HAVING|ORDER)/","\n\t\$1",$pretty);
+    $y->qry.= (isset($y->qry)?"\n":'')."$ok $time \"$pretty\" ";
+//    $y->qry.= (isset($y->qry)?"\n":'')."$ok $time \"$myqry\" ";
+  }
   $y->qry_ms= isset($y->qry_ms) ? $y->qry_ms+$time : $time;
   $qry_del= "\n: ";
   if ( $msg ) {

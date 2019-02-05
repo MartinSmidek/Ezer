@@ -688,7 +688,7 @@ panel needs [,,770,] {type:'right', title:'Požadavky', _sys:'poz', skill:'sp'
     label [533,308,41,] {tag:'notify', title:'bude-li', format:'n' }
     select notify [577,305,91,]  {tag:'notify', type:'map0', data:t.email_kdyz, format:'n',
       map_pipe:cis_s_todo_email.hodnota, options:cis_s_todo_email.hodnota
-      proc onchange() { email.change // aby se zapsala adresa
+      proc onchanged() { email.change // aby se zapsala adresa
     }}
     check nono [668,303,77,] {tag:'notify', title:'ale teď ne', format:'nt', value:'0'}
 

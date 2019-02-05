@@ -91,7 +91,7 @@ function pdo_error() {
 function pdo_affected_rows() {
   return mysql_affected_rows();
 }
-function pdo_qry($qry,$pocet=null,$err=null,$to_throw=false,$db='.main.') {
+function pdo_qry($qry,$pocet=null,$err=null,$to_throw=null,$db=null) {
   return mysql_qry($qry,$pocet,$err,$to_throw,$db);
 }
 }
@@ -192,7 +192,7 @@ function pdo_affected_rows() {
   $pdo= $ezer_db[$curr_db][0];
   return $pdo->rowCount();
 }
-function pdo_qry($qry,$pocet=null,$err=null,$to_throw=false,$db='.main.') {
+function pdo_qry($qry,$pocet=null,$err=null,$to_throw=null,$db=null) {
   return mysql_qry($qry,$pocet,$err,$to_throw,$db);
 }
 }

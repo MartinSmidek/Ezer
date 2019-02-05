@@ -1,6 +1,4 @@
 * text=auto !eol
-client/ezer.css -text
-client/ezer.css.php -text
 client/ezer3.css.php -text
 client/ezer3.js -text
 client/ezer_app3.js -text
@@ -118,7 +116,6 @@ server/ezer3.php -text
 server/ezer_cms3.php -text
 server/ezer_lib3.php -text
 server/ezer_pdo.php -text
-server/ezer_pdo_1.php -text
 server/file_send.php -text
 server/get_oauth_token.php -text
 server/licensed/ezer_tcpdf.php -text

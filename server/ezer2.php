@@ -491,7 +491,7 @@
     else fce_error("ask: funkce {$x->fce} neexistuje");
 //     $y->args= $x->args;
     break;
-  # ------------------------------------------------------------------------------------------------ browse_select
+  # ---------------------------------------------------------------------------------- browse select
   // vrácení klíčů s podmínkou cond - browse bez JOIN a GROUP ale s ORDER
   // x: table, cond, from
   // y: count, from, rows, values[i]
@@ -499,6 +499,7 @@
     $fields= ''; $del= '';
     $x->from= $x->from ? $x->from : 0;
     $y->from= $x->from;
+    $y->quiet= $x->quiet;
     $db= $x->db ? $x->db : $mysql_db; $table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
     $as= explode('AS',$x->table);
     $y->key_id= $key_id= $as[1] ? trim($as[1]).'.'.$x->key_id : $x->key_id;
@@ -513,7 +514,9 @@
     }
     if ( $x->db ) ezer_connect($x->db);
     $qry= "SELECT $key_id AS _klice_ FROM $table $joins WHERE $cond ";
-    if ( $x->order ) $qry.= " ORDER BY {$x->order}";
+    if ( $x->group )  $qry.= " GROUP BY {$x->group}";
+    if ( $x->having ) $qry.= " HAVING {$x->having}";
+    if ( $x->order )  $qry.= " ORDER BY {$x->order}";
     $res= mysql_qry($qry);
     $keys= ''; $del= '';
     while ( $res && $row= pdo_fetch_assoc($res) ) {
@@ -522,7 +525,7 @@
     }
     $y->keys= $keys;
     break;
-  # ------------------------------------------------------------------------------------------------ browse_load
+  # ------------------------------------------------------------------------------------ browse load
   // načtení polí table.fields s podmínkou cond a v pořadí order (od from v počtu maximálně rows)
   // výsledek je ve values[radek][field] - v count je celkový počet
   // x: table, cond, order, fields, from, cursor, rows, [{joins}] [group [having]]   -- field:{id:i, field:f|expr:s}

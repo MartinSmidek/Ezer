@@ -52,6 +52,17 @@ div#popup3 { position: absolute; left: 0; right: 0; bottom: 40%; margin:auto; wi
   font-size:14px; font-weight:bold; margin:2px 0; padding:5px 50px; clear:both; white-space:nowrap;
 }
 
+div.systable {
+  overflow:auto; }
+.systable {
+  border-collapse:collapse; }
+.systable th {
+  font-weight:bold; background-color:$b_item; text-align:center; border-left:1px dotted #69f; }
+.systable td {
+  border-right:1px dotted #bbf; }
+.systable tr {
+  border-bottom:1px solid gray; }
+
 /* --------------------------------------------------------------------------- pomocné konstrukce */
 
 #drag { left:0px; top:-9px; width:1px; height:1px; position:absolute; }

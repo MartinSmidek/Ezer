@@ -2098,11 +2098,11 @@ class Eval {
               // pro C použijeme kód z popisu formuláře
               this.code= cc.o=='c' ? this.proc.code : this.proc.desc.code;
               this.c= 0;
-              this.nargs= (cc.o=='C' ? this.proc.npar : this.proc.desc.npar) || 0;
+              this.nargs= cc.o=='C' ? this.proc.npar : (this.proc.desc ? this.proc.desc.npar : 0);
               if ( (cc.a||0)<this.nargs )
                 Ezer.error('procedura '+cc.i+' je volána s '+(cc.a||0)+' argumenty místo s '+this.nargs,
                   'S',this.proc,last_lc);
-              this.nvars= (cc.o=='C' ? this.proc.nvar : this.proc.desc.nvar) || 0;
+              this.nvars= cc.o=='C' ? this.proc.nvar : (this.proc.desc ? this.proc.desc.nvar : 0);
               this.context= this.proc.owner;
               if ( this.nvars ) {           // vymezení inicializovaného místa na lokální proměnné
                 for (let i=0; i<this.nvars; i++) {

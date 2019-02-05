@@ -715,7 +715,7 @@ function sys_activity($k,$to_skip=0,$den=0,$_watch_access_opt='') {
   $user_options= $_SESSION[$ezer_root]['user_options'];
                                         debug($watch_access_opt);
   $skip= $to_skip && $EZER->activity->skip ? $EZER->activity->skip : '';
-  $html= "<div class='CSection CMenu'>";
+//  $html= "<div class='CSection CMenu'>";
   switch ( "{$k->s} {$k->c}" ) {
   case 'moduly all':
   case 'uzivatele all':
@@ -731,132 +731,132 @@ function sys_activity($k,$to_skip=0,$den=0,$_watch_access_opt='') {
   case 'moduly den':
     $day= $den;
     $day_mysql= sql_date($den,1);
-    $html.= "<h3 class='CTitle'>Aktuální stav užívání $APLIKACE $day $stav_modules</h3>";
+    $html.= "<div class='karta'>Aktuální stav užívání $APLIKACE $day $stav_modules</div>";
     $html.= sys_day_modules($skip,$day_mysql,$k->short);
     break;
   case 'moduly dnes':
     $day= date('j.n.Y');
     $day_mysql= date('Y-m-d');
-    $html.= "<h3 class='CTitle'>Aktuální stav užívání $APLIKACE $day $stav_modules</h3>";
+    $html.= "<div class='karta'>Aktuální stav užívání $APLIKACE $day $stav_modules</div>";
     $html.= sys_day_modules($skip,$day_mysql,$k->short);
     break;
   case 'moduly vcera':
     $day= date('j.n.Y',mktime(0,0,0,date("m"),date("d")-1,date("Y")));
     $day_mysql= date('Y-m-d',mktime(0,0,0,date("m"),date("d")-1,date("Y")));
-    $html.= "<h3 class='CTitle'>Stav užívání $APLIKACE $day $stav_modules</h3>";
+    $html.= "<div class='karta'>Stav užívání $APLIKACE $day $stav_modules</div>";
     $html.= sys_day_modules($skip,$day_mysql,$k->short);
     break;
   case 'moduly dny':
     $day= date('j.n.Y');
     $day_mysql= date('Y-m-d');
-    $html.= "<h3 class='CTitle'>Historie užívání modulů $APLIKACE </h3>";
+    $html.= "<div class='karta'>Historie užívání modulů $APLIKACE </div>";
     $html.= sys_days_modules($skip,$day_mysql,$k->days,$k->short);
     break;
   # -------------------------------- users
   case 'uzivatele den':
     $day= $den;
     $day_mysql= sql_date($den,1);
-    $html.= "<h3 class='CTitle'>Aktuální stav užívání $APLIKACE $day </h3>";
+    $html.= "<div class='karta'>Aktuální stav užívání $APLIKACE $day </div>";
     $html.= sys_day_users($skip,$day_mysql,$k->short);
     break;
   case 'uzivatele dnes':
     $day= date('j.n.Y');
     $day_mysql= date('Y-m-d');
-    $html.= "<h3 class='CTitle'>Aktuální stav užívání $APLIKACE $day </h3>";
+    $html.= "<div class='karta'>Aktuální stav užívání $APLIKACE $day </div>";
     $html.= sys_day_users($skip,$day_mysql,$k->short);
     break;
   case 'uzivatele dny':
     $day= date('j.n.Y');
     $day_mysql= date('Y-m-d');
-    $html.= "<h3 class='CTitle'>Historie aktivity uživatelů $APLIKACE </h3>";
+    $html.= "<div class='karta'>Historie aktivity uživatelů $APLIKACE </div>";
     $html.= sys_days_users($skip,$day_mysql,$k->days,$k->short);
     break;
   case 'uzivatele vcera':
     $day= date('j.n.Y',mktime(0,0,0,date("m"),date("d")-1,date("Y")));
     $day_mysql= date('Y-m-d',mktime(0,0,0,date("m"),date("d")-1,date("Y")));
-    $html.= "<h3 class='CTitle'>Stav užívání $APLIKACE $day</h3>";
+    $html.= "<div class='karta'>Stav užívání $APLIKACE $day</div>";
     $html.= sys_day_users($skip,$day_mysql,$k->short);
     break;
   # -------------------------------- errors
   case 'chyby den':
     $day= $den;
     $day_mysql= sql_date($den,1);
-    $html.= "<h3 class='CTitle'>Chybová hlášení $APLIKACE $day </h3>";
+    $html.= "<div class='karta'>Chybová hlášení $APLIKACE $day </div>";
     $html.= sys_day_errors($skip,$day_mysql);
     break;
   case 'chyby dnes':
     $day= date('j.n.Y');
     $day_mysql= date('Y-m-d');
-    $html.= "<h3 class='CTitle'>Chybová hlášení $APLIKACE $day </h3>";
+    $html.= "<div class='karta'>Chybová hlášení $APLIKACE $day </div>";
     $html.= sys_day_errors($skip,$day_mysql);
     break;
   case 'chyby vcera':
     $day= date('j.n.Y',mktime(0,0,0,date("m"),date("d")-1,date("Y")));
     $day_mysql= date('Y-m-d',mktime(0,0,0,date("m"),date("d")-1,date("Y")));
-    $html.= "<h3 class='CTitle'>Chybová hlášení $APLIKACE $day </h3>";
+    $html.= "<div class='karta'>Chybová hlášení $APLIKACE $day </div>";
     $html.= sys_day_errors($skip,$day_mysql);
     break;
   case 'chyby tyden':
     $day= date('j.n.Y',mktime(0,0,0,date("m"),date("d")-8,date("Y")));
     $day_mysql= date('Y-m-d',mktime(0,0,0,date("m"),date("d")-8,date("Y")));
-    $html.= "<h3 class='CTitle'>Chybová hlášení $APLIKACE od $day </h3>";
+    $html.= "<div class='karta'>Chybová hlášení $APLIKACE od $day </div>";
     $html.= sys_day_errors($skip,$day_mysql,'>');
     break;
   case 'chyby mesic':
     $day= date('j.n.Y',mktime(0,0,0,date("m"),date("d")-32,date("Y")));
     $day_mysql= date('Y-m-d',mktime(0,0,0,date("m"),date("d")-32,date("Y")));
-    $html.= "<h3 class='CTitle'>Chybová hlášení $APLIKACE od $day </h3>";
+    $html.= "<div class='karta'>Chybová hlášení $APLIKACE od $day </div>";
     $html.= sys_day_errors($skip,$day_mysql,'>');
     break;
   case 'chyby vsechny':
-    $html.= "<h3 class='CTitle'>Všechna chybová hlášení $APLIKACE </h3>";
+    $html.= "<div class='karta'>Všechna chybová hlášení $APLIKACE </div>";
     $html.= sys_day_errors($skip,$day_mysql,'all');
     break;
   case 'chyby BUG1':
-    $html.= "<h3 class='CTitle'>Nevyřešené chyby $APLIKACE klasifikované jako BUG</h3>";
+    $html.= "<div class='karta'>Nevyřešené chyby $APLIKACE klasifikované jako BUG</div>";
     $html.= sys_bugs(1);
     break;
   case 'chyby BUG2':
-    $html.= "<h3 class='CTitle'>Vyřešené chyby $APLIKACE klasifikované jako BUG</h3>";
+    $html.= "<div class='karta'>Vyřešené chyby $APLIKACE klasifikované jako BUG</div>";
     $html.= sys_bugs(2);
     break;
   # -------------------------------- logins
   case 'login den':
     $day= $den;
     $day_mysql= sql_date($den,1);
-    $html.= "<h3 class='CTitle'>Přihlášení $APLIKACE $day </h3>";
+    $html.= "<div class='karta'>Přihlášení $APLIKACE $day </div>";
     $html.= sys_day_logins($skip,$day_mysql);
     break;
   case 'login dnes':
     $day= date('j.n.Y');
     $day_mysql= date('Y-m-d');
-    $html.= "<h3 class='CTitle'>Přihlášení $APLIKACE $day </h3>";
+    $html.= "<div class='karta'>Přihlášení $APLIKACE $day </div>";
     $html.= sys_day_logins($skip,$day_mysql);
     break;
   case 'login vcera':
     $day= date('j.n.Y',mktime(0,0,0,date("m"),date("d")-1,date("Y")));
     $day_mysql= date('Y-m-d',mktime(0,0,0,date("m"),date("d")-1,date("Y")));
-    $html.= "<h3 class='CTitle'>Přihlášení $APLIKACE $day </h3>";
+    $html.= "<div class='karta'>Přihlášení $APLIKACE $day </div>";
     $html.= sys_day_logins($skip,$day_mysql);
     break;
   case 'login tyden':
     $day= date('j.n.Y',mktime(0,0,0,date("m"),date("d")-8,date("Y")));
     $day_mysql= date('Y-m-d',mktime(0,0,0,date("m"),date("d")-8,date("Y")));
-    $html.= "<h3 class='CTitle'>Přihlášení $APLIKACE od $day </h3>";
+    $html.= "<div class='karta'>Přihlášení $APLIKACE od $day </div>";
     $html.= sys_day_logins($skip,$day_mysql,'>');
     break;
   case 'login mesic':
     $day= date('j.n.Y',mktime(0,0,0,date("m"),date("d")-32,date("Y")));
     $day_mysql= date('Y-m-d',mktime(0,0,0,date("m"),date("d")-32,date("Y")));
-    $html.= "<h3 class='CTitle'>Přihlášení $APLIKACE od $day </h3>";
+    $html.= "<div class='karta'>Přihlášení $APLIKACE od $day </div>";
     $html.= sys_day_logins($skip,$day_mysql,'>');
     break;
   case 'login vsechny':
-    $html.= "<h3 class='CTitle'>Všechna přihlášení $APLIKACE </h3>";
+    $html.= "<div class='karta'>Všechna přihlášení $APLIKACE </div>";
     $html.= sys_day_logins($skip,$day_mysql,'all');
     break;
   }
-  $html.= "</div>";
+//  $html.= "</div>";
   return $html;
 }
 # -------------------------------------------------------------------------------- sys_sign_obsolete

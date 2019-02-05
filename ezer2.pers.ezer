@@ -116,7 +116,7 @@ form right [,,*,50] {
   label head [0,0,*,50]  { title:' ' }
   select id_user [-20,5,100,20] { type:'map', options:user.surname, format:'xt', skill:'a|a'
     help:'výběr uživatele'
-    proc onchange () {
+    proc onchanged () {
       echo('vybráno:',id_user.get,',',id_user.key);
       the_user.set(id_user.key);
       last_item.click
