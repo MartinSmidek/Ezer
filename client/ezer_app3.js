@@ -1855,7 +1855,7 @@ class Eval {
         if ( xs.length==1 )
           ok= x==id;
         else if ( xs.length==2 )
-          ok= (xs[1]==id||xs[1]=='*') && xs[0]==ids[ids.length-2];
+          ok= (xs[1]==id||xs[1]=='*') && (xs[0]==ids[ids.length-2]||xs[0]=='*');
         return ok;
       }) )
         return;

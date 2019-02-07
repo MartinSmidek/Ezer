@@ -195,7 +195,7 @@ body { font-family: Arial,Helvetica,sans-serif; padding: 0; margin: 0;
 .dbg table.dbg_array { background-color:#ddeeff; }
 .dbg table.dbg_object { background-color:#ffffaa; }
 .ae_switch_on { background-color:#fb6; color:navy;  }
-.ae_switch_sel { background-color:#fb6; color:navy;  }
+.ae_switch_sel { background-color:#fb6; color:white;  }
 #kuk div.trace { margin-left:70px; color:#000; padding:0; white-space:pre-wrap; }
 #kuk div.trace_hide { margin-left:70px; color:#777; height:13px; overflow:hidden; white-space:pre-line; }
 #kuk span.trace_on { background:url($path/tree.png) no-repeat 55px -104px; color:#777;
