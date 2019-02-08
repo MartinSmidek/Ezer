@@ -7521,14 +7521,15 @@ class Browse extends Block {
   browse_snap (data) {
     if ( data )
       Ezer.debug({
-        scroll:this.scrolling?'true':'false',
+        tact:this.tact,scroll:this.scrolling?'true':'false',
         slen:this.slen,b:this.b,blen:this.blen,bmax:this.bmax,t:this.t,r:this.r,tlen:this.tlen,
         tmax:this.tmax,keys_sel:this.keys_sel,keys:this.keys,buf:this.buf});
     else
       Ezer.debug({
-        scroll:this.scrolling?'true':'false',
+        tact:this.tact,scroll:this.scrolling?'true':'false',
         slen:this.slen,b:this.b,blen:this.blen,bmax:this.bmax,t:this.t,r:this.r,tlen:this.tlen,
         tmax:this.tmax});
+    return 1;
   }
 // ------------------------------------------------------------------------------------ set attrib
 //fm: Browse.set_attrib (name,val[,desc=])       nedokumentováno, může být změněno
@@ -8168,6 +8169,7 @@ class Browse extends Block {
     this.slen= Number(y.count);
     this.blen= Number(y.rows);
     this.b= this.blen>0 ? from : -1;
+    this.tact= 0;
     if ( this.blen>0 ) {
       // naplň buf a keys daty
       if ( rec!=-1 )                            // pokud není blokováno
@@ -8192,14 +8194,23 @@ class Browse extends Block {
             if ( rec!=-1 )                      // pokud není blokováno
               this.owner._key= this.keys[bi];   // změň běžný klíč
           }
+          if ( !this.tact && y.browse_seek && y.seek==this.keys[bi] ) {
+            this.tact= bi;
+          }
         }
       }
     }
     // zobrazení viditelné části
     this.t= this.b;
-    this.r= this.b;
     this.tlen= Math.min(this.tmax,this.blen);
-    this.tact= this.tlen ? 1 : 0;
+    if ( y.browse_seek ) {
+      this.r= this.b+this.tact;
+      this.tact++;
+    }
+    else {
+      this.r= this.b;
+      this.tact= this.tlen ? 1 : 0;
+    }
     if ( rec!=-1 )                              // pokud není blokováno
       this.DOM_show();                          // zobrazení
     if ( y.quiet==0 )                           // pokud nebylo zakázáno onrowclick
@@ -8253,14 +8264,15 @@ class Browse extends Block {
       this.DOM_show();
     }
     else if ( y.seek ) {
+      y.seek= Number(y.seek);
       seek= y.seek;
 //                                                         Ezer.trace('*','browse_seek(...) key:'+seek);
       // volání browse_seek s parametry
+      y.browse_seek= 1;
       this.browse_load_(y,-1);  // nebude provedeno _row_move
 //       this.raise('onrowclick',Number(y.seek),0,0,1);
-      var key= Number(y.seek);
       for (var iv= 0; iv<this.blen; iv++) {
-        if ( this.keys[iv]==key ) {             // projdi klíče přečtených řádků browse
+        if ( this.keys[iv]==y.seek ) {          // projdi klíče přečtených řádků browse
           this._row_move(this.b+iv,y.quiet);    // NOEVENT! pokud bylo zakázáno
           break;
         }
@@ -8580,7 +8592,8 @@ class Browse extends Block {
 // pokud je definován atribut optimize, předá jej beze změny
   _params  (x,cond,order,having,from,cursor,zapomen_podminku,sql) {
     Ezer.fce.touch('block',this);     // informace do _touch na server
-    var to_map= x.cmd=='browse_export';         // pro browse_export doplň pro server info o map_pipe
+    var to_map= x.cmd=='browse_export';   // pro browse_export doplň pro server info o map_pipe
+    var ignore= [];                       // seznam vynechaných sloupců definovaný optimize.ignore
     x.cond= cond||this.cond||1;
     if ( !zapomen_podminku ) {
       // zapamatuj si podmínku
@@ -8601,12 +8614,16 @@ class Browse extends Block {
     // řešení optimize
     if ( this.options.optimize )  {
       x.optimize= this.options.optimize;
+      if ( this.options.optimize.ignore ) {
+        // ---------------- browse/ask: zjednodušené předání parametrů - bez join, data, ...
+        ignore= this.options.optimize.ignore.split(',');
+      }
       if ( this.options.optimize.ask ) {
         // ---------------- browse/ask: zjednodušené předání parametrů - bez join, data, ...
         for (let ic in this.part) {
           // předej id od všech show
           let field= this.part[ic];
-          if ( field.type=='show' && field.skill ) {
+          if ( field.type=='show' && field.skill && !ignore.includes(ic) ) {
             x.fields.push(this.part[ic].id);
             // a řazení
             if ( field.sorting && field.sorting!='n' ) {
@@ -8636,7 +8653,7 @@ class Browse extends Block {
     x.joins= {};
     for (let ic in this.part) { // načti jen zobrazené sloupce použité v browse, vybírej použitá view
       let field= this.part[ic];
-      if ( field._load && (field.data || field.options.expr) && field.skill ) {
+      if ( field._load && (field.data || field.options.expr) && field.skill && !ignore.includes(ic) ) {
         this.owner._fillx(field,x,to_map);
       }
     }
