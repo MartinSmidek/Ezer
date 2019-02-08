@@ -8614,7 +8614,7 @@ class Browse extends Block {
     // řešení optimize
     if ( this.options.optimize )  {
       x.optimize= this.options.optimize;
-      if ( this.options.optimize.ignore ) {
+      if ( this.options.optimize.ignore ) { // seznam vynechaných show
         // ---------------- browse/ask: zjednodušené předání parametrů - bez join, data, ...
         ignore= this.options.optimize.ignore.split(',');
       }
