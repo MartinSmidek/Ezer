@@ -901,7 +901,7 @@ function send_mail($subject,$html,$from='',$to='',$fromname='') { trace();
   require_once("$phpmailer_path/class.phpmailer.php");
   // napojení na mailer
   $mail= new PHPMailer;
-  $mail->SetLanguage('cz',"$phpmailer_path/language/");
+  $mail->SetLanguage('cs',"$phpmailer_path/language/");
   $mail->IsSMTP();
   $mail->Host= isset($EZER->smtp->host) ? $EZER->smtp->host : "192.168.1.1";
   $mail->Port= isset($EZER->smtp->port) ? $EZER->smtp->port : 25;

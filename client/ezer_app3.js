@@ -3607,10 +3607,12 @@ Ezer.fce.sql2date= function (ymd,del) {
   del= del||'. ';
   if ( ymd.length > 0 ) {
     ymd= ymd.split('-');
-    d= ymd[2]; if ( d[0]=='0' ) d= d[1];
-    m= ymd[1]; if ( m[0]=='0' ) m= m[1];
-    y= ymd[0];
-    s= d+del+m+del+y;
+    if ( ymd.length == 3 ) {
+      d= ymd[2]; if ( d[0]=='0' ) d= d[1];
+      m= ymd[1]; if ( m[0]=='0' ) m= m[1];
+      y= ymd[0];
+      s= d+del+m+del+y;
+    }
   }
   return s;
 };

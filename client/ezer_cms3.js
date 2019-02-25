@@ -60,6 +60,9 @@ function cms_form(cmd,par) {
             lab= `<span>${e[2]} ${e[1]=='*' ? must : ''}</span>`;
         if ( t=='h' )
           items+= `<input name='${i}' type='hidden'>`;
+        else if ( t=='c' )
+          items+= 
+            `<label>${lab}<input name='${i}' type='checkbox'></label>`;
         else
           items+= h 
             ? `<label>${lab}<textarea name='${i}' style='width:${w}px;height:${h}px'/></label>`
@@ -162,7 +165,14 @@ function cms_form(cmd,par) {
             info.html(y.info); 
             for (name in y.data) {
               let field= data.find(`input[name=${name}],textarea[name=${name}]`);
-              field.val(y.data[name]).data('orig',y.data[name].trim());
+              let t= desc.ELEM[name][0];
+              switch ( t ) {
+                case 'c':  // check 
+                  field.prop('checked',Number(y.data[name])).data('orig',y.data[name]);
+                  break;
+                default:
+                  field.val(y.data[name]).data('orig',y.data[name].trim());
+              }
             }
             // příprava formuláře pro vstup dat
             form.find("[name=pin]").addClass('disabled3');
@@ -239,7 +249,10 @@ function cms_form(cmd,par) {
       data.find('input,textarea').each((i,e) => {
         let elem= jQuery(e).removeClass('missing'),
             name= elem.prop('name'),
-            val= elem.val().trim();
+            typ= desc.ELEM[name][0];
+        let val= typ=='c'  
+            ? (elem.prop('checked') ? 1 : 0)
+            : elem.val().trim();
         // zkontroluj vyplnění povinných
         if ( desc.ELEM[name][1]=='*' && !val ) {
           elem.addClass('missing');
@@ -264,8 +277,6 @@ function cms_form(cmd,par) {
         info.html(TEXT('cms_submit_missing'))
       }
       else {
-        // disable zaslaných položek
-        form.find("[name=items],[name=member]").addClass('disabled3');
         // 2. je požadováno potvrzení?
         if ( conf.length ) {
           if ( !conf.prop('checked') ) {
@@ -274,6 +285,8 @@ function cms_form(cmd,par) {
             break;
           }
         }
+        // disable zaslaných položek
+        form.find("[name=items],[name=member]").addClass('disabled3');
         // pošli změněná data
         jQuery.post(Ezer.web.index,{cms:1,cmd:'CMS_submit',par:par,test:Ezer.cms.test,
             mail:mail.val().trim(),pin:pin.val(),ido:ido,chngs:chngs,join:join})

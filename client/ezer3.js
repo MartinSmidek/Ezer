@@ -6491,6 +6491,21 @@ class Select extends Elem {
     super.init(init_values);
     return true;
   }
+// ------------------------------------------------------------------------------------ change
+//fm: Select.change ([silent=0])
+//      nastaví příznak změny a způsobí onchanged, pokud není silent=1
+//a: silent - 0 | 1
+//e: onchanged
+  change (silent) {
+    this._changed= true;
+//     this.DOM_empty(false);
+    this.DOM_changed(1,this._fc('t'));     // když není format:'t' bez rámečku
+    if ( !silent ) {
+      this.fire('onchange');
+      this.fire('onchanged');
+    }
+    return 1;
+  }
 // ------------------------------------------------------------------------------------ key
 //fm: Select.key ([key])
 //      lze použít jako setter nebo getter pro key - pro multiselect key je seznam čísel
@@ -7799,7 +7814,7 @@ class Browse extends Block {
 //fm: Browse.browse_key ()
 //      klíč aktivního řádku nebo 0
   browse_key  () {
-    return this.tact ? this.keys[this.r-this.b] : 0;
+    return this.tact ? this.keys[this.r-this.b]||0 : 0;
   }
 // ---------------------------------------------------------------------------------==> . raise+
 //fm: Browse.raise (event[,key[,info[,row[,noevent=false]]]])
@@ -8313,11 +8328,11 @@ class Browse extends Block {
 //fm: Browse.browse_next ([r,[rowclick])
 //      nastaví jako aktivní další řádek v browse, nebo r-tý řádek (1..délka souboru)
 //      a vrátí jeho klíč; nevyvolá onrowclick pokud není rowclick=1;
-//      pokud není uvedeno it a současný řádek je poslední, vrátí 0
+//      pokud není uvedeno r a současný řádek je poslední, vrátí 0
 //      jinak pokud požadovaný řádek není načtený v bufferu nastane chyba: 'browse_next mimo rozsah'
 //      Pozn.: metoda nenačítá řádky ze serveru, pro její použití je tedy třeba definovat
 //             dostatečně velký atribut buf_rows
-//a: it - pokud je nenulové, nastaví řádek jako aktivní (první je 1)
+//a: r - pokud je nenulové, nastaví řádek jako aktivní (první je 1)
   browse_next (r) {
     var _key= 0;
     if ( r ) {
@@ -8615,7 +8630,6 @@ class Browse extends Block {
     if ( this.options.optimize )  {
       x.optimize= this.options.optimize;
       if ( this.options.optimize.ignore ) { // seznam vynechaných show
-        // ---------------- browse/ask: zjednodušené předání parametrů - bez join, data, ...
         ignore= this.options.optimize.ignore.split(',');
       }
       if ( this.options.optimize.ask ) {

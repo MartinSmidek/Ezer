@@ -137,6 +137,7 @@ function cms_server(&$y) {
           // případná transformace dat podle typu
           switch ( $ELEM[$Xname][0] ) {
             case 'h':  $y->data->$Xname= $value; break;
+            case 'c':  $y->data->$Xname= $value; break;
             case 't':  $y->data->$Xname= $value; break;
             case 'd':  $y->data->$Xname= sql_date1($value); break;
           }
@@ -193,6 +194,7 @@ function cms_server(&$y) {
         // případná transformace dat podle typu
         switch ( $type ) {
           case 'h':  $value= $nv->value; break;
+          case 'c':  $value= $nv->value; $real_chngs[$X]++; break;
           case 't':  $value= $nv->value; $real_chngs[$X]++; break;
           case 'd':  $value= sql_date1($nv->value,1); $real_chngs[$X]++; break;
         }
@@ -293,6 +295,11 @@ function cms_server(&$y) {
       $ok= call_user_func($FORM['CALL']['family_!'],$ido,$ida,$y->join);
       if ( !$ok ) { $y->info.= $TEXT('CMS_family_error_1').' '; goto end; } 
     }
+    // pokud se má odeslat potvrzující mail
+    if ( in_array('send_mail',$FORM['TYPE']) ) {
+      $ok= call_user_func($FORM['CALL']['sendmail_OA'],$ido,$ida);
+      if ( !$ok ) { $y->info.= $TEXT('CMS_send_mail_error').' '; goto end; } 
+    }
     $y->ok= 1;
     break;
     
@@ -311,11 +318,25 @@ end:
  */
 function cms_form_ref($title,$form,$ida,$akce) { trace();
   $html= '';
-  $asgn= cms_form_def($form);
-  $html.= "<script>$asgn</script>";
-  $html.= "<span class='cms_form' 
-            onclick=\"cms_form('cms_create',{form:'$form',ida:'$ida',akce:'$akce',title:'$title'});\">
-          $title</span>";
+  // identifikace prohlížeče a platformy prohlížeče: pro IE to nepůjde
+  $ua= $_SERVER['HTTP_USER_AGENT'];
+  ezer_browser($browser,$browser_version,$platform,$ua);
+  if ( $browser=='IE' ) {
+    $omluva= 'Omlouváme se, ale z prohlížeče Internet Exlorer není online přihlášení možné. '
+        . 'Přihlašte se prosím náhradním způsobem, uvedeným na stránce. '
+        . 'Nebo k přihlášení použijte prohlížeč Chrome či Firefox či Edge.';
+    $html.= "<span class='cms_form' 
+              onclick=\"alert('$omluva');\">
+            $title</span>";
+  }
+  else {
+    // generování odkazu na přihlášku
+    $asgn= cms_form_def($form);
+    $html.= "<script>$asgn</script>";
+    $html.= "<span class='cms_form' 
+              onclick=\"cms_form('cms_create',{form:'$form',ida:'$ida',akce:'$akce',title:'$title'});\">
+            $title</span>";
+  }
   return $html;
 }
 # ------------------------------------------------------------------------------------- cms form_def
@@ -403,7 +424,7 @@ function cms_mail_send($address,$subject,$body,$reply_to='') {
   $mail= new PHPMailer(true);
   try {
     $mail->SMTPDebug = 0;
-    $mail->SetLanguage('cz');//,"$phpmailer_path/language/");
+    $mail->SetLanguage('cs');//,"$phpmailer_path/language/");
     $mail->IsSMTP();
     $mail->SMTPAuth = true; // enable SMTP authentication
     $mail->SMTPSecure= "ssl"; // sets the prefix to the server
