@@ -297,7 +297,7 @@ function cms_server(&$y) {
     }
     // pokud se má odeslat potvrzující mail
     if ( in_array('send_mail',$FORM['TYPE']) ) {
-      $ok= call_user_func($FORM['CALL']['sendmail_OA'],$ido,$ida);
+      $ok= call_user_func($FORM['CALL']['sendmail_OA'],$y->mail,$ido,$ida);
       if ( !$ok ) { $y->info.= $TEXT('CMS_send_mail_error').' '; goto end; } 
     }
     $y->ok= 1;

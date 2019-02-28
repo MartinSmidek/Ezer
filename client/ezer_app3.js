@@ -3322,15 +3322,18 @@ Ezer.fce.get_cookie= function (id,val,form,refs) {
 // Ezer.obj.contextmenu= {DOM:null,menu:null};
 Ezer.fce.contextmenu= function (menu,event,id,up,focus,focusClass) {
   event= event||window.event;
+  if ( !focus && id ) {
+    focus= jQuery('#'+id);
+  }
   let elem= id || event.target,
     options= {
-      persistent: id ? true : false,
+      persistent: false,
       up: up,
       items: menu,
       focus: focus
     };
   if ( focusClass ) options.focusClass= focusClass;
-  jQuery(elem).contextPopup(options,event,id);
+  jQuery(elem).contextPopup(options,event);
   return 1;
 };
 // ================================================================================================> . string
