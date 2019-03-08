@@ -85,7 +85,7 @@
     // kalendářový prvek
     array("$licensed/pikaday/pikaday.js"),
     // jQuery
-    array("$licensed/jquery-3.2.1.min.js","$licensed/jquery-noconflict.js","$client/licensed/jquery-ui.min.js"),
+    array("$licensed/jquery-3.3.1.min.js","$licensed/jquery-noconflict.js","$client/licensed/jquery-ui.min.js"),
     // podpora dotykového ovládání
     array("$licensed/jquery.touchSwipe.min.js"),
     // jádro Ezer3.1
