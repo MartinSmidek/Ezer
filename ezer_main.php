@@ -11,17 +11,21 @@
  * $rel_roots     - [server,local]
  * $add_pars      - (array) doplní resp. přepíše obsah $pars
  */
-  global $ezer_local, $ezer_root;
+
+  global $app_root, $ezer_root;
   $ezer_root= $app_root;
+  
+  // platí buďto isnull($ezer_local) nebo isnull($ezer_server)
+  global $ezer_local, $ezer_server;
+  if ( is_null($ezer_local) && is_null($ezer_root) ) 
+    fce_error("inconsistent server setting");
+  $is_local= is_null($ezer_local) ? !$ezer_server : $ezer_local;
   
   // nastavení zobrazení PHP-chyb klientem při &err=1
   if ( isset($_GET['err']) && $_GET['err'] ) {
     error_reporting(E_ALL ^ E_NOTICE);
     ini_set('display_errors', 'On');
   }
-
-//  // rozlišení lokální a ostré verze
-//  $ezer_local= preg_match('/^\w+\.bean$/',$_SERVER["SERVER_NAME"])?1:0;
 
   // parametry aplikace
   $app= $app_root;
@@ -52,10 +56,10 @@
   $app_name.=  " 3.1.".EZER_PDO_PORT;
 
   // nastavení cest
-  $abs_root= $abs_roots[$ezer_local];
+  $abs_root= isset($ezer_server) ? $abs_roots[$ezer_server] : $abs_roots[$ezer_local];
   $_SESSION[$app]['abs_root']= $abs_root;
 
-  $http_rel_root= $rel_roots[$ezer_local];
+  $http_rel_root= isset($ezer_server) ? $rel_roots[$ezer_server] : $rel_roots[$ezer_local];
   list($http,$rel_root)= explode('://',$http_rel_root);
   $_SESSION[$app]['rel_root']= $rel_root;
   
@@ -116,7 +120,7 @@
   $options= (object)array(              // přejde do Ezer.options...
     'gmap' => $gmap,                    // zda používat mapy Google
     'curr_version' => 0,                // při přihlášení je nahrazeno nejvyšší ezer_kernel.version
-    'curr_users' => 1,                  // zobrazovat v aktuální hodině aktivní uživatele
+    'curr_users' => $is_local ? 0 : 1,  // zobrazovat v aktuální hodině aktivní uživatele
     'path_files_href' => "'$path_files_href'",  // relativní cesta do složky docs/{root}
     'path_files_s' => "'$path_files_s'",        // absolutní cesta do složky docs/{root}
     'path_files_h' => "'$path_files_h'",        // absolutní cesta do složky ../files/{root}
@@ -124,7 +128,9 @@
   );
 
   $pars= (object)array(
-    'favicon' => $ezer_local ? "{$app}_local.png" : "{$app}.png",
+    'favicon' => isset($ezer_server) 
+      ? ($ezer_server ? "{$app}.png" : "{$app}_local.png")
+      : ($ezer_local ? "{$app}_local.png" : "{$app}.png"),
     'app_root' => "$rel_root",      // startovní soubory app.php a app.inc.php jsou v kořenu
     'dbg' => $dbg,                                              
     'watch_ip' => false,

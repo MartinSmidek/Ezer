@@ -8,7 +8,7 @@ const EZER_version= 3.1;
   $pwd= getcwd();
 
   # identifikace ostrého serveru
-  //$ezer_local= preg_match('/^\w+\.ezer/',$_SERVER["SERVER_NAME"]);
+  $ezer_local= preg_match('/^\w+\.bean/',$_SERVER["SERVER_NAME"]);
   $favicon= $ezer_local ? "comp_local.png" : "comp.png";
 
   if ( $_GET['spec'] ) {

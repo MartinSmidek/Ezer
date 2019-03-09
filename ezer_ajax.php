@@ -9,9 +9,14 @@
 */
  
   const EZER_version= 3.1;
+
+  global $ezer_root;
   
-  global $ezer_local, $ezer_root;
-  
+  // platí buďto isnull($ezer_local) nebo isnull($ezer_server)
+  global $ezer_local, $ezer_server;
+  if ( is_null($ezer_local) && is_null($ezer_root) ) fce_error("inconsistent server setting");
+  $is_local= is_null($ezer_local) ? !$ezer_server : $ezer_local;
+      
   session_start();
   
   // přepínač pro fáze migrace pod PDO !!! tentýž musí být v $app.php
@@ -30,9 +35,6 @@
 
   // test přístupu z jádra
   if ( $_POST['root']!=$ezer_root && $_GET['root']!=$ezer_root ) die('POST PROBLEM');
-
-//  // identifikace ladícího serveru
-//  $ezer_local= preg_match('/^\w+\.bean$/',$_SERVER["SERVER_NAME"])?1:0;
 
   // cesty
   $abs_root= $_SESSION[$ezer_root]['abs_root'];
