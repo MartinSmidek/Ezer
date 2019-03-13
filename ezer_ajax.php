@@ -13,9 +13,8 @@
   global $ezer_root;
   
   // platí buďto isnull($ezer_local) nebo isnull($ezer_server)
-  global $ezer_local, $ezer_server;
-//  if ( is_null($ezer_local) && is_null($ezer_server) ) 
-//    fce_error("inconsistent server setting (1)");
+  global $ezer_local;
+  $ezer_server= $_SESSION[$ezer_root]['ezer_server'];
   $is_local= is_null($ezer_local) ? !$ezer_server : $ezer_local;
       
 //  echo("ezer_ajax.php start, ezer_server=$ezer_server");
