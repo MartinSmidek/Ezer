@@ -55,7 +55,7 @@ function root_php3($app,$app_name,$welcome,$skin,$options,$js,$css,$pars=null,$c
   // platí buďto isnull($ezer_local) nebo isnull($ezer_server)
   global $ezer_local, $ezer_server;
   if ( is_null($ezer_local) && is_null($ezer_server) ) 
-    fce_error("inconsistent server setting");
+    fce_error("inconsistent server setting (3)");
   $is_local= is_null($ezer_local) ? !$ezer_server : $ezer_local;
 
   global $EZER, $app_root, $ezer_root, $ezer_path_serv, $ezer_path_docs, $gc_maxlifetime, $http;
@@ -709,20 +709,21 @@ __EOD;
 #  *$path_pspad         -- cesta k editoru PSPad
 # vstup/výstupní globální proměnné
 #   $ezer_system        -- jméno databáze s tabulkou _user
-function root_inc3($db,$dbs,$tracking,$tracked,$path_root,$path_pspad) {
-  // platí buďto isset($ezer_local) nebo isset($ezer_server)
-  global $ezer_local, $ezer_server;
+function root_inc3($db,$dbs,$tracking,$tracked) { //,$path_root=null,$path_pspad=null) {
 
-  global $ezer_root,
+  global // import
+    $ezer_root, $EZER, $ezer_local, $ezer_server;
+  // platí buďto isset($ezer_local) nebo isset($ezer_server)
+  if ( is_null($ezer_local) && is_null($ezer_server) ) 
+    fce_error("inconsistent server setting (4)");
+
+  global // export
     $ezer_path_root,$sess_save_path,$ezer_path_appl,$ezer_path_libr,$ezer_path_docs,
     $ezer_path_code,$ezer_path_serv,$ezer_path_svn,$ezer_path_todo,$ezer_path_pspad,
     $mysql_db,$mysql_dbi,$ezer_db,$ezer_system,
     $ezer_mysql_cp,$ezer_html_cp,$ezer_sylk_cp,
-    $mysql_db_track,$mysql_tracked,
-    $EZER;
-  // nastavení verze jádra na 'toto'
-  $EZER->version= "ezer".EZER_version; //'ezer3';
-  //$ezer_root= $ezer_root ?: $ezer_root0; - vzniklo 14.4.2015
+    $mysql_db_track,$mysql_tracked;
+
   // nastavení databází
   $sada= is_null($ezer_local) ? $ezer_server : ($ezer_local ? 1 : 0);
   $mysql_dbi= $db[$sada];
@@ -754,7 +755,7 @@ function root_inc3($db,$dbs,$tracking,$tracked,$path_root,$path_pspad) {
   $ezer_path_serv= "$ezer_path_root/{$EZER->version}/server";
   $ezer_path_svn= null;
   $ezer_path_todo= "$ezer_path_root/wiki";
-  $ezer_path_pspad= $path_pspad[$sada];
+//  $ezer_path_pspad= $path_pspad ? $path_pspad[$sada] : null;
   // parametrizace standardních modulů
   if ( !isset($EZER->options) ) $EZER->options= (object)array();
   $EZER->options->root= $ezer_root;
@@ -765,6 +766,6 @@ function root_inc3($db,$dbs,$tracking,$tracked,$path_root,$path_pspad) {
   $EZER->activity->touch_limit= 50; // počet dotyků (ae_hits) po kterých je uskutečněn zápis do _touch
   $EZER->activity->colors= "80:#f0d7e4,40:#e0d7e4,20:#dce7f4,0:#e7e7e7";  // viz system.php::sys_table
   // knihovní moduly
-  require_once("$ezer_path_root/{$EZER->version}/ezer2_fce.php");
+  require_once("$ezer_path_root/ezer3.1/ezer2_fce.php");
 }
 ?>

@@ -1,2 +1,11 @@
-client/img/doc_form.gif
-client/img/doc_module.gif
+/@
+/code/*.json
+/code/*.cpp
+/code/*.key
+/client/licensed/ckeditor*
+/client/licensed/font*
+/client/licensed/jquery*
+/client/licensed/jush*
+/server/vendor
+/server/licensed/xls*
+/nbproject

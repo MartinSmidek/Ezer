@@ -14,9 +14,11 @@
   
   // platí buďto isnull($ezer_local) nebo isnull($ezer_server)
   global $ezer_local, $ezer_server;
-  if ( is_null($ezer_local) && is_null($ezer_root) ) fce_error("inconsistent server setting");
+//  if ( is_null($ezer_local) && is_null($ezer_server) ) 
+//    fce_error("inconsistent server setting (1)");
   $is_local= is_null($ezer_local) ? !$ezer_server : $ezer_local;
       
+//  echo("ezer_ajax.php start, ezer_server=$ezer_server");
   session_start();
   
   // přepínač pro fáze migrace pod PDO !!! tentýž musí být v $app.php

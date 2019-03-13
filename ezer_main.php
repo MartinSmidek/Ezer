@@ -11,14 +11,15 @@
  * $rel_roots     - [server,local]
  * $add_pars      - (array) doplní resp. přepíše obsah $pars
  */
+//  echo("ezer_main.php start, ezer_server=$ezer_server");
 
   global $app_root, $ezer_root;
   $ezer_root= $app_root;
   
   // platí buďto isnull($ezer_local) nebo isnull($ezer_server)
   global $ezer_local, $ezer_server;
-  if ( is_null($ezer_local) && is_null($ezer_root) ) 
-    fce_error("inconsistent server setting");
+  if ( is_null($ezer_local) && is_null($ezer_server) ) 
+    fce_error("inconsistent server setting (2)");
   $is_local= is_null($ezer_local) ? !$ezer_server : $ezer_local;
   
   // nastavení zobrazení PHP-chyb klientem při &err=1
@@ -41,6 +42,7 @@
   }
   $_SESSION[$app]['GET']= $_GET;
   $_SESSION[$app]['ezer']= '3.1';
+  $_SESSION[$app]['ezer_server']= $ezer_server;
 
   // přepínač pro fáze migrace pod PDO - const EZER_PDO_PORT=1|2|3
   if ( isset($_GET['pdo']) && $_GET['pdo']==2 ) {
@@ -175,5 +177,6 @@
   else {
     $options->must_log_in= 1;
   }
+//  echo("ezer_main.php end<br>");
   root_php3($app,$app_name,'chngs',$skin,$options,$js,$css,$pars);
 ?>
