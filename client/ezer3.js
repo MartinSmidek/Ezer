@@ -7640,7 +7640,7 @@ class Browse extends Block {
       }
       case 'set': { // nastaví klíče podle daného seznamu (string s klíči oddělenými čárkou)
         if ( param )
-          this.keys_sel= typeof(param)=='string' ? param.split(',') : [param];
+          this.keys_sel= typeof(param)=='string' ? param.split(',').map(Number) : [param];
         else
           this.keys_sel= [];
         this.selected('refresh');
@@ -7648,7 +7648,7 @@ class Browse extends Block {
       }
       case 'unset': { // zruší klíče podle daného seznamu
         if ( !param ) break;
-        let ikey, p= param.split(',');
+        let ikey, p= param.split(',').map(Number);
         for (let i= 0; i < p.length; i++) {
           ikey= this.keys_sel.indexOf(p[i]);
           if ( ikey >= 0 ) {
