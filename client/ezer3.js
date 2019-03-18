@@ -664,15 +664,12 @@ class Block {
       var _l= Number.parseInt(dom.css('left')),
           _t= Number.parseInt(dom.css('top'));
       var size= dom.measure(function(){
-//         var rsiz= this.getSize();               // x, y
         var rsiz= {x:this.width(),y:this.height()};  // x, y
-        var label= this.find('div.Label');
+        var label= this.find('div.Label3');
         if ( label.length ) {
           // pokud je u elementů použito ^title, je třeba opravit hranice rect
-//           var lpos= label.getPosition(dom);     // x, y
-          var lpos= {x:label.position().left,y:label.position().top};     // x, y
-//           var lsiz= label.getSize();            // x, y
-          var lsiz= {x:label.width(),y:label.height()};  // x, y
+          var lpos= {x:label.actual('position').left,y:label.actual('position').top};     // x, y
+          var lsiz= {x:label.actual('width'),y:label.actual('height')};  // x, y
           // opravy rect (_l, _r, _t, _b)
           rect._l= mmin(rect._l,_l+lpos.x);
           rect._r= mmax(rect._r,_l+lpos.x+lsiz.x);
@@ -3312,7 +3309,11 @@ class Form extends Block {
     }
     sum_h+= space_b;
 //    this.DOM_Block.css({height:sum_h,top:this.options._t+(smer=='up'?this.options._h-sum_h:0)});
-    this.DOM_Block.css({height:sum_h,top:this._t+(smer=='up'?this.options._h-sum_h:0)});
+//    this.DOM_Block.css({height:sum_h,top:this._t+(smer=='up'?this.options._h-sum_h:0)});
+    if ( smer=='down' )  
+      this.DOM_Block.css({height:sum_h});
+    else
+      this.DOM_Block.css({height:sum_h,top:this.DOM_Block.css('top')-sum_h});
     return sum_h;
   }
 // ------------------------------------------------------------------------------------ json
