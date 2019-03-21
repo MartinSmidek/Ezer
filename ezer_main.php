@@ -31,9 +31,9 @@
   // parametry aplikace
   $app= $app_root;
   $CKEditor= isset($_GET['editor'])  ? $_GET['editor']  : '4.6';
-  $dbg=      isset($_GET['dbg'])     ? $_GET['dbg']     : 1;                          /* debugger */
+  $dbg=      isset($_GET['dbg'])     ? $_GET['dbg']     : 0;
   $gapi=     isset($_GET['gapi'])    ? $_GET['gapi']    : 0; //!($ezer_local || $ezer_ksweb);
-  $gmap=     isset($_GET['gmap'])    ? $_GET['gmap']    : 0; //!($ezer_local || $ezer_ksweb);
+  $gmap=     isset($_GET['gmap'])    ? $_GET['gmap']    : ($ezer_server?1:0);
 
   // inicializace SESSION
   if ( !isset($_SESSION) ) {
