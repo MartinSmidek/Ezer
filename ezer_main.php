@@ -30,7 +30,8 @@
 
   // parametry aplikace
   $app= $app_root;
-  $CKEditor= isset($_GET['editor'])  ? $_GET['editor']  : '4.6';
+  $CKEditor= isset($_GET['editor'])  ? $_GET['editor']  : (isset($_COOKIE['editor']) ? $_COOKIE['editor']  : '4.6');
+  $jQuery=   isset($_GET['jquery'])  ? $_GET['jquery']  : (isset($_COOKIE['jquery']) ? $_COOKIE['jquery']  : '3.3.1');
   $dbg=      isset($_GET['dbg'])     ? $_GET['dbg']     : 0;
   $gapi=     isset($_GET['gapi'])    ? $_GET['gapi']    : 0; //!($ezer_local || $ezer_ksweb);
   $gmap=     isset($_GET['gmap'])    ? $_GET['gmap']    : ($ezer_server?1:0);
@@ -91,7 +92,7 @@
     // kalendářový prvek
     array("$licensed/pikaday/pikaday.js"),
     // jQuery
-    array("$licensed/jquery-3.3.1.min.js","$licensed/jquery-noconflict.js","$client/licensed/jquery-ui.min.js"),
+    array("$licensed/jquery-$jQuery.min.js","$licensed/jquery-noconflict.js","$client/licensed/jquery-ui.min.js"),
     // podpora dotykového ovládání
     array("$licensed/jquery.touchSwipe.min.js"),
     // jádro Ezer3.1
