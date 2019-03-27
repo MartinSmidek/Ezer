@@ -1979,8 +1979,11 @@ end_switch:
 
   // nový konec - zvlášť pro trasování, kvůli odchytu non UTF-8
   if ( $x->totrace ) {
-//    $yjson= $json->encode($y);          // pomalejší ale předá i non UTF-8
-    $yjson= json_encode($y);
+    if ( !isset($json) ) {
+      require_once("$ezer_path_serv/licensed/JSON_Ezer.php");
+      $json= new Services_JSON_Ezer();
+    }
+    $yjson= $json->encode($y);          // pomalejší ale předá i non UTF-8
   }
   else {
     $yjson= json_encode($y);
