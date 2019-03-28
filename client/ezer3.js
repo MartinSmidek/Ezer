@@ -6682,10 +6682,13 @@ class Select extends Elem {
         this.DOM_blur();
       })
       .change ( () => {
+        event.stopPropagation();
         if ( this._fc('t') )
           this.DOM_changed(1,1);     // když není format:'t' se zvýrazněním změny
-        else
+        else {
           this.DOM_changed(1,0);
+          this.fire('onchanged');
+        }
       })
       .keydown ( event => {
         event.stopPropagation();
@@ -7107,8 +7110,8 @@ class SelectAuto extends Select {
       if ( on ) {
         Ezer.fce.touch('block',this,'changed');     // informace do _touch na server
         if ( !quiet ) {
-          this.DOM_Input.addClass(this._key||this._empty&&!this.DOM_Input ? 'changed_ok' : 'changed');
-          this.DOM_Input.removeClass(this._key||this._empty&&!this.DOM_Input ? 'changed' : 'changed_ok');
+          this.DOM_Input.addClass(this._key ? 'changed_ok' : 'changed');
+          this.DOM_Input.removeClass(this._key ? 'changed' : 'changed_ok');
         }
         this._changed= true;
       }
