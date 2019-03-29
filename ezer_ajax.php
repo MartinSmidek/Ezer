@@ -74,7 +74,8 @@
     '$server/reference.php',
     'ezer2_fce.php',
     '$server/sys_doc.php',
-    "$server/ezer2.php"
+    "$server/ezer2.php",
+    "$server/vendor/autoload.php"
   );
   
   // uživatelské i knihovní moduly v PHP obsažené v $ezer_path_root

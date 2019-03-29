@@ -1361,13 +1361,6 @@ function uw($x) {
   return utf2win($x,true);
 }
 # ================================================================================================== EXCEL5
-# -------------------------------------------------------------------------------------------------- Excel5_date
-# Excel5_date převede timestamp na excelovské datum
-function Excel5_date($tm) {  #trace();
-  global $ezer_path_serv;
-  require_once "$ezer_path_serv/licensed/xls2/Classes/PHPExcel/Shared/Date.php";
-  return PHPExcel_Shared_Date::PHPToExcel($tm);
-}
 # -------------------------------------------------------------------------------------------------- Excel5
 # definice Excelovského souboru verze před Excel2007
 # PARAMETRY
@@ -1425,10 +1418,6 @@ function Excel5($desc,$gen=1,&$wb=null,$dir='',$excel='xls') {  #trace();
       close
 __XLS;
   }
-  // pro ostrý běh natáhneme knihovny
-  if ( $gen ) {
-    require_once "$ezer_path_serv/licensed/xls2/Classes/PHPExcel.php";
-  }
   $html= "";
   $ws= null;
   $err= 0;
@@ -1455,7 +1444,7 @@ __XLS;
         if ( $gen ) {
           if ( $wb ) fce_error("XLS: 'open' pouzito pro existujici tabulku {$wb->name}");
           $wb= (object)array();
-          $wb->wb= new PHPExcel();
+          $wb->wb= new PhpOffice\PhpSpreadsheet\Spreadsheet();
           $wb->name= $bid;
           $wb->active_ws= -1;
 
@@ -1486,15 +1475,15 @@ __XLS;
           if ( $clear=='clear' )
             $ws->setShowGridlines(false);
           $wp= $ws->getPageSetup();
-          $wp->setOrientation(PHPExcel_Worksheet_PageSetup::ORIENTATION_PORTRAIT);
-          $wp->setPaperSize(PHPExcel_Worksheet_PageSetup::PAPERSIZE_A4);
+          $wp->setOrientation(PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::ORIENTATION_PORTRAIT);
+          $wp->setPaperSize(PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::PAPERSIZE_A4);
           $wm= $ws->getPageMargins();
           $wm->setTop(0.4)->setRight(0.4)->setBottom(0.4)->setLeft(0.4); // 1cm okraje
           if ( $m['area'] ) {
             $wp->setPrintArea($m['area']);
           }
           if ( $lp=='L' ) {
-            $wp->setOrientation(PHPExcel_Worksheet_PageSetup::ORIENTATION_LANDSCAPE);
+            $wp->setOrientation(PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::ORIENTATION_LANDSCAPE);
           }
           if ( $m['fit']=='page' ) {
             $wp->setFitToPage(true);
@@ -1552,7 +1541,7 @@ __XLS;
         if ( file_exists("$ezer_path_root/$path") ) {
           if ( $list ) $html.= "IMAGE $path,$height,$an,$x,$y";
           if ( $ws ) {
-            $wi= new PHPExcel_Worksheet_Drawing();
+            $wi= new PhpOffice\PhpSpreadsheet\Worksheet\Drawing();
             $wi->setPath("$ezer_path_root/$path");
             $wi->setHeight($height);
             $wi->setCoordinates($an);
@@ -1584,7 +1573,7 @@ __XLS;
           if ( preg_match("/^\s*[-+]{0,1}[0-9]+\.{0,1}[0-9]*\s*$/u",$val) ) {
             if ( $list )     $html.= "NUMBER $an-$val-$fmt";
             if ( $ws )
-              $ws->getCell($an)->setValueExplicit($val,PHPExcel_Cell_DataType::TYPE_NUMERIC);
+              $ws->getCell($an)->setValueExplicit($val,PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_NUMERIC);
           }
           else {
             if ( $list ) $html.= "TEXT $an-$val-$fmt";
@@ -1604,7 +1593,7 @@ __XLS;
         $active= $m['n'] ?: 0;
         if ( $gen ) {
           $wb->wb->setActiveSheetIndex($active);
-          $objWriter= PHPExcel_IOFactory::createWriter($wb->wb, $excel=='xls' ? 'Excel5' : 'Excel2007');
+          $objWriter= PhpOffice\PhpSpreadsheet\IOFactory::createWriter($wb->wb, $excel=='xls' ? 'Xls' : 'Xlsx');
           $fpath= "$ezer_path_root/docs/".($dir?"$dir/":'')."{$wb->name}.{$excel}";
           $objWriter->save($fpath);
           if ( $list ) $html.= "CLOSE $fpath";
@@ -1677,7 +1666,7 @@ function Excel5_f(&$ws,$range,$v,&$err) {
     case 'color':
       $wcs->getFont()->getColor()->setARGB($x); break;
     case 'bcolor':
-      $wcs->getFill()->setFillType(PHPExcel_Style_Fill::FILL_SOLID)->getStartColor()->setARGB($x);
+      $wcs->getFill()->setFillType(PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB($x);
       break;
     // text
     case 'bold':   $wcs->getFont()->setBold(true); break;
