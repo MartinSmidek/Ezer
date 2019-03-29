@@ -214,6 +214,7 @@ __EOD;
   }
   $js_options->watch_ip= $EZER->options->watch_ip= isset($pars->watch_ip) ? '1' : '0';
   $js_options->watch_key= $EZER->options->watch_key= isset($pars->watch_key) ? '1' : '0';
+  $js_options->watch_pin= $EZER->options->watch_pin= isset($pars->watch_pin) ? '1' : '0';
   $js_options->CKEditor= isset($pars->CKEditor) ? $pars->CKEditor : '{}';
   $js_options->dbg=      isset($pars->dbg) ? $pars->dbg : '0';
   $js_options->ondomready= isset($pars->ondomready) ? $pars->ondomready : '0';
@@ -256,10 +257,73 @@ __EOD;
 //__EOD;
 //  }
 
-  // SLEDOVÁNÍ IP ADRESY
+  // SLEDOVÁNÍ IP ADRESY, vyžádání klíče, zaslání PINu
   $ip_ok= true;
   $ip_msg= '';
   $key_msg= '';
+  $pin_ok= true;
+  $pin_msg= '';
+  if ( isset($pars->watch_pin) && $pars->watch_pin ) {
+    // pro mobilní zařízení a watch_pin otevřít přihlášení až po ověření PINu zaslaného mailem
+    $usermail= isset($_COOKIE['usermail']) ? $_COOKIE['usermail'] : '';
+    // (kontroluje se, zda vložený mail patří někomu z uživatelů)
+    if ( isset($_POST['email']) ) {
+      // byl vyplněn mail - zkontrolujeme, zda je to mail oprávněného uživatele
+      date_default_timezone_set("Europe/Prague");
+      $mail= trim($_POST['email']);
+      $idu= 0;
+      $pin_last= 0;
+      $pin_date= '';
+      ezer_connect(".main.",false,true);
+      $qu= pdo_query("SELECT id_user,options,history FROM _user WHERE deleted='' ");
+      while ( $qu && (list($id_user,$options,$pin_datetime)= pdo_fetch_row($qu))) {
+        $opt= json_decode($options);
+        if ( $opt->email==$mail ) {
+          $idu= $id_user;
+          $matched= preg_match("/(\d{4});(\d{4}-d{2}-d{2} d{2}:d{2}:\d{2})/",$pin_datetime,$m);
+          if ( $matched ) {
+            $pin_last= $m[1];
+            $pin_date= $m[2];
+          }
+          break;
+        }
+      }
+      // pokud nebyl vyplněn pin, vygenerujeme jej a pošleme mailem
+      if ( $idu && !$_POST['pin'] ) {
+        // vytvoř pin a zapamatuj i s mailem v session
+        $pin= rand(1000,9999);
+        $_SESSION[$ezer_root]['pin']= $pin;
+        $_SESSION[$ezer_root]['mail']= $mail;
+        // odešli mail
+        $EZER->CMS->TEST= 1;
+        $ret= send_gmail($_POST['email'],"Přihlášení ","pin=0000");
+        if ( $ret->ok ) {
+          $pin_ok= false;
+          $pin_msg= "Na vaši adresu byl poslán mail s PINem, zapište jej prosím vedle adresy<br/>";
+          // zapiš PIM do tabulky s jeho limitem
+          $now= date("Y-m-d H:i:s",strtotime("+1 day"));
+          query("UPDATE _user SET history='$pin;$now' WHERE id_user=$idu");
+        }
+        else {
+          $pin_ok= false;
+          $pin_msg= "Bohužel {$ret->msg}<br/>";
+        }
+      }
+      // pokud byl vyplněn pin, zkontrolujeme jej a otevřeme přihlašovací dialog
+      if ( $idu && $_POST['pin'] ) {
+        
+      }
+    }
+    elseif ( isset($_POST['email']) && !$_POST['pin'] ) {
+      // byl vyplněn mail a pin - zkontrolujeme zda je to správný pin a je mladší jak 24 hodin
+      ezer_connect(".main.",false,true);
+      $ips= select("GROUP_CONCAT(ips)","_user","ips!=''",'ezer_system');
+    }
+    else {
+      // je to první zobrazení - nabídneme mail z cookies
+      $pin_ok= false;
+    }
+  }
   if ( (isset($pars->watch_ip) || isset($pars->watch_key))
     && (isset($pars->no_local) && $pars->no_local || !$is_local ) ) {
     // ověření přístupu - externí přístup hlídat vždy, lokální jen je-li  no_local=true
@@ -300,7 +364,7 @@ __EOD;
           <br/><br/>Kontaktní údaje jsou uvedeny vpravo.<br><small>$ip_msg</small>
         </form>
 __EOD
-    : ( $ip_ok
+    : ( $ip_ok || $pin_ok
     ? <<<__EOD
         <form id='logme' method="post" onsubmit="return false;" enctype="multipart/form-data">
           <span>uživatelské jméno</span><br />
@@ -311,6 +375,23 @@ __EOD
           <button id="login_on" tabindex="3">
           	Přihlásit se&nbsp;&nbsp;<i class="fa fa-thumbs-o-up fa-flip-horizontal"></i>
           </button>
+        </form>
+__EOD
+    : ( $pars->watch_pin ? <<<__EOD
+        <form id='watch_pin' method='post'>
+          Z tohoto počítače se do aplikace <b>$app_name</b> není možné přihlásit
+          bez vložení PINu zaslaného na adresu:<br />
+          <input id="usermail" type="text" name="email" value="$usermail" 
+            size="10" maxlength="30" placeholder="emailová adresa"
+            /> <input id="mailpin" type="text" name="pin" value="" 
+              size="1" maxlength="5" placeholder="PIN" />
+          <button id="login_on" tabindex="3">
+          	login <i class="fa fa-thumbs-o-up fa-flip-horizontal"></i>
+          </button>
+          <br/><i>$pin_msg</i>
+          <br/>O zřízení přístupu je možné v&nbsp;oprávněných případech
+          požádat správce systému.
+          <br/><br/>Kontaktní údaje jsou uvedeny vpravo.<br><small>$ip_msg</small>
         </form>
 __EOD
     : ( $pars->watch_key ? <<<__EOD
@@ -329,7 +410,7 @@ __EOD
         požádat správce systému.
         <br/><br/>Kontaktní údaje jsou uvedeny vpravo.<br><small>$ip_msg</small>
 __EOD
-  ));
+  )));
   // PŘIHLAŠOVACÍ DIALOG
   $chngs= "";
   $css_login= "";

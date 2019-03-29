@@ -204,6 +204,57 @@ function send_mail($subject,$html,$from='',$to='',$fromname='') { trace();
   }
   return $ok;
 }
+# -------------------------------------------------------------------------------------------------- send_mail
+# pošle jednoduchý mail ze standardního účtu gmailového nastaveného 
+# v $EZER.CMS.GMAIL.(mail|name|pswd) ... $EZER->CMS->TEST 
+function send_gmail($to,$subject,$body) { trace();
+  global $ezer_path_serv, $EZER;
+  $phpmailer_path= "$ezer_path_serv/licensed/phpmailer";
+  require_once("$phpmailer_path/class.phpmailer.php");
+  require_once("$phpmailer_path/class.smtp.php");
+  $ret= (object)array('ok'=>'1','msg'=>'');
+  $mail= new PHPMailer(true);
+  try {
+    $mail->SMTPDebug = 0;
+    $mail->SetLanguage('cs',"$phpmailer_path/language/");
+    $mail->IsSMTP();
+    $mail->SMTPAuth= true; // enable SMTP authentication
+    $mail->SMTPSecure= "ssl"; // sets the prefix to the server
+    $mail->Host= "smtp.gmail.com"; // sets GMAIL as the SMTP server
+    $mail->Port= 465; // set the SMTP port for the GMAIL server
+    $mail->Username= $EZER->CMS->GMAIL->mail;
+    $mail->Password= $EZER->CMS->GMAIL->pswd;
+    $mail->CharSet= "UTF-8";
+    $mail->IsHTML(true);
+    // zpětné adresy
+    $mail->ClearReplyTos();
+    $mail->SetFrom($EZER->CMS->GMAIL->mail, $EZER->CMS->GMAIL->name);
+    // vygenerování mailu
+    $mail->Subject= $subject;
+    $mail->Body= $body;
+    // přidání příloh
+    $mail->ClearAttachments();
+    // přidání adres
+    $mail->ClearAddresses();
+    $mail->ClearCCs();
+    $mail->AddAddress($to);
+    if ( $EZER->CMS->TEST ) {
+      display("(ne)poslaný mail: $to -- $subject --$body");
+      $ret->msg= "TESTOVÁNÍ - vlastní mail.send je vypnuto";
+    }
+    else {
+    // odeslání mailu
+      $mail->send();
+      $mail->SmtpClose();
+    }
+  }
+  catch (Exception $e) {
+    $ret->msg= $mail->ErrorInfo;
+    $ret->ok= $e;
+    $ret->ok= '0';
+  }
+  return $ret;
+}
 # -------------------------------------------------------------------------------------------------- recursive_mkdir
 // vytvoří adresář
 function recursive_mkdir($path, $sep="\\", $mode = 0777) {

@@ -995,6 +995,14 @@ class Application {
   }
   // ------------------------------------------------------------------------------------- login
   login() {
+    let watch_pin= jQuery('#watch_pin');
+    if ( watch_pin.length ) {
+      watch_pin.submit( () => {
+        Ezer.fce.set_cookie('usermail',watch_pin.find('#usermail').val());
+        watch_pin[0].action= document.location.href; // aby se neztratily GET parametry
+        watch_pin[0].submit();
+      });
+    }
     this.loginDomOpen('logged1','','');      // zavolá this.logged(odpověď serveru)
   }
   // ------------------------------------------------------------------------------------- logged1
