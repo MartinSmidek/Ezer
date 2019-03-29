@@ -9,3 +9,4 @@
 /server/vendor
 /server/licensed/xls*
 /nbproject
+/server/licensed/phpmailer/
