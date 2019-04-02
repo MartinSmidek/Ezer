@@ -1361,6 +1361,13 @@ function uw($x) {
   return utf2win($x,true);
 }
 # ================================================================================================== EXCEL5
+# -------------------------------------------------------------------------------------------------- Excel5_date
+# Excel5_date převede timestamp na excelovské datum
+function Excel5_date($tm) {  #trace();
+  global $ezer_path_serv;
+  require_once "$ezer_path_serv/licensed/xls2/Classes/PHPExcel/Shared/Date.php";
+  return PHPExcel_Shared_Date::PHPToExcel($tm);
+}
 # -------------------------------------------------------------------------------------------------- Excel5
 # definice Excelovského souboru verze před Excel2007
 # PARAMETRY
@@ -1396,6 +1403,8 @@ function Excel2007($desc) {
 }
 function Excel5($desc,$gen=1,&$wb=null,$dir='',$excel='xls') {  #trace();
   global $ezer_path_serv, $ezer_path_root;
+  // natáhneme knihovny
+  require_once 'ezer3.1/server/vendor/autoload.php';
   // pro testování a vývoj
   $list= false;
   if (!$desc || $desc=='0') {
@@ -1506,7 +1515,7 @@ __XLS;
               if ( $x<=$y ) {
                 for ($i= $x; $i<= $y; $i++) {
                   if ( $ws )
-                    $ws->getRowDimension($i)->setRowHeight($width);
+                    $ws->getRowDimension($i)->setRowHeight($widthx);
                     if ( $list ) $html.= " R-$i:$width";
                 }
               }
@@ -1522,9 +1531,9 @@ __XLS;
                 for ($i= $x; $i<= $y; $i++) {
                   if ( $ws ) {
                     if ( $widthx=='*' )
-                      $ws->getColumnDimensionByColumn($i)->setAutoSize(true);
+                      $ws->getColumnDimensionByColumn($i+1)->setAutoSize(true);
                     else
-                      $ws->getColumnDimensionByColumn($i)->setWidth(abs($width))->setVisible($width>0);
+                      $ws->getColumnDimensionByColumn($i+1)->setWidth(abs($width))->setVisible($width>0);
                   }
                 }
               }
@@ -1649,16 +1658,16 @@ function Excel5_f(&$ws,$range,$v,&$err) {
       $tl= array('h'=>'hair','d'=>'dotted','t'=>'thin','T'=>'thick');
       $borders= array();
       if ( isset($r) ) {
-        $borders['top']=    array('style'=>isset($tl[$t]) ? $tl[$t] : 'none');
-        $borders['right']=  array('style'=>isset($tl[$r]) ? $tl[$r] : 'none');
-        $borders['bottom']= array('style'=>isset($tl[$b]) ? $tl[$b] : 'none');
-        $borders['left']=   array('style'=>isset($tl[$l]) ? $tl[$l] : 'none');
+        $borders['top']=    array('borderStyle'=>isset($tl[$t]) ? $tl[$t] : 'none');
+        $borders['right']=  array('borderStyle'=>isset($tl[$r]) ? $tl[$r] : 'none');
+        $borders['bottom']= array('borderStyle'=>isset($tl[$b]) ? $tl[$b] : 'none');
+        $borders['left']=   array('borderStyle'=>isset($tl[$l]) ? $tl[$l] : 'none');
       }
       elseif ( $t[0]=='+' ) {
-        $borders['inside']= array('style'=>isset($tl[$t[1]]) ? $tl[$t[1]] : 'none');
+        $borders['inside']= array('borderStyle'=>isset($tl[$t[1]]) ? $tl[$t[1]] : 'none');
       }
       else {
-        $borders['outline']= array('style'=>isset($tl[$t]) ? $tl[$t] : 'none');
+        $borders['outline']= array('borderStyle'=>isset($tl[$t]) ? $tl[$t] : 'none');
       }
       $wcs->applyFromArray(array('borders'=>$borders));
       break;
