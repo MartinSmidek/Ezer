@@ -51,7 +51,7 @@
 #   $ezer_path_serv     -- string: cesta ke skriptům
 */
 # ----------------------------------------------------------------------------------------- root_php
-function root_php3($app,$app_name,$welcome,$skin,$options,$js,$css,$pars=null,$const=null,$start_sess=true) {
+function root_php3($app,$app_name,$welcome,$skin,$options,$js,$css,$pars=null,$const=null) {
   // platí buďto isnull($ezer_local) nebo isnull($ezer_server)
   global $ezer_local, $ezer_server;
   if ( is_null($ezer_local) && is_null($ezer_server) ) 
@@ -121,18 +121,18 @@ __EOD;
     $favicon= file_exists("./$app/img/{$favicon}") ? $favicon
       : ($is_local ? "{$app}_local.png" : "{$app}.png");
   }
-  if ( $start_sess ) {
-    // promítnutí nastavení do SESSION
-    $gc_maxlifetime= isset($pars->gc_maxlifetime) ? $pars->gc_maxlifetime : 12*60*60;
-    $session= "php";                      // standardní práce se SESSION
-    ini_set('session.gc_maxlifetime',$gc_maxlifetime);
-    if ( !isset($_SESSION) ) session_start();
-    $_SESSION['gc_maxlifetime']= $gc_maxlifetime;
-
-    if ( isset($_GET['session']) ) {             // zobraz stav session hned po startu
-      $info= $_SESSION;
-    }
-  }
+//  if ( $start_sess ) { -- nelze v PHP7.2 
+//    // promítnutí nastavení do SESSION
+//    $gc_maxlifetime= isset($pars->gc_maxlifetime) ? $pars->gc_maxlifetime : 12*60*60;
+//    $session= "php";                      // standardní práce se SESSION
+//    ini_set('session.gc_maxlifetime',$gc_maxlifetime);
+//    if ( !isset($_SESSION) ) session_start();
+//    $_SESSION['gc_maxlifetime']= $gc_maxlifetime;
+//
+//    if ( isset($_GET['session']) ) {             // zobraz stav session hned po startu
+//      $info= $_SESSION;
+//    }
+//  }
   // přenesení GET parametrů do SESSION aby byly přístupné i v root.ini volané z ezer2.php
   // a do Ezer.get aby byly přístupné v klientu, klíč menu je vynechán
   $gets= ''; $del= '';

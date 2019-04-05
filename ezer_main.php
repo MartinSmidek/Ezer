@@ -37,9 +37,19 @@
   $gmap=     isset($_GET['gmap'])    ? $_GET['gmap']    : ($ezer_server?1:0);
 
   // inicializace SESSION
+  $add_options->gc_maxlifetime= 1;
   if ( !isset($_SESSION) ) {
     session_unset();
-    session_start();
+    if ( isset($add_options->gc_maxlifetime) ) {
+      // nastavení ini_set musí být od PHP7.2 před session_start
+      $gc_maxlifetime= isset($add_options->gc_maxlifetime) ? $add_options->gc_maxlifetime : 12*60*60;
+      ini_set('session.gc_maxlifetime',$gc_maxlifetime);
+      session_start();
+      $_SESSION['gc_maxlifetime']= $gc_maxlifetime;
+    }
+    else {
+      session_start();
+    }
   }
   $_SESSION[$app]['GET']= $_GET;
   $_SESSION[$app]['ezer']= '3.1';
