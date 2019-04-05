@@ -37,7 +37,6 @@
   $gmap=     isset($_GET['gmap'])    ? $_GET['gmap']    : ($ezer_server?1:0);
 
   // inicializace SESSION
-  $add_options->gc_maxlifetime= 1;
   if ( !isset($_SESSION) ) {
     session_unset();
     if ( isset($add_options->gc_maxlifetime) ) {
