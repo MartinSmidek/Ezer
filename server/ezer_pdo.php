@@ -94,6 +94,9 @@ function pdo_affected_rows() {
 function pdo_qry($qry,$pocet=null,$err=null,$to_throw=null,$db=null) {
   return mysql_qry($qry,$pocet,$err,$to_throw,$db);
 }
+function pdo_object($qry) {
+  return mysql_object($qry);
+}
 }
 # --------------------------------------------------------------------------------------- driver PDO
 if ( EZER_PDO_PORT==2 ) {
@@ -186,6 +189,12 @@ function pdo_error() {
   $pdo= $ezer_db[$curr_db][0];
   $err= $pdo->errorInfo();
   return "You have an error in your SQL:".$err[2];
+}
+function pdo_object($qry) {
+  $res= pdo_qry($qry,1);
+  $x= $res ? pdo_fetch_object($res) : array();
+  if ( !$res ) pdo_err($qry);
+  return $x;
 }
 function pdo_affected_rows() {          
   global $ezer_db, $curr_db;
