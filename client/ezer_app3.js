@@ -2634,7 +2634,8 @@ class Eval {
         Ezer.trace('M',y.qry,null,Math.round(y.qry_ms*1000)/1000);
       if ( y.error ) {
         Ezer.error('EVAL: '+y.error,'s',this.proc,this.proc?this.proc.desc._lc:null);
-        this.stack[++this.top]= y.value || 0;
+//        this.stack[++this.top]= y.value || 0;
+        return;
       }
       else if ( obj ) {
         val= obj[fce+'_'].call(obj,y);
@@ -4105,7 +4106,7 @@ Ezer.fce.javascript= function(code,value) {
   }
   catch (e) {
     var msg= e.message||'?';
-    Ezer.error('chyba '+msg+' ve funkci javascript pro "'+code+'"');
+    throw {level:'user',msg:msg};
   }
   return value?value:x;
 };
@@ -4134,7 +4135,8 @@ Ezer.fce['function']= function() {
   }
   catch (e) {
     var msg= e.message||'?';
-    Ezer.error('chyba '+msg+' ve funkci function pro "'+code+'('+args[0]+'...)"');
+    throw {level:'user',msg:msg};
+//    Ezer.error('chyba '+msg+' ve funkci function pro "'+code+'('+args[0]+'...)"');
   }
   return x;
 };
@@ -4491,7 +4493,8 @@ Ezer.error= function (str,level,block=null,lc='',calls=null) {
     else {
       // jiná chyba (mimo Eval.eval)
       Ezer.fce.DOM.error(estr+" <b>after</b> "+trail);
-      if ( level!=='msg' && level!=='user' ) throw {level:level,msg:str};
+      if ( level!=='msg' ) throw {level:level,msg:str};
+//      if ( level!=='msg' && level!=='user' ) throw {level:level,msg:str};
     }
   }
   return 1;
@@ -4666,6 +4669,7 @@ Ezer.fce.trail= function (op) {
       }
     }
     catch (e) {
+      throw e;
     }
     break;
   case 'add':

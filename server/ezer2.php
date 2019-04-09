@@ -281,7 +281,10 @@
       else fce_error("ask: funkce '{$x->fce}' neexistuje");
       $y->args= $x->args;
     }
-    catch (Exception $e) {
+    catch (Error $e) { // chytne i syntaktickou chybu
+      $y->error= $e->getMessage();
+    }
+    catch (Exception $e) { 
       $y->error= $e->getMessage();
     }
     if ( $x->cmd=='run') exit;
