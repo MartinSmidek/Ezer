@@ -47,11 +47,9 @@ function dbg_ask (fce,args,then) {
   x.root= Ezer.root;                  // název/složka aplikace
   x.app_root= Ezer.app_root;          // {root].inc je ve složce aplikace
   x.session= Ezer.options.session;    // způsob práce se SESSION
-  jQuery.ajax({url:Ezer.App.options.server_url, data:x, method: 'POST',
+  Ezer.ajax({data:x,
     success: function(y) {
       Ezer.App._ajax(-1);
-//       var y;
-//       try { y= JSON.decode(ay); } catch (e) { y= null; }
       if ( !y  )
         Ezer.error('ASK(dbg): syntaktická chyba v PHP na serveru:'+y,'C');
       else if ( y.error )

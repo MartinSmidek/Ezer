@@ -44,7 +44,7 @@ Ezer.curr= {panel:null};        // zobrazený panel
 Ezer.sys= {root:Ezer.root,user:{},ezer:{},version:Ezer.version,options:Ezer.options};
 Ezer.is_trace= {};                              // zapínání typů trasování
 Ezer.is_dump= {};                               // zapínání typů výpisů
-// ------------------------------------------------------------------------------------------------- const_value
+// ------------------------------------------------------------------------------------- const_value
 // vrátí hodnotu konstanty případně opravenou o hodnotu z Ezer.konst
 Ezer.const_value= function (id,val) {
   var value= null;
@@ -61,6 +61,26 @@ Ezer.const_value= function (id,val) {
   }
   return value;
 };
+// ---------------------------------------------------------------------------- extended jQuery.ajax
+// rošíření jQuery.ajax o
+// - reakci na ztrátu SESSION ukončením aplikace a 
+// - parametry očekávané ezer2.php
+Ezer.ajax= function (options) {
+  var defaults = {              
+    url:Ezer.App.options.server_url,
+    method:'POST',
+    success: function(y){  
+      if ( y.session_none ) // je vráceno ezer2.php, pokud není dobře definováno $_SESSION
+        Ezer.App.bar_clock_break();
+      else if ( options.origin_success ) 
+        options.origin_success(y);
+    }
+  };
+  // kromě události success bude vše zpracovávat jQuery.ajax
+  options.origin_success= options.success;
+  jQuery.extend(options,defaults);
+  return jQuery.ajax(options);    
+};
 // ----------------------------------------------------------------------------- ON unload
 window.addEventListener("beforeunload", function() {
   if ( Ezer && Ezer.sys ) {
@@ -75,11 +95,12 @@ window.addEventListener("beforeunload", function() {
   }
 });
 // ----------------------------------------------------------------------------- ON load
-jQuery(document).ready( () => {
-  Ezer.app= new Application(Ezer.options);
-  Ezer.app._mini_debug(Ezer.app.options.mini_debug);
-  if ( Ezer.app.options.ondomready ) ondomready();
-});
+jQuery(document)
+  .ready( () => {
+    Ezer.app= new Application(Ezer.options);
+    Ezer.app._mini_debug(Ezer.app.options.mini_debug);
+    if ( Ezer.app.options.ondomready ) ondomready();
+  });
 // ----------------------------------------------------------------------------- ON popstate
 if ( Ezer.browser!=='IE' )                               // IE nepodporuje HTML5
   window.addEventListener("popstate", function(e) {
@@ -758,7 +779,7 @@ class Application {
       else if ( this.session_tics > Ezer.App.options.session_interval  ) {
         // je čas obnovit SESSION
         this.session_tics= 1;
-        this.bar_chat({op:'re_log_me'});
+        this.bar_chat({op:'re_log_me',lifetime:Ezer.App.options.session_interval});
       }
       else if ( Ezer.options.must_log_in 
           && !this.waiting && this.clock_tics > Ezer.App.options.login_interval  ) {
@@ -778,7 +799,7 @@ class Application {
       if ( hm.substr(-2)==='59' )
         this.bar_clock_hour();
     }
-    else {
+    else if ( !quiet ) {
       this.bar_clock_show(false);
     }
     if ( !quiet )
@@ -796,7 +817,8 @@ class Application {
       has=    Ezer.options.watch_access_opt.abbr[has];
     }
     has= has===access ? '' : '('+has+')';
-    if ( Ezer.options.curr_users ) {    // pokud je v {root}.php nastaveno tak sleduj uživatele
+    if ( Ezer.options.curr_users && Ezer.sys.user.id_user ) {    
+      // pokud je v {root}.php nastaveno a došlo k přihlášení tak sleduj uživatele
       this.bar_chat({op:'users?'},false,'_show_users');
     }
     var abbr= Ezer.sys.user
@@ -825,7 +847,7 @@ class Application {
       var x= {cmd:'touch',user_id:Ezer.sys.user.id_user,user_abbr:Ezer.sys.user.abbr,root:Ezer.root,
         app_root:Ezer.app_root,session:Ezer.options.session,module:'speed',hits:0,menu:'',msg:speeds
       };
-      jQuery.ajax({method:'POST', data:x, url:Ezer.App.options.server_url, success:null});
+      Ezer.ajax({data:x, success:null});
     }
   }
   // ----------------------------------------------------------------------------- bar_clock_continue
@@ -835,6 +857,13 @@ class Application {
     Ezer.App.hits++;
     Ezer.App.waiting= false;
     Ezer.App.bar_clock(true);
+  }
+  // ----------------------------------------------------------------------------- bar_clock_continue
+  // je voláno pokud čas vypršel nebo SESSION je nedefinované
+  bar_clock_break () {
+    let v= 'odhlaseno '+ae_datum(1)+' po expiraci SESSION';
+    document.cookie= Ezer.root+'_logoff' + '=' + encodeURIComponent(v);
+    location.replace(window.location.href);
   }
   // ----------------------------------------------------------------------------- bar_chat
   // udržuje se serverem konverzaci
@@ -848,13 +877,14 @@ class Application {
     x.curr_version= Ezer.options.curr_version; // verze při startu
     if ( test )
       x.svn= 1;                         // zjištění verze SVN pro aplikaci a jádro
-    jQuery.ajax({url:this.options.server_url, data:x, method: 'POST',
+    Ezer.ajax({data:x,
       success: function(y) {
         //this._ajax(-1);
 //         var y;
 //         try { y= JSON.decode(ay); } catch (e) { y= null; }
-        if ( !y )
+        if ( !y ) {
           Ezer.error('EVAL: syntaktická chyba na serveru:'+y,'E');
+        }
         else {
           if ( test ) {
             Ezer.debug(y,'bar_chat (response)');
@@ -878,8 +908,8 @@ class Application {
                   width:520});
             }
           }
-          if ( y.log_out )
-            location.replace(window.location.href);
+//          if ( y.log_out ) -- nepoužité
+//            location.replace(window.location.href);
         }
       }.bind(this)});
 //     ajax.send();
@@ -1026,7 +1056,7 @@ class Application {
         this.loginDomClose();
 //         Cookie.dispose(Ezer.root+'_logoff')
         Ezer.fce.set_cookie(Ezer.root+'_logoff');
-        this.bar_clock(true);
+        this.bar_clock(false);
         // obnov stav trasování a zaveď kód
         if ( Ezer.sys.user.state && this.options.to_trace ) {
           this.options.to_trace= Ezer.sys.user.state[0]==='+' ? 1 : 0;
@@ -1433,7 +1463,7 @@ class Application {
 //     });
 //     ajax.send();
 //     this._ajax(1);
-    jQuery.ajax({url:this.options.server_url, data:x, method: 'POST',
+    Ezer.ajax({data:x,
       success: function(y) {
         Ezer.App._ajax(-1);
         if ( typeof(y)==='string' )
@@ -1482,7 +1512,7 @@ class Application {
 
     // V template stránky musí být div-element s id='drag' pro design-subsystém
     if ( jQuery('#drag') ) Ezer.drag.init(jQuery('#drag'));
-    this.bar_clock();
+    this.bar_clock(true);
   }
 
 // ------------------------------------------------------------------------==> . DOM layout
@@ -2579,7 +2609,7 @@ class Eval {
     x.app_root= Ezer.app_root;          // {root].inc je ve složce aplikace
     x.session= Ezer.options.session;    // způsob práce se SESSION
     x.totrace= Ezer.App.options.ae_trace;
-    jQuery.ajax({url:Ezer.App.options.server_url, data:x, method:'POST',
+    Ezer.ajax({data:x,
       success: function(y) {
         this.onComplete(y,obj,fce,'x',ms);
       }.bind(this),
@@ -2601,7 +2631,7 @@ class Eval {
     x.root= Ezer.root;                  // název/složka aplikace
     x.app_root= Ezer.app_root;          // {root].inc je ve složce aplikace
     x.session= Ezer.options.session;    // způsob práce se SESSION
-    jQuery.ajax({url:Ezer.App.options.server_url, data:x, method:'POST',
+    Ezer.ajax({data:x,
       success: function(y){
         this.onComplete(y,null,fce,'a',ms);
       }.bind(this),
@@ -4488,7 +4518,7 @@ Ezer.error= function (str,level,block=null,lc='',calls=null) {
       // provede volání funkce 'send_error' (nečeká na výsledek)
       var x= {cmd:'run',fce:'send_error',args:[msg],nargs:1,
               app_root:Ezer.app_root,root:Ezer.root,session:Ezer.options.session};
-      jQuery.ajax({method:'POST', data:x, url:Ezer.App.options.server_url, success:null});
+      Ezer.ajax({data:x, success:null});
     }
     else {
       // jiná chyba (mimo Eval.eval)
@@ -4529,7 +4559,7 @@ Ezer.fce.touch= function (type,block,args) {
       x.cmd= 'server';
       x.fce= block;
       x.args= args;
-      jQuery.ajax({method:'POST', data:x, url:Ezer.App.options.server_url, 
+      Ezer.ajax({data:x,
         success: function(y){
           if ( y.value )
             Ezer.fce.echo(y.value)
@@ -4547,7 +4577,7 @@ Ezer.fce.touch= function (type,block,args) {
       // zapíše do _user.options.context[root] cestu pro active:*
       x.path= [block.owner.id,block.id];
 //                                                 Ezer.trace('*','touch panel '+block.owner.id+'.'+block.id);
-      jQuery.ajax({method:'POST', data:x, url:Ezer.App.options.server_url, success:null});
+      Ezer.ajax({data:x, success:null});
       break;
     case 'block':
       // je to opravdový uživatelský dotek, oddal odhlášení
@@ -4612,12 +4642,12 @@ Ezer.fce.touch= function (type,block,args) {
       x.hits= Ezer.App.hits-1;                    // zapiš hits (poslední patřil dalšímu)
       Ezer.App.hits= 1;                           // zapomeň je
 //                                                 Ezer.trace('*','touch send '+x.menu+' '+x.hits+'x');
-      jQuery.ajax({method:'POST', data:x, url:Ezer.App.options.server_url,
+      Ezer.ajax({data:x,
         success:
         to_logout ? function() {
           // zapiš odhlašení v druhém volání
           x.logout= 1;
-          jQuery.ajax({method:'post', data:x, url:Ezer.App.options.server_url,
+          Ezer.ajax({data:x,
             success: function() {
               window.location.reload(true);
             }

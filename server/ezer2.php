@@ -11,17 +11,27 @@
   # vložení a inicializace balíků
   $ezer_root= $_POST['root'];                        // jméno adresáře a hlavního objektu aplikace
   if ( !$ezer_root ) $ezer_root= $_GET['root'];
-  $ezer_session= $_POST['session'];                  // způsob práce se $_SESSION php|ezer
-  if ( !$ezer_session ) $ezer_session= $_GET['session'];
-  # ---------------------------------------------------------------------------------------- session
-  # session - vlastní nebo standardní obsluha $_SESSION
-  if ( $ezer_session=='ezer' ) {
-    require_once("$ezer_path_serv/session.php");
-    sess_start(); // obsahuje volání session_start()
-  }
-  else {
+//  $ezer_session= $_POST['session'];                  // způsob práce se $_SESSION php|ezer
+//  if ( !$ezer_session ) $ezer_session= $_GET['session'];
+//  # ---------------------------------------------------------------------------------------- session
+//  # session - vlastní nebo standardní obsluha $_SESSION
+//  if ( $ezer_session=='ezer' ) {
+//    require_once("$ezer_path_serv/session.php");
+//    sess_start(); // obsahuje volání session_start()
+//  }
+//  else {
     session_start(); // defaultní práce se session
     $USER= $_SESSION[$ezer_root]['USER'];
+//  }
+  # ------------------------------------------------------------------------- test existence SESSION
+  # po uplynutí gc_maxlifetime je session zrušena (runtimem PHP) => vrátit informaci do klienta
+  if ( !count($_SESSION)
+      && !in_array($_POST['cmd'],array('user_login','load_code2','map_load','touch')) ) {
+    header('Content-type: application/json; charset=UTF-8');
+    $y= (object)array('session_none'=>1,'error'=>'nepřihlášen');
+    $yjson= json_encode($y);
+    echo $yjson;
+    exit;
   }
   # --------------------------------------------------------------------------------- root.inc[.php]
   if ( isset($_SESSION[$ezer_root]['abs_root']) ) {
@@ -152,6 +162,7 @@
   # ------------------------------------------------------------------------------------------------ chat
   # chat : pravidelná relace s klientem se vzkazy: relogme
   case 'chat':
+    // parametr lifetime=Ezer.App.options.session_interval
     $answer= (object)array();
     switch ( $x->op ) {
     case 'message?':          // {op:'message?',user_id:...,hits:n});
@@ -179,10 +190,12 @@
       $_SESSION[$ezer_root]['relog']++;
       // obnova SESSION
       $ezer_user_id= $x->user_id;
-      if ( $ezer_session=='ezer' )
-        sess_revive();
+//      if ( $ezer_session=='ezer' )
+//        sess_revive();
       $_SESSION['ID']= session_id();
       session_regenerate_id();
+      session_start();
+      setcookie(session_name(),session_id(),time()+$x->lifetime);
       $answer->msg= "relog {$x->hits} ID:".session_id()." {$_SESSION[$ezer_root]['user_abbr']}";
       // kontrola verze
       check_version($answer);
@@ -1237,7 +1250,7 @@
           $_SESSION[$ezer_root]['note'].= $qry;
           $res= pdo_query($qry);
         }
-        if ( $ezer_session!='ezer' )
+//        if ( $ezer_session!='ezer' )
           $_SESSION[$ezer_root]['USER']= $USER;
       }
 //       else {
@@ -1286,7 +1299,7 @@
 //        try { $options= $json->decode($u->options); } catch  (Exception $e) { $options= null; }
         try { $options= json_decode($u->options); } catch  (Exception $e) { $options= null; }
         $USER->options= $options;
-        if ( $ezer_session!='ezer' )
+//        if ( $ezer_session!='ezer' )
           $_SESSION[$ezer_root]['USER']= $USER;
         $y->user_id= $ezer_user_id;
       }
