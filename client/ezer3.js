@@ -4178,7 +4178,8 @@ class LabelDrop extends Label {
             this.DOM_addFile(f);
             var r= new FileReader();
             r.Ezer= {file:f,folder:this.folder,bind:this};
-            if ( this.cloud=='G:' ) { // ----------------------------- Google Disk
+            if ( this.cloud=='G:' ) { 
+              // Google Disk
               f.td2.html("načítání");
               r.readAsBinaryString(f);
               r.onload= function(e) {
@@ -4188,7 +4189,8 @@ class LabelDrop extends Label {
                 this.Ezer.bind.DOM_ondrop_Disk(tf);
               };
             }
-            else if ( this.cloud=='S:' || this.cloud=='H:' ) { // ---- server file system
+            else if ( this.cloud=='S:' || this.cloud=='H:' || this.cloud=='U:' ) { 
+              // server file system
               r.onload= function(e) {
                 var tf= this.Ezer.file;
                 tf.data= new Blob([e.target.result],{type:tf.type});
@@ -4443,7 +4445,9 @@ class LabelDrop extends Label {
       xhr.setRequestHeader("EZER-FILE-RELPATH", this.folder);
     else                                                    // S:,H: absolutní
       xhr.setRequestHeader("EZER-FILE-ABSPATH",
-        (this.cloud=='S:' ? Ezer.options.path_files_s : Ezer.options.path_files_h) + this.folder);
+        (this.cloud=='S:' ? Ezer.options.path_files_s : (
+         this.cloud=='H:' ? Ezer.options.path_files_h : (
+         this.cloud=='U:' ? Ezer.options.path_files_u : '::'))) + this.folder);
     xhr.onload = function(e) {
       if (e.target.status == 200) {
         // vraci pole:name|chunk/chunks|path|strlen
