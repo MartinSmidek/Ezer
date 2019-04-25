@@ -307,11 +307,16 @@ class Area extends Block {
 //      zobrazí v area strom pomocí balíku MooTree, desc je popis ve formátu
 //      pokud je dáno id, bude strom pod tímto elementem.
 //      Zadání clone=1 způsobí zkopírování desc do vntřní kopie před konstrukcí stromu (to je
-//      zapotřebí, pokud je desc zadáné jako konstanta Ezert skriptu)
+//        zapotřebí, pokud je desc zadáné jako konstanta Ezert skriptu)
+//      Zadání options je objekt, který umožní pozměnit vzhled, s následujícími složkami
+//        mode:'folders' zobrazí všechny uzly jako ikony složek 
+//        mode:'files' (default) zobrazí uzly bez následníků jako soubory
+//        theme:'mootree_white.gif'  - světlý motiv
+//        theme:'mootree.gif'  - tmavý motiv
 //   nodes: [ node, ... ]
 //   node:  {prop:{text:<string>,down:nodes}}
 //e: tree_onclick - (id,node,node.data.json,merge.data.json)
-  tree_show (desc0,id,clone) {
+  tree_show (desc0,id,clone,options) {
     // načte další generaci pod root podle popisu v desc
     function load(root,desc) {
       if ( desc.down ) {
@@ -333,9 +338,9 @@ class Area extends Block {
     if ( !this.tree ) {
       var root= {text:'site',open:true};
       this.tree= new MooTreeControl({div:id ? jQuery(`#${id}`) : this.DOM_Block,grid:true,
-        mode:'files',                   // folders|files
+        mode:options.mode||'files',             // folders|files
         path:Ezer.paths.images_lib,     // cesta k mootree.gif
-        theme:'mootree_white.gif',
+        theme:options.theme||'mootree_white.gif',
         // ----------------------------------------------------------------- onclick
         onClick: function(node,context) { // při kliknutí na libovolný uzel context=true/undefined
           // spočítáme sumu data - shora dolů
