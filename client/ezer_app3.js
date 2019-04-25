@@ -875,8 +875,10 @@ class Application {
     x.app_root= Ezer.app_root;          // {root].inc je ve složce aplikace
     x.session= Ezer.options.session;    // způsob práce se SESSION
     x.curr_version= Ezer.options.curr_version; // verze při startu
-    if ( test )
-      x.svn= 1;                         // zjištění verze SVN pro aplikaci a jádro
+    if ( test ) {
+//      x.svn= 1;                         // zjištění verze SVN pro aplikaci a jádro
+      x.git= 1;                         // zjištění verze GIT pro aplikaci a jádro
+    }
     Ezer.ajax({data:x,
       success: function(y) {
         //this._ajax(-1);
@@ -4200,7 +4202,7 @@ Ezer.fce.alert= function (...args) {
 //   pozdrží výpočet na ms milisekund
 //s: funkce
 Ezer.fce.wait= function (ms) {
-  Ezer.fce._wait.delay(ms);
+  setTimeout(Ezer.fce._wait,ms);
   return 1;
 };
 Ezer.fce._wait= function () {
@@ -5141,16 +5143,18 @@ Ezer.fce.DOM.confirm= function (str,continuation,butts,options) {
     var but= jQuery(`<button>${butt.tit}</button>`)
       .appendTo('#popup3 div.pop_tail')
       .click( e => 
-          stop(options.input ? (butt.val ? input[0].value : '') : butt.val) );
+          stop(options.input!==undefined ? (butt.val ? input[0].value : '') : butt.val) );
     if ( first_val===null ) {
-      first_val= options.input ? '' : butt.val;
+      first_val= options.input!==undefined ? '' : butt.val;
       first_but= but;
     }
-    last_val= options.input ? '' : butt.val;
+    last_val= options.input!==undefined ? '' : butt.val;
   }
   // show dialog
   mask.fadeIn(Ezer.options.fade_speed);
   popup.fadeIn(Ezer.options.fade_speed);
+  jQuery(document).ready(function() { 
+    jQuery(input).focus(); }); 
   first_but.trigger('focus');
   jQuery(document)
     .keyup( e => { 
