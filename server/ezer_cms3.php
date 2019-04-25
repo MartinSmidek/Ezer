@@ -316,26 +316,31 @@ end:
  * @param string $akce - název akce
  * @return html
  */
-function cms_form_ref($title,$form,$ida,$akce) { trace();
+function cms_form_ref($title,$form=null,$ida=0,$akce=0) { trace();
   $html= '';
-  // identifikace prohlížeče a platformy prohlížeče: pro IE to nepůjde
-  $ua= $_SERVER['HTTP_USER_AGENT'];
-  ezer_browser($browser,$browser_version,$platform,$ua);
-  if ( $browser=='IE' ) {
-    $omluva= 'Omlouváme se, ale z prohlížeče Internet Exlorer není online přihlášení možné. '
-        . 'Přihlašte se prosím náhradním způsobem, uvedeným na stránce. '
-        . 'Nebo k přihlášení použijte prohlížeč Chrome či Firefox či Edge.';
-    $html.= "<span class='cms_form' 
-              onclick=\"alert('$omluva');\">
-            $title</span>";
+  if ( !$form ) {
+    $html.= "<span class='cms_form'>$title</span>";
   }
   else {
-    // generování odkazu na přihlášku
-    $asgn= cms_form_def($form);
-    $html.= "<script>$asgn</script>";
-    $html.= "<span class='cms_form' 
-              onclick=\"cms_form('cms_create',{form:'$form',ida:'$ida',akce:'$akce',title:'$title'});\">
-            $title</span>";
+    // identifikace prohlížeče a platformy prohlížeče: pro IE to nepůjde
+    $ua= $_SERVER['HTTP_USER_AGENT'];
+    ezer_browser($browser,$browser_version,$platform,$ua);
+    if ( $browser=='IE' ) {
+      $omluva= 'Omlouváme se, ale z prohlížeče Internet Exlorer není online přihlášení možné. '
+          . 'Přihlašte se prosím náhradním způsobem, uvedeným na stránce. '
+          . 'Nebo k přihlášení použijte prohlížeč Chrome či Firefox či Edge.';
+      $html.= "<span class='cms_form' 
+                onclick=\"alert('$omluva');\">
+              $title</span>";
+    }
+    else {
+      // generování odkazu na přihlášku
+      $asgn= cms_form_def($form);
+      $html.= "<script>$asgn</script>";
+      $html.= "<span class='cms_form' 
+                onclick=\"cms_form('cms_create',{form:'$form',ida:'$ida',akce:'$akce',title:'$title'});\">
+              $title</span>";
+    }
   }
   return $html;
 }
@@ -443,10 +448,13 @@ function cms_mail_send($address,$subject,$body,$reply_to='') {
     $mail->Body= $body;
     // přidání příloh
     $mail->ClearAttachments();
-    // přidání adres
+    // přidání adresy
     $mail->ClearAddresses();
-    $mail->ClearCCs();
     $mail->AddAddress($address);
+    // přidání kopií
+    $mail->ClearCCs();
+    if ( $reply_to )
+      $mail->AddCC($reply_to);
     if ( $EZER->CMS->TEST ) {
       $ret->msg= "TESTOVÁNÍ - vlastní mail.send je vypnuto";
     }
