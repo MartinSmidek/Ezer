@@ -4443,11 +4443,14 @@ class LabelDrop extends Label {
     xhr.setRequestHeader("EZER-FILE-CHUNKS", max);
     if ( this.cloud=='S:' && !Ezer.options.path_files_s )   // S: relativní (zpětná kompatibilita)
       xhr.setRequestHeader("EZER-FILE-RELPATH", this.folder);
-    else                                                    // S:,H: absolutní
-      xhr.setRequestHeader("EZER-FILE-ABSPATH",
+    else {                                                  // S:,H: absolutní
+      let path=
         (this.cloud=='S:' ? Ezer.options.path_files_s : (
          this.cloud=='H:' ? Ezer.options.path_files_h : (
-         this.cloud=='U:' ? Ezer.options.path_files_u : '::'))) + this.folder);
+         this.cloud=='U:' ? Ezer.options.path_files_u : '::'))) + this.folder;
+      path= encodeURI(path);
+      xhr.setRequestHeader("EZER-FILE-ABSPATH",path);
+    }
     xhr.onload = function(e) {
       if (e.target.status == 200) {
         // vraci pole:name|chunk/chunks|path|strlen

@@ -75,6 +75,7 @@ else {
   $path=   isset($_SERVER['HTTP_EZER_FILE_RELPATH'])
          ? $_SERVER['DOCUMENT_ROOT'].'/'.$_SERVER['HTTP_EZER_FILE_RELPATH']  // S: relativní
          : $_SERVER['HTTP_EZER_FILE_ABSPATH'];                               // S: H: absolutní
+  $path= urldecode($path);
   $path= str_replace('//','/',$path);
   $pname= stripslashes("$path/$name");
 
