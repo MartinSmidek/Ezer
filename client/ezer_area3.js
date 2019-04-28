@@ -338,9 +338,9 @@ class Area extends Block {
     if ( !this.tree ) {
       var root= {text:'site',open:true};
       this.tree= new MooTreeControl({div:id ? jQuery(`#${id}`) : this.DOM_Block,grid:true,
-        mode:options.mode||'files',             // folders|files
+        mode:options&&options.mode?options.mode:'files',             // folders|files
         path:Ezer.paths.images_lib,     // cesta k mootree.gif
-        theme:options.theme||'mootree_white.gif',
+        theme:options&&options.theme?options.theme:'mootree_white.gif',
         // ----------------------------------------------------------------- onclick
         onClick: function(node,context) { // při kliknutí na libovolný uzel context=true/undefined
           // spočítáme sumu data - shora dolů

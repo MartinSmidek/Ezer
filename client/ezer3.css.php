@@ -425,7 +425,7 @@ div.Element3 .Label3, div.Select3 .Label3, div.FieldDate3 .Label3 {
   border:0; border-bottom:1px solid #aaa; }
 .FieldList3 div.SelectDrop3 {
   border:1px solid #aaa; position:absolute; z-index:1; box-shadow:5px 5px 10px #567;
-  overflow-y:auto; overflow-x:hidden; max-height:192px; }
+  overflow-y:auto; overflow-x:hidden; max-height:192px; width:100%; }
 
 /* --------------------------------------------------------------------------------------==> Edit */
 

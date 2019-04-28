@@ -246,6 +246,7 @@
     $y->value= array();
     goto end_switch;
   }
+  try {
   switch ( $x->cmd ) {
   # ================================================================================================ VOLÁNÍ z EZER
   # ------------------------------------------------------------------------------------------------ touch
@@ -271,7 +272,7 @@
   case 'run':   // jako 'ask' ale bez návratu
   case 'ask':
     global $trace_parm;
-    try {
+//    try {
       $fce= $x->fce;
       $ok= function_exists($fce);
       if ( !$ok ) {
@@ -293,13 +294,13 @@
       }
       else fce_error("ask: funkce '{$x->fce}' neexistuje");
       $y->args= $x->args;
-    }
-    catch (Error $e) { // chytne i syntaktickou chybu
-      $y->error= $e->getMessage();
-    }
-    catch (Exception $e) { 
-      $y->error= $e->getMessage();
-    }
+//    }
+//    catch (Error $e) { // chytne i syntaktickou chybu
+//      $y->error= $e->getMessage();
+//    }
+//    catch (Exception $e) { 
+//      $y->error= $e->getMessage();
+//    }
     if ( $x->cmd=='run') exit;
     break;
   # ------------------------------------------------------------------------------------------------ time
@@ -907,7 +908,8 @@
       $qry2_fields= $x->having ? ",$fields" : '';
       $qry2= "SELECT count(*) as _pocet_ $qry2_fields FROM $table $joins WHERE $cond $scond $group $order";
       $res2= mysql_qry($qry2);
-      $from= pdo_num_rows($res2);
+//      $from= pdo_num_rows($res2);
+      $from= 0+pdo_fetch_assoc($res2)['_pocet_'];
       $from= max(0,$from-1);
 //                                                         display("from(1)=$from");
 #      $from= intval($from/$rows)*$rows;  ### TZ, 12.1.2012, aby browse_seek odroloval tak že na prvním řádku bude požadovaný záznam
@@ -962,8 +964,8 @@
         if ( $res ) {
           $y->count= 0+pdo_result($res,0);
         }
-        $row2= pdo_fetch_assoc($res2);
-        $from= $row2['_pocet_'];
+//        $row2= pdo_fetch_assoc($res2);
+//        $from= $row2['_pocet_'];
 //                                                         display("negroup: {$y->count}, $from, $tmax");
         // úprava počátečního řádku, aby byl zobrazný konec konec tabulky, bude-li ve výběru
         if ( $y->count<=$from+$tmax ) {
@@ -1979,6 +1981,13 @@
   default:
     $y->error= "SERVER: příkaz '{$x->cmd}' není implementován";
     break;
+  }
+  }
+  catch (Error $e) { // chytne i syntaktickou chybu
+    $y->error= $e->getMessage();
+  }
+  catch (Exception $e) { 
+    $y->error= $e->getMessage();
   }
 # ================================================================================================== answer
 end_switch:
