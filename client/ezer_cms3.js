@@ -134,6 +134,7 @@ function cms_form(cmd,par) {
             if ( y.ido!==undefined ) 
               form.data('ido',y.ido);
             form.find("[name=pin]").removeClass('disabled3');
+            pin.focus();
           }
           else {
             form.find("[name=mail]").removeClass('disabled3');
@@ -284,7 +285,7 @@ function cms_form(cmd,par) {
       if ( missing ) {
         info.html(TEXT('cms_submit_missing'))
       }
-      if ( bad_date ) {
+      else if ( bad_date ) {
         info.html(TEXT('cms_submit_bad_date'))
       }
       else {
