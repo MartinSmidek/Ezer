@@ -245,7 +245,7 @@ function cms_form(cmd,par) {
       par= form.data('par');
       desc= Ezer.cms.form[par.form];
       // vytvoř seznam ze změněných hodnot
-      let chngs= [], join= [], missing= 0;
+      let chngs= [], join= [], missing= 0, bad_date= 0;
       data.find('input,textarea').each((i,e) => {
         let elem= jQuery(e).removeClass('missing'),
             name= elem.prop('name'),
@@ -257,6 +257,14 @@ function cms_form(cmd,par) {
         if ( desc.ELEM[name][1]=='*' && !val ) {
           elem.addClass('missing');
           missing++;
+        }
+        // zkontroluj tvar datumů
+        if ( desc.ELEM[name][0]=='d' && val ) {
+          dmr= val.match(/\d{1,2}\.\d{1,2}\.\d{4}/);
+          if ( !dmr ) {
+            elem.addClass('missing');
+            bad_date++;
+          }
         }
         // zapiš změněná a skrytá data 
         let orig= elem.data('orig');
@@ -275,6 +283,9 @@ function cms_form(cmd,par) {
       // 1. nejsou zadána povinná data?
       if ( missing ) {
         info.html(TEXT('cms_submit_missing'))
+      }
+      if ( bad_date ) {
+        info.html(TEXT('cms_submit_bad_date'))
       }
       else {
         // 2. je požadováno potvrzení?
