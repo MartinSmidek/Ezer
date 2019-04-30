@@ -9970,17 +9970,17 @@ class Show extends Elem {
         this.DOM_cell[i]
           .dblclick( el => {
             el.stopPropagation();
-            var td= el.target, tr= td.getParent(), show= this, browse= this.owner;
+            var td= jQuery(el.target), tr= td.parent(), show= this, browse= this.owner;
             if ( browse.enabled ) {
               let i= jQuery(tr).data('i');
               if ( i && i <= browse.tlen ) {
                 // uzavření případně předchozí otevřené - jakoby bylo blur
                 if ( browse._opened ) {
-                  var td1= browse._opened.getParent();
+                  var td1= browse._opened.parent();
                   if ( td1 )
                     td1.text(browse._opened_value);
                   browse._opened_value= null;
-                  browse._opened.destroy();
+                  browse._opened.empty();
                   browse._opened= null;
                 }
                 // dblclick na datovém řádku
@@ -9988,32 +9988,35 @@ class Show extends Elem {
                 var val= td.text();
                 browse._opened_value= val;
                 td.text('');
-                td.adopt( browse._opened= new Element('input',{'class':'td_input',type:'text',
-                  value:val,styles:{width:w},events:{
-                    keypress: function(event) {
+                td.append( 
+                  browse._opened= jQuery(`<input class="td_input" type="text">`)
+                    .val(val)
+                    .prop('readonly',false)
+                    .css({width:w})
+                    .focus()
+                    .keypress( event => {
                       switch (event.key) {
-                      case 'esc':   // vrátit původní hodnotu
+                      case 'Escape':   // vrátit původní hodnotu
                         event.stopPropagation();
-                        td.text(val);
+                        td.text(browse._opened.val());
                         browse._opened_value= null;
-                        this.destroy();
+                        browse._opened.empty();
                         browse._opened= null;
                         break;
-                      case 'enter': // zavolat onsubmit
+                      case 'Enter': // zavolat onsubmit
                         event.stopPropagation();
-                        show.let(this.value);
+                        show.let(browse._opened.val());
                         show.fire('onsubmit',[browse.keys[browse.t+i-1-browse.b],event.ctrlKey?1:0]);
                         break;
                       }
-                    },
-                    blur: function(event) {
+                    })
+                    .blur( () => {
                       td.text(val);
                       browse._opened_value= null;
-                      this.destroy();
+                      browse._opened.empty();
                       browse._opened= null;
-                    }
-                }}));
-                browse._opened.setAttribute('tabIndex',0);
+                    })
+                );
               }
             }
             return false;
