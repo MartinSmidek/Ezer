@@ -9207,7 +9207,7 @@ class Browse extends Block {
 //      nastaví focus, pokud není nofocus=true
   DOM_hi_row (r,noevent,nofocus,control) {
     Ezer.assert(this.t<=r&&r<=this.t+this.tlen,"Browse.DOM_hi_row("+r+") - mimo rozsah");
-    if ( this.tact ) {
+    if ( this.tact && this.DOM_row[this.tact] ) {
       // pokud je změna zhasni starý řádek
       this.DOM_row[this.tact].removeClass('tr-form');
       this.DOM_tag[this.tact].removeClass('tag1').addClass('tag0');

@@ -174,6 +174,7 @@ function cms_server(&$y) {
     $R= $SQL['R'];
     $ido= $y->ido;
     $ida= $y->par->ida;
+    $changes= 0; // pro zápis pomocí 'detail_R'
     ezer_connect($SQL['select_O'][0]);
     if ( $ido ) {
       // vyzvednutí starých údajů
@@ -212,6 +213,7 @@ function cms_server(&$y) {
     // OSOBA - oprava nebo vložení osoby
     if ( $ido && $real_chngs['O']  ) {
       // pokud se zaznamenává den změny 
+      $changes|= 8;
       if ( isset($SQL['Ochange']) )  
         $chngs_o[]= (object)array('fld'=>$SQL['Ochange'],'op'=>'u','val'=>date('Y-m-d'));
       // pokud je mezi CALL update_O předej parametry 
@@ -228,10 +230,12 @@ function cms_server(&$y) {
     }  
     else if ( !$ido ) {
       // OSOBA - k vytvářené osobě přidej mezi vyplněné položky také vyplněnou mailovou adresu
+      $changes|= 4;
       $chngs_o[]= (object)array('fld'=>$O[2],'op'=>'i','val'=>$y->mail);
       // pokud se zaznamenává den změny 
-      if ( isset($SQL['Ochange']) )  
+      if ( isset($SQL['Ochange']) ) { 
         $chngs_o[]= (object)array('fld'=>$SQL['Ochange'],'op'=>'i','val'=>date('Y-m-d'));
+      }
       // pokud je mezi CALL insert_O předej parametry 
       if ( isset($FORM['CALL']['insert_O']) ) {
         $ido= call_user_func($FORM['CALL']['insert_O'],"INSERT",$O[0],0,$chngs_o,$O[1]);
@@ -249,20 +253,23 @@ function cms_server(&$y) {
     }
     // pokud je zpracováván souhlas, zapiš jej
     if ( in_array('confirm',$FORM['TYPE']) && isset($FORM['CALL']['confirm_O']) ) {
+      $changes|= 8;
       call_user_func($FORM['CALL']['confirm_O'],$ido,$ida);
     }
     // RELACE - otestování, zda na akci již není přihlášen
     $qry= strtr($SQL['select_R'][1],array('{IDO}'=>$ido,'{IDA}'=>$ida,'{*}'=>$R[1]));
     list($idr)= pdo_fetch_array(pdo_query($qry));
     if ( $idr && count($chngs_r) ) {
+      $changes|= 2;
       // zjisti staré údaje kvůli zápisu do _track
       $old_r= mysql_row("SELECT * FROM $R[0] WHERE $R[1]=$idr");
       for ($i= 0; $i<count($chngs_r); $i++) {
         $chngs_r[$i]->old= $old_r[$chngs_r[$i]->fld];
       }
       // pokud se zaznamenává den změny 
-      if ( isset($SQL['Rchange']) )  
+      if ( isset($SQL['Rchange']) ) { 
         $chngs_r[]= (object)array('fld'=>$SQL['Rchange'],'op'=>'u','val'=>date('Y-m-d'));
+      }
       // oprava údajů v relaci
       ezer_connect($SQL['select_R'][0]);
       ezer_qry("UPDATE",$R[0],$idr,$chngs_r,$R[1]);
@@ -273,15 +280,17 @@ function cms_server(&$y) {
     }
     else if ( !$idr ) {
       // vytvoření relace R - přihlášení osoby na akci
+      $changes|= 1;
       $chngs_r[]= (object)array('fld'=>$R[2],'op'=>'i','val'=>$ido);
       $chngs_r[]= (object)array('fld'=>$R[3],'op'=>'i','val'=>$ida);
       // pokud se zaznamenává den změny 
-      if ( isset($SQL['Rchange']) )  
+      if ( isset($SQL['Rchange']) ) { 
         $chngs_r[]= (object)array('fld'=>$SQL['Rchange'],'op'=>'i','val'=>date('Y-m-d'));
+      }
       // pokud je mezi CALL insert_R předej parametry 
       if ( isset($FORM['CALL']['insert_R']) ) {
-        $ok= call_user_func($FORM['CALL']['insert_R'],"INSERT",$R[0],0,$chngs_r,$R[1]);
-        if ( !$ok ) { $y->info.= $TEXT('CMS_submit_error_2').' '; goto end; } 
+        $idr= call_user_func($FORM['CALL']['insert_R'],"INSERT",$R[0],0,$chngs_r,$R[1]);
+        if ( !$idr ) { $y->info.= $TEXT('CMS_submit_error_2').' '; goto end; } 
       }
       else {
         // jinak proveď insert standardně
@@ -294,6 +303,10 @@ function cms_server(&$y) {
     if ( in_array('family',$FORM['TYPE']) ) {
       $ok= call_user_func($FORM['CALL']['family_!'],$ido,$ida,$y->join);
       if ( !$ok ) { $y->info.= $TEXT('CMS_family_error_1').' '; goto end; } 
+    }
+    // pokud se mají zaznamenávat detaily změn do R
+    if ( isset($FORM['CALL']['changes_R']) ) {
+      $ok= call_user_func($FORM['CALL']['changes_R'],$idr,$changes);
     }
     // pokud se má odeslat potvrzující mail
     if ( in_array('send_mail',$FORM['TYPE']) ) {
