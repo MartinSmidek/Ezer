@@ -9991,23 +9991,12 @@ class Show extends Elem {
                 td.append( 
                   browse._opened= jQuery(`<input class="td_input" type="text">`)
                     .val(val)
-                    .prop('readonly',false)
                     .css({width:w})
-                    .focus()
                     .keypress( event => {
-                      switch (event.key) {
-                      case 'Escape':   // vrátit původní hodnotu
-                        event.stopPropagation();
-                        td.text(browse._opened.val());
-                        browse._opened_value= null;
-                        browse._opened.empty();
-                        browse._opened= null;
-                        break;
-                      case 'Enter': // zavolat onsubmit
+                      if (event.key=='Enter') {   // vrátit původní hodnotu
                         event.stopPropagation();
                         show.let(browse._opened.val());
                         show.fire('onsubmit',[browse.keys[browse.t+i-1-browse.b],event.ctrlKey?1:0]);
-                        break;
                       }
                     })
                     .blur( () => {
@@ -10017,6 +10006,7 @@ class Show extends Elem {
                       browse._opened= null;
                     })
                 );
+                browse._opened.focus();
               }
             }
             return false;
