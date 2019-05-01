@@ -266,6 +266,15 @@ class Block {
     else if ( name=='title' && this.DOM_Label ) {
       this.DOM_Label.html(val);
     }
+    // oživ show.map_pipe
+    if ( name=='map_pipe' && this instanceof Show ) {
+      this.start();
+      this._start2();
+    }
+    // oživ select.options
+    if ( name=='options' && this instanceof SelectMap ) {
+      this._options_load();
+    }
     return 1;
   }
 // ------------------------------------------------------------------------------------ add attrib
