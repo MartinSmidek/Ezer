@@ -290,7 +290,7 @@ div.Popup3 div.pop_head { position: absolute; top: 0; left: 0; width: 100%;
 div.Popup3 div.pop_head button { float:right; }
 div.Popup3 div.pop_close { position: absolute; right: 0; top: 0; cursor: pointer;
   margin: 5px; width: 13px; height: 13px; background: url(img/closebtn.gif) no-repeat; }
-div.Popup3 div.pop_body { position: absolute; /*overflow: auto; */
+div.Popup3 div.pop_body { position: absolute; overflow: auto; 
   width:calc(100% - 30px); height:calc(100% - 42px); 
 }
 
