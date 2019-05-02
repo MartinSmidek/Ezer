@@ -438,14 +438,10 @@ function cms_mail_valid($email,&$reason) {
  * @param string $reply_to nepovinná adresa pro odpověď
  * @return object {ok:0/1,msg:''/popis chyby}
  */
-function cms_mail_send($address,$subject,$body,$reply_to='') { 
+function cms_mail_send($address,$subject,$body,$reply='') { 
   global $EZER;
   $ret= (object)array('ok'=>1,'msg'=>'');
   require 'ezer3.1/server/vendor/autoload.php';
-  // pročištění reply_to
-  $reply= $reply_to;
-  list($reply)= explode(',',$reply_to);
-  $reply= trim($reply);
   // nastavení phpMail
   $mail= new PHPMailer(true);
   try {
