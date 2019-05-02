@@ -310,8 +310,12 @@ function cms_server(&$y) {
     }
     // pokud se má odeslat potvrzující mail
     if ( in_array('send_mail',$FORM['TYPE']) ) {
-      $ok= call_user_func($FORM['CALL']['sendmail_OA'],$y->mail,$ido,$ida);
-      if ( !$ok ) { $y->info.= $TEXT('CMS_send_mail_error').' '; goto end; } 
+      $obj_mail= call_user_func($FORM['CALL']['sendmail_OA'],$y->mail,$ido,$ida);
+      if ( !$obj_mail->ok ) { 
+        $msg= isset($obj_mail->msg) ? $obj_mail->msg : '';
+        $y->info.= $TEXT('CMS_send_mail_error')." $msg"; 
+        goto end; 
+      } 
     }
     $y->ok= 1;
     break;
@@ -436,8 +440,12 @@ function cms_mail_valid($email,&$reason) {
  */
 function cms_mail_send($address,$subject,$body,$reply_to='') { 
   global $EZER;
-  $ret= (object)array('ok'=>'1','msg'=>'');
+  $ret= (object)array('ok'=>1,'msg'=>'');
   require 'ezer3.1/server/vendor/autoload.php';
+  // pročištění reply_to
+  $reply= $reply_to;
+  list($reply)= explode(',',$reply_to);
+  $reply= trim($reply);
   // nastavení phpMail
   $mail= new PHPMailer(true);
   try {
@@ -454,7 +462,7 @@ function cms_mail_send($address,$subject,$body,$reply_to='') {
     $mail->IsHTML(true);
     // zpětné adresy
     $mail->ClearReplyTos();
-    $mail->AddReplyTo($reply_to ? $reply_to : $EZER->CMS->GMAIL->mail);
+    $mail->AddReplyTo($reply ? $reply : $EZER->CMS->GMAIL->mail);
     $mail->SetFrom($EZER->CMS->GMAIL->mail, $EZER->CMS->GMAIL->name);
     // vygenerování mailu
     $mail->Subject= $subject;
@@ -466,8 +474,8 @@ function cms_mail_send($address,$subject,$body,$reply_to='') {
     $mail->AddAddress($address);
     // přidání kopií
     $mail->ClearCCs();
-    if ( $reply_to )
-      $mail->AddCC($reply_to);
+    if ( $reply )
+      $mail->AddCC($reply);
     if ( $EZER->CMS->TEST ) {
       $ret->msg= "TESTOVÁNÍ - vlastní mail.send je vypnuto";
     }
@@ -480,7 +488,7 @@ function cms_mail_send($address,$subject,$body,$reply_to='') {
   catch (Exception $e) {
     $ret->msg= $mail->ErrorInfo;
     $ret->ok= $e;
-    $ret->ok= '0';
+    $ret->ok= 0;
   }
   return $ret;
 }
