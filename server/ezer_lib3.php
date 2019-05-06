@@ -162,6 +162,9 @@ __EOD;
 //   if ( $verze ) {
 //     $_SESSION[$ezer_root]['svn_version']= $verze;
 //   }
+   // zjištění a zapamatování git-verze (jen na serveru, kam je ukládáno pomocí git pull)
+   $_SESSION[$ezer_root]['git_ezer']= root_git(0);
+   $_SESSION[$ezer_root]['git_app']=  root_git(1);
   // ZPRACOVANÍ OPTIONS
   //   přenesení informace do klienta
   //     skill: oprávnění, který uživatel musí mít, aby aplikaci vůbec spustil
@@ -691,6 +694,11 @@ $html_footer
 __EOD;
     break;
   }
+  header("Expires: Tue, 03 Jul 2001 06:00:00 GMT");
+  header("Last-Modified: " . gmdate("D, d M Y H:i:s") . " GMT");
+  header("Cache-Control: no-cache, no-store, must-revalidate"); // HTTP 1.1.
+  header("Cache-Control: post-check=0, pre-check=0", false);
+  header("Pragma: no-cache"); // HTTP 1.0.
   echo $template;
   exit;
 //  return 1;

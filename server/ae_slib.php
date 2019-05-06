@@ -10,6 +10,34 @@
  * funkce root_php a root_inc jsou nahrazeny funkcemi root_php3 a root_inc3 
  */
 
+# ----------------------------------------------------------------------------------------- root git
+# zjistí git-verzi běžící aplikace pro $app=1 nebo jádra pro $app=0
+#   verzí se rozumí datum posledního update souboru .git/refs/heads/master
+function root_git($app=0) {
+  global $EZER, $ezer_root, $ezer_path_root;
+  $tstamp= 0;
+  $git_path= ".git/refs/heads/master";
+  if ( $app ) {
+    $path= "$ezer_root/$git_path";
+    if ( file_exists($path) ) {
+      $tstamp= filemtime($path);
+    }    
+    else {
+      $path= $git_path;
+      if ( file_exists($path) ) {
+        $tstamp= filemtime($path);
+      }
+    }
+  }
+  else {
+    $path= "{$EZER->version}/$git_path" ;
+    if ( file_exists($path) ) {
+      $tstamp= filemtime($path);
+    }    
+  }
+//                              display("root_git($app) - $path: ".date("F d Y H:i:s.",$tstamp));
+  return $tstamp;
+}
 # ----------------------------------------------------------------------------------------- root_svn
 # zjistí svn-verzi běžící aplikace pro $app=1 nebo jádra pro $app=0
 function root_svn($app=0) {

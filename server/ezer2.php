@@ -170,21 +170,37 @@
       $answer->curr_version= $x->curr_version;
       if ( $x->curr_version ) {
         // pokud se má zjišťovat aktuální verze
-        check_version($answer);
-        if ( $x->svn ) {
-          $answer->sa_version= root_svn(1);
-          if ( $answer->sa_version!='?' ) {
-            $answer->sk_version= root_svn(0);
-            $answer->msg.= "<br><br><b>SVN</b><br>$ezer_root=$answer->sa_version, ezer=$answer->sk_version";
-          }
+//        check_version($answer);
+//        if ( $x->svn ) {
+//          $answer->sa_version= root_svn(1);
+//          if ( $answer->sa_version!='?' ) {
+//            $answer->sk_version= root_svn(0);
+//            $answer->msg.= "<br><br><b>SVN</b><br>$ezer_root=$answer->sa_version, ezer=$answer->sk_version";
+//          }
+//        }
+        if ( $x->git ) {
+          check_version_git($answer,1);
+//          $answer->sa_version= $sa= root_git(1);
+//          $answer->sk_version= $sk= root_git(0);
+//          $_sa= $_SESSION[$ezer_root]['git_app']==$sa ? '' : 'need refresh';
+//          $_sk= $_SESSION[$ezer_root]['git_ezer']==$sk ? '' : 'need refresh';
+//          $answer->msg.= "<b>GIT last pull</b><br>$ezer_root: ".date("j.n.Y H:i:s",$sa)." ($sa) $_sa"
+//          . "<br>ezer: ".date("j.n.Y H:i:s",$sk)." ($sk) $_sk";
+//          // test pro refresh
+//          if ( $_sk || $_sa ) {
+//            $answer->refresh= 1;
+//          }
         }
-        if ( $answer->d_version ) {
-          $answer->msg.= "<br><br><b>poslední změna dat</b><br>$answer->d_version";
-        }
+//        if ( $answer->d_version ) {
+//          $answer->msg.= "<br><br><b>poslední změna dat</b><br>$answer->d_version";
+//        }
       }
       break;
     case 'users?':            // {op:'users?'});
       check_users($answer);
+      if ( $x->git ) {
+        check_version_git($answer);
+      }
       break;
     case 're_log_me':         // {op:'re_log_me',user_id:...,hits:n});
       $_SESSION[$ezer_root]['relog']++;
@@ -198,7 +214,7 @@
       setcookie(session_name(),session_id(),time()+$x->lifetime);
       $answer->msg= "relog {$x->hits} ID:".session_id()." {$_SESSION[$ezer_root]['user_abbr']}";
       // kontrola verze
-      check_version($answer);
+//      check_version($answer); -- chybuje 190503
       break;
     }
     header('Content-type: application/json; charset=UTF-8');
@@ -1314,7 +1330,7 @@
     if ( !$y->sys ) $y->sys= (object)array();
     $y->sys->user= $USER;              // přenos do klienta
     $y->sys->ezer= $EZER;
-    check_version($y);
+//    check_version($y); chybuje 190503
     break;
   # ------------------------------------------------------------------------------------------------ user_group_login
   # přihlášení uživatele do sdružených aplikací
@@ -2164,6 +2180,33 @@ function check_users($y) {
   $rh=@ pdo_query($qry);
   if ( $rh && ($h= pdo_fetch_object($rh)) ) {
     $y->msg= $h->_users;
+  }
+}
+# -------------------------------------------------------------------------------- check version_git
+# předá informaci při změně verze jádra; při $y->curr_version porovná verze
+function check_version_git($answer,$msg=0) {
+  global $ezer_root;
+  $sa= root_git(1);
+  $sk= root_git(0);
+  $old_sa= $_SESSION[$ezer_root]['git_app'];
+  $old_sk= $_SESSION[$ezer_root]['git_ezer'];
+  $_sa= $old_sa==$sa ? '' : 'need refresh';
+  $_sk= $old_sk==$sk ? '' : 'need refresh';
+  if ( $msg ) {
+    $answer->sa_version= $sa;
+    $answer->sk_version= $sk;
+    $answer->msg.= "
+      <b>GIT pull time on start</b>
+      <br>$ezer_root: ".date("j.n.Y H:i:s",$old_sa)." ($old_sa)
+      <br>ezer: ".date("j.n.Y H:i:s",$old_sk)." ($old_sk)
+      <hr><b>GIT last pull time</b>
+      <br>$ezer_root: ".date("j.n.Y H:i:s",$sa)." ($sa) $_sa
+      <br>ezer: ".date("j.n.Y H:i:s",$sk)." ($sk) $_sk
+    ";
+  }
+  // test pro refresh
+  if ( $_sk || $_sa ) {
+    $answer->refresh= 1;
   }
 }
 # -------------------------------------------------------------------------------------------------- check_version

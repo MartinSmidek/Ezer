@@ -875,15 +875,12 @@ class Application {
     x.app_root= Ezer.app_root;          // {root].inc je ve složce aplikace
     x.session= Ezer.options.session;    // způsob práce se SESSION
     x.curr_version= Ezer.options.curr_version; // verze při startu
-    if ( test ) {
+//    if ( test ) {
 //      x.svn= 1;                         // zjištění verze SVN pro aplikaci a jádro
       x.git= 1;                         // zjištění verze GIT pro aplikaci a jádro
-    }
+//    }
     Ezer.ajax({data:x,
       success: function(y) {
-        //this._ajax(-1);
-//         var y;
-//         try { y= JSON.decode(ay); } catch (e) { y= null; }
         if ( !y ) {
           Ezer.error('EVAL: syntaktická chyba na serveru:'+y,'E');
         }
@@ -892,30 +889,18 @@ class Application {
             Ezer.debug(y,'bar_chat (response)');
             Ezer.fce.DOM.alert(y.msg);
           }
-          else if ( next ) {
-            this[next](y.msg);
+          else if ( Ezer.options.watch_git && y.refresh ) {
+            var msg= "Na serveru byly provedeny programové změny, obnovte prosím okno prohlížeče"
+              + "<br>pomocí tlačítka (nebo co nejdříve stiskem Ctrl-R), aby vám mohly sloužit."
+              + ( y.help ? "<hr>"+y.help : '');
+            Ezer.fce.DOM.confirm(msg,
+              function(x){ if (x) document.location.reload(true); },[
+                {tit:'Obnov nyní (doporučeno)',val:1},{tit:'Provedu za chvíli ...',val:0}],{heading:
+                "<span style='color:orange;text-align:center;display:block'>Upozornění systému</span>",
+                width:460});
           }
-          else {
-            var cv= y.curr_version ? +y.curr_version : 0,
-               yav= y.a_version ? +y.a_version : 0,
-               ygv= y.g_version ? +y.g_version :0, ykv= y.k_version ? +y.k_version : 0;
-            if ( ykv > cv || yav > cv || (ygv && ygv > cv) ) {
-              var msg= "Na serveru byly provedeny programové změny, obnovte prosím okno prohlížeče"
-                + "<br>pomocí tlačítka (nebo co nejdříve stiskem Ctrl-R), aby vám mohly sloužit.<hr>"
-                + y.help;
-              Ezer.fce.DOM.confirm(msg,
-                function(x){ if (x) document.location.reload(true); },{
-                  'Obnov nyní (doporučeno)':1,'Provedu za chvíli ...':0},{heading:
-                  "<span style='color:orange;text-align:center;display:block'>Upozornění systému</span>",
-                  width:520});
-            }
-          }
-//          if ( y.log_out ) -- nepoužité
-//            location.replace(window.location.href);
         }
       }.bind(this)});
-//     ajax.send();
-    //this._ajax(1);
     return true;
   }
   // ----------------------------------------------------------------------------- bar click
@@ -5116,9 +5101,10 @@ Ezer.fce.DOM.clipboard= function (msg) {
 // klávesnicí lze ovládat volby: Enter je první volba, Esc poslední
 Ezer.fce.DOM.confirm= function (str,continuation,butts,options) {
   butts= butts || [];
+  let width= options && options.width ? options.width : 300;
   options= options || {};
   var mask= jQuery('#top_mask3'),
-      popup= jQuery('#popup3'),
+      popup= jQuery('#popup3').width(width),
       dele= function () {
         popup.find('div.pop_tail').empty();
         popup.find('div.pop_body').empty();
@@ -5130,7 +5116,7 @@ Ezer.fce.DOM.confirm= function (str,continuation,butts,options) {
         jQuery(document).off('keyup');
         popup.fadeOut(dele.bind({ok}));
       };
-  popup.find('div.pop_head').text(options && options.heading||'Upozornění');
+  popup.find('div.pop_head').html(options && options.heading||'Upozornění');
   popup.find('div.pop_body').html(str);
   if ( options.input!==undefined ) {
     // add input field
@@ -5138,10 +5124,11 @@ Ezer.fce.DOM.confirm= function (str,continuation,butts,options) {
       .appendTo('#popup3 div.pop_tail');
   }
   // add buttons
-  var first_val= null, last_val= null, first_but= null;
+  var first_val= null, last_val= null, first_but= null, pop_tail= jQuery('#popup3 div.pop_tail');
+  pop_tail.empty(); // odstraň stará tlačítka
   for (let butt of butts) {
     var but= jQuery(`<button>${butt.tit}</button>`)
-      .appendTo('#popup3 div.pop_tail')
+      .appendTo(pop_tail)
       .click( e => 
           stop(options.input!==undefined ? (butt.val ? input[0].value : '') : butt.val) );
     if ( first_val===null ) {
