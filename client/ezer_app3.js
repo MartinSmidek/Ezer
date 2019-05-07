@@ -430,7 +430,7 @@ class Application {
           if ( elem && elem.part && elem.part[Ezer.root] ) elem= elem.part[Ezer.root];
           if ( elem && elem.part && elem.part.doc ) elem= elem.part.doc;
           if ( elem && elem.part && elem.part.meta ) elem= elem.part.meta;
-          if ( elem && elem instanceof Ezer.Panel ) {
+          if ( elem && elem instanceof Panel ) {
             elem.popup();
           }
           else {
@@ -1120,7 +1120,7 @@ class Application {
   run (tab,DOM) {
     var id= tab.desc._init;
     tab.desc.part= {};
-    tab.desc.part[id]= new Ezer.Panel(null,Ezer.code[id],DOM,id);
+    tab.desc.part[id]= new Panel(null,Ezer.code[id],DOM,id);
   }
   // ------------------------------------------------------------------------------------- echo
   // zobrazení textu v Trace
@@ -4770,7 +4770,7 @@ function DOM_change_skin (skin) {
   ask3({cmd:'session',set:'skin',value:skin},DOM_change_skin_);
 }
 function DOM_change_skin_(y) {
-  jQuery("link[rel='stylesheet']#skin").each( (i,link) => {
+  jQuery("link[rel='stylesheet']").each( (i,link) => {
     var style= jQuery(link),
         href= style.attr('href').split('?');
     href= href[0]+'?root='+Ezer.root+'&timestamp='+Date.now();

@@ -147,13 +147,13 @@ __EOD;
   $_SESSION[$ezer_root]['app_name']= $app_name;
   if ( $app_root )
     $_SESSION[$ezer_root]['app_root']= $app_root;
-  $_SESSION['skin']= $skin;
+//  $_SESSION['skin']= $skin;
   // refresh je buď definován parametrem nebo odvozen ze session
   $refresh= isset($options->refresh) ? $options->refresh :(
     isset($_SESSION[$ezer_root]['sess_state']) && $_SESSION[$ezer_root]['sess_state']=='on'
     ? 'true' : 'false');
   if ( $is_local && isset($_GET['skin']) ) {
-    $_SESSION['skin']= $skin;
+//    $_SESSION['skin']= $skin;
     $title.= "/$skin";
   }
 //                                                                                 ZRUŠENO 31.1.2015
