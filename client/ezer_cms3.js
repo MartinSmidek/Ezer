@@ -57,7 +57,7 @@ function cms_form(cmd,par) {
       let items= '', must= "<b class='cms_must'>*</b>";
       for (let i in desc.ELEM ) {
         let e= desc.ELEM[i], t= e[0], w= e[3], h= e[4],
-            lab= `<span>${e[2]} ${e[1]=='*' ? must : ''}</span>`;
+            lab= `<span>${e[2]} ${e[1]=='*' || e[1]=='+' ? must : ''}</span>`;
         if ( t=='h' )
           items+= `<input name='${i}' type='hidden'>`;
         else if ( t=='c' )
@@ -165,14 +165,19 @@ function cms_form(cmd,par) {
             // je to známá osoba, dostali jsme data
             info.html(y.info); 
             for (name in y.data) {
-              let field= data.find(`input[name=${name}],textarea[name=${name}]`);
-              let t= desc.ELEM[name][0];
+              let field= data.find(`input[name=${name}],textarea[name=${name}]`),
+                  t= desc.ELEM[name][0],
+                  x= desc.ELEM[name][1];
               switch ( t ) {
                 case 'c':  // check 
                   field.prop('checked',Number(y.data[name])).data('orig',y.data[name]);
                   break;
                 default:
                   field.val(y.data[name]).data('orig',y.data[name].trim());
+              }
+              // zakaž položky s '+'
+              if ( x=='+' ) {
+                form.find(`[name=${name}]`).prop('disabled',true );
               }
             }
             // příprava formuláře pro vstup dat
@@ -254,8 +259,8 @@ function cms_form(cmd,par) {
         let val= typ=='c'  
             ? (elem.prop('checked') ? 1 : 0)
             : elem.val().trim();
-        // zkontroluj vyplnění povinných
-        if ( desc.ELEM[name][1]=='*' && !val ) {
+        // zkontroluj vyplnění povinných a povinných při nové osobě
+        if ( (desc.ELEM[name][1]=='*' || desc.ELEM[name][1]=='+' && !ido) && !val ) {
           elem.addClass('missing');
           missing++;
         }
