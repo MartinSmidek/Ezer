@@ -524,7 +524,7 @@ jQuery.fn.extend({
       visibility: 'hidden',
       position: 'absolute'
     });
-    clone.appendTo(document.body);
+//    clone.appendTo(document.body); -- zbytečné, navíc rušilo hodnotu radio
     result= fn.apply(clone);
     clone.remove();
     return result;

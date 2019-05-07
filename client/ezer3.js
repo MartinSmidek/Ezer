@@ -3314,8 +3314,6 @@ class Form extends Block {
       sum_h+= (rect._t||0) + rect._h + space_i;
     }
     sum_h+= space_b;
-//    this.DOM_Block.css({height:sum_h,top:this.options._t+(smer=='up'?this.options._h-sum_h:0)});
-//    this.DOM_Block.css({height:sum_h,top:this._t+(smer=='up'?this.options._h-sum_h:0)});
     if ( smer=='down' )  
       this.DOM_Block.css({height:sum_h});
     else
