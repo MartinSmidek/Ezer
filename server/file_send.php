@@ -69,7 +69,10 @@ err:
 else {
   # ----------------------------------------------------------------------------------------- upload
   $name=   $_SERVER['HTTP_EZER_FILE_NAME'];
-  $name=   utf2ascii(urldecode($name));
+  $name=   urldecode($name);
+  if ( !isset($_SERVER['HTTP_EZER_FILE_NAME_UTF_8']) || !$_SERVER['HTTP_EZER_FILE_NAME_UTF_8'] ) {
+    $name=   utf2ascii($name);
+  }
   $chunk=  $_SERVER['HTTP_EZER_FILE_CHUNK'];
   $chunks= $_SERVER['HTTP_EZER_FILE_CHUNKS'];
   $path=   isset($_SERVER['HTTP_EZER_FILE_RELPATH'])

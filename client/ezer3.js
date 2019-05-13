@@ -4458,6 +4458,9 @@ class LabelDrop extends Label {
       path= encodeURI(path);
       xhr.setRequestHeader("EZER-FILE-ABSPATH",path);
     }
+    if ( this.cloud=='U:' ) {
+      xhr.setRequestHeader("EZER-FILE-NAME-UTF-8",1);
+    }
     xhr.onload = function(e) {
       if (e.target.status == 200) {
         // vraci pole:name|chunk/chunks|path|strlen
