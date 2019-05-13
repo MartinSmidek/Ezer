@@ -24,7 +24,7 @@ function cms_def_test($on) {
  * @param object $y dotaz a zároveň odpověď, *y.cmd* určuje operaci serveru 
  */
 function cms_server(&$y) {
-  global $EZER, $ezer_root;
+  global $EZER, $ezer_root, $ezer_db;
   $FORM= $EZER->CMS->FORM[$y->par->form];
 //  $TEXT= $FORM['TEXT'];
   $ELEM= $FORM['ELEM'];
@@ -62,44 +62,53 @@ function cms_server(&$y) {
       ezer_connect($SQL['mail'][0]);
       $qry= strtr($SQL['mail'][1],array('{MAIL}'=>$y->mail));
       $res= pdo_query($qry);
-      $num= pdo_num_rows($res);
-      if ( $num==0 ) {
-        // mail neznáme
-        $y->ido= 0;
+      $y->qry= $qry;
+      $y->res= $res?1:0;
+      if ( !$res ) {
+        $y->state= 'error';
+        $y->info= "chyba při předání mailu";
       }
-      elseif ( $num==1 ) {
-        // mail je jednoznačný
-        list($y->ido)= pdo_fetch_row($res);
-      }
-      else {
-        // nejednoznačný mail
-        $y->ok= 0;
-        $y->state= 'warning';
-        $y->info= $TEXT('CMS_mail_error_2');
-      }
-      if ( $y->ok ) {
-        // vytvoř pin a zapamatuj i s mailem v session
-        $pin= rand(1000,9999);
-        $_SESSION[$ezer_root]['pin']= $pin;
-        $_SESSION[$ezer_root]['mail']= $y->mail;
-        // odešli mail
-        $body= strtr($TEXT('CMS_mail_txt'),array('{PIN}'=>$pin,'{AKCE}'=>$y->par->akce));
-        if ( $y->test ) { // *DBG*
-          $y->state= 'wait'; // *jako* čekáme na zadání PINu z mailu
-          $y->pin= $pin;
-          $y->info= 'Mail se v TESTu neposílá. ';
+      if ( $res ) {
+        $num= pdo_num_rows($res);
+        if ( $num==0 ) {
+          // mail neznáme
+          $y->ido= 0;
         }
-        else {        
-          $m= cms_mail_send($y->mail, "Přihlášení na {$y->par->akce}",$body); 
-          $y->ok= $m->ok;
-        }
-        if ( $y->ok ) {
-          $y->state= 'wait'; // čekáme na zadání PINu z mailu
-          $y->info.= $TEXT('CMS_mail_1');
+        elseif ( $num==1 ) {
+          // mail je jednoznačný
+          list($y->ido)= pdo_fetch_row($res);
         }
         else {
-          $y->state= 'error';
-          $y->info= strtr($TEXT('CMS_mail_error_3'),array('{SMTP}'=>$m->msg));
+          // nejednoznačný mail
+          $y->ok= 0;
+          $y->state= 'warning';
+          $y->info= $TEXT('CMS_mail_error_2');
+        }
+        if ( $y->ok ) {
+          // vytvoř pin a zapamatuj i s mailem v session
+          $pin= rand(1000,9999);
+          $_SESSION[$ezer_root]['pin']= $pin;
+          $_SESSION[$ezer_root]['mail']= $y->mail;
+          // odešli mail
+          $body= strtr($TEXT('CMS_mail_txt'),array('{PIN}'=>$pin,'{AKCE}'=>$y->par->akce));
+          if ( $y->test ) { // *DBG*
+            $y->state= 'wait'; // *jako* čekáme na zadání PINu z mailu
+            $y->pin= $pin;
+            $y->info= 'Mail se v TESTu neposílá. ';
+          }
+          else {        
+            $m= cms_mail_send($y->mail, "Přihlášení na {$y->par->akce}",$body); 
+                                                                                           goto end;
+            $y->ok= $m ? $m->ok : 0;
+          }
+          if ( $y->ok ) {
+            $y->state= 'wait'; // čekáme na zadání PINu z mailu
+            $y->info.= $TEXT('CMS_mail_1');
+          }
+          else {
+            $y->state= 'error';
+            $y->info= strtr($TEXT('CMS_mail_error_3'),array('{SMTP}'=>$m->msg));
+          }
         }
       }
     }

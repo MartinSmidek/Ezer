@@ -5101,13 +5101,18 @@ Ezer.fce.DOM.clipboard= function (msg) {
 // klávesnicí lze ovládat volby: Enter je první volba, Esc poslední
 Ezer.fce.DOM.confirm= function (str,continuation,butts,options) {
   butts= butts || [];
-  let width= options && options.width ? options.width : 300;
   options= options || {};
-  var mask= jQuery('#top_mask3'),
+  let width= options && options.width ? options.width : 300,
+      mask= jQuery('#top_mask3'),
       popup= jQuery('#popup3').width(width),
+      pop_head= popup.find('div.pop_head').html(options && options.heading||'Upozornění'),
+      pop_tail= popup.find('div.pop_tail').empty(), // odstraň stará tlačítka,
+      pop_body= popup.find('div.pop_body').html(str),
+      input= options.input==undefined ? null 
+        : jQuery(`<input type="text" value="${options.input}"></input>`).appendTo(pop_tail),
       dele= function () {
-        popup.find('div.pop_tail').empty();
-        popup.find('div.pop_body').empty();
+        pop_tail.empty();
+        pop_body.empty();
         if ( typeof(continuation)=="function" )
           continuation(this.ok);
       },
@@ -5115,17 +5120,11 @@ Ezer.fce.DOM.confirm= function (str,continuation,butts,options) {
         mask.fadeOut(Ezer.options.fade_speed).off("click");
         jQuery(document).off('keyup');
         popup.fadeOut(dele.bind({ok}));
-      };
-  popup.find('div.pop_head').html(options && options.heading||'Upozornění');
-  popup.find('div.pop_body').html(str);
-  if ( options.input!==undefined ) {
-    // add input field
-    var input= jQuery(`<input type="text" value="${options.input}"></input>`)
-      .appendTo('#popup3 div.pop_tail');
-  }
-  // add buttons
-  var first_val= null, last_val= null, first_but= null, pop_tail= jQuery('#popup3 div.pop_tail');
-  pop_tail.empty(); // odstraň stará tlačítka
+      },
+      first_val= null, 
+      last_val= null, 
+      first_but= null;
+  // vytvoř tlačítka
   for (let butt of butts) {
     var but= jQuery(`<button>${butt.tit}</button>`)
       .appendTo(pop_tail)
@@ -5137,11 +5136,13 @@ Ezer.fce.DOM.confirm= function (str,continuation,butts,options) {
     }
     last_val= options.input!==undefined ? '' : butt.val;
   }
-  // show dialog
+  // ukaž dialog
   mask.fadeIn(Ezer.options.fade_speed);
   popup.fadeIn(Ezer.options.fade_speed);
-  jQuery(document).ready(function() { 
-    jQuery(input).focus(); }); 
+  if ( input ) {
+    jQuery(document).ready(function() { 
+      jQuery(input).focus(); }); 
+  }
   first_but.trigger('focus');
   jQuery(document)
     .keyup( e => { 

@@ -10,6 +10,7 @@
  */
 function cms_form(cmd,par) {
   function TEXT(i) {
+    desc= Ezer.cms.form[par.form];
     return Ezer.cms.test
         ? `TEXT '${i}'=>${desc.TEXT[i]}`
         : desc.TEXT[i] ? desc.TEXT[i] : `TEXT '${i}'=>undefined`;
