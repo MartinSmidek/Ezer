@@ -9522,6 +9522,27 @@ class Show extends Elem {
     this.owner._opened_value= null;
     return y.rows ? 1 : 0;
   }
+// ------------------------------------------------------------------------------------ save
+//fx: Show.load (php_funkce,table,table_id,...)                                       EXPERIMENTÁLNÍ
+//      zavolá php_funkci(table,table_id,seznam klíčů,...)
+//      funkce vrátí pole klíč->hodnota
+//      hodnoty budou zapsány jako hodnoty tohoto sloupce
+  load  (php_fce,table,key_id,...args0) {
+    let browse= this.owner, args= [table,key_id,browse.keys];
+    for (const arg of args0) {
+      args.push(arg);
+    }
+    this.ask({cmd:'ask',fce:php_fce,nargs:args.length,args:args},'load_');
+    return this;
+  }
+  load_  (y) {
+    let browse= this.owner, vi= this._id;
+    for (let bi= 0; bi<browse.blen; bi++) {     // bi ukazuje do buf a keys
+      browse.buf[bi][vi]= y.value[bi];
+    }
+    browse.DOM_show();                          // zobrazení
+    return 1;
+  }
 // ------------------------------------------------------------------------------------ width+
 //fm: Show.width ([w])
 //      pokud je definováno w nastaví šířku sloupce, jinak ji vrátí
