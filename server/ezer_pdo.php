@@ -280,11 +280,9 @@ function pdo_object($qry) {
   if ( !$res ) pdo_err($qry);
   return $x;
 }
-function pdo_affected_rows($res) {          
-//  global $ezer_db, $curr_db;
-//  $pdo= $ezer_db[$curr_db][0];
-//  return $pdo->rowCount();
-  return $res->rowCount();
+function pdo_affected_rows($res) {       
+  // pro kompatibilitu s mysql_affcted_rows
+  return is_int($res) ? $res : $res->rowCount();
 }
 function mysql_qry($qry,$pocet=null,$err=null,$to_throw=null,$db=null) {
   return pdo_qry($qry,$pocet,$err,$to_throw,$db);
@@ -315,7 +313,7 @@ function pdo_qry($qry,$pocet=null,$err=null,$to_throw=false,$db='') {
   // přepnutí na databázi
   if ( $db ) ezer_connect($db);
   $pdo= $ezer_db[$curr_db][0];
-  if ( preg_match('/^\s*(SET|INSERT|UPDATE|DELETE)/',$qry) ) {
+  if ( preg_match('/^\s*(SET|INSERT|UPDATE|DELETE|DROP|CREATE)/',$qry) ) {
     // pro INSERT|UPDATE|DELETE vrací počet modifikovaných řádků
     $res= $pdo->exec($qry);
     $time= round(getmicrotime() - $time_start,4);
