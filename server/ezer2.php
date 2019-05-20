@@ -263,6 +263,11 @@
     goto end_switch;
   }
   try {
+  # ---------------------------------------------------------------------------------- error handler
+  function exception_error_handler($errno, $errstr, $errfile, $errline ) {
+      throw new ErrorException($errstr, $errno, 0, $errfile, $errline);
+  }
+  set_error_handler("exception_error_handler");
   switch ( $x->cmd ) {
   # ================================================================================================ VOLÁNÍ z EZER
   # ------------------------------------------------------------------------------------------------ touch
@@ -309,7 +314,7 @@
         $y->value= $val;// win2utf($val);
       }
       else fce_error("ask: funkce '{$x->fce}' neexistuje");
-      $y->args= $x->args;
+      $y->args= $args;
 //    }
 //    catch (Error $e) { // chytne i syntaktickou chybu
 //      $y->error= $e->getMessage();
@@ -498,8 +503,8 @@
   # y: value
   case 'form_make':
     if ( function_exists($x->fce) ) {
-      $y->init= $x->init;
-      $y->plain= $x->plain;
+      $y->init= isset($x->init) && $x->init;
+      $y->plain= isset($x->plain) && $x->plain;
       // předání parametrů včetně chybějících hodnot
       $args= array();
       for ($i= 0; $i<$x->nargs; $i++) {
@@ -577,21 +582,25 @@
     }
     else {
       // scroll records
-      if ( $x->optimize ) {
-//                                                                 debug($x->optimize,'browse records optimize');
+//      if ( $x->optimize ) {
+////                                                                 debug($x->optimize,'browse records optimize');
+//      }
+      $db= $mysql_db; 
+      if ( isset($x->db) && $x->db ) {
+        ezer_connect($x->db);
+        $db= $x->db;
       }
-      if ( $x->db ) ezer_connect($x->db);
       $fields= ''; $del= '';
       $x->from= $x->from>0 ? $x->from : 0;
       $y->from= 0+$x->from;
       $y->cursor= 0+$x->cursor;
       $y->key_id= $x->key_id;
       $y->quiet= $x->quiet;
-      $y->oldkey= $x->oldkey;
+      $y->oldkey= isset($x->oldkey) ? $x->oldkey : '';
       if ( isset($x->options) ) $y->options= $x->options;
-      $db= $x->db ? $x->db : $mysql_db; $table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
+      $table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
       $atable= explode(' AS ',$table);
-      $key_id= ($atable[1] ? "{$atable[1]}." : '') . $x->key_id;
+      $key_id= (isset($atable[1]) ? "{$atable[1]}." : '') . $x->key_id;
       $pipe= array();
       // konstrukce JOIN
       $joins= '';
@@ -601,7 +610,7 @@
         }
       }
       // konstrukce ORDER
-      $order= $x->optimize->qry=='noseek'
+      $order= isset($x->optimize->qry) && $x->optimize->qry=='noseek'
       ? ($x->order ? " ORDER BY {$x->order}" : '')
       : ($x->order ? " ORDER BY {$x->order},$key_id" : " ORDER BY $key_id");
       // seznam čtených polí
@@ -624,7 +633,7 @@
           }
         }
         if ( isset($desc->pipe) ) {
-          list($paf,$parg)= explode(':',$desc->pipe);
+          list($paf,$parg)= explode(':',$desc->pipe.':');
           if ( !function_exists($paf) )
             $y->error.= "$paf není PHP funkce";
           else {
@@ -637,7 +646,7 @@
       if ( $x->sql ) mysql_qry($x->sql);
       // úprava cond s q@
       $cond= stripslashes($x->cond);
-      if ( $x->pipe ) {
+      if ( isset($x->pipe) && $x->pipe ) {
         $cpipe= explode('|',$x->pipe);
 //                                                                 debug($cpipe,'cond.pipe');
         for ($i= 1; $i<count($cpipe); $i+=2) {
@@ -1177,8 +1186,12 @@
   // x :: {table:..,where:...,order:...}
   // y :: {values:[[id1:val1,...]...],rows:...}
   case 'map_load':
-    if ( $x->db ) ezer_connect($x->db);
-    $db= $x->db ? $x->db : $mysql_db; $table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
+    $db= $mysql_db; 
+    if ( isset($x->db) ) {
+      ezer_connect($x->db);
+      $db= $x->db;
+    }
+    $table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
     $qry= "SELECT * FROM $table WHERE {$x->where} ";
     if ( $x->order ) $qry.= " ORDER BY {$x->order}";
     $res= mysql_qry($qry);
@@ -1327,7 +1340,7 @@
     }
     // zjištění klíčů _help
     $EZER->help_keys= help_keys();
-    if ( !$y->sys ) $y->sys= (object)array();
+    if ( !isset($y->sys) ) $y->sys= (object)array();
     $y->sys->user= $USER;              // přenos do klienta
     $y->sys->ezer= $EZER;
 //    check_version($y); chybuje 190503
@@ -1999,6 +2012,12 @@
     break;
   }
   }
+  catch (ErrorException $e){
+    $y->error= $e->getMessage().' in '.$e->getFile().';'.$e->getLine();
+  }
+//  catch (Throwable $e) { // chytne i syntaktickou chybu
+//    $y->error= $e->getMessage();
+//  }
   catch (Error $e) { // chytne i syntaktickou chybu
     $y->error= $e->getMessage();
   }
@@ -2012,14 +2031,14 @@ end_switch:
     $y->trace= $trace;
 //                                         $y->trace.= "\ntotrace={$x->totrace}";
   if ( $warning ) $y->warning= $warning;
-  $y->lc= $x->lc;                       // redukce informace místo $y->x= $x;
+  if ( isset($x->lc) ) $y->lc= $x->lc;  // redukce informace místo $y->x= $x;
 //   $y->sys->user= $USER;              // redukce informace - přesunuto do user_relogin, user_login
 //   $y->sys->ezer= $EZER;              // redukce informace - přesunuto do user_relogin, user_login
   header('Content-type: application/json; charset=UTF-8');
   $y->php_ms= round(getmicrotime() - $php_start,4);
 
   // nový konec - zvlášť pro trasování, kvůli odchytu non UTF-8
-  if ( $x->totrace ) {
+  if ( isset($x->totrace) && $x->totrace ) {
     if ( !isset($json) ) {
       require_once("$ezer_path_serv/licensed/JSON_Ezer.php");
       $json= new Services_JSON_Ezer();
@@ -2272,7 +2291,7 @@ function answer () {
 function make_get (&$set,&$select,&$fields) {
   global $x,$y;
   $set= $select= $fields= array();
-  if ( $x->save )
+  if ( isset($x->save) && $x->save )
   foreach ($x->save as $fld => $tfv) {
     $val= $tfv->val;
     if ( ($pipe= $tfv->pip) ) $val= $pipe($val,1);
