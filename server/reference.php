@@ -1097,10 +1097,11 @@ function i_doc_table_struct($tab,$all=1) {  #trace();
   $row= 0;
   $max_note= 200;
 //   query("SET group_concat_max_len=1000000");
-  $res= @pdo_query("SHOW FULL COLUMNS FROM $tab");
+  $res= pdo_query("SHOW FULL COLUMNS FROM $tab");
   if ( $res ) {
     $db= sql_query("SHOW TABLE STATUS LIKE '$tab'");
-    $html.= $db->Comment ? "{$db->Comment}<br><br>" : '';
+    $html.= "tabulka <b>".strtoupper($tab)."</b> <i>= "
+        .($db->Comment ? "{$db->Comment}" : '')."</i><br><br>";
     $html.= "<table class='stat' style='width:100%'>";
     $joins= 0;
     while ( $res && ($c= pdo_fetch_object($res)) ) {
