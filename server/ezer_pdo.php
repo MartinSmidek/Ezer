@@ -251,10 +251,10 @@ function pdo_real_escape_string($inp) {
 function pdo_query($query) {
   global $ezer_db, $curr_db;
   $pdo= $ezer_db[$curr_db][0];
-  if ( preg_match('/^\s*(SET|INSERT|UPDATE|DELETE)/',$query) ) {
+  if ( preg_match('/^\s*(SET|INSERT|UPDATE|DELETE|TRUNCATE|DROP|CREATE)/',$query) ) {
     $res= $pdo->exec($query);
   }
-  else if ( preg_match('/^\s*(SELECT)/',$query) ) {
+  else if ( preg_match('/^\s*(SELECT|SHOW)/',$query) ) {
     $res= $pdo->query($query);
   }
   else {
@@ -313,7 +313,7 @@ function pdo_qry($qry,$pocet=null,$err=null,$to_throw=false,$db='') {
   // přepnutí na databázi
   if ( $db ) ezer_connect($db);
   $pdo= $ezer_db[$curr_db][0];
-  if ( preg_match('/^\s*(SET|INSERT|UPDATE|DELETE|DROP|CREATE)/',$qry) ) {
+  if ( preg_match('/^\s*(SET|INSERT|UPDATE|REPLACE|DELETE|TRUNCATE|DROP|CREATE)/',$qry) ) {
     // pro INSERT|UPDATE|DELETE vrací počet modifikovaných řádků
     $res= $pdo->exec($qry);
     $time= round(getmicrotime() - $time_start,4);
@@ -334,7 +334,7 @@ function pdo_qry($qry,$pocet=null,$err=null,$to_throw=false,$db='') {
       }
     }
   }
-  else if ( preg_match('/^\s*(SELECT)/',$qry) ) {
+  else if ( preg_match('/^\s*(SELECT|SHOW)/',$qry) ) {
     // pro SELECT vrací PDOStatement
     $res= $pdo->query($qry);
     $time= round(getmicrotime() - $time_start,4);
