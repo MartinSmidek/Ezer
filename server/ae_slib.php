@@ -724,7 +724,8 @@ function rc2time($rodcis) {
   $t= 0;
   if (preg_match('~^([0-9]{2})([0-9]{2})([0-9]{2})~', $rodcis, $match)) {
     //$y= ($match[1] >= 12 ? "19" : "20") . $match[1];
-    $y= (strlen($rodcis)==9 && $match[1]<54 ? "19" : "20") . $match[1];
+    $y= (strlen($rodcis)==9 && $match[1]<54 ? "19" : (
+         $match[1] >= 12 ? "19" : "20")) . $match[1];
     $m= $match[2] % 50;  $m= $m ? $m : 1;
     $d= $match[3];       $d= $d ? $d : 1;
     $t= mktime(0,0,0,$m,$d,$y)+1;
@@ -737,7 +738,8 @@ function rc2time($rodcis) {
 function rc2dmy($rodcis) {
   $dmy= '';
   if (preg_match('~^([0-9]{2})([0-9]{2})([0-9]{2})~', $rodcis, $match)) {
-    $y= ($match[1] >= 12 ? "19" : "20") . $match[1];
+    $y= (strlen($rodcis)==9 && $match[1]<54 ? "19" : (
+         $match[1] >= 12 ? "19" : "20")) . $match[1];
     $m= $match[2] % 50; $m= $m ? substr("0$m",-2) : 1;
     $d= $match[3];      $d= $d ? substr("0$d",-2) : 1;
     $dmy= "$d.$m.$y";
@@ -750,7 +752,8 @@ function rc2dmy($rodcis) {
 function rc2ymd($rodcis) {
   $dmy= '0000-00-00';
   if ( (int)$rodcis!=0 && preg_match('~^([0-9]{2})([0-9]{2})([0-9]{2})~', $rodcis, $match)) {
-    $y= ($match[1] >= 12 ? "19" : "20") . $match[1];
+    $y= (strlen($rodcis)==9 && $match[1]<54 ? "19" : (
+         $match[1] >= 12 ? "19" : "20")) . $match[1];
     $m= $match[2] % 50; $m= $m=='00' ? '01' : $m;
     $d= $match[3];      $d= $d=='00' ? '01' : $d;
     $ymd= "$y-$m-$d";

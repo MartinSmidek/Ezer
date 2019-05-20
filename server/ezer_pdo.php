@@ -192,27 +192,30 @@ function ezer_connect ($db0='.main.',$even=false,$initial=0) {
     $db= key($ezer_db);
   }
   // ------------------------------------------- připojení PDO - return vrací PDO objekt!
-  if ( !$ezer_db[$db][0] || $even ) {
-    // vlastní připojení, pokud nebylo ustanoveno
-    $db_name= (isset($ezer_db[$db][5]) && $ezer_db[$db][5]!='') ? $ezer_db[$db][5] : $db;
-    $dsn= "mysql:host={$ezer_db[$db][1]};dbname=$db_name;charset={$ezer_db[$db][4]}";
-    $opt = [
-        PDO::ATTR_ERRMODE            => PDO::ERRMODE_SILENT, //PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-        PDO::ATTR_EMULATE_PREPARES   => false,
-        PDO::ATTR_STRINGIFY_FETCHES  => true,
-    ];
-    try {
-      $ezer_db[$db][0]= new PDO($dsn, $ezer_db[$db][2], $ezer_db[$db][3], $opt);
-    } 
-    catch(PDOException $ex) {
-      $err= "connect: databaze '$db_name' je nepristupna: ".$ex->getMessage();
-      if ( !$initial ) fce_error($err);
-      else die($err);
+  if ( isset($ezer_db[$db]) ) {
+    if ( !$ezer_db[$db][0] || $even ) {
+      // vlastní připojení, pokud nebylo ustanoveno
+      $db_name= (isset($ezer_db[$db][5]) && $ezer_db[$db][5]!='') ? $ezer_db[$db][5] : $db;
+      $dsn= "mysql:host={$ezer_db[$db][1]};dbname=$db_name;charset={$ezer_db[$db][4]}";
+      $opt = [
+          PDO::ATTR_ERRMODE            => PDO::ERRMODE_SILENT, //PDO::ERRMODE_EXCEPTION,
+          PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+          PDO::ATTR_EMULATE_PREPARES   => false,
+          PDO::ATTR_STRINGIFY_FETCHES  => true,
+      ];
+      try {
+        $ezer_db[$db][0]= new PDO($dsn, $ezer_db[$db][2], $ezer_db[$db][3], $opt);
+      } 
+      catch(PDOException $ex) {
+        $err= "connect: databaze '$db_name' je nepristupna: ".$ex->getMessage();
+        if ( !$initial ) fce_error($err);
+        else die($err);
+      }
     }
+    $curr_db= $db;
+    return $ezer_db[$db][0];
   }
-  $curr_db= $db;
-  return $ezer_db[$db][0];
+  fce_error("connect: nezname jmeno '$db' databaze");
 }
 # ------------------------------------------------- pdo funkce
 function pdo_num_rows($rs) {
@@ -251,7 +254,7 @@ function pdo_real_escape_string($inp) {
 function pdo_query($query) {
   global $ezer_db, $curr_db;
   $pdo= $ezer_db[$curr_db][0];
-  if ( preg_match('/^\s*(SET|INSERT|UPDATE|DELETE|TRUNCATE|DROP|CREATE)/',$query) ) {
+  if ( preg_match('/^\s*(SET|INSERT|UPDATE|REPLACE|DELETE|TRUNCATE|DROP|CREATE)/',$query) ) {
     $res= $pdo->exec($query);
   }
   else if ( preg_match('/^\s*(SELECT|SHOW)/',$query) ) {
