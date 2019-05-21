@@ -1471,12 +1471,14 @@ function sys_todo_conds() {
   global $EZER,$USER;
   $obj= (object)array('cond_select'=>1,'cond_browse'=>1);
   $skills= explode(' ',$USER->skills);
-  foreach($obj as $x=>$y) {
-    foreach(explode(';',$EZER->todo->$x) as $parts) {
-      list($skill,$cond)= explode(':',$parts);
-      if ( in_array(trim($skill),$skills) ) {
-        $obj->$x= $cond;
-        break;
+  if ( isset($EZER->todo) ) {
+    foreach($obj as $x=>$y) {
+      foreach(explode(';',$EZER->todo->$x) as $parts) {
+        list($skill,$cond)= explode(':',$parts);
+        if ( in_array(trim($skill),$skills) ) {
+          $obj->$x= $cond;
+          break;
+        }
       }
     }
   }

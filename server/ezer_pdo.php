@@ -187,7 +187,7 @@ function ezer_connect ($db0='.main.',$even=false,$initial=0) {
   global $curr_db, $ezer_db;
   $err= '';
   $db= $db0;
-  if ( $db=='.main.' ) {
+  if ( $db=='.main.' || !$db ) {
     reset($ezer_db);
     $db= key($ezer_db);
   }
@@ -307,7 +307,7 @@ function mysql_qry($qry,$pocet=null,$err=null,$to_throw=null,$db=null) {
 function pdo_qry($qry,$pocet=null,$err=null,$to_throw=false,$db='') {
   global $y, $totrace, $qry_del, $qry_count, $curr_db, $ezer_db;
   if ( !isset($y) ) $y= (object)array();
-  $msg= ''; $abbr= '';
+  $msg= ''; $abbr= $ok= '';
   $qry_count++;
   $myqry= strtr($qry,array('"'=>"'","<="=>'&le;',"<"=>'&lt;'));
 //                                                         display($myqry);
@@ -344,7 +344,7 @@ function pdo_qry($qry,$pocet=null,$err=null,$to_throw=false,$db='') {
     $ok= $res ? 'ok' : '--';
     if ( !$res ) {
       if ( $err=='-' ) goto end;
-      $merr= $pdo->errorInfo();
+      $merr= $pdo->errorInfo()[2];
       $serr= "You have an error in your SQL";
       if ( $merr && substr($merr,0,strlen($serr))==$serr ) {
         $msg.= "SQL error ".substr($merr,strlen($serr))." in:$qry";
@@ -388,7 +388,7 @@ function pdo_qry($qry,$pocet=null,$err=null,$to_throw=false,$db='') {
     $pretty= $myqry;
     if ( strpos($pretty,"\n")===false )
       $pretty= preg_replace("/(FROM|LEFT JOIN|JOIN|WHERE|GROUP|HAVING|ORDER)/","\n\t\$1",$pretty);
-    $y->qry.= (isset($y->qry)?"\n":'')."$ok $time \"$pretty\" ";
+    $y->qry= (isset($y->qry)?"\n":'')."$ok $time \"$pretty\" ";
   }
   $y->qry_ms= isset($y->qry_ms) ? $y->qry_ms+$time : $time;
   $qry_del= "\n: ";

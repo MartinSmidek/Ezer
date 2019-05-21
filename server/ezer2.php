@@ -333,10 +333,11 @@
   // x: table, cond, count
   // y: ok
   case 'delete_record':
-    if ( $x->db ) ezer_connect($x->db);
+    $db= isset($x->db) && $x->db ? $x->db : $mysql_db; 
+    ezer_connect($db);
     // zjištění správného počtu před smazáním
     $y->ok= 0;
-    $db= $x->db ? $x->db : $mysql_db; $table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
+    $table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
     if ( ($count= $x->count) ) {
       $qry= "SELECT count(*) AS _pocet FROM $table WHERE {$x->cond} ";
       $res= mysql_qry($qry);
@@ -356,9 +357,9 @@
   // x: table, par
   // y: vytvořený záznam
   case 'insert_record':
-    if ( $x->db ) ezer_connect($x->db);
+    $db= isset($x->db) && $x->db ? $x->db : $mysql_db; 
+    ezer_connect($db);
     $y->ok= 0;
-    $db= $x->db ? $x->db : $mysql_db;
     $table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
     $ids= $vals= ''; $del= '';
     foreach($x->par as $id=>$val) {
@@ -378,10 +379,11 @@
   // x: table, cond, set
   // y: ok
   case 'update_record':
-    if ( $x->db ) ezer_connect($x->db);
+    $db= isset($x->db) && $x->db ? $x->db : $mysql_db; 
+    ezer_connect($db);
     // zjištění správného počtu před smazáním
     $y->ok= 0;
-    $db= $x->db ? $x->db : $mysql_db; $table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
+    $table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
     $set= ''; $del= '';
     foreach ($x->set as $fld=>$val) {
       $set= "$fld='".pdo_real_escape_string($val)."'";
@@ -406,14 +408,15 @@
   // x: db,table, fields ; fields=[...{id:field,val[,pipe]...]
   // y: qry, err, key
   case 'form_insert':
-    if ( $x->db ) ezer_connect($x->db);
+    $db= isset($x->db) && $x->db ? $x->db : $mysql_db; 
+    ezer_connect($db);
     $zmeny= array();
-    $db= $x->db ? $x->db : $mysql_db; $table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
+    $table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
     if ( $x->fields ) {
       foreach ($x->fields as $desc) {
         $fld= $desc->id;
         $val= $desc->val;
-        if ( $desc->pipe ) { $pipe= $desc->pipe; $val= $pipe($val,1); }
+        if ( isset($desc->pipe) && $desc->pipe ) { $pipe= $desc->pipe; $val= $pipe($val,1); }
         $zmeny[]= (object)array('fld'=>$fld,'op'=>'i','val'=>$val);
       }
       // insert do tabulky, klíč musí být tvaru id_$table (zdvojení _ je přípustné), vrací nový klíč
@@ -430,13 +433,15 @@
   # y: qry, err, rows
   # záznam do _track, pokud operace uspěje
   case 'form_save':
-    if ( $x->db ) ezer_connect($x->db);
+    $db= isset($x->db) && $x->db ? $x->db : $mysql_db; 
+    ezer_connect($db);
     $zmeny= array();
-    $db= $x->db ? $x->db : $mysql_db; $table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
+    $table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
     foreach ($x->fields as $desc) {
       $fld= $desc->id;
       $val= $desc->val;
-      if ( ($pipe= $desc->pipe) ) { $val= $pipe($val,1); }
+      $pipe= isset($desc->pipe) && $desc->pipe ? $desc->pipe : '';
+      if ( $pipe ) { $val= $pipe($val,1); }
       if ( isset($desc->mode) && $desc->mode ) {
         $zmena= (object)array('fld'=>$fld,'op'=>$desc->mode,'val'=>$val);
         if ( isset($desc->row) ) {
@@ -464,32 +469,34 @@
   # y: values, key
   case 'form_load':
     $fields= ''; $del= '';
-    if ( $x->db ) ezer_connect($x->db);
-    $db= $x->db ? $x->db : $mysql_db; $table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
+    $db= isset($x->db) && $x->db ? $x->db : $mysql_db; 
+    ezer_connect($db);
+    $table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
     $y->key= 0;
     foreach ($x->fields as $desc) {
-      if ( $desc->expr ) { $f= $desc->id; $fields.= "$del{$desc->expr} as $f"; }
-      elseif ( ($f= $desc->id) ) { $fields.= "$del{$desc->field} as $f"; }
+      if ( isset($desc->expr) && $desc->expr ) { $f= $desc->id; $fields.= "$del{$desc->expr} as $f"; }
+      elseif ( isset($desc->id) && ($f= $desc->id) ) { $fields.= "$del{$desc->field} as $f"; }
       else { $f= $desc->field; $fields.= "$del$f"; }
-      if ( ($p= $desc->pipe) ) $pipe[$f]= $p;
+      if ( isset($desc->pipe) && ($p= $desc->pipe) ) $pipe[$f]= $p;
       $del= ',';
     }
     // kontrukce podminky
     $atable= explode(' AS ',$table);
-    $key_id= ($atable[1] ? "{$atable[1]}." : '') . $x->key_id;
-    if ( !($xcond= $x->cond) ) {
-      $xcond= "$key_id={$x->key}";
-    }
+    $key_id= (isset($atable[1]) && $atable[1] ? "{$atable[1]}." : '') . $x->key_id;
+    $xcond= isset($x->cond) && $x->cond ? $x->cond : "$key_id={$x->key}";
+//    if ( !($xcond= $x->cond) ) {
+//      $xcond= "$key_id={$x->key}";
+//    }
     // konstrukce JOIN
     $joins= '';
-    if ( ($xjoins= $x->joins) ) foreach ( $xjoins as $join ) $joins.= " $join";
+    if ( isset($x->joins) && ($xjoins= $x->joins) ) foreach ( $xjoins as $join ) $joins.= " $join";
     $qry= "SELECT $fields,$key_id as the_key FROM $table $joins WHERE $xcond ";
     $res= mysql_qry($qry,$xcond ? 0 : 1);
     if ( $res ) {
       $row= pdo_fetch_assoc($res);
       if ( $row ) {
         foreach ($row as $f => $val) {
-          if ( $pipe[$f] ) $val= $pipe[$f]($val);
+          if ( isset($pipe[$f]) && $pipe[$f] ) $val= $pipe[$f]($val);
           $y->values[$f]= $val;
         }
         $y->key= $row['the_key'];
@@ -539,9 +546,11 @@
     $x->from= $x->from ? $x->from : 0;
     $y->from= $x->from;
     $y->quiet= $x->quiet;
-    $db= $x->db ? $x->db : $mysql_db; $table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
+    $db= isset($x->db) && $x->db ? $x->db : $mysql_db; 
+    ezer_connect($db);
+    $table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
     $as= explode('AS',$x->table);
-    $y->key_id= $key_id= $as[1] ? trim($as[1]).'.'.$x->key_id : $x->key_id;
+    $y->key_id= $key_id= isset($as[1]) && $as[1] ? trim($as[1]).'.'.$x->key_id : $x->key_id;
 //     $cond= stripslashes(utf2win($x->cond));
     $cond= stripslashes($x->cond);
     // konstrukce JOIN
@@ -551,11 +560,10 @@
         $joins .= " $join";
       }
     }
-    if ( $x->db ) ezer_connect($x->db);
     $qry= "SELECT $key_id AS _klice_ FROM $table $joins WHERE $cond ";
-    if ( $x->group )  $qry.= " GROUP BY {$x->group}";
-    if ( $x->having ) $qry.= " HAVING {$x->having}";
-    if ( $x->order )  $qry.= " ORDER BY {$x->order}";
+    if ( isset($x->group)  && $x->group )  $qry.= " GROUP BY {$x->group}";
+    if ( isset($x->having) && $x->having ) $qry.= " HAVING {$x->having}";
+    if ( isset($x->order)  && $x->order )  $qry.= " ORDER BY {$x->order}";
     $res= mysql_qry($qry);
     $keys= ''; $del= '';
     while ( $res && $row= pdo_fetch_assoc($res) ) {
@@ -585,11 +593,8 @@
 //      if ( $x->optimize ) {
 ////                                                                 debug($x->optimize,'browse records optimize');
 //      }
-      $db= $mysql_db; 
-      if ( isset($x->db) && $x->db ) {
-        ezer_connect($x->db);
-        $db= $x->db;
-      }
+      $db= isset($x->db) && $x->db ? $x->db : $mysql_db; 
+      ezer_connect($db);
       $fields= ''; $del= '';
       $x->from= $x->from>0 ? $x->from : 0;
       $y->from= 0+$x->from;
@@ -600,7 +605,7 @@
       if ( isset($x->options) ) $y->options= $x->options;
       $table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
       $atable= explode(' AS ',$table);
-      $key_id= (isset($atable[1]) ? "{$atable[1]}." : '') . $x->key_id;
+      $key_id= (isset($atable[1]) && $atable[1] ? "{$atable[1]}." : '') . $x->key_id;
       $pipe= array();
       // konstrukce JOIN
       $joins= '';
@@ -611,8 +616,8 @@
       }
       // konstrukce ORDER
       $order= isset($x->optimize->qry) && $x->optimize->qry=='noseek'
-      ? ($x->order ? " ORDER BY {$x->order}" : '')
-      : ($x->order ? " ORDER BY {$x->order},$key_id" : " ORDER BY $key_id");
+      ? ( isset($x->order) && $x->order ? " ORDER BY {$x->order}" : '')
+      : ( isset($x->order) && $x->order ? " ORDER BY {$x->order},$key_id" : " ORDER BY $key_id");
       // seznam čtených polí
       foreach ($x->fields as $desc) {
         if ( isset($desc->expr) ) {
@@ -661,8 +666,8 @@
       if ( isset($x->group) || isset($x->having) && $x->having ) {
         // pokud je GROUP musíme použít SQL_CALC_FOUND_ROWS
         $qry= "SELECT SQL_CALC_FOUND_ROWS $fields FROM $table $joins WHERE $cond ";
-        if ( $x->group )  $qry.= " GROUP BY {$x->group}";
-        if ( $x->having ) $qry.= " HAVING {$x->having}";
+        if ( isset($x->group) && $x->group )   $qry.= " GROUP BY {$x->group}";
+        if ( isset($x->having) && $x->having ) $qry.= " HAVING {$x->having}";
         $qry.= $order;
         if ( isset($x->rows) ) $qry.= " LIMIT {$x->from},{$x->rows}";
         $res= mysql_qry($qry);
@@ -751,11 +756,12 @@
     }
     else {
       // scroll records
-      if ( $x->db ) ezer_connect($x->db);
+      $db= isset($x->db) && $x->db ? $x->db : $mysql_db; 
+      ezer_connect($db);
       $fields= ''; $del= '';
-      $db= $x->db ? $x->db : $mysql_db; $table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
+      $table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
       $atable= explode(' AS ',$table);
-      $key_id= ($atable[1] ? "{$atable[1]}." : '') . $x->key_id;
+      $key_id= (isset($atable[1]) && $atable[1] ? "{$atable[1]}." : '') . $x->key_id;
       $pipe= array();
       // konstrukce JOIN
       $joins= '';
@@ -783,8 +789,8 @@
             $fields.= $fld;
           }
         }
-        if ( $desc->pipe ) {
-          list($paf,$parg)= explode(':',$desc->pipe);
+        if ( isset($desc->pipe) && $desc->pipe ) {
+          list($paf,$parg)= explode(':',$desc->pipe.':');
           if ( !function_exists($paf) )
             $y->error.= "$paf není PHP funkce";
           else
@@ -802,12 +808,12 @@
       $cond= stripslashes($x->cond);
       // pokud je GROUP musíme použít SQL_CALC_FOUND_ROWS
       $qry= "SELECT $fields FROM $table $joins WHERE $cond ";
-      if ( $x->group ) {
+      if ( isset($x->group) && $x->group ) {
         $qry.= " GROUP BY {$x->group}";
-        if ( $x->having ) $qry.= " HAVING {$x->having}";
+        if ( isset($x->having) && $x->having ) $qry.= " HAVING {$x->having}";
       }
       // konstrukce ORDER
-      $order= $x->optimize->qry=='noseek'
+      $order= isset($x->optimize->qry) && $x->optimize->qry=='noseek'
         ? ($x->order ? " ORDER BY {$x->order}" : '')
         : ($x->order ? " ORDER BY {$x->order},$key_id" : " ORDER BY $key_id");
       $qry.= $order;
@@ -848,19 +854,30 @@
     $x->from= $x->from ? $x->from : 0;
     $y->key_id= $x->key_id;
     $y->quiet= $x->quiet;
-    $key_id= ($x->view ? "{$x->view}." : '').$x->key_id;
+    $key_id= (isset($x->view) ? "{$x->view}." : '').$x->key_id;
     $rows= $x->rows;
     $tmax= $x->tmax;
-    $db= $x->db ? $x->db : $mysql_db; $table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
+    $db= isset($x->db) && $x->db ? $x->db : $mysql_db; 
+    ezer_connect($db);
+    $table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
     $atable= explode(' AS ',$table);
-    $key_id= ($atable[1] ? "{$atable[1]}." : '') . $x->key_id;
+    $key_id= (isset($atable[1]) && $atable[1] ? "{$atable[1]}." : '') . $x->key_id;
     $pipe= array();
     foreach ($x->fields as $desc) {
-      if ( $desc->expr ) { $f= $desc->id; $fields.= "$del{$desc->expr} as {$desc->id}"; }
-      elseif ( $desc->id ) { $f= $desc->id; $fields.= "$del{$desc->field} as {$desc->id}"; }
-      else { $f= $desc->field; $fields.= "$del{$desc->field}"; }
-      if ( $desc->pipe ) {
-        list($paf,$parg)= explode(':',$desc->pipe);
+      if ( isset($desc->expr) && $desc->expr ) { 
+        $f= $desc->id; 
+        $fields.= "$del{$desc->expr} as {$desc->id}"; 
+      }
+      elseif ( isset($desc->id) && $desc->id ) { 
+        $f= $desc->id; 
+        $fields.= "$del{$desc->field} as {$desc->id}"; 
+      }
+      else { 
+        $f= $desc->field; 
+        $fields.= "$del{$desc->field}"; 
+      }
+      if ( isset($desc->pipe) && $desc->pipe ) {
+        list($paf,$parg)= explode(':',$desc->pipe.':');
         if ( !function_exists($paf) )
           $y->error.= "$paf není PHP funkce";
         else
@@ -870,30 +887,32 @@
     }
     // konstrukce JOIN, WHERE,
     $joins= '';
-    if ( $x->joins )      foreach ( $x->joins as $join ) {
-        $joins .= " $join";
-      }
+    if ( isset($x->joins) && $x->joins ) foreach ( $x->joins as $join ) {
+      $joins .= " $join";
+    }
     // proveď případný sql příkaz
     if ( $x->sql ) mysql_qry($x->sql);
     // vlastní příkaz
     $cond= stripslashes($x->cond);
-    $order= $x->optimize->qry=='noseek'
-      ? ($x->order ? " ORDER BY {$x->order}" : '')
-      : ($x->order ? " ORDER BY {$x->order},$key_id" : " ORDER BY $key_id");
+    $xorder= isset($x->order) && $x->order ? $x->order : '';
+    $order= isset($x->optimize->qry) && $x->optimize->qry=='noseek'
+      ? ($xorder ? " ORDER BY $xorder" : '')
+      : ($xorder ? " ORDER BY $xorder,$key_id" : " ORDER BY $key_id");
     $group= '';
-    if ( $x->group ) {
+    if ( isset($x->group) && $x->group ) {
       $group= " GROUP BY {$x->group}";
-      if ( $x->having ) $group.= " HAVING {$x->having}";
+      if ( isset($x->having) && $x->having ) $group.= " HAVING {$x->having}";
     }
     // zjištění hodnot prvního řádku vyhovujícího x->seek
     $ids= $key_id;
-    if ( ($xo= $x->order) ) {
+    if ( $xo= $x->order ) {
       $par= 0;
       for ($i=0;$i<strlen($xo);$i++) {
         if ( $xo[$i]=='(' ) $par++;
         elseif ( $xo[$i]==')' ) $par--;
         elseif ( $xo[$i]==',' && !$par) $xo[$i]= '|';
       }
+      $n= 0;
       foreach (explode('|',$xo) as $ord) {
         $n++;
 //         $id= strpos($ord,' ')==false ? $ord : substr($ord,0,strpos($ord,' '));
@@ -908,14 +927,13 @@
         $ids.= ", $id AS _order{$n}_";
       }
     }
-    if ( $x->db ) ezer_connect($x->db);
     $qry1= "SELECT $ids,$fields FROM $table $joins WHERE ($cond) AND {$x->seek} $group $order LIMIT 1";
     $res1= mysql_qry($qry1);
     if ( $res1 && $row1= pdo_fetch_assoc($res1) ) {
       $key_val= $row1[$x->key_id];
       // zjištění pořadí záznamu vyhovujícího x->seek (smí obsahovat nejvýše jednu podmínku)
       $scond= "AND $key_id<=$key_val";
-      if ( $x->order ) {
+      if ( $xorder ) {
         $scond= "AND ";
         foreach ($ord_ids as $n=>$id) {
           $ord_id= "_order{$n}_";
@@ -930,7 +948,7 @@
       // zjištění počtu před záznamem, včetně něj
       //       $qry2= "SELECT $fields FROM $table $joins WHERE $cond $scond $group $order";
       // pokud je HAVING musíme nechat pole i kvůli dotazu na počet
-      $qry2_fields= $x->having ? ",$fields" : '';
+      $qry2_fields= isset($x->having) && $x->having ? ",$fields" : '';
       $qry2= "SELECT count(*) as _pocet_ $qry2_fields FROM $table $joins WHERE $cond $scond $group $order";
       $res2= mysql_qry($qry2);
 //      $from= pdo_num_rows($res2);
@@ -1048,13 +1066,13 @@
       else fce_error("browse/ask: funkce '$fce' neexistuje");
       break;
     }
-    if ( $x->db ) ezer_connect($x->db);
+    $db= isset($x->db) && $x->db ? $x->db : $mysql_db; 
+    ezer_connect($db);
     $fields= ''; $clmns= ''; $del= '';
     $y->par= $x->par;
-    $db= $x->db ? $x->db : $mysql_db;
     $table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
     $atable= explode(' AS ',$table);
-    $key_id= ($atable[1] ? "{$atable[1]}." : '') . $x->key_id;
+    $key_id= (isset($atable[1]) && $atable[1] ? "{$atable[1]}." : '') . $x->key_id;
     $pipe= array();
     // výběr sloupců
     $shows= isset($x->par->show) ? explode(',',$x->par->show) : null;
@@ -1067,7 +1085,7 @@
       }
     }
     // konstrukce ORDER
-    $order= $x->order ? " ORDER BY {$x->order}" : '';
+    $order= isset($x->order) && $x->order ? " ORDER BY {$x->order}" : '';
     // seznam čtených polí
     $mapi= 0; // čitač map_pipe
     foreach ($x->fields as $desc) {
@@ -1088,7 +1106,7 @@
         }
       }
       if ( isset($desc->pipe) ) {
-        list($paf,$parg)= explode(':',$desc->pipe);
+        list($paf,$parg)= explode(':',$desc->pipe,':');
         if ( !function_exists($paf) )
           $y->error.= "$paf není PHP funkce";
         else
@@ -1137,9 +1155,9 @@
     // zahájení exportu
     export_head($y->par,$clmns);
     $qry= "SELECT $fields FROM $table $joins \nWHERE $cond ";
-    if ( $x->group ) {
+    if ( isset($x->group) && $x->group ) {
       $qry.= " GROUP BY {$x->group}";
-      if ( $x->having ) $qry.= " HAVING {$x->having}";
+      if ( isset($x->having) && $x->having ) $qry.= " HAVING {$x->having}";
     }
     $qry.= $order;
     $res= mysql_qry($qry);
@@ -1162,12 +1180,14 @@
   # y: qry, err, ok
   # záznam do _track, pokud operace uspěje
   case 'show_save':
-    if ( $x->db ) ezer_connect($x->db);
+    $db= isset($x->db) && $x->db ? $x->db : $mysql_db; 
+    ezer_connect($db);
     $zmeny= array();
-    $db= $x->db ? $x->db : $mysql_db; $table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
+    $table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
     $fld= $x->field;
     $val= $x->val;
-    if ( ($pipe= $desc->pipe) ) { $val= $pipe($val,1); }
+    $pipe= isset($desc->pipe) && $desc->pipe ? $desc->pipe : '';
+    if ( $pipe ) { $val= $pipe($val,1); }
     if ( isset($desc->mode) && $desc->mode ) {
       $zmeny[]= (object)array('fld'=>$fld,'op'=>$desc->mode,'val'=>$val);
     }
@@ -1186,14 +1206,11 @@
   // x :: {table:..,where:...,order:...}
   // y :: {values:[[id1:val1,...]...],rows:...}
   case 'map_load':
-    $db= $mysql_db; 
-    if ( isset($x->db) ) {
-      ezer_connect($x->db);
-      $db= $x->db;
-    }
+    $db= isset($x->db) && $x->db ? $x->db : $mysql_db; 
+    ezer_connect($db);
     $table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
     $qry= "SELECT * FROM $table WHERE {$x->where} ";
-    if ( $x->order ) $qry.= " ORDER BY {$x->order}";
+    if ( isset($x->order) && $x->order ) $qry.= " ORDER BY {$x->order}";
     $res= mysql_qry($qry);
     $i= 0;
     while ( $res && $row= pdo_fetch_assoc($res) ) {
@@ -1227,7 +1244,9 @@
       ? $_SERVER['HTTP_X_FORWARDED_FOR'] : $_SERVER['REMOTE_ADDR'];
     $browser= $_SERVER['HTTP_USER_AGENT'];
     if ( $x->uname || $ezer_user_id ) {
-      $size= "{$x->size->body->x}/{$x->size->body->y}|{$x->size->screen->x}/{$x->size->screen->y}";
+      $size= isset($x->size)
+        ? "{$x->size->body->x}/{$x->size->body->y}|{$x->size->screen->x}/{$x->size->screen->y}"
+        : '';
       if ( $x->cmd=='user_prelogin' ) {
         $qry= "SELECT * FROM $ezer_system._user WHERE id_user=$ezer_user_id ";
         $res= mysql_qry($qry,0,0,0,'ezer_system');
@@ -1296,7 +1315,7 @@
     // zjištění klíčů _help
     $EZER->help_keys= help_keys();
     // vrácení hodnot
-    if ( !$y->sys ) $y->sys= (object)array();
+    if ( !isset($y->sys) ) $y->sys= (object)array();
     $y->sys->user= $USER;              // přenos do klienta
     $y->sys->ezer= $EZER;
     break; /* user_login */
@@ -1593,7 +1612,8 @@
   # zapíše text do tabulky _help
   case 'help_save':
     $y->ok= 0;
-    if ( $x->db ) ezer_connect($x->db);
+    $db= isset($x->db) && $x->db ? $x->db : $mysql_db; 
+    ezer_connect($db);
     $text= pdo_real_escape_string($x->text);
     $qh= "SELECT topic FROM _help WHERE topic='{$x->key->sys}'";
     $rh= @pdo_query($qh);
@@ -1891,9 +1911,9 @@
         $xname= "$ezer_path_serv/comp2.php";
         // zdroj musí existovat
         clearstatcache();
-        $etime= @filemtime($ename);
-        $ctime= @filemtime($cname); if ( !$ctime) $ctime= 0;
-        $xtime= @filemtime($xname);
+        $etime= filemtime($ename);
+        $ctime= filemtime($cname); if ( !$ctime) $ctime= 0;
+        $xtime= filemtime($xname);
         $state= 'load';
         $loads= 'error';
         if ( !$etime ) {
@@ -2131,14 +2151,16 @@ function browse_status($x) {
   $clmns= ''; $del= '';
   $y= (object)array();
   $y->par= $x->par;
-  $db= $x->db ? $x->db : $mysql_db; $y->table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
+  $db= isset($x->db) && $x->db ? $x->db : $mysql_db; 
+  ezer_connect($db);
+  $y->table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
   $atable= explode(' AS ',$y->table);
-  $key_id= ($atable[1] ? "{$atable[1]}." : '') . $x->key_id;
+  $key_id= (isset($atable[1]) && $atable[1] ? "{$atable[1]}." : '') . $x->key_id;
   $pipe= array();
   // přenos parametrů
   $y->fields= '';
-  $y->group= $x->group;
-  $y->having= $x->having;
+  $y->group= isset($x->group) && $x->group ? $x->group : '';
+  $y->having= isset($x->having) && $x->having ? $x->having : '';
   $y->cond= stripslashes($x->cond);
   // konstrukce JOIN
   $y->joins= '';
@@ -2146,9 +2168,9 @@ function browse_status($x) {
     foreach ( $x->joins as $join ) $y->joins.= " $join";
   }
   // konstrukce ORDER
-  $y->order= $x->optimize->qry=='noseek'
-  ? ($x->order ? " ORDER BY {$x->order}" : '')
-  : ($x->order ? " ORDER BY {$x->order},$key_id" : " ORDER BY $key_id");
+  $y->order= isset($x->optimize->qry) && $x->optimize->qry=='noseek'
+  ? (isset($x->order) && $x->order ? " ORDER BY {$x->order}" : '')
+  : (isset($x->order) && $x->order ? " ORDER BY {$x->order},$key_id" : " ORDER BY $key_id");
   // seznam čtených polí
   foreach ($x->fields as $desc) {
     if ( isset($desc->expr) ) {
@@ -2182,9 +2204,9 @@ function browse_status($x) {
   }
   // redakce odpovědi
   $y->qry= "SELECT {$y->fields} FROM {$y->table} {$y->joins} WHERE {$y->cond} ";
-  if ( $x->group ) {
+  if ( isset($x->group) && $x->group ) {
     $y->qry.= " GROUP BY {$x->group}";
-    if ( $x->having ) $y->qry.= " HAVING {$x->having}";
+    if ( isset($x->having) && $x->having ) $y->qry.= " HAVING {$x->having}";
   }
   $y->qry.= $y->order;
   return $y;
@@ -2301,7 +2323,7 @@ function make_get (&$set,&$select,&$fields) {
   }
   if ( isset($x->load) )
   foreach ($x->load as $fld => $tf) {
-    $select[]= $tf->exp ? "{$tf->exp} AS $fld": "{$tf->tbl}.{$tf->fld} AS $fld";
+    $select[]= isset($tf->exp) ? "{$tf->exp} AS $fld" : "{$tf->tbl}.{$tf->fld} AS $fld";
     $fields[]= $fld;
   }
 }

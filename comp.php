@@ -36,7 +36,7 @@ const EZER_version= 3.1;
   // verze kompilátoru
   clearstatcache();
   $xname= "server/comp2.php";
-  $xtime= @filemtime($xname);                   // modifikace kompilátoru
+  $xtime= filemtime($xname);                   // modifikace kompilátoru
 
   // ------------------------------------------------------------------------------------ options
   $checked= $option_state==1 ? 'checked' : '';
