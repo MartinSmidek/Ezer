@@ -385,10 +385,10 @@ function pdo_qry($qry,$pocet=null,$err=null,$to_throw=false,$db='') {
     fce_error("pdo_qry nelze použít pro ".substr($qry,0,6).' ...');
   }
   if ( strpos($totrace,'M')!==false ) {
-    $pretty= $myqry;
+    $pretty= trim($myqry);
     if ( strpos($pretty,"\n")===false )
       $pretty= preg_replace("/(FROM|LEFT JOIN|JOIN|WHERE|GROUP|HAVING|ORDER)/","\n\t\$1",$pretty);
-    $y->qry= (isset($y->qry)?"\n":'')."$ok $time \"$pretty\" ";
+    $y->qry= (isset($y->qry)?"$y->qry\n":'')."$ok $time \"$pretty\" ";
   }
   $y->qry_ms= isset($y->qry_ms) ? $y->qry_ms+$time : $time;
   $qry_del= "\n: ";

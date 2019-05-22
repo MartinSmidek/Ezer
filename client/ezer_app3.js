@@ -4465,7 +4465,7 @@ Ezer.error= function (str,level,block=null,lc='',calls=null) {
     else if ( level=='C') {
       // hlášení kompilátoru o syntaktické chybě
       inside= "compiler";
-      Ezer.fce.DOM.error(str);
+//      Ezer.fce.DOM.error(str);
       Ezer.fce.DOM.error(estr+" <b>in compiler</b>");
     }
     else if ( level=='s' ) {
