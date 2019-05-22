@@ -6012,7 +6012,7 @@ class Check extends Elem {
   DOM_add (DOM) {
     this.DOM= this.DOM_Block= jQuery(
       `<label class="Check3">
-         <input type="checkbox" tabindex="${this.options.tabindex||-1}">${this.options.title}</label>`)
+         <input type="checkbox" tabindex="${this.options.tabindex||-1}">${this.options.title||''}</label>`)
       .css(this.coord({textAlign:this._fc('c') ? 'center' : this._fc('r') ? 'right' : 'left'}))
       .appendTo(DOM ? DOM : (this.owner.DOM_Block ? this.owner.DOM_Block : this.owner.value.DOM_Block))
       .data('ezer',this);
