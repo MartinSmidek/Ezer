@@ -22,10 +22,20 @@
     fce_error("inconsistent server setting (2)");
   $is_local= is_null($ezer_local) ? !$ezer_server : $ezer_local;
   
-  // nastavení zobrazení PHP-chyb klientem při &err=1
-  if ( isset($_GET['err']) && $_GET['err'] ) {
-    error_reporting(E_ALL ^ E_NOTICE);
+  // nastavení zobrazení PHP-chyb a výjimek v ezer2.php
+  // err=0 potlačí zobrazení chyb při inicializaci (tj. mimo kód v ezer2.php), jinak jako err=1
+  // err=1 ... (default) standardní handler: E_ALL & ~E_NOTICE 
+  // err=2 ... v PHP7 vlastní handler: E_ALL & ~E_NOTICE     
+  // err=3 ... v PHP7 vlastní handler: E_ALL
+  if ( isset($_GET['err']) && ($err= $_GET['err']) ) {
+    setcookie('error_reporting',$err);
+    error_reporting($err==3 ? E_ALL : E_ALL & ~E_NOTICE);
     ini_set('display_errors', 'On');
+  }
+  else {
+    setcookie('error_reporting',1);
+    error_reporting(E_ALL & ~E_NOTICE);
+    ini_set('display_errors', 'Off');
   }
 
   // parametry aplikace

@@ -28,14 +28,15 @@
     require_once("mysql.inc.php");
   }
 
-  // nastavení zobrazení PHP-chyb klientem při &err=1
-  if ( isset($_GET['err']) && $_GET['err'] ) {
-    error_reporting(E_ALL ^ E_NOTICE);
-    ini_set('display_errors', 'On');
-  } 
-  else {
-    ini_set('display_errors', 'Off');
-  }
+//  // nastavení zobrazení PHP-chyb klientem při &err=1              --- nastavuje se v ezer2.php
+//  if ( isset($_GET['err']) && $_GET['err'] ) {
+////    error_reporting(E_ALL & ~E_NOTICE);
+//    error_reporting(E_ALL);
+//    ini_set('display_errors', 'On');
+//  } 
+//  else {
+//    ini_set('display_errors', 'Off');
+//  }
 
   // test přístupu z jádra
   if ( $_POST['root']!=$ezer_root && $_GET['root']!=$ezer_root ) die('POST PROBLEM');

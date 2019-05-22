@@ -80,8 +80,9 @@ const EZER_version= 3.1;
     while (($file= readdir($dh)) !== false) {
       if ( substr($file,-5)=='.ezer' ) {
         $name= substr($file,0,strlen($file)-5);
-        $etime= @filemtime("$ezer_path_appl/$name.ezer");
-        $ctime= @filemtime("$ezer_path_code/$name.json");
+        $cname= "$ezer_path_code/$name.json";
+        $etime= filemtime("$ezer_path_appl/$name.ezer");
+        $ctime= file_exists($cname) ? filemtime($cname) : 0;
         if ( !$ctime)
           $files[$name]= 'err';
         else
@@ -165,8 +166,9 @@ const EZER_version= 3.1;
   }
   // doplnění o výsledky kompilace
   foreach($files as $name=>$status) {
-    $etime= @filemtime("$ezer_path_appl/$name.ezer");
-    $ctime= @filemtime("$ezer_path_code/$name.json");
+    $cname= "$ezer_path_code/$name.json";
+    $ctime= file_exists($cname) ? filemtime($cname) : 0;
+    $etime= filemtime("$ezer_path_appl/$name.ezer");
     if ( !$ctime)
       $files[$name]= 'err';
     else

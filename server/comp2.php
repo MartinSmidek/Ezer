@@ -37,7 +37,7 @@ function comp ($src) {
 # $root je jméno hlavního objektu aplikace a může být uvedeno jen pro $name='$'
 # $list_only omezí listing kódu procedur na daná jména (oddělená čárkou)
 function comp_file ($name,$root='',$list_only='') {  #trace();
-  global $ezer, $json, $ezer_path_appl, $ezer_path_code, $ezer_path_root,
+  global $ezer, $json, $ezer_path_appl, $ezer_path_code, $ezer_path_root, $err,
     $code, $module, $procs, $context, $ezer_name, $ezer_app, $tree, $errors, $includes, $onloads;
   global $pragma_library, $pragma_syntax, $pragma_attrs, $pragma_names, $pragma_get, $pragma_prefix,
     $pragma_group, $pragma_box, $pragma_using, $pragma_if, $pragma_strings, $pragma_switch;
@@ -302,15 +302,18 @@ function comp_file ($name,$root='',$list_only='') {  #trace();
   }
   catch (Exception $e) {
     $code= (object)array();
-    display($e->getMessage());
+//    display($e->getMessage());
 //     display($tree);
     $ok= 'ko';
+    $errors++;
+    $err= $e->getMessage().' in '.$e->getFile().';'.$e->getLine();
     $cname= "$ezer_path_root/$root/code/$name.json";
     if ( file_exists($cname) )
       unlink($cname);
+    goto end;
   }
   // listing modulu pro trace=7
-  if ($_GET['trace']==7 || $_GET['trace']==1) {
+  if ( isset($_GET['trace']) && ($_GET['trace']==7 || $_GET['trace']==1) ) {
     $lst= $dbg= '';
 //     $dbg= debugx($loads->code);
     $lst= xlist($loads->code,0,$list_only);
@@ -319,6 +322,7 @@ function comp_file ($name,$root='',$list_only='') {  #trace();
   }
   unset($loads->code);
 //                                                         debug($loads,"ENVIRONMENT $myname");
+end:
   return "$ok = kompilace a link $ename => $cname";
 }
 # --------------------------------------------------------------------------------- dbg_context_load

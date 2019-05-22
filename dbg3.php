@@ -3,7 +3,7 @@
 // ============================================================================================> PHP
   // nastavení zobrazení PHP-chyb klientem při &err=1
   if ( isset($_GET['err']) && $_GET['err'] ) {
-    error_reporting(E_ALL ^ E_NOTICE);
+    error_reporting(E_ALL & ~E_NOTICE);
     ini_set('display_errors', 'On');
   }
 

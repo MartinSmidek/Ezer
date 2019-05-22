@@ -1,5 +1,16 @@
 <?php # (c) 2008 Martin Smidek <martin@smidek.eu>
-  error_reporting(E_ALL & ~E_NOTICE);
+  # ----------------------------------------------------------------------------------- obsluha chyb
+  $err= isset($_COOKIE['error_reporting']) ? $_COOKIE['error_reporting'] : 1;
+  error_reporting($err==3 ? E_ALL : E_ALL & ~E_NOTICE);
+  if ( $err>=2 ) {
+    function exception_error_handler($errno, $errstr, $errfile, $errline ) {
+        throw new ErrorException($errstr, $errno, 0, $errfile, $errline);
+    }
+    set_error_handler("exception_error_handler",$err==3 ? E_ALL : E_ALL & ~E_NOTICE);
+  }
+  elseif ( !$err ) 
+    ini_set('display_errors', 'Off');
+  try {
   # --------------------------------------------------------------------------------- paths, globals
   # globální objekty ($json bude v PHP6 zrušeno)
   global $app_root, $ezer_root, $ezer_path_serv, $ezer_path_appl, $ezer_path_root, $ezer_db, $ezer_system, $hash_password;
@@ -262,12 +273,6 @@
     $y->value= array();
     goto end_switch;
   }
-  try {
-  # ---------------------------------------------------------------------------------- error handler
-  function exception_error_handler($errno, $errstr, $errfile, $errline ) {
-      throw new ErrorException($errstr, $errno, 0, $errfile, $errline);
-  }
-  set_error_handler("exception_error_handler");
   switch ( $x->cmd ) {
   # ================================================================================================ VOLÁNÍ z EZER
   # ------------------------------------------------------------------------------------------------ touch
@@ -1892,7 +1897,7 @@
   #
   case 'load_code2': // (name)
 //                                         debug($x,'load_code2');
-    try {
+//    try {
       global $ezer_path_serv,$ezer_path_appl, $ezer_path_code, $ezer_root, $code, $errors, $err;
       require_once("$ezer_path_serv/comp2.php");
       require_once("$ezer_path_serv/comp2def.php");
@@ -1912,7 +1917,9 @@
         // zdroj musí existovat
         clearstatcache();
         $etime= filemtime($ename);
-        $ctime= filemtime($cname); if ( !$ctime) $ctime= 0;
+        $ctime= 0;
+        if ( file_exists($cname) ) // json nemusí
+          $ctime= filemtime($cname); 
         $xtime= filemtime($xname);
         $state= 'load';
         $loads= 'error';
@@ -1926,7 +1933,7 @@
           $state= 'compile '.comp_file($fname,$app);
           if ( $errors ) {
             $y->error= $err;
-            @unlink($cname);
+            if ( file_exists($cname)) unlink($cname);
             break;
           }
           else {
@@ -2010,11 +2017,11 @@
           }
         }
       }
-    }
-    catch (Exception $e) {
-      $y->error= $e->getMessage();
-      $y->chyba= 'jo';
-    }
+//    }
+//    catch (Exception $e) {
+//      $y->error= $e->getMessage();
+//      $y->chyba= 'jo';
+//    }
 //                                         debug($y,'y->app');
 //     file_put_contents("snap.json",$y->error);
 //     file_put_contents("snap.json",$json->encode($y->app));
@@ -2032,23 +2039,20 @@
     break;
   }
   }
-  catch (ErrorException $e){
-    $y->error= $e->getMessage().' in '.$e->getFile().';'.$e->getLine();
+  catch (Throwable $e) { // pro PHP7
+    $y->error= $e->getMessage().' in '.$e->getFile().';'.$e->getLine().' (T'.$e->getCode().')';
   }
-//  catch (Throwable $e) { // chytne i syntaktickou chybu
-//    $y->error= $e->getMessage();
+//  catch (Error $e) { // pro PHP7
+//    $y->error= $e->getMessage().' in '.$e->getFile().';'.$e->getLine().' (T'.$e->getCode().')';
 //  }
-  catch (Error $e) { // chytne i syntaktickou chybu
-    $y->error= $e->getMessage();
-  }
-  catch (Exception $e) { 
-    $y->error= $e->getMessage();
+  catch (Exception $e) { // pro PHP5
+    $y->error= $e->getMessage().' in '.$e->getFile().';'.$e->getLine().' (X'.$e->getCode().')';
   }
 # ================================================================================================== answer
 end_switch:
   global $trace, $warning;
-  if ( $trace && strpos($x->totrace,'u')!==false )
-    $y->trace= $trace;
+//  if ( $trace && isset($x->totrace) && strpos($x->totrace,'u')!==false )
+//    $y->trace= $trace;
 //                                         $y->trace.= "\ntotrace={$x->totrace}";
   if ( $warning ) $y->warning= $warning;
   if ( isset($x->lc) ) $y->lc= $x->lc;  // redukce informace místo $y->x= $x;
@@ -2057,8 +2061,13 @@ end_switch:
   header('Content-type: application/json; charset=UTF-8');
   $y->php_ms= round(getmicrotime() - $php_start,4);
 
+  if ( $trace && !isset($x->totrace) ) {
+    $y->notrace= 1;
+  }
   // nový konec - zvlášť pro trasování, kvůli odchytu non UTF-8
-  if ( isset($x->totrace) && $x->totrace ) {
+//  if ( $trace && isset($x->totrace) && strpos($x->totrace,'u')!==false ) {
+  if ( $trace ) {
+    $y->trace= $trace;
     if ( !isset($json) ) {
       require_once("$ezer_path_serv/licensed/JSON_Ezer.php");
       $json= new Services_JSON_Ezer();
@@ -2298,16 +2307,16 @@ function check_version($y) {
     $y->msg= $msg;
   }
 }
-# -------------------------------------------------------------------------------------------------- answer
-function answer () {
-  global $trace, $y, $USER, $EZER;
-  if ( $trace ) $y->trace= $trace;
-  $y->sys->user= $USER;
-  $y->sys->ezer= $EZER;
-  header('Content-type: application/json; charset=UTF-8');
-  echo json_encode($y);
-  exit;
-}
+//# -------------------------------------------------------------------------------------------------- answer
+//function answer () {
+//  global $trace, $y, $USER, $EZER;
+//  if ( $trace ) $y->trace= $trace;
+//  $y->sys->user= $USER;
+//  $y->sys->ezer= $EZER;
+//  header('Content-type: application/json; charset=UTF-8');
+//  echo json_encode($y);
+//  exit;
+//}
 # -------------------------------------------------------------------------------------------------- make_get
 # převzetí parametrů od funkce form_make
 function make_get (&$set,&$select,&$fields) {
