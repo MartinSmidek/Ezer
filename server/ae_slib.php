@@ -162,8 +162,15 @@ function fce_error ($msg,$send_mail='') { trace();
     // poslat mail
     send_mail("Ezer/$ezer_root ERROR:$msg",$send_mail,"","",'error');
   }
-  throw new Exception($msg);
-  return false;
+  $btrace= debug_backtrace(); 
+  $call0= $btrace[0]; 
+  $call1= $btrace[1]; 
+  $msg.= " at {$call1['function']} in {$call0['file']};{$call0['line']} (f0) "; 
+  $err= isset($_COOKIE['error_reporting']) ? $_COOKIE['error_reporting'] : 1;
+  if ( $err<2 || strlen($msg)>520 ) 
+    throw new ErrorException($msg);
+  else
+    trigger_error($msg, E_USER_ERROR); // viz omezení délky znaků v prvním parametru php.net
 }
 # -------------------------------------------------------------------------------------------------- fce_warning
 # $send_mail může obsahovat doplňkové informace zaslané správci aplikace mailem
@@ -1391,14 +1398,14 @@ function wu($x,$user2sql=0) { #trace();
 function uw($x) {
   return utf2win($x,true);
 }
-# ================================================================================================== EXCEL5
-# -------------------------------------------------------------------------------------------------- Excel5_date
+# ============================================================================================ EXCEL
+# -------------------------------------------------------------------------------------- Excel5_date
 # Excel5_date převede timestamp na excelovské datum
 function Excel5_date($tm) {  #trace();
   require_once 'ezer3.1/server/vendor/autoload.php';
   return PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel($tm);
 }
-# -------------------------------------------------------------------------------------------------- Excel5
+# ------------------------------------------------------------------------------------------- Excel5
 # definice Excelovského souboru verze před Excel2007
 # PARAMETRY
 #       pokud je $table==null je vytvořena tabulka příkazem 'BOOK table_name'
@@ -1648,7 +1655,7 @@ __XLS;
   $html= $list ? "<hr>".nl2br($desc)."<hr>$html" : ($err ? "err=$err:$html" : '');
   return $html;
 }
-# -------------------------------------------------------------------------------------------------- Excel5_col2n
+# ------------------------------------------------------------------------------------- Excel5_col2n
 # převedení názvu sloupce na pořadí A -> 0
 function Excel5_col2n($c) {
   $c= strtoupper($c);
@@ -1659,7 +1666,7 @@ function Excel5_col2n($c) {
 //                                                         display("$c--$x");
   return $x;
 }
-# -------------------------------------------------------------------------------------------------- Excel5_n2col
+# ------------------------------------------------------------------------------------- Excel5_n2col
 # převedení pořadí sloupce na název 0 -> A
 function Excel5_n2col($n) {
   $az= ord('Z')-ord('A')+1;
@@ -1668,12 +1675,12 @@ function Excel5_n2col($n) {
 //                                                         display("$n--$c");
   return $c;
 }
-# -------------------------------------------------------------------------------------------------- Excel5_f
+# ----------------------------------------------------------------------------------------- Excel5_f
 # vytvoření formátu pro Excel5 (bez rich text)
 function Excel5_f(&$ws,$range,$v,&$err) {
   $html= '';
   $wcs= $ws->getStyle($range);
-  foreach(explode(' ',trim($v)) as $f) if ( $f ) {
+  foreach(explode(' ',trim($v)) as $f) { if ( $f ) {
     list($f,$x)= explode('=',$f);
     switch ($f) {
     // numerické
@@ -1736,7 +1743,7 @@ function Excel5_f(&$ws,$range,$v,&$err) {
       $html.= "XLS ERROR Chybný formát:$f in $line";
       $err++;
     }
-  }
+  }}
   return $html;
 }
 // function xls2_rich($m) {

@@ -735,7 +735,7 @@ function root_inc3($db,$dbs,$tracking,$tracked) { //,$path_root=null,$path_pspad
   // nastavení databází
   $sada= is_null($ezer_local) ? $ezer_server : ($ezer_local ? 1 : 0);
   $mysql_dbi= $db[$sada];
-  $mysql_db= isset($dbs[$sada][$db[$sada]][5]) ? $dbs[$sada][$db[$sada]][5] : $db[$sada];
+  $mysql_db= /*isset($dbs[$sada][$db[$sada]][5]) ? $dbs[$sada][$db[$sada]][5] :*/ $db[$sada];
   $ezer_db= $dbs[$sada];
   $ezer_sdb= $dbs[$sada];
   $ezer_system= $ezer_system ? $ezer_system : 'ezer_system';

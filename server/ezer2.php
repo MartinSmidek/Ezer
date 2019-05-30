@@ -2,15 +2,24 @@
   # ----------------------------------------------------------------------------------- obsluha chyb
   $err= isset($_COOKIE['error_reporting']) ? $_COOKIE['error_reporting'] : 1;
   error_reporting($err==3 ? E_ALL : E_ALL & ~E_NOTICE);
+  try {
   if ( $err>=2 ) {
     function exception_error_handler($errno, $errstr, $errfile, $errline ) {
-        throw new ErrorException($errstr, $errno, 0, $errfile, $errline);
+      global $warning, $php_start, $x, $y;
+      $y->error= $errno==E_USER_ERROR ? $errstr : "$errstr in $errfile;$errline (x$errno)";
+      if ( $warning ) $y->warning= $warning;
+      if ( isset($x->lc) ) $y->lc= $x->lc;  // redukce informace místo $y->x= $x;
+      header('Content-type: application/json; charset=UTF-8');
+      $y->php_ms= round(getmicrotime() - $php_start,4);
+      $yjson= json_encode($y);
+      echo $yjson;
+      exit;
+      // místo throw new ErrorException($errstr, $errno, 0, $errfile, $errline);
     }
     set_error_handler("exception_error_handler",$err==3 ? E_ALL : E_ALL & ~E_NOTICE);
   }
   elseif ( !$err ) 
     ini_set('display_errors', 'Off');
-  try {
   # --------------------------------------------------------------------------------- paths, globals
   # globální objekty ($json bude v PHP6 zrušeno)
   global $app_root, $ezer_root, $ezer_path_serv, $ezer_path_appl, $ezer_path_root, $ezer_db, $ezer_system, $hash_password;
@@ -149,11 +158,11 @@
         $text1= ",msg";
         $text2= ',"'.strtr($x->msg,'"',"'").'"';
       }
-      if ( $x->inside ) {
+      if ( isset($x->inside) && $x->inside ) {
         $text1.= ",inside";
         $text2.= ',"'.strtr($x->inside,'"',"'").'"';
       }
-      if ( $x->after ) {
+      if ( isset($x->after) && $x->after ) {
         $text1.= ",after";
         $text2.= ',"'.strtr($x->after,'"',"'").'"';
       }
@@ -263,7 +272,8 @@
   chdir($ezer_path_root);
   $y= (object)array();
   $y->cmd= $x->cmd;
-  $totrace= $x->totrace;                // kopie ae_trace: používá se k omezení trasovacích informací
+  // kopie ae_trace: používá se k omezení trasovacích informací
+  $totrace= isset($x->totrace) ? $x->totrace : 0;
   $y->qry_ms= 0;
   // ochrana proti ztrátě přihlášení
   if ( !$USER->id_user
@@ -273,6 +283,7 @@
     $y->value= array();
     goto end_switch;
   }
+//  $_GET['neex_index'];
   switch ( $x->cmd ) {
   # ================================================================================================ VOLÁNÍ z EZER
   # ------------------------------------------------------------------------------------------------ touch
@@ -2039,12 +2050,15 @@
     break;
   }
   }
+  catch (ErrorException $e) { // pro vlastní error handler
+    $y->error= $e->getMessage().' in '.$e->getFile().';'.$e->getLine().' (E'.$e->getCode().')';
+  }
   catch (Throwable $e) { // pro PHP7
     $y->error= $e->getMessage().' in '.$e->getFile().';'.$e->getLine().' (T'.$e->getCode().')';
   }
-//  catch (Error $e) { // pro PHP7
-//    $y->error= $e->getMessage().' in '.$e->getFile().';'.$e->getLine().' (T'.$e->getCode().')';
-//  }
+  catch (Error $e) { // pro PHP7 ???
+    $y->error= $e->getMessage().' in '.$e->getFile().';'.$e->getLine().' (T'.$e->getCode().')';
+  }
   catch (Exception $e) { // pro PHP5
     $y->error= $e->getMessage().' in '.$e->getFile().';'.$e->getLine().' (X'.$e->getCode().')';
   }
