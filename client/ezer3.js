@@ -5949,6 +5949,7 @@ class EditAuto extends Edit {
 //      nebo ve stringu odděleny čárkami. Delimiter je oddělovač hodnot vkládaným výběrem 
 //      z našeptaných hodnot
   init (init_values,delimiter) {
+    super.init();
     this.keywords= 
       typeof init_values==='object' ? init_values :(
       typeof init_values==='string' ? init_values.split( /,\s*/ ) : []);
