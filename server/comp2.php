@@ -36,13 +36,15 @@ function comp ($src) {
 # v případě chyby nechá $cname beze změny
 # $root je jméno hlavního objektu aplikace a může být uvedeno jen pro $name='$'
 # $list_only omezí listing kódu procedur na daná jména (oddělená čárkou)
-function comp_file ($name,$root='',$list_only='') {  #trace();
-  global $ezer, $json, $ezer_path_appl, $ezer_path_code, $ezer_path_root, $err,
+# $comp_php znamená volání z comp.php
+function comp_file ($name,$root='',$list_only='',$_comp_php=false) {  #trace();
+  global $ezer, $json, $ezer_path_appl, $ezer_path_code, $ezer_path_root, $err, $comp_php,
     $code, $module, $procs, $context, $ezer_name, $ezer_app, $tree, $errors, $includes, $onloads;
   global $pragma_library, $pragma_syntax, $pragma_attrs, $pragma_names, $pragma_get, $pragma_prefix,
     $pragma_group, $pragma_box, $pragma_using, $pragma_if, $pragma_strings, $pragma_switch;
   global $call_php;
   global $doxygen;    // $doxygen=1 pokud se má do složky data generovat *.cpp pro doxygen
+  $comp_php= $_comp_php;
   $doxygen= 1;
   $errors= 0;
   try {
@@ -310,7 +312,8 @@ function comp_file ($name,$root='',$list_only='') {  #trace();
     $cname= "$ezer_path_root/$root/code/$name.json";
     if ( file_exists($cname) )
       unlink($cname);
-    goto end;
+    if ( !$comp_php ) goto end;
+    display($e->getMessage());
   }
   // listing modulu pro trace=7
   if ( isset($_GET['trace']) && ($_GET['trace']==7 || $_GET['trace']==1) ) {

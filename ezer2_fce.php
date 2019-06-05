@@ -91,14 +91,14 @@ function sys_user_record($id_user=0) {  trace();
 # $typ='fld' -- _user.fld
 # $typ='opt' -- _user.options.fld
 # $typ='oop' -- _user.options.options.fld
-function sys_user_get ($id_user,$typ,$fld) {  trace();
+function sys_user_get ($id_user,$typ,$fld) { // trace();
   global $json, $ezer_system;
   $val= '';
   $qry= "SELECT * FROM $ezer_system._user WHERE id_user='$id_user'";
   $res= mysql_qry($qry,0,0,0,'ezer_system');
   if ( $res ) {
     $u= pdo_fetch_object($res);
-                                                debug($u,'fetch');
+//                                                debug($u,'fetch');
 //    $options= $json->decode($u->options);
     $options= json_decode($u->options);
     switch ($typ) {

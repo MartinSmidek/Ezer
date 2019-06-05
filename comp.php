@@ -124,7 +124,16 @@ const EZER_version= 3.1;
   $sel.= "</select>";
   // -------------------------------------------------------------------------------- obnova tabulek
   if ( $_GET['refresh']=='tables' ) {
-    if (!isset($_SESSION[$ezer_root]['abs_root'])) { die("Je třeba nastartovat session pro aplikaci {$root}"); }
+    if (!isset($_SESSION[$ezer_root]['abs_root'])) { 
+      die("Je třeba mít spuštěnou aplikaci {$root} .. neexistuje session"); 
+    }
+    // nastav prostředí podle session
+    if ( isset($_SESSION[$ezer_root]['ezer_server']) ) {
+      // platí buďto isnull($ezer_local) nebo isnull($ezer_server)
+      global $ezer_local, $ezer_server;
+      $ezer_server= $_SESSION[$ezer_root]['ezer_server'];
+      unset($ezer_local);
+    }
     require_once("server/reference.php");
     if ( $root=='ezer3.1' ) {
       global $EZER;
@@ -135,6 +144,10 @@ const EZER_version= 3.1;
       require_once("$ezer_path_root/$root_inc");
                                         debug($ezer_db);
       ezer_connect('ezer_kernel');
+    }
+    elseif ( file_exists("$ezer_path_root/$ezer_root/$root.inc.php") ) {
+      require_once("$ezer_path_root/$ezer_root/$root.inc.php");
+      ezer_connect();
     }
     else {
       require_once("$ezer_path_root/$root.inc.php");
@@ -301,7 +314,7 @@ function comp_module($name,$root='',&$state) {
   global $display, $trace, $json, $ezer_path_appl, $ezer_path_code;
   global $code, $option_source, $option_list, $option_cpp, $lst;
 //   $trace= $option_state;
-  $state= comp_file($name,$root,$option_list);
+  $state= comp_file($name,$root,$option_list,true);
   $txt= '';
   if ( $option_source ) {
     $src= file_get_contents("$ezer_path_appl/$name.ezer");
@@ -331,7 +344,7 @@ function comp_application($root='',&$state,$errs=false) {
   foreach($files as $name=>$status) {
     if ( $status=='old' || ($errs && $status=='err') ) {
       $trace= '';
-      $state= comp_file($name,$root).'<hr />';
+      $state= comp_file($name,$root,'',true).'<hr />';
       display($state);
       $txt.= $trace;
 //                                         if ( substr($state,0,2)=='ko' ) break;
