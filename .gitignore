@@ -10,3 +10,4 @@
 /server/licensed/xls*
 /nbproject
 /server/licensed/phpmailer/
+/server/composer.*
