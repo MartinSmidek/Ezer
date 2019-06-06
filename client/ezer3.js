@@ -2528,11 +2528,13 @@ class PanelPopup extends Panel {
 //   DOM_shown: false,                           // true - pokud bylo poprvé ukázáno
 // ---------------------------------------------------------------------------------- DOM add1
   DOM_add1 () {
-    let min_top= this.options.par ? this.options.par.min_top || 0 : 0; 
+    let min_top= this.options.par ? this.options.par.min_top || 0 : 0,
+        close= this.options.par && this.options.par.close=='no' 
+              ? '' : '<div class="pop_close"></div>';
     this.DOM= jQuery(`
         <div class="Popup3">
           <div class="pop_head"><span></span></div>
-          <div class="pop_close"></div>
+          ${close}
           <div class="pop_body"></div>
         </div>`)
       .css({width:this._w,height:this._h})
@@ -5948,8 +5950,7 @@ class EditAuto extends Edit {
 //      inicializuje našeptávač pro element edit, našeptávané hodnoty jsou předány buďto v poli,
 //      nebo ve stringu odděleny čárkami. Delimiter je oddělovač hodnot vkládaným výběrem 
 //      z našeptaných hodnot
-  init (init_values,delimiter) {
-    super.init();
+  selects (init_values,delimiter) {
     this.keywords= 
       typeof init_values==='object' ? init_values :(
       typeof init_values==='string' ? init_values.split( /,\s*/ ) : []);
