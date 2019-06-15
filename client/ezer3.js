@@ -1757,9 +1757,9 @@ class MenuLeft extends Menu {
       .prependTo(this.owner.DOM_Block.parent())
       .data('ezer',this)
       .addClass(this.awesome==2 ? 'MenuLeft3 MenuLeftFolded3' : 'MenuLeft3');
-    // rozšíří obsahující panel o 210
-    var panel_dom= jQuery(this.owner.DOM);
-    panel_dom.css('width',panel_dom.width()+210);
+//     rozšíří obsahující panel o 210
+//    var panel_dom= jQuery(this.owner.DOM);
+//    panel_dom.css('width',panel_dom.width()+210);
     if ( this.awesome ) {
       // remember menu status
       this.owner._folded= this.awesome==2;
@@ -2465,7 +2465,7 @@ class PanelRight extends Panel {
     Ezer.assert(this.owner.DOM_Block,'panel '+this.id+' nelze vnořit do '+this.owner.id);
     this.owner._addPanel(this);                 // položka v Tabs
     this.DOM= jQuery('<section>')
-      .css({width:this._w})
+//      .css({width:this._w})
       .hide()
       .appendTo('#work');
     this.DOM_Block= jQuery('<div>')
