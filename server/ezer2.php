@@ -2341,7 +2341,7 @@ function make_get (&$set,&$select,&$fields) {
     $val= $tfv->val;
     if ( ($pipe= $tfv->pip) ) $val= $pipe($val,1);
     $set[$tfv->tbl][]= "{$tfv->fld}='$val'";
-    if ( !isset($y->plain) ) $y->plain= (object)array();
+    if ( !isset($y->plain) || !$y->plain ) $y->plain= (object)array();
     $y->plain->$fld= 1;
   }
   if ( isset($x->load) )

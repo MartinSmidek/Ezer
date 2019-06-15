@@ -1105,7 +1105,7 @@ function gen_proc($c,&$desc,$name) {
   // úprava seznamu lokálních proměnných a parametrů
   $n= 0;
   $c->var= (object)array();
-  if ( count($c->vars) )
+  if ( isset($c->vars) && count($c->vars) )
   foreach($c->vars as $id=>$typ) {
     $c->var->{$id}= $n;
     $n++;
