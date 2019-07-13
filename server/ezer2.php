@@ -1927,7 +1927,7 @@
         $xname= "$ezer_path_serv/comp2.php";
         // zdroj musí existovat
         clearstatcache();
-        $etime= filemtime($ename);
+        $etime= file_exists($ename) ? filemtime($ename) : 0;
         $ctime= 0;
         if ( file_exists($cname) ) // json nemusí
           $ctime= filemtime($cname); 
