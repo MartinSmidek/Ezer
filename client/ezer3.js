@@ -3980,6 +3980,8 @@ class Label extends Block {
 //s: Block
 //i: LabelDrop.ondrop - funkce zavolaná po dokončení vložení souboru
 //i: LabelDrop.onload - funkce zavolaná po dokončení přenosu na server
+//oo: LabelDrop.par   - pro cloud=U:   {utf8:1}
+//      utf8=0 vynutí konverzi jména souboru na ASCII znaky
 class LabelDrop extends Label {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  initialize
   initialize () {
@@ -3988,14 +3990,15 @@ class LabelDrop extends Label {
     this.cloud= null;           // S:,H: pro souborový systém na serveru nebo G: pro Google Disk
     this.folder= '/';           // relativní cesta na disku vzhledem k 'files/{root}' nebo ID složky cloudu
     this.mask= '';              // regulární výraz pro omezení jmen souborů (pro preg_match)
-    this.continuation= null;   // bod pokračování pro fi
+    this.utf8= this.options.par && this.options.par.utf8 ? 1 : 0;
+    this.continuation= null;    // bod pokračování pro fi
   }
 // ------------------------------------------------------------------------------- LabelDrop.init
 //fm: LabelDrop.init (folder[,cloud=S:[,mask='']])
 // inicializace oblasti pro drop souborů, definice cesty pro soubory
 // (začínající jménem a končící lomítkem a relativní k $ezer_root)
 // NEBO definice sloužky a cloudu (zatím jen S: pro docs/{root}, H: pro ../files/{root} na serveru
-// a G: pro Google Disk)
+// a G: pro Google Disk a U: pro uživatelské nastavení)
 // nepovinná maska se používá pro výběr a zobrazení v lsdir - pokud je ve výrazu skupina (),
 // použije se v lsdir pro zobrazení souboru
   init (folder,cloud,mask) {
@@ -4461,7 +4464,7 @@ class LabelDrop extends Label {
       xhr.setRequestHeader("EZER-FILE-ABSPATH",path);
     }
     if ( this.cloud=='U:' ) {
-      xhr.setRequestHeader("EZER-FILE-NAME-UTF-8",1);
+      xhr.setRequestHeader("EZER-FILE-NAME-UTF-8",this.utf8);
     }
     xhr.onload = function(e) {
       if (e.target.status == 200) {
