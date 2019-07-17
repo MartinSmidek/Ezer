@@ -2570,6 +2570,10 @@ function drop_unlink($folder,$file,$cloud='S:') {
   if ( $cloud=='S:' && isset($_SESSION[$ezer_root]['path_files']) )
     // S: relativně (zpětná kompatibilita)
     $path_files= trim($_SESSION[$ezer_root]['path_files']);
+  elseif ( $cloud=='U:' )
+    // U: 
+    $path_files= isset($_SESSION[$ezer_root]['path_files_u']) 
+      ? $_SESSION[$ezer_root]['path_files_u'] : $_SESSION[$ezer_root]['abs_root'];
   else
     // S: H: absolutní (od září 2015)
     $path_files= trim($_SESSION[$ezer_root][$cloud=='S:' ? 'path_files_s' :  'path_files_h'],"' ");
@@ -2602,6 +2606,10 @@ function drop_rename($folder,$file,$name,$cloud='S:') {
   if ( $cloud=='S:' && isset($_SESSION[$ezer_root]['path_files']) )
     // S: relativně (zpětná kompatibilita)
     $path_files= trim($_SESSION[$ezer_root]['path_files']);
+  elseif ( $cloud=='U:' )
+    // U: 
+    $path_files= isset($_SESSION[$ezer_root]['path_files_u']) 
+      ? $_SESSION[$ezer_root]['path_files_u'] : $_SESSION[$ezer_root]['abs_root'];
   else
     // S: H: absolutní (od září 2015)
     $path_files= trim($_SESSION[$ezer_root][$cloud=='S:' ? 'path_files_s' :  'path_files_h'],"' ");
@@ -2609,7 +2617,7 @@ function drop_rename($folder,$file,$name,$cloud='S:') {
   $renamed= 0;
   // smazání jednoho souboru
   $path1= str_replace('//','/',"$path_files/$folder/$file");
-  $path2= str_replace('//','/',"$path_files/$folder/").cs2ascii($name,'.');
+  $path2= str_replace('//','/',"$path_files/$folder/").utf2ascii($name,'.');
   $renamed= rename($path1,$path2) ? "soubor $file byl přejmenován" : "přejmenování souboru se nepovedlo";
   return $renamed;
 }

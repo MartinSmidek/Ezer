@@ -3980,8 +3980,6 @@ class Label extends Block {
 //s: Block
 //i: LabelDrop.ondrop - funkce zavolaná po dokončení vložení souboru
 //i: LabelDrop.onload - funkce zavolaná po dokončení přenosu na server
-//oo: LabelDrop.par   - pro cloud=U:   {utf8:1}
-//      utf8=0 vynutí konverzi jména souboru na ASCII znaky
 class LabelDrop extends Label {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  initialize
   initialize () {
@@ -3990,21 +3988,30 @@ class LabelDrop extends Label {
     this.cloud= null;           // S:,H: pro souborový systém na serveru nebo G: pro Google Disk
     this.folder= '/';           // relativní cesta na disku vzhledem k 'files/{root}' nebo ID složky cloudu
     this.mask= '';              // regulární výraz pro omezení jmen souborů (pro preg_match)
-    this.utf8= this.options.par && this.options.par.utf8 ? 1 : 0;
+    this.utf8= 0;
+    this.list= 1;
+    this.href= undefined;
     this.continuation= null;    // bod pokračování pro fi
   }
 // ------------------------------------------------------------------------------- LabelDrop.init
-//fm: LabelDrop.init (folder[,cloud=S:[,mask='']])
+//fm: LabelDrop.init (folder[,cloud=S:[,mask='',par={utf8:0,list:1[,href:u-folder]}]])
 // inicializace oblasti pro drop souborů, definice cesty pro soubory
 // (začínající jménem a končící lomítkem a relativní k $ezer_root)
 // NEBO definice sloužky a cloudu (zatím jen S: pro docs/{root}, H: pro ../files/{root} na serveru
-// a G: pro Google Disk a U: pro uživatelské nastavení)
+//   a G: pro Google Disk a U: pro uživatelské nastavení)
 // nepovinná maska se používá pro výběr a zobrazení v lsdir - pokud je ve výrazu skupina (),
-// použije se v lsdir pro zobrazení souboru
-  init (folder,cloud,mask) {
+//   použije se v lsdir pro zobrazení souboru
+// nepovinné par - utf8=1 povolí UTF8 znaky ve jménech souborů, list=0 potlačí zobrazení souborů,
+//  href=odkaz na složku se soubory - použije se jen pro U:
+  init (folder,cloud,mask,par) {
     this.cloud= cloud||'S:';            // S: je pro soubory viditelné přes http
     this.folder= folder;
     this.mask= mask||'';
+    if ( par ) {
+      this.utf8= par.utf8;
+      this.list= par.list;
+      this.href= par.href;
+    }
     this.DOM_init();
     return 1;
   }
@@ -4029,7 +4036,7 @@ class LabelDrop extends Label {
       for (let f of lst) {
         if ( this.cloud=='G:' )
           this.DOM_addFile_Disk(f);
-        else if ( this.cloud=='S:' || this.cloud=='H:' )
+        else if ( ['S:','H:','U:'].includes(this.cloud) )
           this.DOM_addFile({name:f.name,title:f.title,status:f.size});
         else
           Ezer.error("'"+this.cloud+"' není podporovaný cloud pro upload");
@@ -4052,6 +4059,7 @@ class LabelDrop extends Label {
 // ------------------------------------------------------------------------------ LabelDrop.lsdir
 //fi: LabelDrop.lsdir ([subdir='',mask=''])
 // zobrazí obsah složky, pro server může být dán parametr=jméno podsložky pro interaktivní změnu
+// pro U: musí být nastavené Ezer.options.path_files_u
   lsdir (subdir) {
     this.DOM_init();
     if ( this.cloud=='G:' ) {
@@ -4064,8 +4072,10 @@ class LabelDrop extends Label {
       else
         return null;
     }
-    else { // složka S neho H na serveru
-      var path_files= this.cloud=='S:' ? Ezer.options.path_files_s : Ezer.options.path_files_h;
+    else { // složka na serveru
+      var path_files= 
+        this.cloud=='S:' ? Ezer.options.path_files_s : (
+        this.cloud=='U:' ? Ezer.options.path_files_u : Ezer.options.path_files_h);
       if ( subdir )
         this.folder+= this.folder + (this.folder.substr(-1)=='/' ? '' : '/') + subdir;
       this.ask({cmd:'lsdir',base:path_files,folder:this.folder,mask:this.mask},'_lsdir');
@@ -4073,7 +4083,7 @@ class LabelDrop extends Label {
     }
   }
   _lsdir (xs) {
-    if ( this.cloud=='S:' || this.cloud=='H:' ) {
+    if ( this.cloud!='G:' ) {
       xs= xs.files;
     }
     xs.sort(function(a,b){ return a.title>b.title ? 1 : a.title<b.title ? -1 : 0; });
@@ -4098,14 +4108,16 @@ class LabelDrop extends Label {
         return null;
     }
     else { // složka S nebo H na serveru
-      var path_files= this.cloud=='S:' ? Ezer.options.path_files_s : Ezer.options.path_files_h;
+      var path_files= 
+        this.cloud=='S:' ? Ezer.options.path_files_s : (
+        this.cloud=='U:' ? Ezer.options.path_files_u : Ezer.options.path_files_h);
       this.ask({cmd:'isdir',base:path_files,folder:this.folder+name},'_isdir');
       return this;
     }
   }
   _isdir (xs) {
     this.continuation.stack[++this.continuation.top]=
-      this.cloud=='S:' || this.cloud=='H:' ? xs.ok : (xs.length>0 ? xs[0].id : 0);
+      ['S:','H:','U:'].includes(this.cloud) ? xs.ok : (xs.length>0 ? xs[0].id : 0);
     this.continuation.eval.apply(this.continuation,[0,1]);
   }
 // ------------------------------------------------------------------------------ LabelDrop.mkdir
@@ -4175,24 +4187,26 @@ class LabelDrop extends Label {
       .on({
         dragover: evt => {
           evt.preventDefault();
-          this.DOM_Block.addClass('LabelDropHover');
+          this.DOM_Block.addClass('LabelDropHover3');
         },
         dragleave: evt => {
           evt.preventDefault();
-          this.DOM_Block.removeClass('LabelDropHover');
+          this.DOM_Block.removeClass('LabelDropHover3');
         },
         drop: evt => {
           evt.stopPropagation();
           evt.preventDefault();
-          this.DOM_Block.removeClass('LabelDropHover');
+          this.DOM_Block.removeClass('LabelDropHover3');
           for (var i= 0; i<evt.originalEvent.dataTransfer.files.length; i++) {
             var f= evt.originalEvent.dataTransfer.files[i];
-            this.DOM_addFile(f);
+            if ( this.list ) 
+              this.DOM_addFile(f);
             var r= new FileReader();
             r.Ezer= {file:f,folder:this.folder,bind:this};
             if ( this.cloud=='G:' ) { 
               // Google Disk
-              f.td2.html("načítání");
+              if ( this.list ) 
+                f.td2.html("načítání");
               r.readAsBinaryString(f);
               r.onload= function(e) {
                 var tf= this.Ezer.file;
@@ -4201,7 +4215,7 @@ class LabelDrop extends Label {
                 this.Ezer.bind.DOM_ondrop_Disk(tf);
               };
             }
-            else if ( this.cloud=='S:' || this.cloud=='H:' || this.cloud=='U:' ) { 
+            else if ( ['S:','H:','U:'].includes(this.cloud) ) { 
               // server file system
               r.onload= function(e) {
                 var tf= this.Ezer.file;
@@ -4233,17 +4247,19 @@ class LabelDrop extends Label {
 // přidá řádek pro informaci o vkládaném souboru {name,title,status}
 // obohatí f o td1,td2 a volitelně td3
   DOM_addFile (f) {
-    var td3w= 0; // nebo volitelně šířka třetího informačního sloupce
-    var td2w= 60;
-    var td1w= this._w - (td2w + td3w + (td3w?16:14) + 16);
-    var tr= jQuery(`<tr>`).appendTo(this.DOM_BlockRows);
-    f.td1= jQuery(`<td style="width:${td1w}px">${f.status ? this.DOM_href(f) : f.name}</td>`)
-      .appendTo(tr);
-    f.td2= jQuery(`<td style="width:${td2w}px;align:right">${f.status||"čekám"}</td>`)
-      .appendTo(tr);
-    if ( td3w )
-      f.td3= jQuery(`<td style="width:60px">`)
+    if ( this.list ) {
+      var td3w= 0; // nebo volitelně šířka třetího informačního sloupce
+      var td2w= 60;
+      var td1w= this._w - (td2w + td3w + (td3w?16:14) + 16);
+      var tr= jQuery(`<tr>`).appendTo(this.DOM_BlockRows);
+      f.td1= jQuery(`<td style="width:${td1w}px">${f.status ? this.DOM_href(f) : f.name}</td>`)
         .appendTo(tr);
+      f.td2= jQuery(`<td style="width:${td2w}px;align:right">${f.status||"čekám"}</td>`)
+        .appendTo(tr);
+      if ( td3w )
+        f.td3= jQuery(`<td style="width:60px">`)
+          .appendTo(tr);
+    }
     f.newname= '';
     this.DOM_files.push(f);
   }
@@ -4251,27 +4267,29 @@ class LabelDrop extends Label {
 // přidá řádek pro informaci o souboru vloženém na Google Disk
 // obohatí f o td1,td2 a volitelně td3
   DOM_addFile_Disk (f) {
-    var td3w= 0; // nebo volitelně šířka třetího informačního sloupce
-    var td2w= 60;
-    var td1w= this._w - (td2w + td3w + (td3w?16:14) + 16);
-    var tr= jQuery(`<tr>`).appendTo(this.DOM_BlockRows);
-    f.td1= jQuery(`<td style="width:${td1w}px">${this.DOM_href_Disk(f)}</td>`)
-      .appendTo(tr);
-    f.td2= jQuery(`<td style="width:${td2w}px;align:right">${f.fileSize||(
-        f.mimeType=='application/vnd.google-apps.folder' ? 'složka' : 'dokument')}</td>`)
-      .appendTo(tr);
-    if ( td3w )
-      f.td3= jQuery(`<td style="width:60px">`)
+    if ( this.list ) {
+      var td3w= 0; // nebo volitelně šířka třetího informačního sloupce
+      var td2w= 60;
+      var td1w= this._w - (td2w + td3w + (td3w?16:14) + 16);
+      var tr= jQuery(`<tr>`).appendTo(this.DOM_BlockRows);
+      f.td1= jQuery(`<td style="width:${td1w}px">${this.DOM_href_Disk(f)}</td>`)
         .appendTo(tr);
+      f.td2= jQuery(`<td style="width:${td2w}px;align:right">${f.fileSize||(
+          f.mimeType=='application/vnd.google-apps.folder' ? 'složka' : 'dokument')}</td>`)
+        .appendTo(tr);
+      if ( td3w )
+        f.td3= jQuery(`<td style="width:60px">`)
+          .appendTo(tr);
+    }
     this.DOM_files.push(f);
   }
 // ------------------------------------------------------------------------------ DOM href
 // přidá odkaz na soubor s případným kontextovým menu, pokud je přítomna procedura onmenu
-// pro S: je f.name vždy definováno, f.title je vynecháno
+// pro S:,U: je f.name vždy definováno, f.title je vynecháno
 // pro H: je f.name vždy definováno, f.title jen pokud bylo vytvořeno pomocí this.mask v lsdir
   DOM_href (f) {
     var m='', href, title;
-    if ( this.cloud=='S:' ) {   // úložiště viditelné protokolem http: ./docs/{root}
+    if ( ['S:','U:'].includes(this.cloud) ) {   // úložiště viditelné protokolem http
       // kontextové menu, pokud je přítomna procedura onremove
       var obj, mopt= '';
       if ( this.part && (obj= this.part.onmenu) ) {
@@ -4294,8 +4312,17 @@ class LabelDrop extends Label {
       let folder= this.folder;
       if ( folder.substr(-1)!='/' )
         folder+= '/';
-      href= "<a target='docs' href='"+(Ezer.options.path_files_href||'')+folder+f.name+"'"+m+">"
-        + f.name+"</a>";
+      if ( this.cloud=='S:' ) {
+        href= "<a target='docs' href='"+(Ezer.options.path_files_href||'')+folder+f.name+"'"+m+">"
+          + f.name+"</a>";
+      }
+      else if ( this.cloud=='U:' && this.href!==undefined ) {
+        href= "<a target='docs' href='"+this.href+folder+f.name+"'"+m+">"
+          + f.name+"</a>";
+      }
+      else {
+        href= "<span"+m+">"+ f.name+"</span>";
+      }
     }
     if ( this.cloud=='H:' ) {   // úložiště neviditelné protokolem http: ../files/{root}
       if ( f.name[0]=='[' ) {
@@ -4363,7 +4390,8 @@ class LabelDrop extends Label {
   DOM_upload_Disk (f,do_upload) {
     if ( do_upload ) {
       // ==> . upload G:
-      f.td2.html("přenášení");
+      if ( this.list ) 
+        f.td2.html("přenášení");
       // konstanty boundery, delimiter, close_delim, CHUNK nahrazeny var kvůli IE
       var boundary = '-------314159265358979323846';
       var delimiter = "\r\n--" + boundary + "\r\n";
@@ -4386,8 +4414,10 @@ class LabelDrop extends Label {
       var end = function(gf) {
         //console.log(f)
         var size= gf.fileSize||'doc';
-        f.td1.html(this.DOM_href_Disk(gf));
-        f.td2.html(size);
+        if ( this.list ) {
+          f.td1.html(this.DOM_href_Disk(gf));
+          f.td2.html(size);
+        }
         if ( this.part && (obj= this.part.onload) ) {
           // zavolání funkce onload ex-li s kopií f - po dokončení přenosu
           var ff= {name:gf.title, folder:'', size:size, status:1};
@@ -4396,7 +4426,7 @@ class LabelDrop extends Label {
       }.bind(this);
       request.execute(end);
     }
-    else {
+    else if ( this.list ) {
       // zrušení progress
       f.td2.html("zrušeno");
     }
@@ -4422,19 +4452,22 @@ class LabelDrop extends Label {
   DOM_upload (f,do_upload) {
     if ( do_upload ) {
       f.newname= do_upload==1 ? '' : do_upload;
-      // upload rozdělený na části s referováním do <progrress>
-      f.td2.html("");
-      var bar= jQuery(`<progress max="100" value="0" title="kliknutí přeruší přenos">`)
-        .click( evt => {
-          f.cancel= true;
-        })
-        .appendTo(f.td2);
+      // upload rozdělený na části 
+      if ( this.list ) {
+        // s referováním do <progrress>
+        f.td2.html("");
+        var bar= jQuery(`<progress max="100" value="0" title="kliknutí přeruší přenos">`)
+          .click( evt => {
+            f.cancel= true;
+          })
+          .appendTo(f.td2);
+      }
       var CHUNK= 100000; //512 * 1024; // 0.5MB chunk sizes.
   //     if (bar) bar.prop('value= 0;
       var max= Math.ceil(f.data.size/CHUNK);
       this.DOM_upload_chunk(1,max,CHUNK,f,bar);
     }
-    else {
+    else if ( this.list ) {
       // zrušení progress
       f.td2.html("zrušeno");
     }
@@ -4443,7 +4476,8 @@ class LabelDrop extends Label {
 // konec vkládání a případný upload s volání funkce onload po ukončení přesunu na server
   DOM_upload_chunk (n,max,CHUNK,f,bar) {
     if ( f.cancel ) {
-      f.td2.html("přerušeno");
+      if ( this.list )
+        f.td2.html("přerušeno");
       return 0;
     }
     // ==> . upload S:,H:
@@ -4463,8 +4497,8 @@ class LabelDrop extends Label {
       path= encodeURI(path);
       xhr.setRequestHeader("EZER-FILE-ABSPATH",path);
     }
-    if ( this.cloud=='U:' ) {
-      xhr.setRequestHeader("EZER-FILE-NAME-UTF-8",this.utf8);
+    if ( this.utf8 ) {
+      xhr.setRequestHeader("EZER-FILE-NAME-UTF-8",1);
     }
     xhr.onload = function(e) {
       if (e.target.status == 200) {
@@ -4480,8 +4514,10 @@ class LabelDrop extends Label {
           if ( bar ) bar.value= 100;
           // záměna jména souboru za vrácené, obohacení o odkaz a délku
           f.status= resp[5] ? "error" : resp[6] ? "warning" : resp[3];
-          f.td2.html(f.status);
-          f.td1.html(this.DOM_href({name:resp[0]}));
+          if ( this.list ) {
+            f.td2.html(f.status);
+            f.td1.html(this.DOM_href({name:resp[0]}));
+          }
           var obj, ff= {name:resp[0], folder:this.folder, size:f.size, status:f.status};
           // kontrola korektnosti
           if ( resp[5] ) Ezer.error(resp[5],'S',this);
