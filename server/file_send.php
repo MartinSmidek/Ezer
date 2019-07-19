@@ -71,7 +71,7 @@ else {
   $name=   $_SERVER['HTTP_EZER_FILE_NAME'];
   $name=   urldecode($name);
   if ( !isset($_SERVER['HTTP_EZER_FILE_NAME_UTF_8']) || !$_SERVER['HTTP_EZER_FILE_NAME_UTF_8'] ) {
-    $name=   utf2ascii($name);
+    $name=   utf2ascii($name,'.');
   }
   $chunk=  $_SERVER['HTTP_EZER_FILE_CHUNK'];
   $chunks= $_SERVER['HTTP_EZER_FILE_CHUNKS'];
@@ -143,11 +143,11 @@ end:
   exit;
 }
 # ---------------------------------------------------------------------------------------- utf2ascii
-# konverze z UTF-8 do písmen, číslic, teček a podtržítka, konvertují se i html entity
-function utf2ascii($val) {
+# konverze z UTF-8 do písmen, číslic a podtržítka, konvertují se i html entity
+function utf2ascii($val,$allow='') {
   $txt= preg_replace('~&(.)(?:acute|caron);~u', '\1', $val);
   $txt= preg_replace('~&(?:nbsp|amp);~u', '_', $txt);
-  $ref= preg_replace('~[^\\pL0-9_\-\.]+~u', '_', $txt);
+  $ref= preg_replace("~[^\\pL0-9_$allow]+~u", '_', $txt);
   $ref= trim($ref, "_");
 //     setLocale(LC_CTYPE, "cs_CZ.utf-8");                      bohužel nebývá nainstalováno
 //     $url= iconv("utf-8", "us-ascii//TRANSLIT", $url);
@@ -156,7 +156,7 @@ function utf2ascii($val) {
   $ref= strtr($ref,array('Ě'=>'E','Š'=>'S','Č'=>'C','Ř'=>'R','Ž'=>'Z','Ý'=>'Y','Á'=>'A','Í'=>'I',
                          'É'=>'E','Ů'=>'U','Ú'=>'U','Ó'=>'O','Ď'=>'D','Ť'=>'T','Ň'=>'N'));
   $ref= mb_strtolower($ref);
-  $ref= preg_replace('~[^-a-z0-9_\.]+~', '', $ref);
+  $ref= preg_replace("~[^-a-z0-9_$allow]+~", '', $ref);
   return $ref;
 }
 ?>

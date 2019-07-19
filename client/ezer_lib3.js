@@ -1015,7 +1015,7 @@ Ezer.browser=='IE' ? null :
  // (C) WebReflection Mit Style License
  // Resample function, accepts an image as url, base64 string, or Image/HTMLImgElement
  // optional width or height, and a callback to invoke on operation complete
-  var $Resample= function (img, width, height, onresample) {
+  var $Resample= function (img, type, width, height, onresample) {
   var
    // check the image type
    load = typeof img == "string",
@@ -1031,11 +1031,18 @@ Ezer.browser=='IE' ? null :
   }
   // easy/cheap way to store info
   i._onresample = onresample;
-  i._width = width;
-  i._height = height;
+  i._width= width;
+  i._height= height;
+  i._mime= type;
   // if string, we trust the onload event otherwise we call onload directly
   // with the image as callback context
-  load ? ((i.src = img)) : onload.call(img);
+//  load ? ((i.src = img)) : onload.call(img);
+  if ( load ) {
+    i.src= img;
+  }
+  else {
+    onload.call(img);
+  }
  }
  // just in case something goes wrong
  function xonerror() {
@@ -1063,6 +1070,7 @@ Ezer.browser=='IE' ? null :
     onresample= img._onresample,               // the callback
     pw= max_width / img.width,
     ph= max_height / img.height,
+    mime= img._mime,
     p= Math.min(pw,ph);                         // poměr změny
   // vypocitame vysku a sirku změněného obrazku - vrátíme ji do výstupních parametrů
   let width= p>=1 ? img.width : round(img.width * p);
@@ -1089,12 +1097,12 @@ Ezer.browser=='IE' ? null :
    height       // destination height
   );
   // retrieve the canvas content as base4 encoded PNG image and pass the result to the callback
-  onresample(canvas.toDataURL("image/jpeg"));
+  onresample(canvas.toDataURL(mime));
  }
  var context = canvas.getContext("2d"), // point one, use every time ...
   round = Math.round                    // local scope shortcut
  ;
- return Resample;
+ return $Resample;
 }(
  // lucky us we don't even need to append and render anything on the screen
  // let's keep this DOM node in RAM for all resizes we want
