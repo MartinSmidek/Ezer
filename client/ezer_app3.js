@@ -3681,10 +3681,10 @@ Ezer.fce.fdate= function (format,datetime) {
     case 'n':  y= d.getMonth()+1; break;
     case 'j':  y= d.getDate(); break;
     case 'w':  y= d.getDay(); break;
-    case 'W':  var j1 = new Date(d.getFullYear(),0,1);
+    case 'W':  var j1= new Date(d.getFullYear(),0,1);
                y= Math.ceil((((d.getTime() - j1.getTime()) / 86400000) + j1.getDay()+1)/7);
                break;
-    case 't':  y= d.get('LastDayOfMonth'); break;
+    case 't':  y= new Date(t[0], t[1], 0).getDate(); break;
     case 'H':  y= padNum(d.getHours(),2); break;
     case 'i':  y= padNum(d.getMinutes(),2); break;
     case 's':  y= padNum(d.getSeconds(),2); break;
