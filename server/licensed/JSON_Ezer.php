@@ -136,7 +136,7 @@ class Services_JSON_Ezer
     *                                   bubble up with an error, so all return values
     *                                   from encode() should be checked with isError()
     */
-    function Services_JSON_Ezer($use = 0)
+    function Services_JSON_Ezer_($use = 0)
     {
         $this->use = $use;
     }
@@ -802,7 +802,7 @@ class Services_JSON_Ezer
     /**
      * @todo Ultimately, this class shall be descended from PEAR_Error
      */
-    class Services_JSON_Ezer_Error
+    class Services_JSON_Ezer_Error_
     {
         function Services_JSON_Ezer_Error($message = 'unknown error', $code = null,
                                      $mode = null, $options = null, $userinfo = null)

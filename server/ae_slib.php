@@ -1410,7 +1410,8 @@ function Excel5_date($tm) {  #trace();
 # PARAMETRY
 #       pokud je $table==null je vytvořena tabulka příkazem 'BOOK table_name'
 #       pokud je $table= {wb:otevřená kniha,formats:formáty}
-#       dir je nepovinné jméno podsložky docs
+#       dir je nepovinné jméno podsložky docs NEBO pokud začíná znakem = 
+#         tak následuje absolutní cesta (bez koncového /) složky pro sešit            [od 27.7.2019]
 # příkazy jsou od sebe odděleny novým řádkem nebo |
 # příkazy začínající // jsou ignorovány (// musí být na začátku nepokračovacího řádku nebo po |)
 # řádek je možno ukončit ||, nový řádek pak tvoří pokračování stávajícího
@@ -1640,7 +1641,10 @@ __XLS;
         if ( $gen ) {
           $wb->wb->setActiveSheetIndex($active);
           $objWriter= PhpOffice\PhpSpreadsheet\IOFactory::createWriter($wb->wb, $excel=='xls' ? 'Xls' : 'Xlsx');
-          $fpath= "$ezer_path_root/docs/".($dir?"$dir/":'')."{$wb->name}.{$excel}";
+          $fpath= $dir && substr($dir,0,1)=='='
+              ? substr($dir,1).'/'
+              : "$ezer_path_root/docs/".($dir?"$dir/":'');
+          $fpath.= "{$wb->name}.{$excel}";
           $objWriter->save($fpath);
           if ( $list ) $html.= "CLOSE $fpath";
         }
