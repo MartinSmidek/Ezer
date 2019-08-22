@@ -5081,7 +5081,8 @@ class Elem extends Block {
       value:null,                                 // -- jak byla načtena
       key:null};                                  // -- s daným klíčem
     this.fixed_value= null;                       // pro operace form.option a elem.init
-    this._changed= false;                         // příznak změny (odpovídá zobrazení)
+    this._changed= 0;                             // příznak změny (odpovídá zobrazení)
+                                                  // 2=programatická změna, nelze ji zrušit uživatelem
     this.help= null;                              // nápovědní jméno položky
     this.title= null;                             // nápověda položky
   }
@@ -5134,7 +5135,7 @@ class Elem extends Block {
 //a: val - hodnota
   set (val) {
     this.value= val;
-    this._changed= false;
+    this._changed= 0;
     this.DOM_set();              // zobrazení v DOM z this.value
     this.DOM_changed(0);
     return 1;
@@ -5179,13 +5180,13 @@ class Elem extends Block {
   }
 // ------------------------------------------------------------------------------------ change
 //fm: Elem.change ([silent=0])
-//      nastaví příznak změny a způsobí onchange, pokud není silent=1
+//      nastaví příznak programatické změny a způsobí onchange, pokud není silent=1
 //a: silent - 0 | 1
 //e: onchange
   change (silent) {
-    this._changed= true;
+    this._changed= 2;       // nelze vynulovat uživatelsky jen programově plain, init, ...
 //     this.DOM_empty(false);
-    this.DOM_changed(1,this._fc('t'));     // když není format:'t' bez rámečku
+    this.DOM_changed(2,this._fc('t'));     // když není format:'t' bez rámečku
     if ( !silent )
       this.fire('onchange');
     return 1;
@@ -5194,7 +5195,7 @@ class Elem extends Block {
 //fm: Elem.plain ()
 //      odstranění příznaku změny
   plain () {
-    this._changed= false;
+    this._changed= 0;
     this.DOM_changed(0);
     return 1;
   }
@@ -5292,7 +5293,8 @@ class Elem extends Block {
     }
   }
 // ------------------------------------------------------------------------------------ DOM changed
-// označení příznaku změny elementu formuláře, pokud je quiet=0
+// označení příznaku změny elementu formuláře, pokud je quiet=0; 
+// on= 0|1|2 ... nastaví _changed na 2 na on - pokud je on=0 a _changed=2 tak _changed nechá
   DOM_changed (on,quiet) {
     if ( this.DOM_Input ) {
       // pokud má element zobrazení
@@ -5300,12 +5302,12 @@ class Elem extends Block {
         Ezer.fce.touch('block',this,'changed');     // informace do _touch na server
         if ( !quiet )
           this.DOM_Input.addClass('changed');
-        this._changed= true;
+        this._changed= on;
       }
-      else {
+      else if ( this._changed!==2 ) {
         if ( !quiet )
           this.DOM_Input.removeClass('changed');
-        this._changed= false;
+        this._changed= 0;
       }
     }
   }
@@ -5362,7 +5364,8 @@ class Elem extends Block {
       change: event => {
         event.stopPropagation();
         if ( this.DOM_Input.val()!=this.original.value ) {
-          this.DOM_changed(1,this._fc('t'));     // když není format:'t' se zvýrazněním změny
+          // když není format:'t' se zvýrazněním změny - zachovej její programatičnost 
+          this.DOM_changed(Math.max(this._changed,1),this._fc('t')); 
         }
         return false;
       },
@@ -5372,8 +5375,8 @@ class Elem extends Block {
           if ( this._changed ) {
             if ( event.target.value!=this.value )
               this.change();
-            else
-              this.DOM_changed(0);     // když byla změna vrácena
+            else if ( this._changed!==2 )
+              this.DOM_changed(0);     // když byla neprogramatická změna vrácena
           }
           break;
         case 13: // Enter
@@ -5407,7 +5410,8 @@ class Elem extends Block {
           }
           if ( !this._fc('t') ) {
             if ( this.original.value==this.DOM_Input.val() ) {
-              this.DOM_Input.removeClass('changed');
+              if ( this._changed!==2 ) 
+                this.DOM_Input.removeClass('changed');
             }
             else {
               this.DOM_Input.addClass('changed');
@@ -5661,7 +5665,8 @@ class FieldList extends Elem {
         this.fire('onblur');
       })
       .change ( () => {
-        this.DOM_changed(1,this._fc('t')?1:0); // když není format:'t' se zvýrazněním změny
+        // když není format:'t' se zvýrazněním změny - zachovej její programatičnost 
+        this.DOM_changed(Math.max(this._changed,1),this._fc('t')); 
       })
       .keydown ( event => {
         event.stopPropagation();
@@ -5714,7 +5719,8 @@ class FieldList extends Elem {
           }.bind(this), 50);
         })
         .change ( () => {
-          this.DOM_changed(1,this._fc('t')?1:0);
+          // když není format:'t' se zvýrazněním změny - zachovej její programatičnost 
+          this.DOM_changed(Math.max(this._changed,1),this._fc('t')); 
           this.DOM_refresh();
         })
         .keyup ( event => {
@@ -5899,7 +5905,8 @@ class EditHtml extends Elem {
           if ( !this._changed ) {
             this.DOM_outline.removeClass('focus').addClass('changed_focus');
           }
-          this.DOM_changed(1,this._fc('t'));     // když není format:'t' se zvýrazněním změny
+          // když není format:'t' se zvýrazněním změny - zachovej její programatičnost 
+          this.DOM_changed(Math.max(this._changed,1),this._fc('t')); 
           this.fire('onchange');
         }
       }.bind(this));
@@ -5970,12 +5977,12 @@ class EditHtml extends Elem {
   DOM_changed (on,quiet) {
     // pokud má element zobrazení
     if ( on ) {
-      this._changed= true;
+      this._changed= on;
       Ezer.fce.touch('block',this,'changed');     // informace do _touch na server
       if ( !quiet && this.DOM_outline )
         this.DOM_outline.addClass('changed');
     }
-    else if ( !quiet && this.DOM_outline )
+    else if ( this._changed!==2 && !quiet && this.DOM_outline )
       this.DOM_outline.removeClass('changed');
   }
 // ------------------------------------------------------------------------------------ DOM set
@@ -6071,6 +6078,7 @@ class Check extends Elem {
 //      pro init_values==2 s nastavením elementu jako change
   init (init_values) {
     this.value= this.options.value||0;
+    this._changed= 0;
     this.DOM_set();
     this.DOM_empty(true);
     if ( init_values==2 )
@@ -6122,6 +6130,7 @@ class Radio extends Elem {
 //      naplní element hodnotou atributu 'value'
 //      pro init_values==2 s nastavením elementu jako change
   init (init_values) {
+    this._changed= 0;
     if ( this.options.value!==undefined ) {
       this.value= this.options.value;
       this.DOM_set();
@@ -6202,10 +6211,13 @@ class Radio extends Elem {
       Ezer.fce.touch('block',this,'changed');     // informace do _touch na server
       if ( !quiet )
         this.DOM_Block.addClass('changed');
-      this._changed= true;
+      this._changed= on;
     }
-    else if ( !quiet )
+    else if ( this._changed!==2 ) {
+      if ( !quiet )
       this.DOM_Block.removeClass('changed');
+      this._changed= 0;
+    }
   }
 }
 
@@ -6229,7 +6241,8 @@ class Case extends Elem {
       .appendTo(this.owner.DOM_Block)
       .data('ezer',this)
       .change( el => {
-        this.owner.DOM_changed(1,this.owner._fc('t')); // když není format:'t' se zvýrazněním změny
+        // když není format:'t' se zvýrazněním změny - zachovej její programatičnost 
+        this.owner.DOM_changed(Math.max(this.owner._changed,1),this.owner._fc('t')); 
         this.owner.value= this.options.expr||this.options.value;
         this.owner.fire('onchange',[],el);
       });
@@ -6270,7 +6283,7 @@ class Chat extends Elem {
     //Ezer.Elem.prototype.init.call(this,'');
     this.DOM_clear();
     this.value= '';
-    this._changed= false;
+    this._changed= 0;
     this._changedRow= {};
     this.DOM_changed(0);
     return true;
@@ -6291,7 +6304,7 @@ class Chat extends Elem {
     // nastaví value a zruší případný příznak změny
     this.DOM_clear();
     this.value= val;
-    this._changed= false;
+    this._changed= 0;
     this._changedRow= {};
     this.DOM_changed(0);
     // zobraz historii chatu po řádcích - v případě nedodržení formátu zobraz to co je
@@ -6318,7 +6331,7 @@ class Chat extends Elem {
     var ns= 2*n-2;
     if ( chs && chs.length>ns ) {
       var ch= jQuery(chs[2*n-2]);
-      this._changed= true;
+      this._changed= 2;
       this._changedRow= {row:n};
       if ( value ) {
         // prvek bude změněn
@@ -6339,10 +6352,10 @@ class Chat extends Elem {
 // ------------------------------------------------------------------------------------ set
 //fm: Chat.set (val,is_original)
 //      set pro chat
-  set (val,is_original) {
+  set (val) {
     // nastaví value a zruší případný příznak změny
     this.value= val;
-    this._changed= false;
+    this._changed= 0;
     this.DOM_changed(0);
     // zobraz historii chatu po řádcích - v případě nedodržení formátu zobraz to co je
     var aval= val ? val.split('|') : [];
@@ -6473,10 +6486,12 @@ class Chat extends Elem {
     if ( on ) {
       this.DOM_Input.addClass('changed');
       this.DOM_Input.removeClass('empty').removeClass('empty_focus');
-      this._changed= true;
+      this._changed= on;
     }
-    else {
+    else if ( this._changed!==2 ) {
+      if ( !quiet )
       this.DOM_Input.removeClass('changed');
+      this._changed= 0;
     }
     if ( this._changedRow.row ) {
       // pokud byla započata oprava řádku, poznač opravu či smazání
@@ -6588,9 +6603,9 @@ class Select extends Elem {
 //a: silent - 0 | 1
 //e: onchanged
   change (silent) {
-    this._changed= true;
+    this._changed= 2;       // nelze vynulovat uživatelsky jen programově plain, init, ...
 //     this.DOM_empty(false);
-    this.DOM_changed(1,this._fc('t'));     // když není format:'t' bez rámečku
+    this.DOM_changed(2,this._fc('t'));     // když není format:'t' bez rámečku
     if ( !silent ) {
       this.fire('onchange');
       this.fire('onchanged');
@@ -6604,7 +6619,7 @@ class Select extends Elem {
     var ret= 1, del= '';
     if ( key!==undefined ) {
       Ezer.assert(this.Items,'nedefinované položky v select',this);
-      this._changed= false;
+      this._changed= 0;
       this.DOM_changed(0);
       if ( this.multi ) {       // multi select
         // oprav hodnotu klíče z čísla na string
@@ -6641,7 +6656,7 @@ class Select extends Elem {
     this.original.value= val;
     this.original.key= key;
     this.set(val);
-    this._changed= false;
+    this._changed= 0;
     this.DOM_changed(0);
   }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  _save
@@ -6774,9 +6789,9 @@ class Select extends Elem {
       .change ( () => {
         event.stopPropagation();
         if ( this._fc('t') )
-          this.DOM_changed(1,1);     // když není format:'t' se zvýrazněním změny
+          this.DOM_changed(Math.max(this._changed,1),1);     // když není format:'t' se zvýrazněním změny
         else {
-          this.DOM_changed(1,0);
+          this.DOM_changed(Math.max(this._changed,1),0);
           this.fire('onchanged');
         }
       })
@@ -6797,7 +6812,8 @@ class Select extends Elem {
             case 45: {                    // 'insert':
               if ( this.multi ) {
                 this._drop_status= 2;
-                  this.DOM_changed(1,this._fc('t')); // když není format:'t' se zvýrazněním změny
+                // když není format:'t' se zvýrazněním změny - zachovej její programatičnost 
+                this.DOM_changed(Math.max(this._changed,1),this._fc('t')); 
                 li.toggleClass('li-sel');
                 this.DOM_seekItems(true);
               }
@@ -6856,7 +6872,7 @@ class Select extends Elem {
                   this.DOM_noneItem();
                 }
   //              this.fire('onchanged');
-                this._changed= false;
+                this._changed= this._changed==2 ? 2 : 0;
               }
               break;
             }
@@ -6874,7 +6890,8 @@ class Select extends Elem {
           else {
             this.DOM_Input.val(this.value);
             this._key= this.original.key;
-            this.DOM_changed(0);     
+            if ( this._changed!==2 )
+              this.DOM_changed(0);     
           }
           this._drop_status= 1;
           this.DOM_drop_hide();
@@ -6985,7 +7002,8 @@ class Select extends Elem {
       this._key=  val==999998 ? 0 : sel.val();
     }
     this.DOM_setCss();
-    this.DOM_changed(1,this._fc('t')); // když není format:'t' se zvýrazněním změny
+    // když není format:'t' se zvýrazněním změny - zachovej její programatičnost 
+    this.DOM_changed(Math.max(this._changed,1),this._fc('t')); 
     this._drop_status= 2;
     if ( hide ) 
       this.DOM_drop_hide();
@@ -7037,7 +7055,8 @@ class Select extends Elem {
             this.DOM_Input.focus();
             if ( event.ctrlKey ) {
               this._drop_status= 2;
-              this.DOM_changed(1,this._fc('t')); // když není format:'t' se zvýrazněním změny
+              // když není format:'t' se zvýrazněním změny - zachovej její programatičnost 
+              this.DOM_changed(Math.max(this._changed,1),this._fc('t')); 
               li.toggleClass('li-sel');
               this.DOM_seekItems(true);
             }
@@ -7203,11 +7222,13 @@ class SelectAuto extends Select {
           this.DOM_Input.addClass(this._key ? 'changed_ok' : 'changed');
           this.DOM_Input.removeClass(this._key ? 'changed' : 'changed_ok');
         }
-        this._changed= true;
+        this._changed= on;
       }
-      else {
+      else if ( this._changed!==2 ) {
+        if ( !quiet )
         this.DOM_Input.removeClass('changed');
         this.DOM_Input.removeClass('changed_ok');
+        this._changed= 0;
       }
     }
   }
@@ -7326,7 +7347,7 @@ class SelectMap extends Select {
         }
       }
     }
-    this._changed= false;
+    this._changed= 0;
     this.DOM_set();              // zobrazení v DOM z this.value
     this.DOM_changed(0);
     return 1;
@@ -7357,6 +7378,7 @@ class SelectMap extends Select {
 //a: init_values : >0 nastaví hodnotu podle atributu value, ==2 označí jako změněné
   init  (init_values) {
     this.value= '';
+    this._changed= 0;
     if ( init_values ) {
       if ( this.owner._option && this.owner._option.x && this.owner._option.x==1
         && this._f('x')>=0 ) {
@@ -7389,7 +7411,7 @@ class SelectMap extends Select {
     this.original.value= val;
     this.original.key= key;
     this.key(val);
-    this._changed= false;
+    this._changed= 0;
     this.DOM_changed(0);
   }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  SelectMap _save
