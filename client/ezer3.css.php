@@ -331,7 +331,9 @@ div.MenuGroup3 li i:first-of-type { font-size: 14px; margin-left: -28px; width: 
 div.MenuGroup3 li:hover { background-color:$fb_item; color:$fc_item; border-right: 4px solid $s2_item; }
 div.MenuGroup3 li.selected3 { background-color: #ffffff; border-right: 4px solid #ffffff; }
 div.MenuGroup3 li.selected3:hover { background-color:$ab; color:$c !important; }
-div.MenuGroup3 li.disabled3:hover { background-color:#777;
+div.MenuGroup3 li.disabled3:hover { background-color:#777; }
+div.MenuGroup3 i.fa-red { color:red }
+div.MenuGroup3 .disabled3 i.fa-red { color:grey 
 }
 
 /* -------------------------------------------------------------------------------==> MenuContext */
