@@ -2720,7 +2720,10 @@ function get_value (&$val,&$type) {
 # zjistí, zda následuje hodnota
 function look_value () {
   global $head, $lex, $typ, $tree;
-  $ok= $typ[$head]=='num' || $typ[$head]=='str' || ($typ[$head]=='del' && $lex[$head]=='°');
+  $ok= $typ[$head]=='num' || $typ[$head]=='str' 
+      || ($typ[$head]=='del' && $lex[$head]=='°')
+      || ($typ[$head]=='del' && $lex[$head]=='-')
+      ;
   return $ok;
 }
 # -------------------------------------------------------------------------------------------- array
