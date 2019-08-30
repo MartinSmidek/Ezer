@@ -266,6 +266,9 @@ class Block {
     else if ( name=='title' && this.DOM_Label ) {
       this.DOM_Label.html(val);
     }
+    else if ( name=='title' && this instanceof MenuGroup ) {
+      this.DOM_Block.find('a').html(val);
+    }
     // oživ show.map_pipe
     if ( name=='map_pipe' && this instanceof Show ) {
       this.start();
