@@ -83,7 +83,7 @@ function ezer_browser(&$abbr,&$version,&$platform,$agent=null ) {
 # type = a-aplikace, g-group, k-kernel
 function doc_chngs_show($type='ak',$days=30,$app_name='') { trace();
   global $ezer_db, $ezer_root;
-  list($grp_name)= preg_split("/[\s-_]/",$app_name);
+  list($grp_name)= preg_split("/[\s\-_]/",$app_name);
   $lines= array();
   $s2u= function($d) { return substr($d,8,2).'.'.substr($d,5,2).'.'.substr($d,0,4); };
   $db_name= function($db) use ($ezer_db) {

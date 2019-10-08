@@ -713,7 +713,7 @@ function sys_activity($k,$to_skip=0,$den=0,$_watch_access_opt='') {
   global $ezer_root, $json, $user_options, $APLIKACE, $USER, $EZER, $watch_access_opt;
   $watch_access_opt= $_watch_access_opt;
   $user_options= $_SESSION[$ezer_root]['user_options'];
-                                        debug($watch_access_opt);
+//                                        debug($watch_access_opt);
   $skip= $to_skip && $EZER->activity->skip ? $EZER->activity->skip : '';
 //  $html= "<div class='CSection CMenu'>";
   switch ( "{$k->s} {$k->c}" ) {

@@ -3965,20 +3965,20 @@ Ezer.fce.stop= function () {
 // //      STARÉ: prázdná operace
 //   return 1;
 // };
-// -------------------------------------------------------------------------------------- clipboard
-//ff: fce.clipboard (msg1,msg2,...)
-//    vložení textů do schránky Windows, části textu odděluje znakem \n;
-//a: msgi - části textu
-//s: oldies
-Ezer.fce.clipboard= function () {
-  var msg= '', del= '';
-  for (var i= 0; i<arguments.length; i++) {
-    msg+= del+arguments[i];
-    del= '\n';
-  }
-  clipboard_set(msg);
-  return 1;
-};
+//// -------------------------------------------------------------------------------------- clipboard
+////ff: fce.clipboard (msg1,msg2,...)
+////    vložení textů do schránky Windows, části textu odděluje znakem \n;
+////a: msgi - části textu
+////s: oldies
+//Ezer.fce.clipboard= function () {
+//  var msg= '', del= '';
+//  for (var i= 0; i<arguments.length; i++) {
+//    msg+= del+arguments[i];
+//    del= '\n';
+//  }
+//  clipboard_set(msg);
+//  return 1;
+//};
 // ================================================================================================> . system
 // ------------------------------------------------------------------------------------ logout
 //ff: fce.logout ()

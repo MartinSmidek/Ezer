@@ -256,9 +256,11 @@ function pdo_query($query) {
   $pdo= $ezer_db[$curr_db][0];
   if ( preg_match('/^\s*(SET|INSERT|UPDATE|REPLACE|DELETE|TRUNCATE|DROP|CREATE)/',$query) ) {
     $res= $pdo->exec($query);
+    if ( $res===false ) fce_error($pdo->errorInfo()[2]);
   }
   else if ( preg_match('/^\s*(SELECT|SHOW)/',$query) ) {
     $res= $pdo->query($query);
+    if ( $res===false ) fce_error($pdo->errorInfo()[2]);
   }
   else {
     fce_error("pdo_query nelze použít pro ".substr($query,0,6).' ...');
@@ -319,6 +321,9 @@ function pdo_qry($qry,$pocet=null,$err=null,$to_throw=false,$db='') {
   if ( preg_match('/^\s*(SET|INSERT|UPDATE|REPLACE|DELETE|TRUNCATE|DROP|CREATE)/',$qry) ) {
     // pro INSERT|UPDATE|DELETE vrací počet modifikovaných řádků
     $res= $pdo->exec($qry);
+    if ( $res===false ) {
+      $msg.= $pdo->errorInfo()[2];
+    }
     $time= round(getmicrotime() - $time_start,4);
     if ( $pocet  ) {
 //      fce_error("pdo_qry: OBSOLETE - 2.parametr (počet záznamů & PHP7/PDO)");
