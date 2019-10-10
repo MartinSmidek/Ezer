@@ -226,7 +226,7 @@ panel act [,,*,] {type:'right', title:'Aktivita', _sys:'akt', skill:'a|a;aa|aa'
       item { title:'včetně programátorů' par:°{s:'skip',c:'0'}}
       proc onclick(i) { skip.set(i.par.c) }
     }
-    menu sur { title:'Přehledy',type:'group',skill:'a;aa'
+    menu sur { title:'Přehledy',type:'group',skill:'a'
       item { title:'tabulka oprávnění'}
       proc onclick() {
         ask('sys_user_skills','skills');
@@ -881,7 +881,7 @@ table _user { key_id:'id_user', db:'ezer_system'
   text options { help:'privátní nastavení|ve formátu JSON' }
   text username,
   text password,
-  number state,
+  text state,
   text forename,
   text surname,
   text login,

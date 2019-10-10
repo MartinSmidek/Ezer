@@ -141,7 +141,7 @@ table _user { key_id:'id_user', db:'ezer_system'
   text options { help:'privátní nastavení|ve formátu JSON' }
   text username,
   text password,
-  number state,
+  text state,
   text forename,
   text surname,
   text login,
