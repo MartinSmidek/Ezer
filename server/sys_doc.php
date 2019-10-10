@@ -72,7 +72,7 @@ function doc_ezer($info_only=false) { trace();
   $html.= "</dl>";
   $html.= "</div>";
 //                                                 $ezer_dbg_names= array(1,2,3);
-                                                debug($ezer_dbg_names);
+//                                                debug($ezer_dbg_names);
   return $info_only ? $ezer_dbg_names : $html;
 }
 # ------------------------------------------------------------------------------------------ doc_php
