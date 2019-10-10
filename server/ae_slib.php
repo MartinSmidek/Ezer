@@ -152,9 +152,9 @@ function doc_chngs_show($type='ak',$days=30,$app_name='') { trace();
   $html= implode('<br>',$lines);
   return $html;
 }
-/** ================================================================================================ SYSTEM */
+/** ========================================================================================= SYSTEM */
 # knihovna funkcí pro moduly server, compiler, reference
-# -------------------------------------------------------------------------------------------------- fce_error
+# ---------------------------------------------------------------------------------------- fce_error
 # $send_mail může obsahovat doplňkové informace zaslané správci aplikace mailem
 function fce_error ($msg,$send_mail='') { trace();
   global $ezer_root;
@@ -172,7 +172,7 @@ function fce_error ($msg,$send_mail='') { trace();
   else
     trigger_error($msg, E_USER_ERROR); // viz omezení délky znaků v prvním parametru php.net
 }
-# -------------------------------------------------------------------------------------------------- fce_warning
+# -------------------------------------------------------------------------------------- fce_warning
 # $send_mail může obsahovat doplňkové informace zaslané správci aplikace mailem
 function fce_warning ($msg,$send_mail='') { trace();
   global $warning, $ezer_root;
@@ -183,7 +183,7 @@ function fce_warning ($msg,$send_mail='') { trace();
   }
   return false;
 }
-# -------------------------------------------------------------------------------------------------- send_error
+# --------------------------------------------------------------------------------------- send_error
 # pošle chybovou hlášku správci aplikace mailem
 function send_error ($msg) { trace();
   global $ezer_root, $USER;
@@ -192,7 +192,7 @@ function send_error ($msg) { trace();
   send_mail("Ezer/$ezer_root ERROR",$body,"","",'error');
   return false;
 }
-# -------------------------------------------------------------------------------------------------- set_limits
+# --------------------------------------------------------------------------------------- set_limits
 # nastaví limity pro upload (MB,sec)
 function set_limits ($max_size=10,$max_time=300) { trace();
   ini_set('upload_max_filesize', "{$max_size}M");
@@ -201,7 +201,7 @@ function set_limits ($max_size=10,$max_time=300) { trace();
   ini_set('max_execution_time', $max_time);
   return true;
 }
-# -------------------------------------------------------------------------------------------------- send_mail
+# ---------------------------------------------------------------------------------------- send_mail
 # pošle systémový mail, pokud není určen adresát či odesílatel jde o mail správci aplikace
 # $to může být seznam adres oddělený čárkou
 function send_mail($subject,$html,$from='',$to='',$fromname='') { trace();
@@ -239,7 +239,7 @@ function send_mail($subject,$html,$from='',$to='',$fromname='') { trace();
   }
   return $ok;
 }
-# -------------------------------------------------------------------------------------------------- recursive_mkdir
+# ---------------------------------------------------------------------------------- recursive_mkdir
 // vytvoří adresář
 function recursive_mkdir($path, $sep="\\", $mode = 0777) {
   $dirs= explode($sep, $path);
@@ -260,7 +260,7 @@ function kolik_1_2_5($kolik,$tvary) {
   $tvar= explode(',',$tvary);
   return "$kolik ".($kolik>4 ? $tvar[2] : ($kolik>1 ? $tvar[1] : ($kolik>0 ? $tvar[0] : $tvar[2])));
 }
-# -------------------------------------------------------------------------------------------------- lorem_ipsum
+# -------------------------------------------------------------------------------------- lorem_ipsum
 # vrátí požadovaný počet odstavců výplňového textu
 function lorem_ipsum($repeat=1) {
   $lorem= str_repeat(
@@ -272,7 +272,7 @@ function lorem_ipsum($repeat=1) {
     ,$repeat);
   return $lorem;
 }
-# -------------------------------------------------------------------------------------------------- display
+# ------------------------------------------------------------------------------------------ display
 function display ($msg) {
   global $trace;
 //   $msg= win2utf($msg);
@@ -280,13 +280,13 @@ function display ($msg) {
   $trace.= ($trace?"<div />":'').$msg;
 //   else $trace= $msg;
 }
-# -------------------------------------------------------------------------------------------------- display_
+# ----------------------------------------------------------------------------------------- display_
 function display_ ($msg) {
   global $trace;
 //   $msg= win2utf($msg);
   $trace.= $msg;
 }
-# -------------------------------------------------------------------------------------------------- trace
+# -------------------------------------------------------------------------------------------- trace
 # $note je poznámka uvedená za trasovací informací
 function trace($note='',$coding='') {
   global $trace, $trace_parm;
@@ -298,11 +298,11 @@ function trace($note='',$coding='') {
   if ( $coding=='win1250' ) $x= wu($x);
   $trace.= $x;
 }
-# -------------------------------------------------------------------------------------------------- time_mark
+# ---------------------------------------------------------------------------------------- time_mark
 # kvůli časování operací
 function time_mark($msg) { trace();
 }
-# -------------------------------------------------------------------------------------------------- call_stack
+# --------------------------------------------------------------------------------------- call_stack
 function call_stack($act,$n,$hloubka=2,$show_call=1) { #$this->debug($act,'call_stack');
   $fce= isset($act[$n]['class'])
     ? "{$act[$n]['class']}{$act[$n]['type']}{$act[$n]['function']}" : $act[$n]['function'];
@@ -346,7 +346,7 @@ function call_stack($act,$n,$hloubka=2,$show_call=1) { #$this->debug($act,'call_
   }
   return $show_call ? "$fce($args)$from" : $from;
 }
-# -------------------------------------------------------------------------------------------------- debug
+# -------------------------------------------------------------------------------------------- debug
 # vygeneruje čitelný obraz pole nebo objektu
 # pokud jsou data v kódování win1250 je třeba použít  debug($s,'s',(object)array('win1250'=>1));
 # options:
@@ -441,8 +441,8 @@ function PHP($expr) {
   $fce= eval($expr);
   return $fce;
 }
-/*** =============================================================================================== MySQL */
-# -------------------------------------------------------------------------------------------------- select
+/*** ========================================================================================= MySQL */
+# ------------------------------------------------------------------------------------------- select
 # navrácení hodnoty jednoduchého dotazu
 # pokud $expr obsahuje čárku, vrací pole hodnot, pokud $expr je hvězdička vrací objekt
 # příklad 1: $id= select("id","tab","x=13")
@@ -472,7 +472,7 @@ function select($expr,$table,$cond=1,$db='.main.') {
 //                                                 debug($result,"select");
   return $result;
 }
-# -------------------------------------------------------------------------------------------------- select1
+# ------------------------------------------------------------------------------------------ select1
 # navrácení hodnoty jednoduchého dotazu - $expr musí vracet jednu hodnotu
 function select1($expr,$table,$cond=1,$db='.main.') {
   $result= '';
@@ -483,7 +483,7 @@ function select1($expr,$table,$cond=1,$db='.main.') {
   $result= $o->_result_;
   return $result;
 }
-# -------------------------------------------------------------------------------------------------- select_object
+# ------------------------------------------------------------------------------------ select_object
 # navrácení hodnot jednoduchého jednoznačného dotazu jako objektu (funkcí pdo_fetch_object)
 function select_object($expr,$table,$cond=1,$db='.main.') {
   $qry= "SELECT $expr FROM $table WHERE $cond";
@@ -492,14 +492,14 @@ function select_object($expr,$table,$cond=1,$db='.main.') {
   $result= pdo_fetch_object($res);
   return $result;
 }
-# -------------------------------------------------------------------------------------------------- query
+# -------------------------------------------------------------------------------------------- query
 # provedení MySQL dotazu
 function query($qry,$db='.main.') {
   $res= mysql_qry($qry,0,0,0,$db);
 //  if ( !$res ) fce_error(wu("chyba funkce query:$qry/".pdo_error()));
   return $res;
 }
-# -------------------------------------------------------------------------------------------------- sql_query
+# ---------------------------------------------------------------------------------------- sql_query
 # provedení MySQL dotazu
 function sql_query($qry,$db='.main.') {
   $obj= (object)array();
@@ -509,8 +509,8 @@ function sql_query($qry,$db='.main.') {
   }
   return $obj;
 }
-/** ================================================================================================ OSVĚDČENÉ FUNKCE */
-# -------------------------------------------------------------------------------------------------- dph_koeficienty
+/** =============================================================================== OSVĚDČENÉ FUNKCE */
+# ---------------------------------------------------------------------------------- dph_koeficienty
 # vrátí tabulku koeficientů DPH podle zákona o DPH
 function dph_koeficienty() {
   return array(
@@ -520,7 +520,7 @@ function dph_koeficienty() {
     21 => 0.1736
   );
 }
-# -------------------------------------------------------------------------------------------------- test_session
+# ------------------------------------------------------------------------------------- test_session
 # vypíše session
 function test_session() {
   global $ezer_root;
@@ -529,7 +529,7 @@ function test_session() {
                                                 debug($_SESSION,'$_SESSION');
   return $html;
 }
-# -------------------------------------------------------------------------------------------------- simple_glob
+# -------------------------------------------------------------------------------------- simple_glob
 /** Jednodušší náhrada funkce glob()
 * @param string $mask vyhledávací maska může v názvu souboru obsahovat znak * a ?
 * @return array pole obsahující všecny nalezené soubory/adresáře
@@ -551,7 +551,7 @@ function simple_glob($mask) {
     }
     return $return;
 }
-# -------------------------------------------------------------------------------------------------- map_cis
+# ------------------------------------------------------------------------------------------ map_cis
 # zjištění hodnot číselníku a vrácení jako překladového pole
 #   array (data => $val, ...)
 function map_cis($druh,$val='zkratka',$order='poradi',$db='') {
@@ -565,7 +565,7 @@ function map_cis($druh,$val='zkratka',$order='poradi',$db='') {
   }
   return $cis;
 }
-# -------------------------------------------------------------------------------------------------- json_encode_simple
+# ------------------------------------------------------------------------------- json_encode_simple
 function json_encode_simple($ao) {
 //                                         debug($ca);
   $js= ''; $ad= '';
@@ -580,7 +580,7 @@ function json_encode_simple($ao) {
   }
   return "[$js]";
 }
-# -------------------------------------------------------------------------------------------------- ezer_json_encode
+# --------------------------------------------------------------------------------- ezer_json_encode
 function ezer_json_encode($ao) {
 //                                         debug($ca);
   $js= ''; $ad= '';
@@ -611,7 +611,7 @@ function ezer_json_encode($ao) {
   }
   return $js;
 }
-# -------------------------------------------------------------------------------------------------- emailIsValid
+# ------------------------------------------------------------------------------------- emailIsValid
 # tells you if an email is in the correct form or not
 # emailIsValid - http://www.kirupa.com/forum/showthread.php?t=323018
 # args:  string - proposed email address
@@ -670,9 +670,9 @@ function emailIsValid($email,&$reason) {
    $reason= count($reasons) ? implode(', ',$reasons) : '';
    return $isValid;
 }
-/** ================================================================================================ AJAX - kontroly */
+/** ================================================================================ AJAX - kontroly */
 # v této sekci jsou testy korektnosti dat
-# -------------------------------------------------------------------------------------------------- verify_rodcis
+# ------------------------------------------------------------------------------------ verify_rodcis
 # podle http://latrine.dgx.cz/jak-overit-platne-ic-a-rodne-cislo
 function verify_rodcis($rc) {
   $ok= false;
@@ -700,7 +700,7 @@ function verify_rodcis($rc) {
   }
   return $ok;
 }
-# -------------------------------------------------------------------------------------------------- verify_datum
+# ------------------------------------------------------------------------------------- verify_datum
 # akceptuje d.m.yyyy
 function verify_datum($datum,&$d,&$m,&$y,&$timestamp) {
   $ymd= sql_date1($datum,1);
@@ -711,7 +711,7 @@ function verify_datum($datum,&$d,&$m,&$y,&$timestamp) {
   $timestamp= mktime(0,0,0,$m,$d,$y);
   return $ok;
 }
-# -------------------------------------------------------------------------------------------------- datum_rc
+# ----------------------------------------------------------------------------------------- datum_rc
 /** Zjištění data narození z rodného čísla
 * @param string $rodne_cislo rodné číslo ve formátu rrmmdd/xxxx
 * @return string datum ve formátu rrrr-mm-dd
@@ -724,7 +724,7 @@ function datum_rc($rodne_cislo) {
   }
   return false;
 }
-# -------------------------------------------------------------------------------------------------- rc2time
+# ------------------------------------------------------------------------------------------ rc2time
 # převod rodného čísla na datum narození
 # (zjednodušené)
 function rc2time($rodcis) {
@@ -739,7 +739,7 @@ function rc2time($rodcis) {
   }
   return $t;
 }
-# -------------------------------------------------------------------------------------------------- rc2dmy
+# ------------------------------------------------------------------------------------------- rc2dmy
 # převod rodného čísla na datum narození ve formátu d.m.Y s opravou chyb
 # (zjednodušené)
 function rc2dmy($rodcis) {
@@ -753,7 +753,7 @@ function rc2dmy($rodcis) {
   }
   return $dmy;
 }
-# -------------------------------------------------------------------------------------------------- rc2ymd
+# ------------------------------------------------------------------------------------------- rc2ymd
 # převod rodného čísla na datum narození ve formátu YYYY-mm-dd s opravou chyb
 # (zjednodušené)
 function rc2ymd($rodcis) {
@@ -767,13 +767,13 @@ function rc2ymd($rodcis) {
   }
   return $ymd;
 }
-# -------------------------------------------------------------------------------------------------- rc2man
+# ------------------------------------------------------------------------------------------- rc2man
 # zjistí pohlaví podle rodného čísla (zjednodušené)
 function rc2man($rc) {
   $man= strpos(" 56",substr($rc,2,1)) ? false : true;
   return $man;
 }
-# -------------------------------------------------------------------------------------------------- rc2roky
+# ------------------------------------------------------------------------------------------ rc2roky
 # zjistí aktuální věk v rocích podle rodného čísla (zjednodušené)
 function rc2roky($rc,$now=0) {
 //   return $rc;
@@ -781,7 +781,7 @@ function rc2roky($rc,$now=0) {
   $roky= $rc && $rc!="0000000000" ? floor(($now-rc2time($rc))/(60*60*24*365.2425)) : 0;
   return $roky;
 }
-# -------------------------------------------------------------------------------------------------- narozeni2roky
+# ------------------------------------------------------------------------------------ narozeni2roky
 # zjistí aktuální věk v rocích z data narození (typu mktime) zjištěného třeba rc2time          ?????
 # pokud je předáno $now(jako timestamp) bere se věk k tomu
 # $roky= narozeni2roky(rc2time($rodcis))
@@ -790,7 +790,7 @@ function narozeni2roky($time,$now=0) {
   $roky= floor((date("Ymd",$now) - date("Ymd", $time)) / 10000);
   return $roky;
 }
-// ------------------------------------------------------------------------------------------------- roku_k
+// ------------------------------------------------------------------------------------------ roku_k
 // roku_k (dat[,kdatu=now])
 // vrací počet roku uplynulých od daného data do daného data (neni-li uvedeno tak od běžného)
 function roku_k($dat,$kdatu='') {
@@ -821,9 +821,9 @@ function roku_k($dat,$kdatu='') {
 //   }
 //   return $d;
 // }
-/** ================================================================================================ AJAX - filtry */
+/** ================================================================================== AJAX - filtry */
 // v této sekci jsou oboustranné filtry pro transformaci mezi sql/user podobou dat
-# -------------------------------------------------------------------------------------------------- sql_week
+# ----------------------------------------------------------------------------------------- sql_week
 // datum bez dne v týdnu
 function sql_week ($datum) {
   // převeď sql tvar na uživatelskou podobu (default)
@@ -840,7 +840,7 @@ function sql_week ($datum) {
   }
   return $text;
 }
-# -------------------------------------------------------------------------------------------------- sql_date1
+# ---------------------------------------------------------------------------------------- sql_date1
 // datum bez dne v týdnu
 function sql_date1 ($datum,$user2sql=0,$del='.') {
   if ( $user2sql ) {
@@ -869,7 +869,7 @@ function sql_date1 ($datum,$user2sql=0,$del='.') {
   }
   return $text;
 }
-# -------------------------------------------------------------------------------------------------- sql_date
+# ----------------------------------------------------------------------------------------- sql_date
 // datum
 function sql_date ($datum,$user2sql=0) {
   if ( $user2sql ) {
@@ -899,7 +899,7 @@ function sql_date ($datum,$user2sql=0) {
   }
   return $text;
 }
-# -------------------------------------------------------------------------------------------------- sql_yymmdd
+# --------------------------------------------------------------------------------------- sql_yymmdd
 // uživatelské datum je ve formě yymmrr, pokud je yy>date('y') chápej rok jako 19yy jinam 20yy
 function sql_yymmdd ($datum,$user2sql=0) {
   $text= '';
@@ -919,7 +919,7 @@ function sql_yymmdd ($datum,$user2sql=0) {
   }
   return $text;
 }
-# -------------------------------------------------------------------------------------------------- sql_time
+# ----------------------------------------------------------------------------------------- sql_time
 // datum
 function sql_time ($datetime,$user2sql=0,$del=' ') {
   if ( $user2sql ) {
@@ -953,7 +953,7 @@ function sql_time ($datetime,$user2sql=0,$del=' ') {
   }
   return $text;
 }
-# -------------------------------------------------------------------------------------------------- sql_time1
+# ---------------------------------------------------------------------------------------- sql_time1
 // datum
 function sql_time1 ($datetime,$user2sql=0,$del=' ') {
   if ( $user2sql ) {
@@ -985,7 +985,7 @@ function sql_time1 ($datetime,$user2sql=0,$del=' ') {
   }
   return $text;
 }
-# -------------------------------------------------------------------------------------------------- sql_min
+# ------------------------------------------------------------------------------------------ sql_min
 // datum
 function sql_min ($datetime,$user2sql=0) {
   if ( $user2sql ) {
@@ -1009,7 +1009,7 @@ function sql_min ($datetime,$user2sql=0) {
   }
   return $text;
 }
-# -------------------------------------------------------------------------------------------------- sql_time_hmm
+# ------------------------------------------------------------------------------------- sql_time_hmm
 // datum
 function sql_time_hmm ($datetime,$user2sql=0) {
   if ( $user2sql ) {
@@ -1038,7 +1038,7 @@ function sql_time_hmm ($datetime,$user2sql=0) {
   }
   return $text;
 }
-# -------------------------------------------------------------------------------------------------- sql_time_mss
+# ------------------------------------------------------------------------------------- sql_time_mss
 // datum
 function sql_time_mss ($datetime,$user2sql=0) {
   if ( $user2sql ) {
@@ -1074,7 +1074,7 @@ function sql_time_mss ($datetime,$user2sql=0) {
   }
   return $text;
 }
-# -------------------------------------------------------------------------------------------------- stamp_date
+# --------------------------------------------------------------------------------------- stamp_date
 # na datum na stránce z timestamp v tabulce
 function stamp_date($x,$user2sql=0) { #trace();
   if ( $user2sql ) {
@@ -1088,7 +1088,7 @@ function stamp_date($x,$user2sql=0) { #trace();
   }
   return $y;
 }
-# -------------------------------------------------------------------------------------------------- sql2stamp
+# ---------------------------------------------------------------------------------------- sql2stamp
 # na datum z tabulky na timestamp
 function sql2stamp($ymd) { #trace();
   if ( $ymd=='0000-00-00' )
@@ -1101,7 +1101,7 @@ function sql2stamp($ymd) { #trace();
   }
   return $t;
 }
-# -------------------------------------------------------------------------------------------------- win2utf
+# ------------------------------------------------------------------------------------------ win2utf
 # konverze z CP-1250 do UTF-8
 function win2utf($val,$always=false) { #trace();
   global $ezer_mysql_cp;
@@ -1111,7 +1111,7 @@ function win2utf($val,$always=false) { #trace();
   }
   return $val;
 }
-# -------------------------------------------------------------------------------------------------- utf2win
+# ------------------------------------------------------------------------------------------ utf2win
 # konverze z UTF-8 do CP-1250
 function utf2win($val,$always=false) {
   global $ezer_mysql_cp;
@@ -1120,7 +1120,7 @@ function utf2win($val,$always=false) {
   }
   return $val;
 }
-# -------------------------------------------------------------------------------------------------- utf2winsylk
+# -------------------------------------------------------------------------------------- utf2winsylk
 # konverze z UTF-8 do CP-1250 pro export do SYLKu
 function utf2win_sylk($val,$always=false) {
   global $ezer_mysql_cp;
@@ -1129,7 +1129,7 @@ function utf2win_sylk($val,$always=false) {
   }
   return $val;
 }
-# -------------------------------------------------------------------------------------------------- utf2ascii
+# ---------------------------------------------------------------------------------------- utf2ascii
 # konverze z UTF-8 do písmen, číslic a podtržítka, konvertují se i html entity
 function utf2ascii($val,$allow='') {
   $txt= preg_replace('~&(.)(?:acute|caron);~u', '\1', $val);
@@ -1146,7 +1146,7 @@ function utf2ascii($val,$allow='') {
   $ref= preg_replace("~[^-a-z0-9_$allow]+~", '', $ref);
   return $ref;
 }
-# -------------------------------------------------------------------------------------------------- array_values_recursive
+# --------------------------------------------------------------------------- array_values_recursive
 # seznam prvků polí
 function array_values_recursive($array) {
   $flat= array();
@@ -1158,7 +1158,7 @@ function array_values_recursive($array) {
   }
   return $flat;
 }
-# -------------------------------------------------------------------------------------------------- menu_definition
+# ---------------------------------------------------------------------------------- menu_definition
 # transformace textu v json na definici menu, včetně zohlednění skill
 function menu_definition($k1,$k2,$k3,$def) {
   global $y, $json, $USER;
@@ -1182,7 +1182,7 @@ function menu_definition($k1,$k2,$k3,$def) {
   }
   $y->selected= array($k2,$k3);
 }
-# -------------------------------------------------------------------------------------------------- file_between
+# ------------------------------------------------------------------------------------- file_between
 # vrátí úsek textu ze $soubor mezi \n$ods a $dos
 function file_between($soubor,$ods,$dos) {
   $text= '';
@@ -1195,7 +1195,7 @@ function file_between($soubor,$ods,$dos) {
   else fce_error("soubor $soubor neexistuje");
   return $text;
 }
-# -------------------------------------------------------------------------------------------------- source_text
+# -------------------------------------------------------------------------------------- source_text
 # vrátí zdrojový text
 function source_text ($file,$app='') {
   global $ezer_path_appl, $ezer_path_root;
@@ -1204,7 +1204,7 @@ function source_text ($file,$app='') {
   $text= @file_get_contents($fpath);
   return $text;
 }
-# -------------------------------------------------------------------------------------------------- edit_source
+# -------------------------------------------------------------------------------------- edit_source
 # nastaví zdrojový text v PSPad
 function edit_source ($file,$app,$line) { trace();
   global $ezer_path_appl, $ezer_path_root;
@@ -1249,7 +1249,7 @@ function edit_source ($file,$app,$line) { trace();
   }
   return $ok;
 }
-# -------------------------------------------------------------------------------------------------- source_line
+# -------------------------------------------------------------------------------------- source_line
 # vrátí úsek zdrojového textu $line (+-1) a označí sloupec
 function source_line ($file,$app,$line,$clmn) {
   global $ezer_path_root, $ezer_name, $ezer_root;
@@ -1274,7 +1274,7 @@ function source_line ($file,$app,$line,$clmn) {
   }
   return $text;
 }
-# ================================================================================================== EXPORT
+# =========================================================================================== EXPORT
 # sada funkcí pro export z příkazu browse_export ve formátech: csv
 #   export_head
 #   export_row
@@ -1285,7 +1285,7 @@ function source_line ($file,$app,$line,$clmn) {
 #   type        -- 'csv'|'xls'|'xlsx'
 #   title       -- pro 'xls(x)': nadpis od A1, hlavička pak začne od A3
 #   color       -- pro 'xls(x)': podložení hlavičky, default=aabbbbbb (4 barvy)
-# -------------------------------------------------------------------------------------------------- export_head
+# -------------------------------------------------------------------------------------- export_head
 # otevření exportovaného souboru, $clmns je seznam jmen sloupců
 function export_head($par,$clmns,$fmt='') { #trace();
   global $export_par, $ezer_path_docs;
@@ -1326,7 +1326,7 @@ function export_head($par,$clmns,$fmt='') { #trace();
     break;
   }
 }
-# -------------------------------------------------------------------------------------------------- export_row
+# --------------------------------------------------------------------------------------- export_row
 # zápis řádku do exportovaného souboru
 function export_row($row,$fmt='') { #trace();
   global $export_par;
@@ -1350,7 +1350,7 @@ function export_row($row,$fmt='') { #trace();
     break;
   }
 }
-# -------------------------------------------------------------------------------------------------- export_tail
+# -------------------------------------------------------------------------------------- export_tail
 # uzavření exportovaného souboru
 function export_tail($show_xls=0) { #trace();
   global $export_par;
@@ -1379,8 +1379,8 @@ function export_tail($show_xls=0) { #trace();
   }
   return $ret;
 }
-# ================================================================================================== EXPORT EXCEL
-# -------------------------------------------------------------------------------------------------- wu
+# ====================================================================================== EXPORT EXCEL
+# ----------------------------------------------------------------------------------------------- wu
 # na UTF8 na win1250
 function wu($x,$user2sql=0) { #trace();
   if ( $user2sql ) {
@@ -1393,7 +1393,7 @@ function wu($x,$user2sql=0) { #trace();
   }
   return $y;
 }
-# -------------------------------------------------------------------------------------------------- uw
+# ----------------------------------------------------------------------------------------------- uw
 # z UTF8 do win1250
 function uw($x) {
   return utf2win($x,true);
@@ -1761,8 +1761,8 @@ function Excel5_f(&$ws,$range,$v,&$err) {
 //   }
 //   return '';
 // }
-# ================================================================================================== EZER2
-# -------------------------------------------------------------------------------------------------- mysql_row
+# ============================================================================================ EZER2
+# ---------------------------------------------------------------------------------------- mysql_row
 # provedení dotazu v $y->qry="..." a vrácení pdo_fetch_assoc (případně doplnění $y->err)
 function mysql_row($qry,$err=null) {
   $res= mysql_qry($qry,1);
@@ -1770,7 +1770,7 @@ function mysql_row($qry,$err=null) {
   if ( !$res ) mysql_err($qry);
   return $row;
 }
-# -------------------------------------------------------------------------------------------------- mysql_object
+# ------------------------------------------------------------------------------------- mysql_object
 # provedení dotazu v $y->qry="..." a vrácení pdo_fetch_object (případně doplnění $y->err)
 function mysql_object($qry,$err=null) {
   $res= mysql_qry($qry,1);
@@ -1778,13 +1778,13 @@ function mysql_object($qry,$err=null) {
   if ( !$res ) mysql_err($qry);
   return $x;
 }
-# -------------------------------------------------------------------------------------------------- getmicrotime
+# ------------------------------------------------------------------------------------- getmicrotime
 function getmicrotime() {
 //   list($usec, $sec) = explode(" ", microtime());
 //   return ((float)$usec + (float)$sec);
   return round(microtime(true)*1000);
 }
-# -------------------------------------------------------------------------------------------------- mysql_err
+# ---------------------------------------------------------------------------------------- mysql_err
 # ošetření chyby a doplnění $y->error, $y->ok
 function mysql_err($qry) {
   global $y;
@@ -1802,90 +1802,7 @@ function mysql_err($qry) {
   $y->ok= 'ko';
   $y->error.= $msg;
 }
-//# ---------------------------------------------------------------------------------------- mysql_qry
-//# provedení dotazu a textu v $y->qry="..." a případně doplnění $y->err
-//#   $qry      -- SQL dotaz
-//#   $pocet    -- pokud je uvedeno, testuje se a při nedodržení se ohlásí chyba
-//#   $err      -- text chybové hlášky, která se použije místo standardní ... pokud končí znakem':'
-//#                bude za ni doplněna standardní chybová hláška;
-//#                pokud $err=='-' nebude generována chyba a funkce vrátí false
-//#   $to_throw -- chyba způsobí výjimku
-//#   $db       -- před dotazem je přepnuto na databázi daného jména v tabulce $ezer_db nebo na hlavní
-//function mysql_qry($qry,$pocet=null,$err=null,$to_throw=false,$db='') {
-//  global $y, $totrace, $qry_del, $qry_count, $ezer_db;
-//  if ( !isset($y) ) $y= (object)array();
-//  $msg= ''; $abbr= '';
-//  $qry_count++;
-//  $myqry= strtr($qry,array('"'=>"'","<="=>'&le;',"<"=>'&lt;'));
-////                                                         display($myqry);
-//  // dotaz s měřením času
-//  $time_start= getmicrotime();
-//  // přepnutí na databázi
-//  if ( $db ) ezer_connect($db);
-//  $res= @pdo_query($qry);
-//  $time= round(getmicrotime() - $time_start,4);
-//  $ok= $res ? 'ok' : '--';
-//  if ( !$res ) {
-//    if ( $err=='-' ) goto end;
-//    $merr= pdo_error();
-//    $serr= "You have an error in your SQL";
-//    if ( $merr && substr($merr,0,strlen($serr))==$serr ) {
-//      $msg.= "SQL error ".substr($merr,strlen($serr))." in:$qry";
-//      $abbr= '/S';
-//    }
-//    else {
-//      $myerr= $merr;
-//      if ( $err ) {
-//        $myerr= $err;
-//        if ( substr($err,-1,1)==':' )
-//          $myerr.= $merr;
-//      }
-//      $myerr= str_replace('"',"U",$myerr);
-////       $msg.= win2utf("\"$myerr\" ")."\nQRY:$qry";
-//      $msg.= "\"$myerr\" \nQRY:$qry";
-//      $abbr= '/E';
-//    }
-//    $y->ok= 'ko';
-//  }
-//  // pokud byl specifikován očekávaný počet, proveď kontrolu
-//  else if ( $pocet  ) {
-//    if ( substr($qry,0,6)=='SELECT' )
-//      $num= pdo_num_rows($res);
-//    elseif ( in_array(substr($qry,0,6),array('INSERT','UPDATE','REPLAC','DELETE')) )
-//      $num= pdo_affected_rows($res); // INSERT, UPDATE, REPLACE or DELETE
-//    else
-//      fce_error("mysql_qry: neznámá operace v $qry");
-//    if ( $pocet!=$num ) {
-//      if ( $num==0 ) {
-//        $msg.= "nenalezen záznam " . ($err ? ", $err" : ""). " v $qry";
-//        $abbr= '/0';
-//      }
-//      else {
-//        $msg.= "vraceno $num zaznamu misto $pocet" . ($err ? ", $err" : ""). " v $qry";
-//        $annr= "/$num";
-//      }
-//      $y->ok= 'ko';
-//      $ok= "ko [$num]";
-//      $res= null;
-//    }
-//  }
-//  if ( strpos($totrace,'M')!==false ) {
-//    $pretty= $myqry;
-//    if ( strpos($pretty,"\n")===false )
-//      $pretty= preg_replace("/(FROM|LEFT JOIN|JOIN|WHERE|GROUP|HAVING|ORDER)/","\n\t\$1",$pretty);
-//    $y->qry.= (isset($y->qry)?"\n":'')."$ok $time \"$pretty\" ";
-////    $y->qry.= (isset($y->qry)?"\n":'')."$ok $time \"$myqry\" ";
-//  }
-//  $y->qry_ms= isset($y->qry_ms) ? $y->qry_ms+$time : $time;
-//  $qry_del= "\n: ";
-//  if ( $msg ) {
-//    if ( $to_throw ) throw new Exception($err ? "$err$abbr" : $msg);
-//    else $y->error= (isset($y->error) ? $y->error : '').$msg;
-//  }
-//end:
-//  return $res;
-//}
-# -------------------------------------------------------------------------------------------------- ezer_qry
+# ----------------------------------------------------------------------------------------- ezer_qry
 # záznam změn do tabulky _track
 # 1. ezer_qry("INSERT",$table,$x->key,$zmeny[,$key_id]);       -- vložení 1 záznamu
 # 2. ezer_qry("UPDATE",$table,$x->key,$zmeny[,$key_id]);       -- oprava 1 záznamu
