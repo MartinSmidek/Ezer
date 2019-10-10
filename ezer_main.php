@@ -45,6 +45,7 @@
   $dbg=      isset($_GET['dbg'])     ? $_GET['dbg']     : 0;
   $gapi=     isset($_GET['gapi'])    ? $_GET['gapi']    : 0; //!($ezer_local || $ezer_ksweb);
   $gmap=     isset($_GET['gmap'])    ? $_GET['gmap']    : ($ezer_server?1:0);
+  $touch=    isset($_GET['touch'])   ? $_GET['touch']   : 1;
 
   // inicializace SESSION
   if ( !isset($_SESSION) ) {
@@ -113,7 +114,7 @@
     // jQuery
     array("$licensed/jquery-$jQuery.min.js","$licensed/jquery-noconflict.js","$client/licensed/jquery-ui.min.js"),
     // podpora dotykového ovládání
-    array("$licensed/jquery.touchSwipe.min.js"),
+    array($touch ? "$licensed/jquery.touchSwipe.min.js" : ''),
     // jádro Ezer3.1
     array(
       "$client/ezer_app3.js","$client/ezer3.js","$client/ezer_area3.js",
