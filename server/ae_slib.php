@@ -845,7 +845,7 @@ function sql_week ($datum) {
 function sql_date1 ($datum,$user2sql=0,$del='.') {
   if ( $user2sql ) {
     // převeď uživatelskou podobu na sql tvar
-    $text= '';
+    $text= '0000-00-00';
     if ( $datum ) {
       $datum= str_replace(' ','',$datum);
       list($d,$m,$y)= explode('.',$datum);
@@ -874,7 +874,7 @@ function sql_date1 ($datum,$user2sql=0,$del='.') {
 function sql_date ($datum,$user2sql=0) {
   if ( $user2sql ) {
     // převeď uživatelskou podobu na sql tvar
-    $text= '';
+    $text= '0000-00-00';
     if ( $datum ) {
       $datum= trim($datum);
       list($d,$m,$y)= explode('.',$datum);
@@ -902,8 +902,8 @@ function sql_date ($datum,$user2sql=0) {
 # --------------------------------------------------------------------------------------- sql_yymmdd
 // uživatelské datum je ve formě yymmrr, pokud je yy>date('y') chápej rok jako 19yy jinam 20yy
 function sql_yymmdd ($datum,$user2sql=0) {
-  $text= '';
   if ( $user2sql ) {                            // převeď uživatelskou podobu na sql tvar
+    $text= '0000-00-00';
     if ( $datum ) {
       $datum= trim($datum);
       $datum= str_pad($datum,6,'_');
@@ -913,6 +913,7 @@ function sql_yymmdd ($datum,$user2sql=0) {
     }
   }
   else {                                        // převeď sql tvar na uživatelskou podobu (default)
+    $text= '';
     if ( $datum && substr($datum,0,10)!='0000-00-00' ) {
       $text= substr($datum,2,2).substr($datum,5,2).substr($datum,8,2);
     }

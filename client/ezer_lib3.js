@@ -308,22 +308,24 @@ function ae_time2ymd (dmy) {
   var y, yh, m, d, s= [];
   if ( dmy.length > 0 ) {
     dmy= dmy.split('.');
-    // den může být předeslán jménem dne v týdnu
-    d= dmy[0].split(' ');
-    d= parseInt(d[d.length-1],10);
-    m= parseInt(dmy[1],10);
-    // rok může být následován časem
-    yh= dmy[2].split(' ');
-    y= parseInt(yh[0]);
-    if (yh[1]) {
-      var hms= yh[1].split(':');
-      if ( hms.length==3 )
-        s= [y,m,d,parseInt(hms[0]),parseInt(hms[1]),parseInt(hms[2])];
+    if ( dmy.length==3 ) {
+      // den může být předeslán jménem dne v týdnu
+      d= dmy[0].split(' ');
+      d= parseInt(d[d.length-1],10);
+      m= parseInt(dmy[1],10);
+      // rok může být následován časem
+      yh= dmy[2].split(' ');
+      y= parseInt(yh[0]);
+      if (yh[1]) {
+        var hms= yh[1].split(':');
+        if ( hms.length==3 )
+          s= [y,m,d,parseInt(hms[0]),parseInt(hms[1]),parseInt(hms[2])];
+        else
+          s= [y,m,d,parseInt(hms[0]),parseInt(hms[1])];
+      }
       else
-        s= [y,m,d,parseInt(hms[0]),parseInt(hms[1])];
+        s= [y,m,d];
     }
-    else
-      s= [y,m,d];
   }
   return s;
 }
