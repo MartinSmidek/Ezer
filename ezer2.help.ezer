@@ -108,7 +108,7 @@ panel gen [,,770,] {type:'right', title:'Generování', _sys:'*', skill:'m'
   }
   use u: form f [0,0,,]
 }
-# ============================================================================================> ZMĚNY
+# ===========================================================================================> ZMĚNY
 panel nov [,,770,] {type:'right', title:'Přehled změn', _sys:'*'
   use msg_a: form _msg_a [12,35,,] { tag:'ma', format:'n' }
   use msg_g: form _msg_g [12,35,,] { tag:'mg', format:'n' }
@@ -151,7 +151,7 @@ panel nov [,,770,] {type:'right', title:'Přehled změn', _sys:'*'
   use u: form f [12,4,,]
   # ------------------------------------------------------------------------ _msg_a
   form _msg_a [,,*,500] {
-    var virgin= 1
+    var virgin= 1, a_version= 0
     proc start() { virgin.get; refresh; virgin.set(0) }
     proc refresh() { s.browse_load("kind='v'") }
     view h: table _help
@@ -159,7 +159,8 @@ panel nov [,,770,] {type:'right', title:'Přehled změn', _sys:'*'
     // příkazy
     label  [12,5,145,30] { css:'ae_parm'}
     button [20,11,,] { title:"[fa-database] Nový", proc onclick() { var ver_max:number
-        form.init(2);
+        form.init(2); 
+        [ a_version.get; version.set(sum(a_version.get,1)); version.change ];
         kind.change; datum.set(now); datum.change; topic.change; hlp.change; }}
     button [79,11,,] { title:"[fa-trash-o] Vymazat", proc onclick() {
       confirm("Opravdu vymazat zprávu ",s.topic.get,"?");
@@ -189,6 +190,7 @@ panel nov [,,770,] {type:'right', title:'Přehled změn', _sys:'*'
       show [,,419,] { title:'help', data:h.help, format:'sq*t' }
       proc onrowclick() {
         form.key(id_help.get); form.load;
+        a_version.set(ver.get);
       }
     }
   }
