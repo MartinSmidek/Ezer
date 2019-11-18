@@ -287,7 +287,7 @@ function pdo_object($qry) {
 }
 function pdo_affected_rows($res) {       
   // pro kompatibilitu s mysql_affcted_rows
-  return is_int($res) ? $res : $res->rowCount();
+  return ($res===false || is_int($res)) ? $res : $res->rowCount();
 }
 function mysql_qry($qry,$pocet=null,$err=null,$to_throw=null,$db=null) {
   return pdo_qry($qry,$pocet,$err,$to_throw,$db);
