@@ -9129,7 +9129,7 @@ class Browse extends Block {
       })
       .contextmenu( el => { // kliknutí pravým tlačítkem na datovém řádku označí řádek a zobrazí contextmenu
         if ( this.enabled ) {
-          Ezer.fce.touch('block',this,'dblclick');     // informace do _touch na server
+          Ezer.fce.touch('block',this,'contextmenu');     // informace do _touch na server
           var tr= el.target.tagName=='TD' ? el.target.parentNode : el.target;
           var i= jQuery(tr).data('i');
           if ( i && i <= this.tlen ) {
@@ -9137,7 +9137,7 @@ class Browse extends Block {
             this.tact= i;
             this.DOM_focus();
 			this.DOM_clear_focus(1)
-            this.DOM_hi_row(this.t+i-1,1);
+            this.DOM_hi_row(this.t+i-1,0); // a vyvolá onrowclick
           }
         }
       });
