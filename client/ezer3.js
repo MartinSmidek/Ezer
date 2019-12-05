@@ -8150,6 +8150,8 @@ class Browse extends Block {
     // staré hodnoty buferů budou zapomenuty
     this.buf= [];
     this.keys= [];
+    // zrušení případných title
+    jQuery(this.DOM_tbody).find('td').removeAttr('title');
   }
 // ------------------------------------------------------------------------------------ browse fill+
 //fm: Browse.browse_fill (data[,del='|',first=0[,cond,order,having]])
