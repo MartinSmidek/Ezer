@@ -5294,56 +5294,72 @@ Ezer.fce.DOM.help= function (html,title,ykey,xkey,seen,refs,db) {
 //          help.dotaz.find('textarea').val(),Ezer.fce.DOM.help_);
 //        Ezer.obj.DOM.help.dotaz.fadeOut(Ezer.options.fade_speed)
 //      });
-  }
-  if ( Ezer.options.CKEditor.version[0]=='4' && Ezer.sys.user.skills
-    && Ezer.sys.user.skills.split(' ').includes('ah') ) {
-    help.panel.DOM.find('div.pop_head')
-      .contextmenu( event => {
-        event.preventDefault();
-        event.stopPropagation();
-        // kontextové menu pro administraci helpu
-        Ezer.fce.contextmenu([
-          ['editovat obsah',function(el) {
-            help.text.html(`<div id='editable' contenteditable='true'>${help.html}</div>`);
-            CKEDITOR.disableAutoInline= true;
-            var e1= CKEDITOR.inline('editable',{ startupFocus:true, resize_enabled:false, //skin:'Kama',
-              entities:false, entities_latin:false, language:'cs', contentsLanguage:'cs',
-              toolbar:Ezer.options.CKEditor.EzerHelp
-                ? Ezer.options.CKEditor.EzerHelp.toolbar
-                : [['PasteFromWord','-','Format','Bold','Italic',
-                  '-','JustifyLeft','JustifyCenter','JustifyRight',
-                  '-','Link','Unlink','HorizontalRule','Image',
-                  '-','NumberedList','BulletedList','-','Outdent','Indent',
-                  '-','Source','ShowBlocks','RemoveFormat']]
-            });
-          }],
-          ["uložit pod '"+help.ykey.title+"'",function(el) {
-            var data= CKEDITOR.instances.editable.getData();
-            help.text.html(data);
-            Ezer.App.help_save(help.ykey,data,help.db);
-            Ezer.fce.DOM.help_hide();
-          }],
-          help.ykey.sys==help.xkey.sys ? null :
-          ["uložit pod '"+help.xkey.title+"'",function(el) {
-            var data= window.CKEDITOR.instances.editable.getData();
-            help.text.html(data);
-            Ezer.App.help_save(help.xkey,data,help.db);
-            Ezer.fce.DOM.help_hide();
-          }],
-          ["vynutit zobrazení",function(el) {
-            Ezer.App.help_force(help.ykey);
-          }],
-          ["-neukládat změny",function(el) {
-            help.text.html(help.html);
-            Ezer.fce.DOM.help_hide();
-          }],
-          ["odkaz na help do schránky",function(el) {
-            Ezer.fce.clipboard(" <a href='help://"+help.xkey.sys+"'>"
-              +help.xkey.title+"</a> ");
-          }]
-        ],event);
-//         return false;
-      });
+    if ( Ezer.options.CKEditor.version[0]=='4' && Ezer.sys.user.skills
+      && Ezer.sys.user.skills.split(' ').includes('ah') ) {
+      help.panel.DOM.find('div.pop_head')
+        .contextmenu( event => {
+          event.preventDefault();
+          event.stopPropagation();
+          // kontextové menu pro administraci helpu
+          Ezer.fce.contextmenu([
+            ['editovat obsah',function(el) {
+              help.text.html(`<div id='editable' contenteditable='true'>${help.html}</div>`);
+              CKEDITOR.disableAutoInline= true;
+              var e1= CKEDITOR.inline('editable',{ startupFocus:true, resize_enabled:false, //skin:'Kama',
+                entities:false, entities_latin:false, language:'cs', contentsLanguage:'cs',
+                toolbar:Ezer.options.CKEditor.EzerHelp
+                  ? Ezer.options.CKEditor.EzerHelp.toolbar
+                  : [['PasteFromWord','-','Format','Bold','Italic',
+                    '-','JustifyLeft','JustifyCenter','JustifyRight',
+                    '-','Link','Unlink','HorizontalRule','Image',
+                    '-','NumberedList','BulletedList','-','Outdent','Indent',
+                    '-','Source','ShowBlocks','RemoveFormat']]
+              });
+            }],
+            ["uložit pod '"+help.ykey.title+"'",function(el) {
+              var data= CKEDITOR.instances.editable.getData();
+              help.text.html(data);
+              Ezer.App.help_save(help.ykey,data,help.db);
+              Ezer.fce.DOM.help_hide();
+            }],
+            help.ykey.sys==help.xkey.sys ? null :
+            ["uložit pod '"+help.xkey.title+"'",function(el) {
+              var data= window.CKEDITOR.instances.editable.getData();
+              help.text.html(data);
+              Ezer.App.help_save(help.xkey,data,help.db);
+              Ezer.fce.DOM.help_hide();
+            }],
+            !Ezer.options.group_db ? null :
+            ["-uložit pod '"+help.ykey.title+"' (group_db)",function(el) {
+              var data= CKEDITOR.instances.editable.getData();
+              help.db= 'ezer_group';
+              help.text.html(data);
+              Ezer.App.help_save(help.ykey,data,help.db);
+              Ezer.fce.DOM.help_hide();
+            }],
+            help.ykey.sys==help.xkey.sys || !Ezer.options.group_db ? null :
+            ["uložit pod '"+help.xkey.title+"' (group_db)",function(el) {
+              var data= window.CKEDITOR.instances.editable.getData();
+              help.db= 'ezer_group';
+              help.text.html(data);
+              Ezer.App.help_save(help.xkey,data,help.db);
+              Ezer.fce.DOM.help_hide();
+            }],
+            ["-vynutit zobrazení",function(el) {
+              Ezer.App.help_force(help.ykey);
+            }],
+            ["neukládat změny",function(el) {
+              help.text.html(help.html);
+              Ezer.fce.DOM.help_hide();
+            }],
+            ["odkaz na help do schránky",function(el) {
+              Ezer.fce.clipboard(" <a href='help://"+help.xkey.sys+"'>"
+                +help.xkey.title+"</a> ");
+            }]
+          ],event);
+    //         return false;
+        });
+    }
   }
   // zobrazení Helpu podle zadaných parametrů
   help.html= Ezer.fce.replace_fa(html);
