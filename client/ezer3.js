@@ -9795,8 +9795,9 @@ class Show extends Elem {
         id= this.options.data ? (this.view ? this.view.id : this.table.id) + '.' + this.data.id :
             agregate          ? this.id : this.options.expr;
         if ( this._fc('h') ) {
-          // pokud je sloupec s formátem 'h' použijeme MySQL uživatelskou funkci strip_tags
-          id= 'strip_tags('+id+')';
+          // pokud je sloupec s formátem 'h' použijeme xml funkci 
+          // viz https://mariadb.com/kb/en/library/extractvalue/
+          id= `ExtractValue(${id},'//text()')`;
         }
         // datumy je třeba konvertovat, pro data zjistíme z tabulky, pro expr heuristikou z sql_pipe
         typ= this.options.data ? this.data.type :
@@ -9936,8 +9937,9 @@ class Show extends Elem {
       // definuj řazení podle tohoto sloupce - viz též v browse_clmn.start
       var id= this.data ? this.data.id : this.options.expr;
       if ( this._fc('h') ) {
-        // pokud je sloupec s formátem 'h' použijeme MySQL uživatelskou funkci strip_tags
-        id= 'strip_tags('+id+')';
+        // pokud je sloupec s formátem 'h' použijeme xml funkci 
+        // viz https://mariadb.com/kb/en/library/extractvalue/
+        id= `ExtractValue(${id},'//text()')`;
       }
       this.owner.order= this.view ? this.view.id+'.' : '';
       this.owner.order+= id;

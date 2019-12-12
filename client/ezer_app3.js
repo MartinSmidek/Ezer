@@ -3388,16 +3388,22 @@ Ezer.fce.match= function (pattern,str,flags) {
 };
 // -------------------------------------------------------------------------------------- strip_tags
 //ff: fce.strip_tags (x[,allowed=''])
-//      odstraní z x HTML a PHP tagy. Viz http://phpjs.org/functions/strip_tags
+//  pokud není použito allowed použije se jQuery funkce text, jinak 
+//  se tagy odstraní z x podle http://phpjs.org/functions/strip_tags
 //s: funkce
 Ezer.fce.strip_tags= function (input,allowed) {
-  // making sure the allowed arg is a string containing only tags in lowercase (<a><b><c>)
-  allowed= (((allowed || "") + "").toLowerCase().match(/<[a-z][a-z0-9]*>/g) || []).join('');
-  var tags= /<\/?([a-z][a-z0-9]*)\b[^>]*>/gi,
-    commentsAndPhpTags= /<!--[\s\S]*?-->|<\?(?:php)?[\s\S]*?\?>/gi;
-  return input.replace(commentsAndPhpTags, '').replace(tags, function ($0, $1) {
+  if ( !allowed ) {
+    return jQuery(`<p>${input}</p>`).text();
+  }
+  else {
+    // making sure the allowed arg is a string containing only tags in lowercase (<a><b><c>)
+    allowed= (((allowed || "") + "").toLowerCase().match(/<[a-z][a-z0-9]*>/g) || []).join('');
+    var tags= /<\/?([a-z][a-z0-9]*)\b[^>]*>/gi,
+      commentsAndPhpTags= /<!--[\s\S]*?-->|<\?(?:php)?[\s\S]*?\?>/gi;
+    return input.replace(commentsAndPhpTags, '').replace(tags, function ($0, $1) {
     return allowed.indexOf('<' + $1.toLowerCase() + '>') > -1 ? $0 : '';
   });
+  }
 };
 // -------------------------------------------------------------------------------------- contains
 //ff: fce.contains (x,list[,sep=','])
