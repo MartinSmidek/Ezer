@@ -2534,7 +2534,7 @@ class PanelPopup extends Panel {
         close= this.options.par && this.options.par.close=='no' 
               ? '' : '<div class="pop_close"></div>';
     this.DOM= jQuery(`
-        <div class="Popup3">
+        <div class="Popup3" tabindex="0">
           <div class="pop_head"><span></span></div>
           ${close}
           <div class="pop_body"></div>
@@ -7881,6 +7881,13 @@ class Browse extends Block {
       this.DOM_clear_focus();
     return 1;
   }
+// ------------------------------------------------------------------------------------ keydown
+//fm: Browse.keydown (page_up|page_down|insert)
+//      simulace stisku dané klávesy
+  keydown (key) {
+    this.DOM_riseEvent('keydown_'+key);
+    return 1;
+  }
 // ------------------------------------------------------------------------------------ enable
 //fm: Browse.enable ([on])
 //      pokud je on=0 potlačí citlivost na klik, dvojklik a kolečko myši na datový řádek
@@ -8943,17 +8950,24 @@ class Browse extends Block {
   DOM_add1 (data_only) {
     if ( !data_only ) {
       // základní struktura zobrazení browse - úplné vybudování
+      let foot_keys= 
+        `<i class="fa fa-caret-down" style="position:absolute;left: 10px;" title="PageDown"></i>
+         <i class="fa fa-caret-up"   style="position:absolute;left: 18px;" title="PageUp"></i>
+         <i class="fa fa-genderless" style="position:absolute;left: 26px;" title="Insert"></i>
+        `;
       this.DOM= this.DOM_Block= jQuery(
         `<div class="BrowseSmart">
           <table cellspacing=1>
             <thead><tr><td class="tag0" style="width:8px"></td></tr></thead>
             <tfoot><tr><th colspan=1>
+              ${foot_keys}
               <div style="display:block;text-align:center">
                 <span>-</span></div></th></tr></tfoot>
             <tbody></tbody>
           </table>` + 
           //pro odchytávání událostí klávesnice (ovládání browse klávesnicí, na mobilních zařízeních ale stále vyskakovala sw klávesnice)
-          (Ezer.platform!=='A'&&Ezer.platform!=='I'&&Ezer.platform!=='P' ? `<input class="BrowseFocus" type="text">` : ``)
+          (Ezer.platform!=='A'&&Ezer.platform!=='I'&&Ezer.platform!=='P' 
+            ? `<input class="BrowseFocus" type="text">` : ``)
         )
         .css(this.coord())
         .appendTo(this.owner.DOM_Block)
@@ -8998,8 +9012,13 @@ class Browse extends Block {
           .append(this.DOM_tag[i]= jQuery(`<td class="tag0"> </td>`))
       );
     }
+    // přidání obsluhy simulace kláves PgDn, PgUp, Ins
+    this.DOM_foot.find('i.fa-caret-down').click( () => { this.keydown('page_down') });
+    this.DOM_foot.find('i.fa-caret-up')  .click( () => { this.keydown('page_up') });
+    this.DOM_foot.find('i.fa-genderless').click( () => { this.keydown('insert') });
+    // scrollbar na úrovni dat
     if ( !this.DOM_tr_posun )
-      this.DOM_tr_posun= this.DOM_row[1];         // scrollbar na úrovni dat
+      this.DOM_tr_posun= this.DOM_row[1];         
   }
 // ------------------------------------------------------------------------------- DOM enable_reload
 //f: Browse-DOM.DOM_enable_reload ()
