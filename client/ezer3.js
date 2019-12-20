@@ -5041,7 +5041,7 @@ class Button extends Block {
 //  ; 'd' : disabled
 //  ; 'h' : hidden (pro prvky typu input)
 //  ; 'n' : display=none
-//  ; 'o' : 'read<u>o</u>nly' nelze změnit
+//  ; 'o' : 'read<u>o</u>nly' nelze změnit ani označit tabulátorem
 //  ; 'p' : 'password' zobrazit hvězdičky
 //  ; 'r' : 'right' zarovnávat doprava
 //  ; 't' : 'tiše' nezobrazuje se rámeček při změně
@@ -5438,7 +5438,7 @@ class Elem extends Block {
     if ( this.title ) this.DOM_Input.prop('title',this.title);
     // společné formáty
     if ( this._fc('o') && this.DOM_Block ) {
-      this.DOM_Block.addClass('readonly');
+      this.DOM_Block.addClass('readonly').attr('tabindex',-1);
       if ( this.DOM_Input )
         this.DOM_Input.prop('readonly','readonly');
     }
