@@ -480,6 +480,7 @@ __EOD;
     Ezer.root= '$app';
     Ezer.app_root= '$app_root';
     Ezer.version= '{$EZER->version}';
+    Ezer.server= '$ezer_server';
     Ezer.options= { $options_txt
     };
     Ezer.browser= '$browser';
@@ -766,6 +767,7 @@ function root_inc3($db,$dbs,$tracking,$tracked) { //,$path_root=null,$path_pspad
 //  $ezer_path_pspad= $path_pspad ? $path_pspad[$sada] : null;
   // parametrizace standardních modulů
   if ( !isset($EZER->options) ) $EZER->options= (object)array();
+  $EZER->server= isset($ezer_server) ? $ezer_server : -1;
   $EZER->options->root= $ezer_root;
   $EZER->options->app=  $ezer_root;
   $EZER->options->index= "$ezer_root.php";
