@@ -5048,7 +5048,7 @@ class Button extends Block {
 //  ; 'T' : 'Tiše' změna vyvolá Elem.onchange(d) ale nikoliv Form.onchanged (rámeček udělá)
 //  ;     : po dvojtečce
 //  ; 'e' : místo 0 se zobrazuje ''
-/*  ; 'F' : první písmeno zobrazit jako velké */
+//  ; 'F' : první písmeno zobrazit jako velké 
 
 class Elem extends Block {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  initialize
@@ -5362,6 +5362,9 @@ class Elem extends Block {
           this.change();
           return true;
         }
+        else if ( this instanceof Field && this._fc('f') ) {
+          this.DOM_Input.select();
+        }
         return false;
       },
       change: event => {
@@ -5391,6 +5394,19 @@ class Elem extends Block {
             let field= this.owner.part[ifield];
             if ( field instanceof Button && field.type=='button.submit' ) {
               field.fire('onclick');
+            }
+          }
+          if ( this instanceof Field && this._fc('f') ) {
+            // najdeme další 'tabbable' element 
+            let tabbables= jQuery(':tabbable');
+            let i= tabbables.index(this.DOM_Input);
+            for (; i>0 && i<tabbables.length; i++) {
+              let next= jQuery(tabbables[i+1]).data('ezer');
+              if ( next instanceof Field && next._fc('f') ) {
+                next.focus();
+                next.DOM_Input.select();
+                break;
+              }
             }
           }
           break;
@@ -5452,6 +5468,8 @@ class Elem extends Block {
 //      vstupní část formuláře
 //t: Block,Elem
 //s: Block
+//os: Field.format - vzhled a chování hodnotového prvku
+//  ; 'f' : při kliknutí field získá fokus a po Enter fokus přejde na další element (jako při Tab)
 //-
 //os: Field.title - jmenovka pole (pokud začíná ^ resp. - bude umístěná nad resp. za, jinak před)
 class Field extends Elem {
