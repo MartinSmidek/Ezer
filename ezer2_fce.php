@@ -349,7 +349,7 @@ function sys_backup_make($par) {  trace();
   case 'restore':
     $html.= "<h2>Zálohy v $path_backup/</h2>";
     // denní zálohy
-    $html.= "<h3>Denní zálohy</h3><dl>";
+    $html.= "<h3>denní zálohy</h3><dl>";
     foreach (glob("$path_backup/days/*",GLOB_ONLYDIR) as $dir_d) {
       $files= glob("$dir_d/*");
       $html.= "<dt>".substr($dir_d,1+strlen($path_backup))."/</dt>";

@@ -5468,6 +5468,7 @@ class Elem extends Block {
 //      vstupní část formuláře
 //t: Block,Elem
 //s: Block
+//-
 //os: Field.format - vzhled a chování hodnotového prvku
 //  ; 'f' : při kliknutí field získá fokus a po Enter fokus přejde na další element (jako při Tab)
 //-
