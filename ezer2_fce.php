@@ -403,7 +403,7 @@ function sys_backup_make($par) {  trace();
     break;
   case 'kontrola':
     $d= date('N');                                              // dnešní den v týdnu (pondělí=1)
-    sys_backup_test("$path_backup/days/$d",date("Ymd_*"),$backs,$ok);
+    sys_backup_test("$path_backup/days/$d",date("Ymd*"),$backs,$ok);
 //                                         display("$ok:$backs");
     $html.= $backs && $ok ? "Dnešní zálohy byly vytvořeny v pořádku"
       : ($backs ? "Některé":"Žádné") . " dnešní zálohy nebyly vytvořeny";
@@ -412,7 +412,7 @@ function sys_backup_make($par) {  trace();
   case 'kaskada':
     $d= date('N');                                              // dnešní den v týdnu (pondělí=1)
     // kontrola existence záloh - aby nedošlo k přepsání
-    sys_backup_test("$path_backup/days/$d",date("Ymd_*"),$backs,$ok);
+    sys_backup_test("$path_backup/days/$d",date("Ymd*"),$backs,$ok);
     if ( $ok ) {
       $html.= "<br>dnešní zálohy již v 'days/$d' existují";
     }
