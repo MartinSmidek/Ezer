@@ -450,7 +450,7 @@ function sys_backup_test($into,$sign,&$backs,&$ok) {   trace();
     list($n,$host,$user,$pasw,$lang,$db_name)= $db_desc;
     if ( !isset($ezer_db[$db_name]) ) {
       $name= $db_name ? $db_name : $db_id;
-      $files= glob("$into/{$name}_$sign.sql");
+      $files= glob("$into/{$name}-$sign.sql");
       $je= count($files)>0;
       $backs.= "<dt>databáze $name</dt><dd>";
       $backs.= $je ? implode(' ',$files) : "!!! chybí";
@@ -471,7 +471,7 @@ function sys_backup_into($into,$sign) {   trace();
       if ( !$omitt ) { //&& !isset($ezer_db[$db_name]) ) {
         $name= $db_name ? $db_name : $db_id;
                                                 debug($db_desc,$db_id);
-        $file= "{$name}_$sign.sql";
+        $file= "{$name}-$sign.sql";
         $path= "$into/$file";
         $cmd= "$ezer_mysql_path/mysqldump --opt -h $host ";
         $cmd.= "-u $user --password=$pasw $name ";
