@@ -1613,7 +1613,17 @@ class MenuMain extends Menu {
     }
     return 1;
   }
-// ------------------------------------------------------------------------------------ MenuMain-DOM
+// ------------------------------------------------------------------------------------ enable
+//fm: MenuMain.enable (enabled)
+//      parametr enabled=0 znecitliví hlavní menu a submenu, enabled=1 je opět povolí
+  enable (enabled) {
+    this.enabled= enabled=="0" ? 0 : enabled;
+    if ( this.enabled )
+      jQuery('#menu,#submenu').removeClass('disabled3');
+    else
+      jQuery('#menu,#submenu').addClass('disabled3');
+    return true;
+  }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  DOM initialize
   DOM_initialize () {
     this.DOM_SelectedTabs= null;
@@ -1957,8 +1967,9 @@ class Item extends Block {
     case 'menu.group': {
       let href= make_url_menu([this.owner.owner.owner.owner.id,this.owner.owner.owner.id,
             this.owner.owner.id,this.owner.id,this.id]),
-          title= ''+(this.options.title||this.id);
-      title= title.replace(/\[fa-([^\]]+)\]/g,"<i class='fa fa-fw fa-$1'></i>");
+          title= ''+(this.options.title||this.id),
+          text= title.replace(/\[fa-([^\]]+)\]/g,'');
+      title= title.replace(/\[fa-([^\]]+)\]/g,`<i class='fa fa-fw fa-$1' title='${text}'></i>`);
       this.DOM_Block= jQuery(`<li>${title}</li>`)
         .addClass(this._fc('d') ? 'disabled3' : '')
         .appendTo(this.owner.DOM_Block.find('ul'))
