@@ -1968,9 +1968,10 @@ class Item extends Block {
       let href= make_url_menu([this.owner.owner.owner.owner.id,this.owner.owner.owner.id,
             this.owner.owner.id,this.owner.id,this.id]),
           title= ''+(this.options.title||this.id),
-          text= title.replace(/\[fa-([^\]]+)\]/g,'');
+          text= title.replace(/\[fa-([^\]]+)\]/g,''),
+          help= this.options.help ? ` title="${this.options.help}"` : '';
       title= title.replace(/\[fa-([^\]]+)\]/g,`<i class='fa fa-fw fa-$1' title='${text}'></i>`);
-      this.DOM_Block= jQuery(`<li>${title}</li>`)
+      this.DOM_Block= jQuery(`<li${help}>${title}</li>`)
         .addClass(this._fc('d') ? 'disabled3' : '')
         .appendTo(this.owner.DOM_Block.find('ul'))
         .click( e => {
