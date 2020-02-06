@@ -1091,7 +1091,7 @@ function i_doc_menu($chapters,$section0,$class0) {
 # ##cis  - cis je jméno číselníku v ezer_group
 # ###cis - cis je jméno číselníku v ezer_kernel
 # -x    - položka je označena jako méně důležitá (tiskne se jen, pokud je all=1)
-function i_doc_table_struct($tab,$all=1) {  #trace();
+function i_doc_table_struct($tab,$all=1,$css='stat') {  #trace();
   global $ezer_root;
   $html= '';
   $row= 0;
@@ -1102,7 +1102,7 @@ function i_doc_table_struct($tab,$all=1) {  #trace();
     $db= sql_query("SHOW TABLE STATUS LIKE '$tab'");
     $html.= "tabulka <b>".strtoupper($tab)."</b> <i>= "
         .($db->Comment ? "{$db->Comment}" : '')."</i><br><br>";
-    $html.= "<table class='stat' style='width:100%'>";
+    $html.= "<table class='$css' style='width:100%'>";
     $joins= 0;
     while ( $res && ($c= pdo_fetch_object($res)) ) {
       if ( !$row ) {
