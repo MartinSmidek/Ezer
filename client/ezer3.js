@@ -3933,13 +3933,32 @@ class Label extends Block {
   }
 // ------------------------------------------------------- Label.DOM_add2
   DOM_add2 () {
-    if ( this.part && this.part.onclick ) {
+    if ( this.part && (this.part.onclick || this.part.onctrlclick)) {
+      // label with onclick or onctrlclick
       jQuery(this.DOM_Block).on({
         click: el => {
-          if ( el.shiftKey ) return dbg_onshiftclick(this);       // label with onclick
-          if ( !Ezer.design && (this.options.enabled || this.options.enabled===undefined) ) {
-            Ezer.fce.touch('block',this,'click');                 // increase _touch
-            this.fire('onclick',[],el);
+          if ( el.shiftKey ) {
+            if ( Ezer.options.dbg ) {
+              // shift + click, pokud je &dbg=1, ukáže zdrojový text 
+              return dbg_onshiftclick(this);       
+            }
+            else if ( this.part.onshiftclick ) {
+              // shift + click se neuplatní, pokud je &dbg=1
+              Ezer.fce.touch('block',this,'shiftclick');  
+              this.fire('onshiftclick',[],el);
+            }
+          }
+          else if ( !Ezer.design && (this.options.enabled || this.options.enabled===undefined) ) {
+            // ctrl + click
+            if ( el.ctrlKey && this.part.onctrlclick ) {
+              Ezer.fce.touch('block',this,'ctrlclick');   
+              this.fire('onctrlclick',[],el);
+            }
+            else {
+              // onclick se zavolá, pokud není on{x}click a stisknuto {x}
+              Ezer.fce.touch('block',this,'click');       
+              this.fire('onclick',[],el);
+            }
           }
         }
       });
