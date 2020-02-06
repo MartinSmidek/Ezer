@@ -204,6 +204,16 @@ function ezer_connect ($db0='.main.',$even=false,$initial=0) {
           PDO::ATTR_STRINGIFY_FETCHES  => true,
       ];
       try {
+                        $errmode= isset($_COOKIE['error_reporting']) ? $_COOKIE['error_reporting'] : 1;
+                        if ( $errmode==333) {
+                          if (!defined('PDO::ATTR_DRIVER_NAME')) {
+                            echo 'PDO unavailable ... ';
+                          }
+                          else {
+                            echo '('.print_r(PDO::getAvailableDrivers(),true).')';
+                            echo "$db,$dsn,...";
+                          }
+                        }
         $ezer_db[$db][0]= new PDO($dsn, $ezer_db[$db][2], $ezer_db[$db][3], $opt);
       } 
       catch(PDOException $ex) {

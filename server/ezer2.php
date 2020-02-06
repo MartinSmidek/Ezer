@@ -325,7 +325,7 @@
           $args[$i]= isset($x->args->$i) ? $x->args->$i : null;
         }
 //                                                         debug($args,"ask $fce/{$x->nargs}");
-        if ( $x->lc ) $trace_parm= " &laquo; {$x->lc}";
+        if ( isset($x->lc) && $x->lc ) $trace_parm= " &laquo; {$x->lc}";
         $val= call_user_func_array($fce,$args);
         $y->value= $val;// win2utf($val);
       }
@@ -1437,14 +1437,20 @@
   # ------------------------------------------------------------------------------------------------ source_line
   # vrátí zdrojový řádek souboru x.file x.lc
   case 'source_line': // (id)
-    list($line,$clmn)= explode(',',$x->lc);
-    $y->text= source_line($x->file,$x->app,$line,$clmn);
+    $y->text= "?";
+    if ( isset($x->lc) ) {
+      list($line,$clmn)= explode(',',$x->lc);
+      $y->text= source_line($x->file,$x->app,$line,$clmn);
+    }
     break;
   # ------------------------------------------------------------------------------------------------ edit_source
   # spustí editor (PSPad) na zdrojový soubor x.file na řádku x.lc
   case 'edit_source': // (id)
-    list($line,$clmn)= explode(',',$x->lc);
-    $y->text= edit_source($x->file,$x->app,$line);
+    $y->text= "?";
+      if ( isset($x->lc) ) {
+      list($line,$clmn)= explode(',',$x->lc);
+      $y->text= edit_source($x->file,$x->app,$line);
+    }
     break;
   # ------------------------------------------------------------------------------------------------ source_text
   # vrátí obsah souboru x.file

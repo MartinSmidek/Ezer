@@ -1466,8 +1466,13 @@ class Application {
         }
       },
       error: function(xhr) {
-        if ( x.cmd=='source_line' && then )
-            app[then].apply(app,[{},parm]);
+        if ( x.cmd=='source_line' && then ) {
+          app[then].apply(app,[{},parm]);
+        }
+        else if ( xhr.status==200 && xhr.responseText && xhr.responseText[1]=='{' && then ) {
+          let y= xhr.responseText.substr(1);
+          app[then].apply(app,[JSON.parse(y),parm]);
+        }
         else {
           let msg= 'SERVER failure (1)';
           if ( typeof(xhr.responseText)==='string' )
