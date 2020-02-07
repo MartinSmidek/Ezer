@@ -3212,14 +3212,32 @@ class Form extends Block {
     this.DOM_add2();
   }
 // ------------------------------------------------------------------------------------ tagged
-//fm: Form.tagged (tags)
+//fm: Form.tagged (tags[,inlist=0])
 //      vrátí pole elementů vyhovujících podmínce tags, pole lze zpracovávat například příkazem
 //      foreach(form.tagged('x'),procx); kde procx je jednoparametrická procedura
-  tagged (tags) {
+//      pokud je inlist=1 projde i elementy vnořené do List
+  tagged (tags,inlist) {
     var list= [];
     var re= new RegExp(tags);
-    for (var ie in this.part) {           // projdi elementy
+    // projdi elementy
+    for (var ie in this.part) {           
       var elem= this.part[ie];
+      if ( elem instanceof List ) {
+        if ( inlist ) {
+          // projdi elementy vnořené do List
+          for (var irow in elem.part) {   
+            var row= elem.part[irow];
+            if ( row instanceof ListRow ) {
+              for (var ile in row.part) {   
+                var listelem= row.part[ile];
+                if ( listelem.options.tag && re.test(listelem.options.tag) ) {
+                  list.push(listelem);
+                }
+              }
+            }
+          }
+        }
+      }
       if ( elem.options.tag && re.test(elem.options.tag) ) {
         list.push(elem);
       }
