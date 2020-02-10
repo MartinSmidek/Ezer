@@ -1834,14 +1834,16 @@ function ezer_qry ($op,$table,$cond_key,$zmeny,$key_id='') {
     // vytvoření INTO a VALUES
     $flds= ''; $vals= ''; $del= '';
     $tracked[0]= array();
-    foreach ($zmeny as $zmena) {
-      $fld= $zmena->fld;
-      if ( $fld!='zmena_kdo' && $fld!='zmena_kdy' ) $tracked[0][]= $zmena;
-      if ( $fld=='id_cis' ) $id_cis= $zmena->val;
-      $val= pdo_real_escape_string($zmena->val);
-      $flds.= "$del$fld";
-      $vals.= "$del'$val'";
-      $del= ',';
+    if ( $zmeny ) {
+      foreach ($zmeny as $zmena) {
+        $fld= $zmena->fld;
+        if ( $fld!='zmena_kdo' && $fld!='zmena_kdy' ) $tracked[0][]= $zmena;
+        if ( $fld=='id_cis' ) $id_cis= $zmena->val;
+        $val= pdo_real_escape_string($zmena->val);
+        $flds.= "$del$fld";
+        $vals.= "$del'$val'";
+        $del= ',';
+      }
     }
     // provedení INSERT
     $key_val= 0;
