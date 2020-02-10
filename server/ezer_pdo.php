@@ -264,7 +264,7 @@ function pdo_real_escape_string($inp) {
 function pdo_query($query) {
   global $ezer_db, $curr_db;
   $pdo= $ezer_db[$curr_db][0];
-  if ( preg_match('/^\s*(SET|INSERT|UPDATE|REPLACE|DELETE|TRUNCATE|DROP|CREATE)/',$query) ) {
+  if ( preg_match('/^\s*(SET|INSERT|UPDATE|REPLACE|DELETE|TRUNCATE|DROP|CREATE|ALTER)/',$query) ) {
     $res= $pdo->exec($query);
     if ( $res===false ) fce_error($pdo->errorInfo()[2]);
   }
@@ -328,7 +328,7 @@ function pdo_qry($qry,$pocet=null,$err=null,$to_throw=false,$db='') {
   // přepnutí na databázi
   if ( $db ) ezer_connect($db);
   $pdo= $ezer_db[$curr_db][0];
-  if ( preg_match('/^\s*(SET|INSERT|UPDATE|REPLACE|DELETE|TRUNCATE|DROP|CREATE)/',$qry) ) {
+  if ( preg_match('/^\s*(SET|INSERT|UPDATE|REPLACE|DELETE|TRUNCATE|DROP|CREATE|ALTER)/',$qry) ) {
     // pro INSERT|UPDATE|DELETE vrací počet modifikovaných řádků
     $res= $pdo->exec($qry);
     if ( $res===false ) {
