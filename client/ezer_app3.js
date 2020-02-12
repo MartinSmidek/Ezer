@@ -4814,6 +4814,8 @@ function DOM_drag(on) {
       var block= el.data('ezer');
       if ( block instanceof Menu ) return;
       if ( block instanceof Panel ) return;
+      // zajisti citlivost na klávesnici zviditelněním
+      jQuery('#drag').parent().css({display:'block'});
       if ( el.hasClass('disabled3') )
         el.css({pointerEvents:'auto'});
       el.addClass('dragged')
@@ -4829,6 +4831,8 @@ function DOM_drag(on) {
 //         .contextmenu( () => { DOM_tip(block,block.desc.options); return false; });
     }
     else { // on=false
+      // potlač zviditelnění
+      jQuery('#drag').parent().css({display:'none'});
       if ( el.hasClass('disabled3') )
         el.css({pointerEvents:'none'});
       el.removeClass('dragged')
