@@ -337,8 +337,8 @@ function sys_user_skills($file='') {
 #   special  - uložení okamžité zálohy do složky special
 #   kontrola - kontrola existence dnešní zálohy
 function sys_backup_make($par) {  trace();
-  global $path_backup, $ezer_root, $EZER;
-                                                        display("path_backup=$path_backup, ezer_root=$ezer_root");
+  global $ezer_mysql_path, $path_backup, $ezer_root, $EZER;
+                                                        display("path_backup=$path_backup, ezer_root=$ezer_root, mysql=$ezer_mysql_path");
   $html= '';
   $sign= date("Ymd_Hi");
   if ( $EZER->options->local )
@@ -347,28 +347,49 @@ function sys_backup_make($par) {  trace();
   case 'download':
   case 'listing':
   case 'restore':
-    $html.= "<h2>Zálohy v $path_backup/</h2>";
+//    $html.= "<h2>Zálohy v $path_backup/</h2>";
     // denní zálohy
-    $html.= "<h3>denní zálohy</h3><dl>";
-    foreach (glob("$path_backup/days/*",GLOB_ONLYDIR) as $dir_d) {
-      $files= glob("$dir_d/*");
-      $html.= "<dt>".substr($dir_d,1+strlen($path_backup))."/</dt>";
-      foreach($files as $file) {
-        $size= number_format(filesize($file),0,'.',' ').'B';
-        $ref= $par->typ=='restore'||$par->typ=='download'
-          ? "<a target='back' href='zaloha.php?root=$ezer_root&{$par->typ}="
-              .substr($file,1+strlen($path_backup))."'>".substr($file,1+strlen($dir_d))."</a>"
-          : substr($file,1+strlen($dir_d));
-        $html.= "<dd>$ref ($size)</dd>";
+    if ( file_exists("$path_backup/days") ) {
+      $html.= "<h3>denní zálohy</h3><dl>";
+      foreach (glob("$path_backup/days/*",GLOB_ONLYDIR) as $dir_d) {
+        $files= glob("$dir_d/*");
+        $html.= "<dt>".substr($dir_d,1+strlen($path_backup))."/</dt>";
+        foreach($files as $file) {
+          $size= number_format(filesize($file),0,'.',' ').'B';
+          $ref= $par->typ=='restore'||$par->typ=='download'
+            ? "<a target='back' href='zaloha.php?root=$ezer_root&{$par->typ}="
+                .substr($file,1+strlen($path_backup))."'>".substr($file,1+strlen($dir_d))."</a>"
+            : substr($file,1+strlen($dir_d));
+          $html.= "<dd>$ref ($size)</dd>";
+        }
       }
+      $html.= "</dl>";
     }
-    $html.= "</dl>";
     // týdenní zálohy
-    $html.= "<h3>týdenní zálohy</h3><dl>";
-    $dirs= glob("$path_backup/weeks/*",GLOB_ONLYDIR);
-    rsort($dirs);
-    foreach ($dirs as $dir_d) {
+    if ( file_exists("$path_backup/weeks") ) {
+      $html.= "<h3>týdenní zálohy</h3><dl>";
+      $dirs= glob("$path_backup/weeks/*",GLOB_ONLYDIR);
+      rsort($dirs);
+      foreach ($dirs as $dir_d) {
+        $files= glob("$dir_d/*");
+        $html.= "<dt>".substr($dir_d,1+strlen($path_backup))."/</dt>";
+        foreach($files as $file) {
+          $size= number_format(filesize($file),0,'.',' ').'B';
+          $ref= $par->typ=='restore'||$par->typ=='download'
+            ? "<a target='back' href='zaloha.php?root=$ezer_root&{$par->typ}="
+                .substr($file,1+strlen($path_backup))."'>".substr($file,1+strlen($dir_d))."</a>"
+            : substr($file,1+strlen($dir_d));
+          $html.= "<dd>$ref ($size)</dd>";
+        }
+      }
+      $html.= "</dl>";
+    }
+    // speciální zálohy
+    $dir_d= "$path_backup/special";
+    if ( file_exists($dir_d) ) {
+      $html.= "<h3>speciální zálohy</h3><dl>";
       $files= glob("$dir_d/*");
+      rsort($files);
       $html.= "<dt>".substr($dir_d,1+strlen($path_backup))."/</dt>";
       foreach($files as $file) {
         $size= number_format(filesize($file),0,'.',' ').'B';
@@ -378,23 +399,8 @@ function sys_backup_make($par) {  trace();
           : substr($file,1+strlen($dir_d));
         $html.= "<dd>$ref ($size)</dd>";
       }
+      $html.= "</dl>";
     }
-    $html.= "</dl>";
-    // speciální zálohy
-    $html.= "<h3>speciální zálohy</h3><dl>";
-    $dir_d= "$path_backup/special";
-    $files= glob("$dir_d/*");
-    rsort($files);
-    $html.= "<dt>".substr($dir_d,1+strlen($path_backup))."/</dt>";
-    foreach($files as $file) {
-      $size= number_format(filesize($file),0,'.',' ').'B';
-      $ref= $par->typ=='restore'||$par->typ=='download'
-        ? "<a target='back' href='zaloha.php?root=$ezer_root&{$par->typ}="
-            .substr($file,1+strlen($path_backup))."'>".substr($file,1+strlen($dir_d))."</a>"
-        : substr($file,1+strlen($dir_d));
-      $html.= "<dd>$ref ($size)</dd>";
-    }
-    $html.= "</dl>";
     break;
   case 'special':
     $path= "$path_backup/special";
@@ -874,7 +880,7 @@ function sys_day_modules($skip,$day,$short=false) {
   $hours= array();
   $and=  $skip ? "AND NOT FIND_IN_SET(user,'$skip')" : '';
   $qry= "SELECT org,day,hour(time) as hour,user,module,menu,count(*) as c,msg FROM _touch
-         JOIN _user ON abbr=user
+         LEFT JOIN _user ON abbr=user
          WHERE day='$day' AND user!='' $and
          GROUP BY module,menu,user,hour(time) ORDER BY module,menu";
   $res= mysql_qry($qry);
@@ -911,7 +917,7 @@ function sys_days_modules($skip,$day,$ndays,$short=false) {
   $days= array();
   $and=  $skip ? "AND NOT FIND_IN_SET(user,'$skip')" : '';
   $qry= "SELECT org,day,user,module,menu,count(*) as c FROM _touch
-         JOIN _user ON abbr=user
+         LEFT JOIN _user ON abbr=user
          WHERE day BETWEEN '$day'-INTERVAL $ndays DAY AND '$day' AND user!='' /*AND module='block'*/ $and
          GROUP BY module,menu,user,day ORDER BY module,menu";
   $res= mysql_qry($qry);
@@ -950,9 +956,9 @@ function sys_day_users($skip,$day,$short=false) {  trace();
   $hours= array();
   $AND=  $skip     ? "AND NOT FIND_IN_SET(user,'$skip')" : '';
   $AND=  $short==2 ? "AND module='speed' " : '';
-  $qry= "SELECT org,day,hour(time) as hour,user,module,menu,count(*) as c,sum(hits) as h,
+  $qry= "SELECT u.org,day,hour(time) as hour,user,module,menu,count(*) as c,sum(hits) as h,
          GROUP_CONCAT(msg SEPARATOR ';') AS _speed FROM _touch
-         JOIN _user ON abbr=user
+         LEFT JOIN _user AS u ON u.abbr=user
          WHERE day='$day' AND user!='' $AND GROUP BY user,module,menu,hour(time) ORDER BY user,hour";
   $res= mysql_qry($qry);
   while ( $res && $row= pdo_fetch_assoc($res) ) {
@@ -996,7 +1002,7 @@ function sys_days_users($skip,$day,$ndays,$short=false) {
   $AND=  $short==2 ? "AND module='speed' " : '';
   $qry= "SELECT org,day,user,module,menu,count(*) as c,sum(hits) as h,
          GROUP_CONCAT(msg SEPARATOR ';') AS _speed FROM _touch
-         JOIN _user ON abbr=user
+         LEFT JOIN _user ON abbr=user
          WHERE day BETWEEN '$day'-INTERVAL $ndays DAY AND '$day' AND user!='' $AND
          GROUP BY user,module,menu,day ORDER BY user,day";
   $res= mysql_qry($qry);
@@ -1103,7 +1109,7 @@ function sys_day_logins($skip,$day,$sign='=') {
   $cond= $sign=='all' ? '1' : "day$sign'$day'";
   $qry= "SELECT org, id_touch, msg, day, time, user, menu
          FROM _touch
-         JOIN _user ON abbr=user
+         LEFT JOIN _user ON abbr=user
          WHERE $cond AND msg!='' AND menu IN ('login','acount?','ip?') $and
          ORDER BY day DESC,time DESC";
   $res= mysql_qry($qry);
