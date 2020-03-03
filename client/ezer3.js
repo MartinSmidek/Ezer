@@ -2513,14 +2513,16 @@ class PanelPopup extends Panel {
     this.continuation= null;                     // bod pokračování pro modální dialog
   }
 // -------------------------------------------------------------------------------------- modal
-//fi: PanelPopup.modal ([l,t[,title,noevent=0]])
+//fi: PanelPopup.modal ([l,t[,title,noevent=0,nomodal=1]])
 //      ukáže panel jako modální dialog. Další příkaz bude interpretován až po uzavření dialogu.
 //      Uzavření dialogu je provedeno funkcí hide, jehož argument se stane
 //      hodnotou modal.
 //a: l,t - poloha, pokud je vynechána bude dialog vycentrovám
 //   title - volitelný nadpis, pokud má být odlišný od panel.title
-  modal (l,t,title,noevent=0) {
-    this._show(l,t,noevent,title).DOM_modal(1);
+//   nomodal - panel nebude modální, lze jej zavřít metodou close
+  modal (l,t,title,noevent=0,nomodal=0) {
+    this._show(l,t,noevent,title);
+    if ( !nomodal ) this.DOM_modal(1);
     // pokud vrátí false pokračuje interpret další instrukcí; pokud vrátí objekt, uloží
     // do jeho continuation interpret stav, metody tohoto objektu mohou pokračovat ve výpočtu
     return this;
@@ -4699,12 +4701,25 @@ class LabelMap extends Label {
   }
 // ----------------------------------------------------------------------------------------- get
 //fm: LabelMap.get (op[,id])
+// get('count') vrátí počet zobrazených značek
 // get('ids') vrátí seznam zobrazených značek
 // get('id') vrátí značku s daným id nebo null
   get (op,id) {
     let ret= '', del= '';
     if ( this.map ) {
       switch (op) {
+      case 'count':
+        ret= 0;
+        for (let i in this.mark) {
+          ret++;
+        }
+        break;
+      case 'titles':
+        for (let i in this.mark) {
+          ret+= del+this.mark[i].title;
+          del= ',';
+        }
+        break;
       case 'ids':
         for (let i in this.mark) {
           if ( this.mark[i].id && this.mark[i].id!==undefined ) {
