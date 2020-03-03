@@ -176,7 +176,7 @@ panel nov [,,770,] {type:'right', title:'Přehled změn', _sys:'*'
     field version [98,45,41,] { data:h.version, format:'r' }
     field name  { data:h.name }
     field topic [152,45,116,] { data:h.topic, format:'' }
-      button [272,47,16,16] { title:"[fa-tree]", style:"padding:0 1px", proc onclick() {
+      button [272,47,16,16] { title:"[fa-tree]", style:"padding:0 1px", css:'fa' proc onclick() {
         topic.set(replace(meta.modal,'^[^\.]+\.','')); topic.change;
         name.set(replace(meta.name.get,'<[^>]+>','','^[^\|]+\|','')); name.change; }}
     field wrk [698,20,32,] { title:'pracnost:', data:h.work, format:'r:e', skill:'m|mw' }
@@ -221,7 +221,7 @@ panel nov [,,770,] {type:'right', title:'Přehled změn', _sys:'*'
     field version [98,45,41,] { data:h.version, format:'r' }
     field name  { data:h.name }
     field topic [152,45,116,] { data:h.topic, format:'' }
-      button [272,47,16,16] { title:"[fa-tree]", style:"padding:0 1px", proc onclick() {
+      button [272,47,16,16] { title:"[fa-tree]", style:"padding:0 1px", css:'fa', proc onclick() {
         topic.set(replace(meta.modal,'^[^\.]+\.','')); topic.change;
         name.set(replace(meta.name.get,'<[^>]+>','','^[^\|]+\|','')); name.change; }}
     field hlp [239+60,45,431,] { data:h.help, format:'' }
@@ -332,7 +332,7 @@ panel faq [,,770,] {type:'right', title:'Tvorba nápovědy', _sys:'*', skill:'ah
     field name [La+131,42,169,] { data:h.name, title:'název:'  }
     field topic [La+358,42,133,] { data:h.topic, title:'zkratka:'
       help:"zřetězení atributů _sys pro kontext nebo 'ezer.cokoliv' pro obecný text" }
-    button [topic.r+3,topic.t+2,16,16] { title:"[fa-tree]", style:"padding:0 1px"
+    button [topic.r+3,topic.t+2,16,16] { title:"[fa-tree]", style:"padding:0 1px", css:'fa' 
       proc onclick() { topic.set(replace(meta.modal,'^[^\.]+\.','')); topic.change;
         name.set(replace(meta.name.get,'<[^>]+>','','^[^\|]+\|','')); name.change; }}
     field seen [La+358,66,150,] { data:h.seen, title:'stav:', format:'d' }
@@ -390,7 +390,7 @@ panel faq [,,770,] {type:'right', title:'Tvorba nápovědy', _sys:'*', skill:'ah
     field name [La+131,42,169,] { data:h.name, title:'název:'  }
     field topic [La+358,42,133,] { data:h.topic, title:'zkratka:'
       help:"zřetězení atributů _sys pro kontext nebo 'ezer.cokoliv' pro obecný text" }
-    button [topic.r+3,topic.t+2,16,16] { title:"[fa-tree]", style:"padding:0 1px"
+    button [topic.r+3,topic.t+2,16,16] { title:"[fa-tree]", style:"padding:0 1px", css:'fa' 
       proc onclick() { topic.set(replace(meta.modal,'^[^\.]+\.','')); topic.change;
         name.set(replace(meta.name.get,'<[^>]+>','','^[^\|]+\|','')); name.change; }}
     field seen [La+387,66,122,] { data:h.seen, title:'stav:', format:'d' }
@@ -448,7 +448,7 @@ panel faq [,,770,] {type:'right', title:'Tvorba nápovědy', _sys:'*', skill:'ah
     field name [La+131,42,169,] { data:h.name, title:'název:'  }
     field topic [La+358,42,133,] { data:h.topic, title:'zkratka:'
       help:"zřetězení atributů _sys pro kontext nebo 'ezer.cokoliv' pro obecný text" }
-    button [topic.r+3,topic.t+2,16,16] { title:"[fa-tree]", style:"padding:0 1px"
+    button [topic.r+3,topic.t+2,16,16] { title:"[fa-tree]", style:"padding:0 1px", css:'fa' 
       proc onclick() { topic.set(replace(meta.modal,'^[^\.]+\.','')); topic.change;
       name.set(replace(meta.name.get,'<[^>]+>','','^[^\|]+\|','')); name.change; }}
     //field seen [La+387,66,122,] { data:h.seen, title:'stav:', format:'d' }

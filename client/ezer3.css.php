@@ -337,7 +337,9 @@ div.MenuGroup3 li.selected3 { background-color: #ffffff; border-right: 4px solid
 div.MenuGroup3 li.selected3:hover { background-color:$ab; color:$c !important; }
 div.MenuGroup3 li.disabled3:hover { background-color:#777; }
 div.MenuGroup3 i.fa-red { color:red }
-div.MenuGroup3 .disabled3 i.fa-red { color:grey 
+div.MenuGroup3 .disabled3 i.fa-red { color:grey }
+div.MenuGroup3 i.fa-darkviolet { color:darkviolet }
+div.MenuGroup3 .disabled3 i.fa-darkviolet { color:grey 
 }
 
 /* -------------------------------------------------------------------------------==> MenuContext */
@@ -403,7 +405,10 @@ button.Button3:disabled3 i.fa-red { color:grey }
     
 /* korekce Mozilla */
 @-moz-document url-prefix() {
-button { padding:0px 4px !important; }
+  button { padding:0px 4px !important; }
+  button.Button3.fa { 
+    width:18px !important; height:19px !important; right:-2px; 
+    margin-top: -1px; padding-left:1px !important; }
 }
 
 /* -------------------------------------------------------------------------------------==> Field */
@@ -622,7 +627,7 @@ td.BrowseNoClmn img.sort {
 
 /* ==> ... korekce Mozilla */
 @-moz-document url-prefix() {
-.FieldDate3 button.fa, .Select3 button.fa, .FieldList3 button.fa   {
+.FieldDate3 button.fa, .Select3 button.fa, .FieldList3 button.fa  {
   width:18px; height:19px; right:-2px; margin-top: 1px; padding-left:1px !important; }
 }
 
