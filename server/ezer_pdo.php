@@ -121,7 +121,7 @@ function mysql_qry($qry,$pocet=null,$err=null,$to_throw=false,$db='') {
   $time= round(getmicrotime() - $time_start,4);
   $ok= $res ? 'ok' : '--';
   if ( !$res ) {
-    if ( $err=='-' ) goto end;
+    if ( $err==='-' ) goto end;
     $merr= mysql_error();
     $serr= "You have an error in your SQL";
     if ( $merr && substr($merr,0,strlen($serr))==$serr ) {
@@ -358,7 +358,7 @@ function pdo_qry($qry,$pocet=null,$err=null,$to_throw=false,$db='') {
     $time= round(getmicrotime() - $time_start,4);
     $ok= $res ? 'ok' : '--';
     if ( !$res ) {
-      if ( $err=='-' ) goto end;
+      if ( $err==='-' ) goto end;
       $merr= $pdo->errorInfo()[2];
       $serr= "You have an error in your SQL";
       if ( $merr && substr($merr,0,strlen($serr))==$serr ) {
