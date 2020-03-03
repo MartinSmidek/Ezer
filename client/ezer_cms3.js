@@ -141,7 +141,9 @@ function cms_form(cmd,par) {
             form.find("[name=mail]").removeClass('disabled3');
           }
         })
-        .fail(e=>{ info.html(TEXT('cms_error')); });
+        .fail(e=>{ 
+          info.html(TEXT('cms_error')); 
+        });
         form.find("[name=mail]").addClass('disabled3');
       break;
     }

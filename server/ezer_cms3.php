@@ -97,8 +97,13 @@ function cms_server(&$y) {
             $y->info= 'Mail se v TESTu neposílá. ';
           }
           else {        
-            $m= cms_mail_send($y->mail, "Přihlášení na {$y->par->akce}",$body); 
-                                                                                           goto end;
+            $_SESSION['trace']['CMS_mail_call-1']= $FORM['CALL']['sendmail'];
+            if ( isset($FORM['CALL']['sendmail']) ) {
+              $m= call_user_func($FORM['CALL']['sendmail'],$y->mail,"Přihlášení na {$y->par->akce}",$body);
+            }
+            else {
+              $m= cms_mail_send($y->mail, "Přihlášení na {$y->par->akce}",$body); 
+            }
             $y->ok= $m ? $m->ok : 0;
           }
           if ( $y->ok ) {
@@ -486,8 +491,8 @@ function cms_mail_send($address,$subject,$body,$reply='') {
     }
     else {
     // odeslání mailu
-      $mail->send();
-      $mail->SmtpClose();
+      $mail->Send();
+      $mail->smtpClose();
     }
   }
   catch (Exception $e) {
