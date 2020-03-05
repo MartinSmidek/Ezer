@@ -252,6 +252,10 @@ function pdo_fetch_array($rs) {
   $row= $rs->fetch(PDO::FETCH_BOTH);
   return $row;
 }
+function pdo_fetch_all($rs) {
+  $rows= $rs->fetchAll();
+  return $rows;
+}
 function pdo_real_escape_string($inp) {
   return str_replace(
       array('\\', "\0", "\n", "\r", "'", '"', "\x1a"), 

@@ -977,9 +977,15 @@
       $qry2_fields= isset($x->having) && $x->having ? ",$fields" : '';
       $qry2= "SELECT count(*) as _pocet_ $qry2_fields FROM $table $joins WHERE $cond $scond $group $order";
       $res2= mysql_qry($qry2);
-//      $from= pdo_num_rows($res2);
-      $from= 0+pdo_fetch_assoc($res2)['_pocet_'];
-      $from= max(0,$from-1);
+//      $from= 0+pdo_fetch_assoc($res2)['_pocet_'];
+      if($group=='') {
+        $from= 0+pdo_fetch_assoc($res2)['_pocet_'];
+      } 
+      else {
+        $a= pdo_fetch_all($res2);
+        $from= 0+count($a);
+      }
+       $from= max(0,$from-1);
 //                                                         display("from(1)=$from");
 #      $from= intval($from/$rows)*$rows;  ### TZ, 12.1.2012, aby browse_seek odroloval tak že na prvním řádku bude požadovaný záznam
       if ( isset($x->group) || isset($x->having) && $x->having ) {
@@ -1133,6 +1139,7 @@
       }
       if ( isset($desc->pipe) ) {
         list($paf,$parg)= explode(':',$desc->pipe,':');
+        if ($paf=='') { $paf= $desc->pipe; }
         if ( !function_exists($paf) )
           $y->error.= "$paf není PHP funkce";
         else
