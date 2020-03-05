@@ -4677,8 +4677,9 @@ class LabelMap extends Label {
 // ---------------------------------------------------------------------------------------- dump
 //fm: LabelMap.dump ()
 // vytvoří objekt obsahující informaci o počtu značek, polygonů, ...
+// pokud mapa neexistuje vrací objekt {ok:0}
   dump () {
-    let ans= {};
+    let ans= {ok:0};
     if ( this.map ) {
       var visible= 0;
       var viewPort= this.map ? this.map.getBounds() : null;
@@ -4691,6 +4692,7 @@ class LabelMap extends Label {
         }
       }
       ans= {
+        ok:1,
         marks: this.mark ? Object.keys(this.mark).length : 0,
         visible: visible,
         polys: this.poly ? this.poly.length : 0,

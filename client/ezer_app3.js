@@ -3476,7 +3476,7 @@ Ezer.fce.sort= function (list,del,comp) {
 //   i - index
 //s: funkce
 Ezer.fce.split= function (x,del,i) {
-  if ( typeof(x)!='string' && x.toString() )
+  if ( typeof(x)!='string' && x.toString )
     x= x.toString();
   Ezer.assert(typeof(x)=='string','split: první parametr musí být převeditelný na řetězec');
   var y= x.split(del,i+1);
@@ -3512,7 +3512,7 @@ Ezer.fce.repeat= function (x,n) {
 Ezer.fce.replace= function () {
   var x= arguments[0]||'', a, b, r;
   if ( x ) {
-    if ( typeof(x)!='string' && x.toString() )
+    if ( typeof(x)!='string' && x.toString )
       x= x.toString();
     for (var i= 1; i<arguments.length; i+=2) {
       a= String(arguments[i]); b= arguments[i+1]===undefined?'':arguments[i+1];
@@ -3529,7 +3529,7 @@ Ezer.fce.replace= function () {
 //      pokud je delete=1 pak tyto podřetězce odstraní
 //s: funkce
 Ezer.fce.replace_fa= function (x,del) {
-  if ( typeof(x)!='string' && x.toString() )
+  if ( typeof(x)!='string' && x.toString )
     x= x.toString();
   return x.replace(/\[fa-([^\]]+)\]/g,del ? "" : "<i class='fa fa-$1'></i>");
 };
