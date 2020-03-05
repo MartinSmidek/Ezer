@@ -70,8 +70,11 @@ Ezer.ajax= function (options) {
     url:Ezer.App.options.server_url,
     method:'POST',
     success: function(y){  
-      if ( y.session_none ) // je vráceno ezer2.php, pokud není dobře definováno $_SESSION
+      // je vráceno ezer2.php, pokud není dobře definováno $_SESSION
+      if ( y.session_none ) {
+        Ezer.fce.alert(y.error);
         Ezer.App.bar_clock_break();
+      }
       else if ( options.origin_success ) 
         options.origin_success(y);
     }

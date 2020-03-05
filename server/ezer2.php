@@ -45,10 +45,20 @@
 //  }
   # ------------------------------------------------------------------------- test existence SESSION
   # po uplynutí gc_maxlifetime je session zrušena (runtimem PHP) => vrátit informaci do klienta
-  if ( !count($_SESSION)
-      && !in_array($_POST['cmd'],array('user_login','load_code2','map_load','touch')) ) {
+  if ( !count($_SESSION) ) {
+    if ( !in_array($_POST['cmd'],array('user_login','load_code2','map_load','touch')) ) {
+      header('Content-type: application/json; charset=UTF-8');
+      $y= (object)array('session_none'=>1,'error'=>'nepřihlášen');
+      $yjson= json_encode($y);
+      echo $yjson;
+      exit;
+    }
+  }
+  # -------------------------------------------------------------------------- test verze jádra EZER
+  # při zjištění staré verze jádra v SESSION je vynucen restart 
+  elseif ( isset($_SESSION[$ezer_root]['ezer']) && $_SESSION[$ezer_root]['ezer']!='3.1' ) {
     header('Content-type: application/json; charset=UTF-8');
-    $y= (object)array('session_none'=>1,'error'=>'nepřihlášen');
+    $y= (object)array('session_none'=>1,'error'=>'nepovolený souběh se starou verzí jádra');
     $yjson= json_encode($y);
     echo $yjson;
     exit;
