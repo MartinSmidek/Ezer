@@ -4818,7 +4818,8 @@ function DOM_drag(on) {
       if ( block instanceof Menu ) return;
       if ( block instanceof Panel ) return;
       // zajisti citlivost na klávesnici zviditelněním
-      jQuery('#drag').parent().css({display:'block'});
+//      jQuery('#drag').parent().css({display:'block'});
+      jQuery('#drag').css({display:'block'});
       if ( el.hasClass('disabled3') )
         el.css({pointerEvents:'auto'});
       el.addClass('dragged')

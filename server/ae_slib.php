@@ -536,20 +536,23 @@ function test_session() {
 * @copyright Jakub Vrána, http://php.vrana.cz
 */
 function simple_glob($mask) {
-    $dirname = preg_replace('~[^/]*$~', '', $mask);
-    $dir = opendir(strlen($dirname) ? $dirname : ".");
-    $return = array();
+  $return= array();
+  $dirname= preg_replace('~[^/]*$~', '', $mask);
+  $dirname= strlen($dirname) ? $dirname : ".";
+  if ( file_exists($dirname) ) {
+    $dir= opendir($dirname);
     if ($dir) {
-        $pattern = '~^' . strtr(preg_quote($mask, '~'), array('\\*' => '.*', '\\?' => '.')) . '$~';
-        while (($filename = readdir($dir)) !== false) {
+        $pattern= '~^' . strtr(preg_quote($mask, '~'), array('\\*' => '.*', '\\?' => '.')) . '$~';
+        while (($filename= readdir($dir)) !== false) {
             if ($filename != "." && $filename != ".." && preg_match($pattern, "$dirname$filename")) {
-                $return[] = "$dirname$filename";
+                $return[]= "$dirname$filename";
             }
         }
         closedir($dir);
         sort($return);
     }
-    return $return;
+  }
+  return $return;
 }
 # ------------------------------------------------------------------------------------------ map_cis
 # zjištění hodnot číselníku a vrácení jako překladového pole
