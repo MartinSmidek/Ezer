@@ -1697,7 +1697,9 @@ function Excel5_f(&$ws,$range,$v,&$err) {
   $html= '';
   $wcs= $ws->getStyle($range);
   foreach(explode(' ',trim($v)) as $f) { if ( $f ) {
-    list($f,$x)= explode('=',$f);
+    $fs= explode('=',$f);
+    $f= $fs[0];
+    $x= isset($fs[1]) ? $fs[1] : '';
     switch ($f) {
     // numerické
     case 'kc':   $wcs->getNumberFormat()->setFormatCode('#,##0.00 Kč'); break;
@@ -1810,7 +1812,7 @@ function mysql_err($qry) {
     $msg.= "SQL error ".substr($merr,strlen($serr))." in:$qry";
   }
   else {
-    $myerr= $err ? $err : $merr;
+    $myerr= $merr;
     $myerr= str_replace('"',"U",$myerr);
     $msg.= win2utf("\"$myerr\" ")."\nQRY:$qry";
   }
