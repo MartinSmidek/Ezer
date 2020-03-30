@@ -129,7 +129,7 @@
       if  ( $_SESSION['group_login'] ) {
         foreach(explode(',',$_SESSION['group_login']) as $root) {
           if ( $root!=$ezer_root ) {
-            $_SESSION[$ezer_root]= array('sess_state'=>"$user timeout $day $time due to $ezer_root");
+            $_SESSION[$root]= array('sess_state'=>"$user timeout $day $time due to $ezer_root");
           }
         }
       }
