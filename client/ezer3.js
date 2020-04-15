@@ -4899,7 +4899,7 @@ class LabelMap extends Label {
   }
 // ------------------------------------------------------------------------------------ option
 //fm: LabelMap.option (obj)
-//   pro obj={poly_edit:{1|0}} zapne resp. vypne editaci polygonů v mapě
+//   pro obj={poly_edit:{1|0}} 1=zapne resp. 0=vypne editaci polygonů v mapě
 //   při zapnuté editaci lze pravým uchem myši smazat vrchol
   option (obj) {
     if ( this.poly ) {
