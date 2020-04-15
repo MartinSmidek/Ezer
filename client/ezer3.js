@@ -4695,7 +4695,7 @@ class LabelMap extends Label {
         ok:1,
         marks: this.mark ? Object.keys(this.mark).length : 0,
         visible: visible,
-        polys: this.poly ? this.poly.length : 0,
+        polys: this.poly ? this.poly.getPaths().length : 0,
         bounds: viewPort ? this.get_bounds() : ",;,"
       };
     }
@@ -4704,8 +4704,9 @@ class LabelMap extends Label {
 // ----------------------------------------------------------------------------------------- get
 //fm: LabelMap.get (op[,id])
 // get('count') vrátí počet zobrazených značek
-// get('ids') vrátí seznam zobrazených značek
-// get('id') vrátí značku s daným id nebo null
+// get('ids')   vrátí seznam zobrazených značek
+// get('id')    vrátí značku s daným id nebo null
+// get('poly')  vrátí textovou reprezentaci polygonů
   get (op,id) {
     let ret= '', del= '';
     if ( this.map ) {
@@ -4736,6 +4737,21 @@ class LabelMap extends Label {
           if ( this.mark[i].id==id ) {
             ret= this.mark[i];
             break;
+          }
+        }
+        break;
+      case 'poly':
+        ret= '';
+        let del= '';
+        if ( this.poly ) {
+          var paths= this.poly.getPaths();
+          for (var n= 0; n < paths.length; n++) {
+            let vertices= paths.getAt(n);
+            for (var i= 0; i < vertices.length; i++) {
+              ret+= del+vertices.getAt(i).toUrlValue();
+              del= ';';
+            }
+            del= '|'
           }
         }
         break;
@@ -4852,24 +4868,60 @@ class LabelMap extends Label {
         this.rect.setMap(this.map);
       }
       // -------------------------------------------- POLY
-      if ( geo.poly == '' && this.poly ) {                // zruš polygon
-        this.poly.setMap(null);
+      if ( geo.poly == '' /*&& this.poly*/ ) {                // zruš polygon
+        if ( this.poly ) this.poly.setMap(null);
         this.poly= null;
       }
       else if ( geo.poly ) {                              // zobraz polygon
-        if ( this.poly ) this.poly.setMap(null);          // zruš napřed starý
-        let paths = [];
-        geo.poly.split(';').map(function(xy) {
-          let p= xy.split(',');
-          paths.push(new google.maps.LatLng(p[0],p[1]));
-        });
-        this.poly= new google.maps.Polygon({
-          paths: paths, fillOpacity: 0, strokeWeight: 1, strokeColor: 'red'
-        });
+//        if ( this.poly ) this.poly.setMap(null);          // zruš napřed starý
+        geo.poly.split('|').map(function(pxy) {
+          let coords= pxy.split(';').map(function(xy) {
+            let p= xy.split(',');
+            return new google.maps.LatLng(p[0],p[1]);
+          });
+          if ( this.poly ) {
+            // přidej k existující
+            let paths= this.poly.getPaths();
+            paths.push(new google.maps.MVCArray(coords));
+            this.poly.setPaths(paths);
+          }
+          else {
+            // vytvoř první
+            this.poly= new google.maps.Polygon({
+              paths: coords, fillOpacity: 0, strokeWeight: 1, strokeColor: 'red'
+            });
+          }
+        }.bind(this));
         this.poly.setMap(this.map);
       }
     }
     return ret;
+  }
+// ------------------------------------------------------------------------------------ option
+//fm: LabelMap.option (obj)
+//   pro obj={poly_edit:{1|0}} zapne resp. vypne editaci polygonů v mapě
+//   při zapnuté editaci lze pravým uchem myši smazat vrchol
+  option (obj) {
+    if ( this.poly ) {
+      this.poly.setEditable(obj.poly_edit?true:false);
+      if ( obj.poly_edit ) {
+        var deleteNode= function(mev) {
+          Ezer.fce.echo('delete ',mev.path,'/',mev.vertex);
+          if (mev.vertex != null) {
+            let path= this.poly.getPaths().getAt(mev.path),
+                length= path.getLength();
+            if ( length>2 ) {
+              path.removeAt(mev.vertex);
+            }
+            else {
+              path.clear();
+            }
+          }
+        }.bind(this);
+        google.maps.event.addListener(this.poly, 'rightclick', deleteNode);
+      }
+    }
+    return 1;
   }
 // ------------------------------------------------------------------------------------ set_mark
 //fm: LabelMap.set_mark (mark,option)
