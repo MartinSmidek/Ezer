@@ -103,8 +103,10 @@
   $client= "$http://$rel_root/{$EZER->version}/client";
   $licensed= "$client/licensed";
 
-  // -------------------------------------------------------------------------------------- Ezer 3
-  $api_key= "AIzaSyAq3lB8XoGrcpbCKjWr8hJijuDYzWzImXo"; // Google Maps JavaScript API 'answer-test'
+  // klíče
+  $deep_root= "../files/ezer3.1";
+  require_once("$deep_root/ezer.keys.php");
+  
   $app_js= array_values(array_filter($app_js)); // vynechání všech false
   $js= array_merge(
     // ckeditor 
