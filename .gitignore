@@ -12,3 +12,5 @@
 /server/licensed/phpmailer/
 /server/composer.*
 /server/@
+/server/composer.json
+/server/composer.lock

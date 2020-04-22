@@ -44,7 +44,7 @@
   $jQuery=   isset($_GET['jquery'])  ? $_GET['jquery']  : (isset($_COOKIE['jquery']) ? $_COOKIE['jquery']  : '3.3.1');
   $dbg=      isset($_GET['dbg'])     ? $_GET['dbg']     : 0;
   $gapi=     isset($_GET['gapi'])    ? $_GET['gapi']    : 0; //!($ezer_local || $ezer_ksweb);
-  $gmap=     isset($_GET['gmap'])    ? $_GET['gmap']    : ($ezer_server?1:0);
+  $gmap=     isset($_GET['gmap'])    ? $_GET['gmap']    : ($is_local?0:1);
   $touch=    isset($_GET['touch'])   ? $_GET['touch']   : 1;
 
   // inicializace SESSION

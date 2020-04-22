@@ -1138,7 +1138,7 @@
         }
       }
       if ( isset($desc->pipe) ) {
-        list($paf,$parg)= explode(':',$desc->pipe,':');
+        list($paf,$parg)= explode(':',$desc->pipe.':');
         if ($paf=='') { $paf= $desc->pipe; }
         if ( !function_exists($paf) )
           $y->error.= "$paf není PHP funkce";
