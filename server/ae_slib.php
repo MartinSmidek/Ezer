@@ -1293,7 +1293,7 @@ function source_line ($file,$app,$line,$clmn) {
 #   color       -- pro 'xls(x)': podložení hlavičky, default=aabbbbbb (4 barvy)
 # -------------------------------------------------------------------------------------- export head
 # otevření exportovaného souboru, $clmns je seznam jmen sloupců
-function export_head($par,$clmns,$fmt='') { #trace();
+function export_head($par,$clmns,$fmt='') { trace();
   global $export_par, $ezer_path_docs;
   $export_par= $par;
   $export_par->rows= 0;
@@ -1310,10 +1310,10 @@ function export_head($par,$clmns,$fmt='') { #trace();
     $c= 0;
     $n= 1;
     $export_par->_xls.= "|columns ";
-    $color= $export_par->color ? $export_par->color : 'aabbbbbb';
+    $color= isset($export_par->color) && $export_par->color ? $export_par->color : 'aabbbbbb';
     $del= '';
     $header= '';
-    if ( $export_par->title ) {
+    if ( isset($export_par->title) && $export_par->title ) {
       $header.= "A1 {$export_par->title}::bold";
       $export_par->rows= 2;
       $n= 3;
@@ -1324,7 +1324,7 @@ function export_head($par,$clmns,$fmt='') { #trace();
       $header.= "|$A$n $clmn $fmt";
       $del= ',';
     }
-    if ( $export_par->title ) {
+    if ( isset($export_par->title) && $export_par->title ) {
       $header.= "|A1:{$A}1 merge center";
     }
     $export_par->_xls.= "\n$header";
@@ -1334,7 +1334,7 @@ function export_head($par,$clmns,$fmt='') { #trace();
 }
 # --------------------------------------------------------------------------------------- export row
 # zápis řádku do exportovaného souboru
-function export_row($row,$fmt='') { #trace();
+function export_row($row,$fmt='') { trace();
   global $export_par;
   $export_par->rows++;
   switch ($export_par->type) {
@@ -1358,7 +1358,7 @@ function export_row($row,$fmt='') { #trace();
 }
 # -------------------------------------------------------------------------------------- export tail
 # uzavření exportovaného souboru
-function export_tail($show_xls=0) { #trace();
+function export_tail($show_xls=0) { trace();
   global $export_par;
   $ret= '';
   switch ($export_par->type) {
@@ -1374,10 +1374,18 @@ function export_tail($show_xls=0) { #trace();
       $ret= $export_par->_xls;
     else {
       $wb= null;
-      $inf= Excel5($export_par->_xls,1,$wb,$export_par->dir,$export_par->type);
-//       $inf= Excel5($export_par->_xls);
+      if ( PHP_VERSION_ID < 50600 ) {
+        // pro starší verzi PHP použij náhradu standardní exportní funkce
+        if ( function_exists('Excel54') ) 
+          // musí být součástí aplikace
+          $inf= Excel54($export_par->_xls,1,$wb,isset($export_par->dir)?$export_par->dir:'',$export_par->type);
+        else
+          fce_error("POZOR: pro verzi PHP nižší než 5.6 musí existovat funkce Excel54");
+      }
+      else {
+        $inf= Excel5($export_par->_xls,1,$wb,isset($export_par->dir)?$export_par->dir:'',$export_par->type);
+      }
       $export_par->ok= $inf ? 0 : 1;
-//                                                         debug($export_par,$inf);
       if ( $inf ) fce_warning($inf);
     }
     unset($export_par->_xls);
@@ -1999,10 +2007,12 @@ function ezer_qry ($op,$table,$cond_key,$zmeny,$key_id='') {
         }
         $qry= "$qry_prefix,'$fld','$op','$old','$val'); ";
         $res= mysql_qry($qry);
+        if ( !$res ) fce_error("ezer_qry/zápis selhal: $qry");
 //                                                 display("TRACK: $qry");
       }
     }
   }
+  elseif ( $table=='clen') fce_error("ezer_qry/no track for clen");
 end:
   return $result;
 }

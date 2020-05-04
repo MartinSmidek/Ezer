@@ -10,7 +10,7 @@
       if ( $warning ) $y->warning= $warning;
       if ( isset($x->lc) ) $y->lc= $x->lc;  // redukce informace místo $y->x= $x;
       header('Content-type: application/json; charset=UTF-8');
-      $y->php_ms= round(getmicrotime() - $php_start,4);
+      $y->php_ms= round(microtime(true)*1000 - $php_start,4);
       $yjson= json_encode($y);
       echo $yjson;
       exit;
@@ -63,17 +63,25 @@
     echo $yjson;
     exit;
   }
-  # --------------------------------------------------------------------------------- root.inc[.php]
+  # ----------------------------------------------------------------------------------- root.inc.php
+  $ezer_root_inc= '';
   if ( isset($_SESSION[$ezer_root]['abs_root']) ) {
     $path= $_SESSION[$ezer_root]['abs_root'];
     $ezer_root_inc= 
         file_exists("$path/$ezer_root/$ezer_root.inc.php") ? "$ezer_root/$ezer_root.inc.php" : (
-        file_exists("$path/$ezer_root.inc.php")            ? "$ezer_root.inc.php" : "$ezer_root.inc");
+        file_exists("$path/$ezer_root.inc.php")            ? "$ezer_root.inc.php" : '');
   }
   else {
-    $path= $_POST['app_root'] ? "./../../$ezer_root" : "./../../";
-    $ezer_root_inc= file_exists("$path/$ezer_root.inc.php") ? "$ezer_root.inc.php" : "$ezer_root.inc";
+    if ( file_exists("$ezer_root.inc.php") ) {
+      $path= '.';
+      $ezer_root_inc= "$ezer_root.inc.php";
+    }
+    elseif ( file_exists("$ezer_root/$ezer_root.inc.php") ) {
+      $path= '$ezer_root';
+      $ezer_root_inc= "$ezer_root/$ezer_root.inc.php";
+    }
   }
+  if ( !$ezer_root_inc ) fce_error("SYSTEM: inconsistent kernel call");
   require_once("$path/$ezer_root_inc");
   require_once("$ezer_path_serv/ae_slib.php");
   $php_start= getmicrotime();                        // měření času
@@ -1141,7 +1149,7 @@
         list($paf,$parg)= explode(':',$desc->pipe.':');
         if ($paf=='') { $paf= $desc->pipe; }
         if ( !function_exists($paf) )
-          $y->error.= "$paf není PHP funkce";
+          $y->error.= "$paf($parg) není PHP funkce";
         else
           $pipe[$f]= array($paf,$parg);
       }
@@ -1156,14 +1164,14 @@
         if ( isset($mopt->db) && isset($ezer_db[$mopt->db][5]) )
           $mopt->db= $ezer_db[$mopt->db][5];
         $mapi++;
-        $tab= ($mopt->db ? "{$mopt->db}." : '').$map->table;
+        $tab= (isset($mopt->db) && $mopt->db ? "{$mopt->db}." : '').$map->table;
         $where= $mopt->where;
         if ( $map->table=='_cis' )
           $where= str_replace('druh=',"\$m$mapi.druh=",$where);
         $join= "\nLEFT JOIN $tab AS \$m$mapi ";
         $join.= "ON \$m$mapi.{$mopt->key_id}=$fld AND $where ";
         $joins.= $join;
-        $fld= "\$m$m$mapi.{$map->field}";
+        $fld= "\$m$mapi.{$map->field}";
       }
       // konstrukce položek FROM
       if ( !$shows || in_array($desc->id,$shows) ) {

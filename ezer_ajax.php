@@ -51,13 +51,13 @@
   require_once("$abs_root/ezer".EZER_version."/server/ae_slib.php");
   require_once("$abs_root/ezer".EZER_version."/server/ezer_lib3.php");
 
-  $path_root=  array($abs_root,$abs_root);
-  $path_pspad= null;
+//  $path_root=  array($abs_root,$abs_root);
+//  $path_pspad= null;
   
   // ostatní parametry
   $tracking= '_track';
   $tracked= isset($tracked) ? "$tracked,_user," : ',_user,';
-  root_inc3($db,$dbs,$tracking,$tracked,$path_root,$path_pspad,$ezer_root);
+  root_inc3($db,$dbs,$tracking,$tracked/*,$path_root,$path_pspad,$ezer_root*/);
 
   // PARAMETRY SPECIFICKÉ PRO APLIKACI
 
