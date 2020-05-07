@@ -2527,6 +2527,13 @@ class PanelPopup extends Panel {
     // do jeho continuation interpret stav, metody tohoto objektu mohou pokračovat ve výpočtu
     return this;
   }
+// ------------------------------------------------------------------------------------ popup
+//fm: PanelPopup.popup (l,t,noevent=0,nomove=0)
+//      Ukáže panel, pro nomove=1 na původním místě
+  popup (l,t,noevent=0,nomove=0) {
+    this._show(l,t,noevent,'',nomove);
+    return 1;
+  }
 // -------------------------------------------------------------------------------------- hide
 //fm: PanelPopup.hide ([value])
   hide (value) {
@@ -2569,12 +2576,15 @@ class PanelPopup extends Panel {
       .click( e => this.hide(0) );
   }
 // ---------------------------------------------------------------------------------- _show
-  _show (l,t,noevent,title) {
+// nomove=1 zobrazí panel na původním místě
+  _show (l,t,noevent,title,nomove) {
     // panel position
-    if ( l!==undefined && t!==undefined )
-      this.DOM.css({left:Number(l),top:Number(t),marginLeft:0,marginTop:0});
-    else
-      this.DOM.css({left:'50%',top:'50%',marginLeft:-this._w/2-5,marginTop:-this._h/2-15});
+    if ( !nomove ) {
+      if ( l!==undefined && t!==undefined )
+        this.DOM.css({left:Number(l),top:Number(t),marginLeft:0,marginTop:0});
+      else
+        this.DOM.css({left:'50%',top:'50%',marginLeft:-this._w/2-5,marginTop:-this._h/2-15});
+    }
     // panel title
     if ( title!==undefined )
       this.DOM.find('div.pop_head span').first().html(title);
