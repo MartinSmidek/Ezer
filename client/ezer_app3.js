@@ -260,6 +260,8 @@ class Application {
     this.waiting= false;                          // je zobrazena výzva k prodloužení
     this.hits_block= null;                        // Ezer.fce.touch: blok, kterému byly naposledy připsány hits
     //                                          -- app --
+    this.domIcon_idle= jQuery('#StatusIcon_idle');
+    this.domIcon_server= jQuery('#StatusIcon_server');
     this._ajax(0);                                // počet neukončených požadavků na server
     Ezer.App= this;
     Object.assign(this.options,options); // moo: this.setOptions(options);
@@ -1540,8 +1542,6 @@ class Application {
 // _mini_debug_virgin: true,
   _mini_debug (on) {
     var timer;
-  //   this.domIcon_idle= $('StatusIcon_idle');
-  //   this.domIcon_server= $('StatusIcon_server');
     if ( this._mini_debug_virgin===undefined ) this._mini_debug_virgin= true;
     this.idle= true;                            // není běžící požadavek na server
     // kontextový help
@@ -1667,6 +1667,14 @@ class Application {
     if ( this.pb ) {
       // zobrazení
       this.pb.css('width',this.ajax*100);
+    }
+    if ( this.domIcon_server ) {
+      if ( this.ajax>0 ) {
+        this.domIcon_server.hide();
+      }
+      else {
+        this.domIcon_server.show();
+      }
     }
   }
 // ----------------------------------------------------------------------------- _ajax_init
