@@ -1844,12 +1844,15 @@ function user_test() {
   }
 }
 function ezer_qry ($op,$table,$cond_key,$zmeny,$key_id='') {
-  global $json, $mysql_db, $mysql_db_track, $mysql_tracked, $USER;
+  global $json, $ezer_db, $mysql_db, $mysql_db_track, $mysql_tracked, $USER;
 //                                                         debug($zmeny,"qry_update($op,$table,$cond_key)");
   $result= 0;
   $tracked= array();
   $keys= '???';                 // seznam klíčů
-  $tab= str_replace("$mysql_db.",'',$table);
+  $db_name= (isset($ezer_db[$mysql_db][5]) && $ezer_db[$mysql_db][5]!='') 
+      ? $ezer_db[$mysql_db][5] : $mysql_db;
+
+  $tab= str_replace("$db_name.",'',$table);
   if ( !$key_id ) $key_id= $tab=='pdenik' ? 'id_pokl' : str_replace('__','_',"id_$tab");
   $user= $USER->abbr;
   user_test();
