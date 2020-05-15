@@ -1391,6 +1391,7 @@ class Block {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  DOM_optStyle
 // doplní případný styl, css-třídu a title
 // předpony title: ^ umístit nad, - umístit napravo, jinak nalevo
+// pokud ignore_right=true ignoruje se format=r, pokud je ignore_right číslo posune se label doleva
   DOM_optStyle (dom,title_as_label,ignore_right) {
     // atribut style definuje styly pro parametr
     if ( this.options.style ) {
@@ -1410,10 +1411,10 @@ class Block {
       const label= title_as_label[0]=='^' ? title_as_label.substr(1) : (
                    title_as_label[0]=='-' ? title_as_label.substr(1) : title_as_label );
       const up= title_as_label[0]=='^';
-      const up_left= ignore_right || !this._fc('r');
+      const up_left= ignore_right===true || !this._fc('r');
       const right= title_as_label[0]=='-';
       this.DOM_Label= jQuery(`<div class="Label3">${label}</div>`)
-        .css(up ? (up_left ? {top:-14,left:2}       : {top:-14,right:0})
+        .css(up ? (up_left ? {top:-14,left:2}       : {top:-14,right:isNaN(ignore_right)?0:ignore_right})
                 : (right   ? {top:3,left:this._w+3} : {top:3,right:this._w+2}));
       if ( right )
         this.DOM_Block.append(this.DOM_Label);
@@ -5682,7 +5683,7 @@ class FieldDate extends Field {
       .appendTo(this.owner.DOM_Block||this.owner.value.DOM_Block)
       .data('ezer',this)
       .css(this.coord());
-    this.DOM_optStyle(this.DOM_Block,this.options.title);
+    this.DOM_optStyle(this.DOM_Block,this.options.title,20);
     this.DOM_ElemEvents();
     this.picker= null;
   }
