@@ -75,8 +75,8 @@
     $_SESSION[$app]['pdo']= 1;
   }
 
-  // doplnění jména aplikace o verzi ezer a db
-  $app_name.=  " 3.1.".EZER_PDO_PORT;
+//  // doplnění jména aplikace o verzi ezer a pdo
+//  $app_name.=  " 3.1.".EZER_PDO_PORT;
 
   // nastavení cest
   $abs_root= isset($ezer_server) ? $abs_roots[$ezer_server] : $abs_roots[$ezer_local];
@@ -103,9 +103,10 @@
   $client= "$http://$rel_root/{$EZER->version}/client";
   $licensed= "$client/licensed";
 
-  // klíče
+  // klíče, pokud jsou dostupné
   $deep_root= "../files/ezer3.1";
-  require_once("$deep_root/ezer.keys.php");
+  if ( @file_exists("$deep_root/ezer.keys.php"))
+    require_once("$deep_root/ezer.keys.php");
   
   $app_js= array_values(array_filter($app_js)); // vynechání všech false
   $js= array_merge(
