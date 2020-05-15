@@ -322,7 +322,7 @@ function mysql_qry($qry,$pocet=null,$err=null,$to_throw=null,$db=null) {
 #   $db       -- před dotazem je přepnuto na databázi daného jména v tabulce $ezer_db nebo na hlavní
 function pdo_qry($qry,$pocet=null,$err=null,$to_throw=false,$db='') {
   global $y, $totrace, $qry_del, $qry_count, $curr_db, $ezer_db;
-  if ( !isset($y) ) $y= (object)array();
+//  if ( !isset($y) ) $y= (object)array();
   $msg= ''; $abbr= $ok= '';
   $qry_count++;
   $myqry= strtr($qry,array('"'=>"'","<="=>'&le;',"<"=>'&lt;'));
@@ -350,7 +350,7 @@ function pdo_qry($qry,$pocet=null,$err=null,$to_throw=false,$db='') {
           $msg.= "zmeneno $res zaznamu misto $pocet" . ($err ? ", $err" : ""). " v $qry";
           $annr= "/$res";
         }
-        $y->ok= 'ko';
+        if ( isset($y) ) $y->ok= 'ko';
         $ok= "ko [$res]";
         $res= null;
       }
@@ -380,7 +380,7 @@ function pdo_qry($qry,$pocet=null,$err=null,$to_throw=false,$db='') {
         $msg.= "\"$myerr\" \nQRY:$qry";
         $abbr= '/E';
       }
-      $y->ok= 'ko';
+      if ( isset($y) ) $y->ok= 'ko';
     }
     else if ( $pocet  ) {
 //      fce_error("pdo_qry: OBSOLETE - 2.parametr (počet záznamů & PHP7/PDO)");
@@ -394,7 +394,7 @@ function pdo_qry($qry,$pocet=null,$err=null,$to_throw=false,$db='') {
           $msg.= "vraceno $num zaznamu misto $pocet" . ($err ? ", $err" : ""). " v $qry";
           $annr= "/$num";
         }
-        $y->ok= 'ko';
+        if ( isset($y) ) $y->ok= 'ko';
         $ok= "ko [$num]";
         $res= null;
       }
@@ -407,13 +407,14 @@ function pdo_qry($qry,$pocet=null,$err=null,$to_throw=false,$db='') {
     $pretty= trim($myqry);
     if ( strpos($pretty,"\n")===false )
       $pretty= preg_replace("/(FROM|LEFT JOIN|JOIN|WHERE|GROUP|HAVING|ORDER)/","\n\t\$1",$pretty);
-    $y->qry= (isset($y->qry)?"$y->qry\n":'')."$ok $time \"$pretty\" ";
+    if ( isset($y) ) $y->qry= (isset($y->qry)?"$y->qry\n":'')."$ok $time \"$pretty\" ";
   }
-  $y->qry_ms= isset($y->qry_ms) ? $y->qry_ms+$time : $time;
+  if ( isset($y) ) $y->qry_ms= isset($y->qry_ms) ? $y->qry_ms+$time : $time;
   $qry_del= "\n: ";
   if ( $msg ) {
     if ( $to_throw ) throw new Exception($err ? "$err$abbr" : $msg);
-    else $y->error= (isset($y->error) ? $y->error : '').$msg;
+    elseif ( isset($y) ) $y->error= (isset($y->error) ? $y->error : '').$msg;
+    else fce_error($msg);
   }
 end:
   return $res;
