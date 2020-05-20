@@ -133,6 +133,115 @@ function dbg_oncontextmenu(line,op) {
   }
   return found;
 }
+// --------------------------------------------------------------------------------- dbg find_block
+// DBG - voláno z dbg3.php
+// akce kontextového menu na určitém řádku
+// op= stop+ | stop- | trace+ | trace- | dump
+function dbg_find_block(name,l,c) {
+  var block_file, 
+      find_block, find_elem, inside,
+      block= null, elem= null, msg= '';
+  find_block= function(b) {
+    var found= false,
+        file= b._file || b.desc ? b.desc._file : null;
+    if ( file==block_file ) {
+      found= b;
+    }
+    else if ( b.part ) {
+      for ( let bi in b.part ) {
+        found= find_block(b.part[bi]);
+        if ( found ) break;
+      }
+    }
+    return found;
+  }
+  find_elem= function(top,l,c) {
+    var found= null;
+    if ( top.part ) {
+      for (let ti in top.part) {
+        let b= top.part[ti];
+        if ( b.type=='var' && b._of=='form' && b.value ) {
+          b= find_elem(b.value,l,c);
+          if ( b ) {
+            found= b;
+            block= b.value;
+            break;
+          }
+        }
+        else if ( b.part ) {
+          let b1= find_elem(b,l,c);
+          if ( b1 ) {
+            found= b1;
+            block= b;
+            break;
+          }
+        }
+        else {
+          let _lc= b.desc._lc, lc_= b.desc.lc_;
+          if ( _lc ) {
+            _lc= _lc.split(',');
+            if ( lc_==undefined ) {
+              if ( l==_lc[0] ) {
+                found= b;
+                block= top;
+                break;
+              }
+            }
+            else {
+              lc_= lc_.split(',');
+              if ( inside(l,c,_lc[0],_lc[1],lc_[0],lc_[1]) ) {
+                found= b;
+                let deeper= find_elem(b,l,c);
+                if ( deeper ) {
+                  found= deeper;
+                }
+                break;
+              }
+            }
+          }
+        }
+      }
+    }
+    return found;
+  }
+  inside= function(l,c,_l,_c,l_,c_) {
+    let ok= l>=_l && l<=l_;
+    return ok ? (_l==l_ ? c>=_c && c<=c_ : true) : false;
+  }
+  Ezer.fce.echo(name,':',l,',',c);
+  var root_file_ezer= name.match(/(.*\/)(.*)\.(ezer)/);
+  if ( root_file_ezer[3]=='ezer' ) {
+    block_file= root_file_ezer[2];
+    block= find_block(Ezer.run.$);
+    if ( block ) {
+      elem= find_elem(block,l,c);
+      if ( elem ) {
+        msg+= elem.type+' '+elem.id;
+        switch ( elem.type ) {
+          case 'var':
+          case 'const':
+            msg+= ' (value='+elem.get()+')';
+            break;
+          case 'proc':
+            let del= '';
+            msg+= ' (';
+            for (let par in elem.desc.par) {
+              msg+= del+par;
+              del= ',';
+            }
+            msg+= ')';
+            del= ' var ';
+            for (let par in elem.desc.var) {
+              msg+= del+par;
+              del= ',';
+            }
+            break;
+        }
+      }
+    }
+  }
+  return {block:block,elem:elem,msg:msg};
+}
 // =================================================================================> DEBUGGER LOCAL
 // funkce debuggeru - volané z aplikace
 // ----------------------------------------------------------------------------- isElementInViewport
@@ -176,7 +285,8 @@ function dbg_onshiftclick(block) {
       var x= ltwh.split(',');
       var position= 'left='+x[0]+',top='+x[1]+',width='+x[2]+',height='+x[3];
       Ezer.sys.dbg.win_ezer= window.open(
-        `./ezer3.1/dbg3.php?err=1&app=${pos.app}&src=${fname}&pick=${line}`,'dbg',
+        `./ezer3.1/dbg3.php?err=1&app=${Ezer.root}&src=${fname}&pick=${line}`,'dbg',
+//        `./ezer3.1/dbg3.php?err=1&app=${pos.app}&src=${fname}&pick=${line}`,'dbg',
         position+',resizable=1,titlebar=0,menubar=0');
       if ( Ezer.sys.dbg.win_ezer ) {
         Ezer.sys.dbg.file= pos.file;
