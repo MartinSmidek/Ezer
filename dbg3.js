@@ -22,12 +22,14 @@ jQuery.fn.extend({
 //   window.addEvent('load', function() {
 jQuery.when(jQuery.ready).then( function() {
   log= jQuery('#log');
+  prompt= jQuery('#prompt');
   help= jQuery('#help');
   dbg_show_text(source);
   if ( pick )
     dbg_show_line(pick,'pick');
   jQuery('body').click( () => {
     log.css({display:'none'});
+    prompt.css({display:'none'});
     help.css({display:'none'});
   })
 });
@@ -42,6 +44,10 @@ window.addEvent('unload', function() {
 //       opener.Ezer.sys.dbg.win_php= null;
 //     }
 })
+// --------------------------------------------------------------------------------------- dbg clear
+function dbg_clear() {
+  
+}
 // ----------------------------------------------------------------------------------- dbg_show_help
 function dbg_show_help(ret) {
   if ( ret.typ=='php' ) {
@@ -172,6 +178,19 @@ function dbg_touch(value,e) {
   log.css({display:'block',top:e.pageY||e.page.y,left:e.pageX||e.page.x})
      .html(value);
 }
+// --------------------------------------------------------------------------------------- dbg_touch
+function dbg_prompt(txt,deflt,ret_fce,e) {
+  prompt.css({display:'block',top:e.pageY||e.page.y,left:e.pageX||e.page.x});
+  prompt.find('span').html(txt);
+  let input= prompt.find('input');
+  input.val(deflt).focus().keyup(function(e){
+    if (e.keyCode == 13) {
+      input.unbind();
+      prompt.hide();
+      ret_fce(input.val());
+    }
+  });
+}
 // ------------------------------------------------------------------------------- dbg_onclick_start
 function dbg_onclick_start(win) {
   win= win ? win : window;
@@ -194,21 +213,8 @@ function dbg_onclick_start(win) {
   jQuery('#src')
     // -----------------------------------==> .. click na zdrojový text
     .click( el => {
-      var l= dbg_context(el.target),
-          c= get_caret(),
-          text= "lc="+l+','+c; 
+      var l= dbg_context(el.target);
       dbg_show_line(l,'pick');
-      let y= opener.dbg_find_block(name,l,c), elem= y.elem, block= y.block;
-      if ( block ) 
-        text+= '<br><br> ... block '+block.id+' / '+block.type+' _lc-lc_='+block.desc._lc+'-'+block.desc.lc_;
-      if ( elem && elem.type=='proc') 
-        text+= '<br><br> ... elem '+elem.id+' / '+elem.type+' _lc-lc_='+elem.desc._lc+'-'+elem.desc.lc_;
-      else if ( elem ) 
-        text+= '<br><br> ... elem '+elem.id+' / '+elem.type+' _lc='+elem.desc._lc;
-      help
-        .css({display:'block'})
-        .html(y.msg+'<br><br>'+text);
-      return false;
     })
     // -----------------------------------==> .. dvojclick na zdrojový text
     .dblclick( el => {
@@ -226,41 +232,101 @@ function dbg_onclick_start(win) {
     })
     // -----------------------------------==> .. kontextové menu pro zdrojový text
     .contextmenu( menu_el => {
+      var l= dbg_context(menu_el.target),
+          c= get_caret(),
+          text= "lc="+l+','+c; 
+      dbg_show_line(l,'pick');
+      let y= opener.dbg_find_block(name,l,c), elem= y.elem, block= y.block;
+      if ( block ) 
+        text+= '<br><br> ... block '+block.id+' / '+block.type+' _lc-lc_='+block.desc._lc+'-'+block.desc.lc_;
+      if ( elem && elem.type=='proc') 
+        text+= '<br><br> ... elem '+elem.id+' / '+elem.type+' _lc-lc_='+elem.desc._lc+'-'+elem.desc.lc_;
+      else if ( elem ) 
+        text+= '<br><br> ... elem '+elem.id+' / '+elem.type+' _lc='+elem.desc._lc;
+      help
+        .css({display:'block'})
+        .html(y.msg+'<br><br>'+text);
+      
+      // zobraz kontextové menu podle kontextu elem
+      switch (elem.type) {
+        case 'var':
+          Ezer.fce.contextmenu([
+            ['zjisti hodnotu', function(el) {
+                let value= elem.get();
+                if ( typeof value == "object" )
+                  value= opener.Ezer.fce.debug(value,elem.id,3);
+                else
+                  value= elem.id+'='+value;
+                dbg_touch(value,menu_el)
+                return false;
+            }],
+            ['změň hodnotu', function(el) {
+                let value= elem.get();
+                if ( typeof value == "object" ) {
+                  value= opener.Ezer.fce.debug(value,elem.id+" ... NELZE ZMĚNIT",3);
+                  dbg_touch(value,menu_el)
+                }
+                else {
+                  value= dbg_prompt(elem.id,value,function(val){elem.set(val);return false;},menu_el);
+                }
+                return false;
+            }]
+          ],arguments[0]);
+          break;
+        case 'proc':
+          Ezer.fce.contextmenu([
+            ['nastav trasování', function(el) {
+                elem.proc_trace(1);
+                dbg_touch('proc '+elem.id,menu_el)
+                src[l].addClass('trace');
+                return false;
+            }],
+            ['zruš trasování', function(el) {
+                elem.proc_trace(0);
+                dbg_touch('proc '+elem.id,menu_el)
+                src[l].removeClass('trace');
+                return false;
+            }],
+            ['-zastopuj proceduru', function(el) {
+                elem.proc_stop(1);
+                dbg_touch('proc '+elem.id,menu_el)
+                src[l].addClass('break');
+                return false;
+            }],
+            ['uvolni proceduru', function(el) {
+                elem.proc_stop(0);
+                dbg_touch('proc '+elem.id,menu_el)
+                src[l].removeClass('break');
+                return false;
+            }]
+          ],arguments[0]);
+          break;
+      }
+      return false;
+    })
+};
+// ------------------------------------------------------------------------------------------- caret
+function get_caret() {
+  return window.getSelection().getRangeAt(0).startOffset;
+}
+function set_caret(node,caret) {
+  node.focus();
+  var textNode= node.firstChild;
+  if ( textNode ) {
+    var clmn= Math.min(caret,textNode.length);
+    var range= document.createRange();
+    range.setStart(textNode, clmn);
+    range.setEnd(textNode, clmn);
+    var sel= window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
+}
+/*
       var x= dbg_context(menu_el.target);
       if ( x ) {
         dbg_show_line(x,'pick');
         Ezer.fce.contextmenu([
-          ['zjisti hodnotu', function(el) {
-              found= opener.dbg_oncontextmenu(x,'dump');
-              dbg_touch(found ? found.value : '?',menu_el)
-              return false;
-          }],
-          ['-nastav trasování', function(el) {
-              found= opener.dbg_oncontextmenu(x,'trace+');
-              if ( found ) {
-                dbg_touch('proc '+found.id,menu_el)
-                src[x].addClass('trace');
-              }
-              return false;
-          }],
-          ['zruš trasování', function(el) {
-              found= opener.dbg_oncontextmenu(x,'trace-');
-              if ( found ) src[x].removeClass('trace');
-              return false;
-          }],
-          ['-zastopuj proceduru', function(el) {
-              found= opener.dbg_oncontextmenu(x,'stop+');
-              if ( found ) {
-                dbg_touch('proc '+found.id,menu_el)
-                src[x].addClass('break');
-              }
-              return false;
-          }],
-          ['uvolni proceduru', function(el) {
-              found= opener.dbg_oncontextmenu(x,'stop-');
-              if ( found ) src[x].removeClass('break');
-              return false;
-          }],
           ['-oprav text', function(el) {
               if ( !open ) {
                 for (var i=0; i<x.chs.length; i++) {
@@ -333,24 +399,9 @@ function dbg_onclick_start(win) {
       }
       return true;
     })
-// */
+// 
 };
 function myTrimRight(x) {
   return x.replace(/ +$/gm,'');
 }
-function get_caret() {
-  return window.getSelection().getRangeAt(0).startOffset;
-}
-function set_caret(node,caret) {
-  node.focus();
-  var textNode= node.firstChild;
-  if ( textNode ) {
-    var clmn= Math.min(caret,textNode.length);
-    var range= document.createRange();
-    range.setStart(textNode, clmn);
-    range.setEnd(textNode, clmn);
-    var sel= window.getSelection();
-    sel.removeAllRanges();
-    sel.addRange(range);
-  }
-}
+*/

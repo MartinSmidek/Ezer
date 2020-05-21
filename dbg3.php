@@ -61,7 +61,7 @@ function html_closure($win_name,$notes,$source,$url,$lines,$typ,$start,$backgrou
   var typ= '$typ';
   var start= '$start';
   var pick= '$pick';
-  var log;
+  var log, prompt;
   var open= false;
   var help;
   var src= not= [];
@@ -134,6 +134,13 @@ function html_closure($win_name,$notes,$source,$url,$lines,$typ,$start,$backgrou
       #log {
         position:absolute; display: none; background-color:#eee; box-shadow:5px 5px 10px #567;
         padding: 5px; }
+      #prompt {
+        position:absolute; display: none; background-color:#eee; box-shadow:5px 5px 10px #567;
+        padding: 5px; }
+      #prompt span {
+        display:block; }
+      #prompt input {
+        width:100px; }
       .dbg {
         margin:0; overflow-y:auto; font-size:8pt; line-height:13px; }
       table.dbg {
@@ -190,6 +197,7 @@ function html_closure($win_name,$notes,$source,$url,$lines,$typ,$start,$backgrou
       <ul>$source</ul>
     </div>
     <span id='log'></span>
+    <span id='prompt'><span></span><input></span>
   </body>
 </html>
 __EOD;

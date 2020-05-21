@@ -573,7 +573,8 @@ $html_header
   <div id='horni' class="MainBar">
     <div id="appl" $version>$title_right</div>
     <div id='logo'>
-      <button id='logoContinue' style='display:none;outline:3px solid orange;z-index:2011;margin:7px'>
+      <button id='logoContinue' 
+          style='display:none;outline:3px solid orange;z-index:2011;margin:7px;position:absolute'>
         continue</button>
       <img class="StatusIcon" id="StatusIcon_idle" src="$app/img/-logo.gif" />
       <img class="StatusIcon" id="StatusIcon_server" src="$app/img/+logo.gif" />
