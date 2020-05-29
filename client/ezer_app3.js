@@ -41,7 +41,7 @@ Ezer.excited= 0;                // >0 pokud bylo již použito Ezer.options.star
 Ezer.konst= Ezer.konst || {};   // hodnoty nedefinovaných konsta(const x;y;z)
 Ezer.curr= {panel:null};        // zobrazený panel
 // systémové proměnné (root,user,ezer,options)
-Ezer.sys= {root:Ezer.root,user:{},ezer:{},version:Ezer.version,options:Ezer.options};
+Ezer.sys= {root:Ezer.root,user:{},ezer:{},version:Ezer.version,options:Ezer.options,dbg:null};
 Ezer.is_trace= {};                              // zapínání typů trasování
 Ezer.is_dump= {};                               // zapínání typů výpisů
 // ------------------------------------------------------------------------------------- const_value
@@ -1171,20 +1171,6 @@ class Application {
         obj.desc.type+' '+obj.id+(obj.desc.stop?' STOP':'')+(obj.desc.trace?' TRACE':''));
     }
   }
-  // ------------------------------------------------------------------------------------- toggle
-  // toggle příznaku (stopadresy,trasování) procedury
-  // obj :: {id:key,desc:value,path:idkey};
-  toggle (obj,tag) {
-//     obj.desc[tag]= obj.desc[tag] ? false : true;
-  }
-  // ------------------------------------------------------------------------------------- stopped
-  // interpret narazil na stop-adresu
-  stopped (proc) {
-//     if ( this.options.debug && window.top.dbg.show_stop )
-//       window.top.dbg.show_stop(proc);
-//     else
-//       alert('proc '+proc.id+' stopped');
-  }
   // ------------------------------------------------------------------------------------- load_root
   // load_root (aplikace)
   //   source :: { use:<str*>  part:<desc># }
@@ -1578,6 +1564,7 @@ class Application {
         if ( Ezer.continuation ) {
           button.css({display:'none'});
           jQuery('#maskContinue').css({display:'none'});
+          dbg_proc_stop(false); // funkce v ezer_lib3 volající dbg3
           Ezer.continuation.eval();
           Ezer.continuation= null;
         }
@@ -1961,13 +1948,6 @@ class Eval {
   eval (step,back) {
     var eval_start= Ezer.options.to_speed ? new Date().valueOf() : 0;       // měření spotřebovaného času
     try {
-//       //==> . stopadresa
-//             if ( this.proc && (this.proc.stop || this.proc.desc && this.proc.desc.stop) ) {
-//               this.trace_proc('>>>STOP '+this.context.id+'.'+this.code[this.c].i,this.proc,this.nargs,this.nvars,'T');
-//               Ezer.continuation= this;
-//               Ezer.App.stopped();
-//               return;
-//             }
       var i, o, val, obj=null, fce=null, cc={}, args=[], nargs=0, c, top, last_lc, no_iff, keys;
       this.step= step||this.step;
       if ( !step && !back )
@@ -2160,7 +2140,7 @@ class Eval {
                 jQuery('#logoContinue').css({display:'block'});
                 jQuery('#maskContinue').css({display:'block'});
                 Ezer.continuation= this;
-                Ezer.App.stopped(this.proc);
+                dbg_proc_stop(true); // funkce v ezer_lib3 volající dbg3
                 this.simple= false;
                 if ( Ezer.options.to_speed ) this.speed(eval_start);
                 return;

@@ -1,10 +1,23 @@
 <?php # (c) 2008 Martin Smidek <martin@smidek.eu>
 
 // ============================================================================================> PHP
+
+  session_start();
+
   // nastavení zobrazení PHP-chyb klientem při &err=1
   if ( isset($_GET['err']) && $_GET['err'] ) {
     error_reporting(E_ALL & ~E_NOTICE);
     ini_set('display_errors', 'On');
+  }
+  
+  // AJAX volání 
+  if ( count($_POST) && !isset($_POST['post']) ) {
+    $x= array2object($_POST);
+    $y= dbg_server($x);
+    header('Content-type: application/json; charset=UTF-8');
+    $yjson= json_encode($y);
+    echo $yjson;
+    exit;
   }
 
   // parametry aplikace DBG
@@ -16,18 +29,11 @@
   $typ= isset($_GET['typ']) ? $_GET['typ'] : 'ezer';
   $start= isset($_GET['start']) ? $_GET['start'] : '';
   $pick= isset($_GET['pick']) ? $_GET['pick'] : '';
+  $file= isset($_GET['file']) ? $_GET['file'] : '';
 
-  session_start();
   $app= $_GET['app'];
-  $rel_root= $_SESSION[$app]['rel_root'];
   
-  $url= "http://$rel_root/$src";
-  $html= $notes= $lines= "";
-  $lns= file($url,FILE_IGNORE_NEW_LINES);
-  foreach($lns as $i=>$ln) {
-    $ln= str_replace('</script','<\/script',$ln);
-    $lines.= "\n\"".addslashes($ln).'",';
-  }
+  $html= "";
   switch($typ) {
   case 'ezer':
     $background= 'oldlace';
@@ -36,10 +42,6 @@
     $background= '#fafaff';
     break;
   }
-  $html= html_closure($src,$notes,$html,$src,$lines,$typ,$start,$background,$pick);
-  echo $html;
-// ------------------------------------------------------------------------------------ html_closure
-function html_closure($win_name,$notes,$source,$url,$lines,$typ,$start,$background,$pick) {
   $html= <<<__EOD
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="cs" dir="ltr">
@@ -47,7 +49,7 @@ function html_closure($win_name,$notes,$source,$url,$lines,$typ,$start,$backgrou
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=9" />
     <link rel="shortcut icon" href="client/img/dbg.ico" />
-    <title>$win_name</title>
+    <title>$src</title>
     <script src="client/licensed/jquery-3.2.1.min.js" type="text/javascript" charset="utf-8"></script>
     <script src="client/licensed/jquery-noconflict.js" type="text/javascript" charset="utf-8"></script>
     <script src="client/licensed/jquery-ui.min.js" type="text/javascript" charset="utf-8"></script>
@@ -58,23 +60,37 @@ function html_closure($win_name,$notes,$source,$url,$lines,$typ,$start,$backgrou
     <script src="dbg3.js" type="text/javascript" charset="utf-8"></script>
     <script type="text/javascript">
 // =====================================================================================> JAVASCRIPT
-  var typ= '$typ';
-  var start= '$start';
-  var pick= '$pick';
-  var log, prompt;
-  var open= false;
-  var help;
-  var src= not= [];
-  var url= "$url";
-  var name= "$win_name";
-  source= [
-    $lines
-  ];
+  var name= "$src";         // GET src
+  var typ= '$typ';          // GET type=ezer 
+  var start= '$start';      // GET start
+  var pick= '$pick';        // GET pick
+  var src= not= [];         // array of DOM ezer, array of DOM poznámek
+  var help, log, prompt,    // DOM elements
+      lines, notes, files;
+  var doc, dbg;             // document aplikace a debuggeru
+  var app= '$app';          // ajax
+  //-var url= "$src";
+  //-var open= false;       // editor
+
+ jQuery(function(){
+    // rozlišení dvou oken-dokumentů
+    opener.doc= doc= opener;
+    opener.dbg= dbg= window;
+    // zapamatované elementy DOM
+    log=    jQuery('#log');
+    prompt= jQuery('#prompt');
+    help=   jQuery('#help');
+    lines=  jQuery('#lines');
+    notes=  jQuery('#notes');
+    files=  jQuery('#files');
+    // inicializace 
+    dbg_onclick_start('$file');
+  });
 // =========================================================================================> STYLES
     </script>
     <style>
-      body {
-        font-size: 8pt; font-family: monospace,consolas; overflow: hidden; }
+      body, select {
+        font-size: 8pt; font-family: monospace,consolas; overflow: hidden; /*margin: 0;*/ }
       li {
         white-space: pre; list-style-type: none; text-overflow: ellipsis; overflow: hidden; }
       /* ----------------------- help */
@@ -82,24 +98,25 @@ function html_closure($win_name,$notes,$source,$url,$lines,$typ,$start,$backgrou
         position: fixed; right: 30px; top: 25px; width: 300px; min-height: 100px;
         background-color: #eee; border: 1px solid #aaa; z-index: 2;
         overflow-y: auto; max-height: 50%; display: none; }
+      div#help span {
+        text-decoration: underline; color: blue; cursor: alias;}
       #sources {
         position: fixed; right: 10px; top: 2px; font-size: 16px; color: lightgray; }
       /* ----------------------- notes */
-      div#notes {
-        padding: 0; margin-top: 5px; overflow-y: scroll; height: 100%;
-        left: 0; width: 120px; position: absolute; }
-      #notes ul {
-        padding: 0; margin-top: 5px; }
-      #notes li {
+      div#filnot {
+        padding: 0; height: 100%; left: 0; width: 120px; position: absolute; }
+      select#files {
+        background-color: silver; position:absolute; height:20px; width:120px; }
+      ul#notes  {
+        overflow-y: scroll; padding: 0; margin-top:20px; height:calc(100% - 20px); }
+      ul#notes li {
         cursor: alias; }
       /* ----------------------- source */
-      #source {
-        position: fixed; right: 10px; top: 2px; font-size: 16px; color: lightgray;}
-      div#src {
-        padding: 0; margin-top: 5px; overflow-y: scroll; height: 100%;
+      div#lines {
+        padding: 0; overflow-y: scroll; height: 100%;
         left: 120px; right: 0px; position: absolute;}
-      #src ul {
-        padding: 0; margin-top: 5px; scroll-behavior: smooth;}
+      #lines ul {
+        padding: 0; margin-top: 0; scroll-behavior: smooth;}
       li span.text {
         margin-left:40px; display: block; }
       li span.text[contenteditable=true] {
@@ -117,7 +134,10 @@ function html_closure($win_name,$notes,$source,$url,$lines,$typ,$start,$backgrou
         background-color: silver; vertical-align: top; padding-right: 5px; margin-right: 5px;
         width: 24px; text-align: right;  }
       li.break span {
-        background-color: darkred;
+        background-color: #ff244861;
+        color: black; }
+      li.stop span {
+        background-color: #ff2448eb;
         color: yellow; }
       /* ----------------------- trace */
       li span.line {
@@ -140,7 +160,7 @@ function html_closure($win_name,$notes,$source,$url,$lines,$typ,$start,$backgrou
       #prompt span {
         display:block; }
       #prompt input {
-        width:100px; }
+        width:200px; }
       .dbg {
         margin:0; overflow-y:auto; font-size:8pt; line-height:13px; }
       table.dbg {
@@ -166,43 +186,69 @@ function html_closure($win_name,$notes,$source,$url,$lines,$typ,$start,$backgrou
 .ContextMenu3 li.disabled3:hover { background-color:#eee; }
 .ContextFocus3 { background-color:#ffa !important;
 }
-/*
-      .ContextMenu   {
-        border:1px solid #ccc; padding:2px; background:#fff; width:200px; list-style-type:none;
-        display:none; position:static; box-shadow:5px 5px 10px #567; cursor:default; }
-      .ContextMenu .separator   {
-        border-top:1px solid #999; }
-      .ContextMenu li   {
-        margin:0; padding:0; }
-      .ContextMenu li a {
-        display:block; padding:2px 2px 0px 25px; width:173px; text-decoration:none; color:#000; }
-      .ContextMenu li a:hover   {
-        background-color:#b2b4bf; }
-      .ContextMenu li a.disabled3 {
-        color:#ccc; font-style:italic; }
-      .ContextMenu li a.disabled3:hover {
-        background-color:#eee; }
-      .ContextFocus {
-        background-color:#ffa !important; }
-*/
     </style>
   </head>
-  <body id='body' onload="dbg_onclick_start()" style="background-color:$background;">
+  <body id='body' style="background-color:$background;">
     <div id="help">...</div>
-    <div id="source">$win_name</div>
-    <div id='notes'>
-      <ul>$notes</ul>
+    <div id='work'>
+      <div id='filnot'>
+        <select id='files' onchange="dbg_reload(this.value);">
+          <option selected>$file.ezer</option>
+        </select>
+        <ul id="notes"><li>notes</li></ul>
+      </div>
+      <div id='lines'>
+        <ul><li>lines</li></ul>
+      </div>
+      <span id='log'></span>
+      <span id='prompt'><span></span><input></span>
     </div>
-    <div id='src'>
-      <ul>$source</ul>
-    </div>
-    <span id='log'></span>
-    <span id='prompt'><span></span><input></span>
   </body>
 </html>
 __EOD;
-  return $html;
+  echo $html;
+// =========================================================================================> SERVER
+// -------------------------------------------------------------------------------------- dbg server
+// AJAX volání z dbg3_ask
+// na vstupu je definováno: x.app
+function dbg_server($x) {
+  $y= $x;
+  switch ($x->cmd) {
+  case 'source':
+    $file= "{$x->file}.ezer";
+    $name= "{$x->app}/$file";
+    $path= "{$_SESSION[$x->app]['abs_root']}/$name";
+    if ( file_exists($path) ) {
+      $y->lines= file($path,FILE_IGNORE_NEW_LINES);
+      $y->name= $name;
+    }
+    else {
+      $name= "ezer3.1/$file";
+      $path= "{$_SESSION[$x->app]['abs_root']}/$name";
+      if ( file_exists($path) ) {
+        $y->lines= file($path,FILE_IGNORE_NEW_LINES);
+        $y->name= $name;
+      }
+      else {
+        $y->lines= array("modul {$x->file} se nepodařilo najít");
+      }
+    }
+    break;
+  }
+  return $y;
 }
-
+# ------------------------------------------------------------------------------------- array2object
+function array2object(array $array) {
+  $object= new stdClass();
+  foreach($array as $key => $value) {
+    if(is_array($value)) {
+      $object->$key= array2object($value);
+    }
+    else {
+      $object->$key= $value;
+    }
+  }
+  return $object;
+}
 ?>
 

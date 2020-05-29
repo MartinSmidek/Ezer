@@ -1,250 +1,11 @@
-/* global Ezer */
+/* global Ezer, dbg */
 
 // ===========================================================================================> LIB3
 "use strict";
-// ================================================================================> DEBUGGER REMOTE
-// funkce debuggeru - volané z dbg3.php
-// ------------------------------------------------------------------------------------ dbg_onunload
-// DBG - voláno z dbg3.php
-// zavření okna
-function dbg_onunload(typ,position) {
-  if ( typ==='ezer' ) {
-    Ezer.sys.dbg.win_ezer= null;
-    Ezer.sys.dbg.file= '';
-    // zápis polohy a rozměru do cookies ezer_dbg_win=l,t,w,h ==> . dbg unload
-    Ezer.fce.set_cookie('ezer_dbg_win',position);
-  }
-  else if ( typ=='php' )  {
-    Ezer.sys.dbg.win_php= null;
-    Ezer.fce.set_cookie('ezer_dbg_win2',position);
-  }
-}
-// -------------------------------------------------------------------------------------- dbg_onsave
-// DBG - voláno z dbg3.php
-function dbg_onsave(url,source) { Ezer.fce.echo("save "+url);//+"<hr>"+source);
-  dbg_ask('save_file',[url,source],_dbg_onsave);
-}
-function _dbg_onsave(y) { //Ezer.fce.echo(Ezer.fce.debug(y,"saved"));
-  Ezer.fce.echo(y.value);
-  return y.value;
-}
-// ---------------------------------------------------------------------------------------- dbg_help
-// dotaz na server o help pro daný item
-function dbg_help (typ,item) {
-  if ( typ=='ezer' ) {
-    dbg_ask('item_help',[item],_dbg_help);
-  }
-}
-function _dbg_help(y) { //Ezer.fce.echo(Ezer.fce.debug(y,"help"));
-  Ezer.fce.echo(y.value);
-  Ezer.sys.dbg.win_ezer.dbg_show_help(y.value);
-  return y.value;
-}
-// ----------------------------------------------------------------------------------------- dbg_ask
-// dotaz na server se jménem funkce po dokončení
-function dbg_ask (fce,args,then) {
-  var x= {cmd:'ask',fce:fce,args:args,nargs:args.length};
-  x.root= Ezer.root;                  // název/složka aplikace
-  x.app_root= Ezer.app_root;          // {root].inc je ve složce aplikace
-  x.session= Ezer.options.session;    // způsob práce se SESSION
-  Ezer.ajax({data:x,
-    success: function(y) {
-      Ezer.App._ajax(-1);
-      if ( !y  )
-        Ezer.error('ASK(dbg): syntaktická chyba v PHP na serveru:'+y,'C');
-      else if ( y.error )
-        Ezer.error(y.error,'C');
-      else {
-        if ( y.trace ) Ezer.trace('u',y.trace);
-        then.bind(this)(y);
-      }
-    }.bind(this),
-    error: function(xhr) {
-      Ezer.error('SERVER failure (dbg)','C');
-    }
-  });
-//   ajax.send();
-  Ezer.App._ajax(1);
-}
-// ------------------------------------------------------------------------------- dbg_oncontextmenu
-// DBG - voláno z dbg3.php
-// akce kontextového menu na určitém řádku
-// op= stop+ | stop- | trace+ | trace- | dump
-function dbg_oncontextmenu(line,op) {
-  var found= null;
-  var type= op=='dump' ? 'var' : 'proc';
-  if ( Ezer.sys.dbg ) {
-    var walk = function(o,ln) {
-      if ( o.part ) for (var i in o.part) {
-        if ( found ) break;
-        var oo= o.part[i];
-        if ( oo.desc && oo.desc._lc && oo.type==type && oo.desc._lc.includes(ln) ) {
-          found= {id:i,block:oo};
-          break;
-        }
-        found= walk(oo,ln);
-        if ( !found && oo instanceof Ezer.Var && oo._of=='form' && oo.value ) {
-          found= walk(oo.value,ln);
-        }
-      }
-      return found;
-    };
-    var dbg= Ezer.sys.dbg;
-    dbg.line= line;
-    // nalezení Ezer.Block podle dbg.start
-    var ctx= [], known;
-    known= Ezer.run_name(dbg.start,null,ctx);
-    if ( known ) for (var i=ctx.length-1; i>=0; i--) {
-      var o= ctx[i];
-      if ( o.desc._file==dbg.file ) { // nejvyšší blok - budeme hledat řádek
-        found= walk(o,line+',');
-        if ( found ) {
-          dbg.id= found.id;
-          dbg.block= found.block;
-          break;
-        }
-      }
-    }
-    // upravení found - jen hodnotové var
-    if ( found && type=='var' && (found.block._of=='form' || found.block._of=='area')) {
-      found= null;
-    }
-    // vlastní ladící akce
-    if ( found ) switch (op) {
-      case 'dump':
-        if ( typeof dbg.block.value == "object" )
-          found.value= Ezer.debug(dbg.block.value,dbg.id,3);
-        else
-          found.value= dbg.id+'='+dbg.block.value;
-        break;
-      case 'stop+':
-        dbg.block.proc_stop(1);
-        break;
-      case 'stop-':
-        dbg.block.proc_stop(0);
-        break;
-      case 'trace+':
-        dbg.block.proc_trace(1);
-        break;
-      case 'trace-':
-        dbg.block.proc_trace(0);
-        break;
-    }
-  }
-  return found;
-}
-// --------------------------------------------------------------------------------- dbg find_block
-// DBG - voláno z dbg3.php
-// akce kontextového menu na určitém řádku
-// op= stop+ | stop- | trace+ | trace- | dump
-function dbg_find_block(name,l,c) {
-  var block_file, 
-      find_block, find_elem, inside,
-      block= null, elem= null, msg= '';
-  find_block= function(b) {
-    var found= false,
-        file= b._file || b.desc ? b.desc._file : null;
-    if ( file==block_file ) {
-      found= b;
-    }
-    else if ( b.part ) {
-      for ( let bi in b.part ) {
-        found= find_block(b.part[bi]);
-        if ( found ) break;
-      }
-    }
-    return found;
-  }
-  find_elem= function(top,l,c) {
-    var found= null;
-    if ( top.part ) {
-      for (let ti in top.part) {
-        let b= top.part[ti];
-        if ( b.type=='var' && b._of=='form' && b.value ) {
-          b= find_elem(b.value,l,c);
-          if ( b ) {
-            found= b;
-            block= b.value;
-            break;
-          }
-        }
-        else if ( b.part ) {
-          let b1= find_elem(b,l,c);
-          if ( b1 ) {
-            found= b1;
-            block= b;
-            break;
-          }
-        }
-        else {
-          let _lc= b.desc._lc, lc_= b.desc.lc_;
-          if ( _lc ) {
-            _lc= _lc.split(',');
-            if ( lc_==undefined ) {
-              if ( l==_lc[0] ) {
-                found= b;
-                block= top;
-                break;
-              }
-            }
-            else {
-              lc_= lc_.split(',');
-              if ( inside(l,c,_lc[0],_lc[1],lc_[0],lc_[1]) ) {
-                found= b;
-                let deeper= find_elem(b,l,c);
-                if ( deeper ) {
-                  found= deeper;
-                }
-                break;
-              }
-            }
-          }
-        }
-      }
-    }
-    return found;
-  }
-  inside= function(l,c,_l,_c,l_,c_) {
-    let ok= l>=_l && l<=l_;
-    return ok ? (_l==l_ ? c>=_c && c<=c_ : true) : false;
-  }
-  Ezer.fce.echo(name,':',l,',',c);
-  var root_file_ezer= name.match(/(.*\/)(.*)\.(ezer)/);
-  if ( root_file_ezer[3]=='ezer' ) {
-    block_file= root_file_ezer[2];
-    block= find_block(Ezer.run.$);
-    if ( block ) {
-      elem= find_elem(block,l,c);
-      if ( elem ) {
-        msg+= elem.type+' '+elem.id;
-        switch ( elem.type ) {
-          case 'var':
-          case 'const':
-            msg+= ' (value='+elem.get()+')';
-            break;
-          case 'proc':
-            let del= '';
-            msg+= ' (';
-            for (let par in elem.desc.par) {
-              msg+= del+par;
-              del= ',';
-            }
-            msg+= ')';
-            del= ' var ';
-            for (let par in elem.desc.var) {
-              msg+= del+par;
-              del= ',';
-            }
-            break;
-        }
-      }
-    }
-  }
-  return {block:block,elem:elem,msg:msg};
-}
 // =================================================================================> DEBUGGER LOCAL
 // funkce debuggeru - volané z aplikace
-// ----------------------------------------------------------------------------- isElementInViewport
+// --------------------------------
+// --------------------------------------------- isElementInViewport
 function isElementInViewport(el) {
   var rect= el.getBoundingClientRect();
   return rect.bottom > 0 &&
@@ -256,27 +17,43 @@ function isElementInViewport(el) {
 function dbg_onshiftclick(block) {
   if ( !Ezer.options.dbg ) return false;
   if ( !Ezer.sys.dbg )
-    Ezer.sys.dbg= {win_ezer:null,file:'',win_php:null};
+    Ezer.sys.dbg= {
+      win_ezer:null,    // podřízené okno s debugrem
+      file:'',          // aktuálně zobrazený soubor
+      files:{},         // všechny soubory se stavem {stops:[line, ...]} 
+      win_php:null};
   var pos= block.app_file();
   if ( pos.file ) {
+    var lc= block.desc._lc.split(','), ln= lc[0];
     var show= function() {
       var lc= block.desc._lc.split(',');
-      var win= Ezer.sys.dbg.win_ezer;
-      win.focus();
-      win.dbg_show_line(lc[0],'pick');
+      dbg.focus();
+      dbg.dbg_show_line(lc[0],'pick');
     };
     // zobrazení
     Ezer.sys.dbg.start= block.self();
     if ( pos.file==Ezer.sys.dbg.file ) {
       show();
     }
+    else if ( Ezer.sys.dbg.files[pos.file] ) {
+      dbg.dbg_reload(pos.file,ln);
+//      show();
+    }
+    else if ( Ezer.sys.dbg.win_ezer ) {
+      Ezer.sys.dbg.files[pos.file]= {stops:[],pick:0};
+      dbg.dbg_reload(pos.file,ln);
+//      show();
+    }
     else {
+//      if ( Ezer.sys.dbg.win_ezer ) {
+//        // zavření zobrazeného
+//        Ezer.sys.dbg.win_ezer.noevent= true;
+//        Ezer.sys.dbg.win_ezer.close();
+//      }
+//      if ( !Ezer.sys.dbg.files[pos.file] ) {
+      Ezer.sys.dbg.files[pos.file]= {stops:[],pick:0};
+//      }
       var line= block.desc._lc.split(',')[0];
-      if ( Ezer.sys.dbg.win_ezer ) {
-        // zavření zobrazeného
-        Ezer.sys.dbg.win_ezer.noevent= true;
-        Ezer.sys.dbg.win_ezer.close();
-      }
       var fname= pos.app+'/'+pos.file+'.ezer';
       //fname= pos.app+'/tut.the.php';  -- test otevření PHP
       //fname= pos.app+'/i_fce.js';     -- test otevření JS
@@ -285,10 +62,10 @@ function dbg_onshiftclick(block) {
       var x= ltwh.split(',');
       var position= 'left='+x[0]+',top='+x[1]+',width='+x[2]+',height='+x[3];
       Ezer.sys.dbg.win_ezer= window.open(
-        `./ezer3.1/dbg3.php?err=1&app=${Ezer.root}&src=${fname}&pick=${line}`,'dbg',
-//        `./ezer3.1/dbg3.php?err=1&app=${pos.app}&src=${fname}&pick=${line}`,'dbg',
+        `./ezer3.1/dbg3.php?err=1&app=${Ezer.root}&src=${fname}&file=${pos.file}&pick=${line}`,'dbg',
         position+',resizable=1,titlebar=0,menubar=0');
       if ( Ezer.sys.dbg.win_ezer ) {
+//        dbg_reload(pos.file);
         Ezer.sys.dbg.file= pos.file;
         Ezer.sys.dbg.typ= 'ezer';
         Ezer.sys.dbg.noevent= false;
@@ -297,31 +74,38 @@ function dbg_onshiftclick(block) {
   }
   return false;
 }
-// -------------------------------------------------------------------------------- dbg_onclick_text
-function dbg_onclick_text(el) {
-  return 1;
+//// -------------------------------------------------------------------------------- dbg_onclick_text
+//function dbg_onclick_text(el) {
+//  return 1;
+//}
+// ----------------------------------------------------------------------------------- dbg proc_stop
+// DBG - voláno z intepreta po vytvoření aktivačního záznamu v zásobníku
+// Ezer.continuation obsahuje aktuální stav interpreta
+function dbg_proc_stop(on_off) {
+    if ( Ezer.sys.dbg.win_ezer ) {
+      Ezer.sys.dbg.win_ezer.dbg_show_proc(Ezer.continuation,on_off);
+    }
 }
 // ------------------------------------------------------------------------------- dbg_onclick_start
-function dbg_onclick_start(win) {
-  win= win ? win : window;
-  var dbg_src= win.document.getElementById('dbg_src');
-  if ( dbg_src ) {
-    dbg_src.addEvents({
-      click: function(el) {
-        var chs= el.target.getParent().getChildren(), x= 0;
-        for (var i=0; i<chs.length; i++) {
-          if ( chs[i]==el.target ) {
-            x= i+1;
-            break;
-          }
-        }
-        Ezer.fce.echo("line=",x);
-        return x;
-      }
-    });
-  }
-}
-
+//function dbg_onclick_start(win) {
+//  win= win ? win : window;
+//  var dbg_src= win.document.getElementById('dbg_src');
+//  if ( dbg_src ) {
+//    dbg_src.addEvents({
+//      click: function(el) {
+//        var chs= el.target.getParent().getChildren(), x= 0;
+//        for (var i=0; i<chs.length; i++) {
+//          if ( chs[i]==el.target ) {
+//            x= i+1;
+//            break;
+//          }
+//        }
+//        Ezer.fce.echo("line=",x);
+//        return x;
+//      }
+//    });
+//  }
+//}
 // ===================================================================================> Užitečné fce
 // heap s oddělovači sep obsahuje string
 function contains(heap, string, sep){
@@ -498,7 +282,6 @@ function debugx (gt,label,depth) {
   }
   return x;
 }
-
 // --------------------------------------------------------------------------------- remap_fields_db
 function remap_fields_db (block,new_db) {
   for (var ic in block.part) {
@@ -509,35 +292,6 @@ function remap_fields_db (block,new_db) {
   }
   return 1;
 }
-
-// ===========================================================================================> AJAX
-
-// ------------------------------------------------------------------------------------------- ask 3
-// ask3(x,then,context): after running x on server call then
-function ask3(x,then) {
-  x.root= Ezer.root;                  // název/složka aplikace
-  x.app_root= Ezer.app_root;          // {root].inc.php je ve složce aplikace
-  jQuery.ajax({
-    url: 'ezer3.1/server/ezer3.php',
-    method: 'POST',
-    data: x
-  })
-    .done(y => {
-        if ( typeof(y)==='string' )
-          Ezer.error(`SERVER3: error for cmd='${x.cmd}':${y}`,'C');
-        else if ( y.error )
-          Ezer.error(y.error,'C');
-        else {
-          if ( y.trace ) Ezer.trace('u',y.trace);
-          if ( then )
-            then(y);
-        }
-    })
-    .fail( (xhr) => {
-       Ezer.error('SERVER3 failure (1)'+(xhr.responseText||''),'C');
-    });
-}
-
 // ====================================================================================> Ezer Slider
 // DOM before:       <div id="x">
 // initialization:   var slider= $("#x").slider({ezer_stop:info}).slider('init',h).slider('instance')
