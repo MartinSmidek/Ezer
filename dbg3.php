@@ -97,7 +97,7 @@
       div#help {
         position: fixed; right: 30px; top: 25px; width: 300px; min-height: 100px;
         background-color: #eee; border: 1px solid #aaa; z-index: 2;
-        overflow-y: auto; max-height: 50%; display: none; }
+        overflow-y: auto; max-height: 50%; display: none; box-shadow: 5px 5px 10px #567; }
       div#help span {
         text-decoration: underline; color: blue; cursor: alias;}
       #sources {
@@ -144,8 +144,8 @@
         position: absolute;
         background-color: silver; vertical-align: top; padding-right: 5px; margin-right: 5px;
         width: 24px; text-align: right;  }
-      li.trace {
-        background-color: silver; }
+      li.trace span {
+        background-color: #c0c0c0a6; }
       li.curr {
         background-color: orange; }
       li.pick, span.pick {
@@ -153,14 +153,14 @@
       /* ----------------------- debug */
       #log {
         position:absolute; display: none; background-color:#eee; box-shadow:5px 5px 10px #567;
-        padding: 5px; }
+        padding: 5px; z-index: 4; }
       #prompt {
         position:absolute; display: none; background-color:#eee; box-shadow:5px 5px 10px #567;
-        padding: 5px; }
+        padding: 5px; z-index: 3; }
       #prompt span {
         display:block; }
       #prompt input {
-        width:200px; }
+        width:200px; font-size: 8pt; font-family: monospace,consolas; }
       .dbg {
         margin:0; overflow-y:auto; font-size:8pt; line-height:13px; }
       table.dbg {

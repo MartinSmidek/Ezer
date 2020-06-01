@@ -6399,6 +6399,11 @@ class Case extends Elem {
       });
     this.DOM_Input= this.DOM.find("input");
     this.DOM_optStyle(this.DOM_Block);
+    this.DOM_Input.on({
+      click: event => {
+        if ( event.shiftKey ) return dbg_onshiftclick(this); /* element */
+      }
+    });
   }
 }
 

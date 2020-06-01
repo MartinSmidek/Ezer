@@ -2666,6 +2666,7 @@ class Eval {
     }
   }
 }
+Ezer.EvalClass= Eval;
 // ==================================================================================> obecné funkce
 // ----------------------------------------------------------------------------------==> . code_name
 // funkce vrací bezkontextový význam name v code jako pole

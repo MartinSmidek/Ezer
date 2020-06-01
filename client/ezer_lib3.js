@@ -20,11 +20,14 @@ function dbg_onshiftclick(block) {
     Ezer.sys.dbg= {
       win_ezer:null,    // podřízené okno s debugrem
       file:'',          // aktuálně zobrazený soubor
-      files:{},         // všechny soubory se stavem {stops:[line, ...]} 
+      files:{},         // všechny soubory se stavem
       win_php:null};
-  var pos= block.app_file();
+  var pos= block.app_file(),
+      state0= {stops:[],stop:0,traces:[],pick:0}; // stopadresy - stop, trasování, aktuální ř.
   if ( pos.file ) {
-    var lc= block.desc._lc.split(','), ln= lc[0];
+    var lc= block.desc._lc;
+    lc= lc.split(',');
+    let ln= lc[0];
     var show= function() {
       var lc= block.desc._lc.split(',');
       dbg.focus();
@@ -40,7 +43,7 @@ function dbg_onshiftclick(block) {
 //      show();
     }
     else if ( Ezer.sys.dbg.win_ezer ) {
-      Ezer.sys.dbg.files[pos.file]= {stops:[],pick:0};
+      Ezer.sys.dbg.files[pos.file]= state0;
       dbg.dbg_reload(pos.file,ln);
 //      show();
     }
@@ -51,7 +54,7 @@ function dbg_onshiftclick(block) {
 //        Ezer.sys.dbg.win_ezer.close();
 //      }
 //      if ( !Ezer.sys.dbg.files[pos.file] ) {
-      Ezer.sys.dbg.files[pos.file]= {stops:[],pick:0};
+      Ezer.sys.dbg.files[pos.file]= state0;
 //      }
       var line= block.desc._lc.split(',')[0];
       var fname= pos.app+'/'+pos.file+'.ezer';
@@ -163,7 +166,7 @@ function padNum(number, numDigits) {
   while (str.length < numDigits) str= '0' + str;
   return str;
 }
-// ------------------------------------------------------------------------------------------- padStr
+// ------------------------------------------------------------------------------------------ padStr
 // dorovnání stringu mezerami resp. omezení do dané délky
 function padStr(str, len) {
   str= htmlentities(str);
@@ -974,3 +977,29 @@ Ezer.browser=='IE' ? null :
  // let's keep this DOM node in RAM for all resizes we want
  this.document.createElement("canvas"))
 );
+// ===========================================================================================> AJAX
+// ------------------------------------------------------------------------------------------- ask 3
+// ask3(x,then,context): after running x on server call then
+function ask3(x,then) {
+  x.root= Ezer.root;                  // název/složka aplikace
+  x.app_root= Ezer.app_root;          // {root].inc.php je ve složce aplikace
+  jQuery.ajax({
+    url: 'ezer3.1/server/ezer3.php',
+    method: 'POST',
+    data: x
+  })
+    .done(y => {
+        if ( typeof(y)==='string' )
+          Ezer.error(`SERVER3: error for cmd='${x.cmd}':${y}`,'C');
+        else if ( y.error )
+          Ezer.error(y.error,'C');
+        else {
+          if ( y.trace ) Ezer.trace('u',y.trace);
+          if ( then )
+            then(y);
+        }
+    })
+    .fail( (xhr) => {
+       Ezer.error('SERVER3 failure (1)'+(xhr.responseText||''),'C');
+    });
+}

@@ -1801,18 +1801,14 @@
     # -------------------- doplní id do includes (korekce kvůli identifikaci jmen knihovních modulů)
     function dbg_includes() { trace();
       global $includes;
-//                                                 debug($includes,'includes',(object)array('depth'=>2));
       if ( $includes ) foreach($includes as $ids=>$include) {
         $id= strrpos($ids,'.') ? substr($ids,strrpos($ids,'.')+1) : $ids;
         $includes[$ids]->id= $id;
-//                                                 display("$ids-$id-{$includes[$ids]->id}");
       }
     }
     # -------------------------- najde objekt pojmenovaný úplným jménem a přebuduje kontext překladu
     function dbg_find_obj($full) { //trace();
-      global $context,$includes;
-      $old_context= $context;
-//                                                 debug($context[0],"context[0]",(object)array('depth'=>2)); //9
+      global $context;
       $obj= $context[0]->ctx;
       $obj_id= $context[0]->id;
       $context= array();
@@ -1823,30 +1819,15 @@
         for ($i= 0; $i<count($ids); $i++) {
           $id= $ids[$i];
           $fname.= $fname ? ".$id" : $id;
-//                                                 display("$id - ".isset($obj->part->$id));
           if ( $id && isset($obj->part->$id) ) {
-//                                                 display("$i:$obj_id.$id - ok {$obj->part->$id->options->include}");
-//             $obi= $obj->part->$id;
-//             if ( $obi->options->include ) {
-//               foreach($old_context as $oi=>$oobj) {
-// //                                                 debug($oobj);
-//                                                 display("{$oobj->ctx->_file}=?=$fname");
-//                 if ( $oobj->ctx->_file==$fname ) {
-//                   $obj= $oobj->ctx;
-//                                                 debug($obj,"obj",(object)array('depth'=>3));
-//                   break;
-//                 }
-//               }
-//             }
           }
           elseif ($obj->options->include) {
-//                                                 display("$i:$obj_id.$id - no 1");
-              $obj= null;
-              goto end;
+            $obj= null;
+            goto end;
           }
           else {
-//                                                 display("$i:$obj_id.$id - no 2");
-            $obj= null; goto end;
+            $obj= null; 
+            goto end;
           }
           context_push($obj_id,$obj);
           $obj_id= $id;
@@ -1871,20 +1852,13 @@
       array_push($context,(object)array('id'=>$id,'ctx'=>$obj));
     }
     # ----------- překlad skriptu $x->script do procedury _dbg_ v zadaném kontextu $x->context->self
-//                                                 display("debugger context: {$x->context->self}");
-                                                debug($x,"dbg_compile",(object)array('depth'=>3));
-    $log= $cd= "";
+    $log= $cd= $err= "";
     $log.= dbg_context_load($x->context);
     dbg_includes();
-//                                                 debug($includes,"includes",(object)array('depth'=>2));
     try {
       $ezer= $x->script;
-//                                                 debug($x,"debugger parms",(object)array('depth'=>4));
       $_SESSION[$ezer_root]['dbg_script']= $ezer;
-//                                                 debug($context,"context",(object)array('depth'=>4));
       $obj= dbg_find_obj($x->context->self);
-//                                                 debug($context,"context",(object)array('depth'=>4));
-//                                                 debug($obj,"obj",(object)array('depth'=>3));
       if ( !$obj ) { $err= "Warning: nelze určit kontext překladu"; $obj= (object)array(); }
       $ok= get_ezer($top,$obj,true);
       if ( $ok ) {
@@ -1898,14 +1872,14 @@
     if ( !$errors ) {
       $cd= $block->code;
       $log.= "compilation ok, ";
-//       if ( $cd ) $log.= "přeložený kód:".xcode($cd,0,'');
     }
   end_dbg:
+    $y->context= $x->context;
     $y->ret= (object)array();
     $y->ret->code= $cd;
     $y->ret->err= $err;
     $y->ret->errors= $errors;
-    $y->ret->warnings= "???";
+    $y->ret->warnings= "";
     $y->ret->trace= $log.$trace;
     break;
   # ------------------------------------------------------------------------------------- load_code2

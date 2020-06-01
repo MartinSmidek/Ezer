@@ -2529,6 +2529,7 @@ function get_if_keyed_name (&$key,&$id,&$lc,&$note) {
       $key= $lex[$head]; $head++; $tree.= ' k';
       $ok= $typ[$head]=='id' || $typ[$head]=='key' ;
       if ( $ok ) {
+        $lc= $pos[$head];
         $id= $lex[$head]; $head++; $tree.= 'i';
       }
       else {
@@ -3116,7 +3117,9 @@ function comp_error ($msg,$offset=0) {
   $in_code= preg_match("/CODE/",$msg);
   list($line,$clmn)= explode(',',$in_code ? $error_code_lc : $pos[$head]+$offset);
   $msg2= "<b>".($in_code ? "SYNTAX " : '')."$msg</b> in $ezer_name;$line,$clmn<br>";
-  $msg2.= source_line($ezer_name,$ezer_app,$line,$clmn);
+  if ( $ezer_name ) {
+    $msg2.= source_line($ezer_name,$ezer_app,$line,$clmn);
+  }
   $err.= $msg2;
   throw new Exception($msg2);
   return false;
