@@ -1877,6 +1877,7 @@
     $y->context= $x->context;
     $y->ret= (object)array();
     $y->ret->code= $cd;
+    $y->ret->list= $cd ? xcode($cd) : '';
     $y->ret->err= $err;
     $y->ret->errors= $errors;
     $y->ret->warnings= "";

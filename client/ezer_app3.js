@@ -1693,10 +1693,12 @@ class Eval {
 //   stack: [],
 //   top: -1,
 //   value: null,
-  constructor (code,context,args,id,continuation,no_trow,proc,nvars) {
+  constructor (code,context,args,id,continuation,
+      no_trow=false,proc=null,nvars=0,say_error=Ezer.error) {
 
     this.code= {};
     this.context= null;
+    this.say_error= say_error;
     this.stack= [];
     this.top= -1;
     this.value= null;
@@ -1719,18 +1721,18 @@ class Eval {
     Ezer.app.evals_check();
     args= args||[];
     this.args= [...args];  // moo $A(args);
-    this.nvars= nvars||0;               // počet lokálních proměnných
+    this.nvars= nvars;                  // počet lokálních proměnných
     this.nargs= args.length-this.nvars;
     this.code= code;
     this.id= id||'';
     this.continuation= continuation||null;
     this.requests= 0;                   // počet nedokončených požadavků na serveru
-    this.no_trow= no_trow||false;
+    this.no_trow= no_trow;
     this.stack= [...args];              // zásobník parametrů interpretu
     this.top= args.length-1+this.nvars; // oprava 150416g
     this.act= args.length-1+this.nvars; // oprava 150416g
     this.calls= [];
-    this.proc= proc||null;              // procedura nebo null
+    this.proc= proc;                    // procedura nebo null
     this.c= 0;
     this.step= false;                   // true=krokovat
     this.simple= true;                  // nedošlo k vytvoření dalšího vlákna (server. modální dialog,..)
@@ -2012,17 +2014,17 @@ class Eval {
               obj= [];
               val= Ezer.run_name(cc.i,this.context,obj);
               if ( val==3 )
-                Ezer.error('jméno '+cc.i+' obsahuje nedefinovanou objektovou proměnnou '+obj[0],
+                this.say_error('jméno '+cc.i+' obsahuje nedefinovanou objektovou proměnnou '+obj[0],
                   'S',this.proc,last_lc);
               else if ( val!=1 )
-                Ezer.error('jméno '+cc.i+' nemá v "'+this.context.type+' '+this.context.id+'" smysl (o)',
+                this.say_error('jméno '+cc.i+' nemá v "'+this.context.type+' '+this.context.id+'" smysl (o)',
                   'S',this.proc,last_lc);
               this.stack[++this.top]= obj[0];
               break;
             case 'd':
               obj= [];
               if ( Ezer.run_name(cc.i,this.context,obj)!=1 )
-                Ezer.error('jméno '+cc.i+' nemá v "'+this.context.type+' '+this.context.id+'" smysl (d)',
+                this.say_error('jméno '+cc.i+' nemá v "'+this.context.type+' '+this.context.id+'" smysl (d)',
                   'S',this.proc,last_lc);
               this.context= obj[0];
               break;
@@ -2056,7 +2058,7 @@ class Eval {
                   }
                 }
                 if ( !obj )
-                  Ezer.error('příkaz není zanořen do bloku "'+val+'"','S',this.proc,last_lc);
+                  this.say_error('příkaz není zanořen do bloku "'+val+'"','S',this.proc,last_lc);
               }
               else {
                 // formát2: this(a)
@@ -2074,10 +2076,10 @@ class Eval {
             case 'q':
               o= this.stack[this.top--]; // odstraň objekt
               if ( typeof(o)!='object' )
-                Ezer.error('EVAL: '+cc.i+' nemá definovaný objekt','S',this.proc,last_lc);
+                this.say_error('EVAL: '+cc.i+' nemá definovaný objekt','S',this.proc,last_lc);
               obj= Ezer.obj_name(cc.i,o);
               if ( !obj )
-                Ezer.error('nenalezen odkaz '+cc.i+' v "'+o.type+' '+o.id+'"',
+                this.say_error('nenalezen odkaz '+cc.i+' v "'+o.type+' '+o.id+'"',
                   'S',this.proc,last_lc);
               this.stack[++this.top]= obj;
               break;
@@ -2087,7 +2089,7 @@ class Eval {
               if ( o instanceof ListRow || o instanceof Form )
                 o= o.part;
               if ( typeof(o)!='object' )
-                Ezer.error('EVAL: '+cc.i+' nemá definovaný objekt','S',this.proc,last_lc);
+                this.say_error('EVAL: '+cc.i+' nemá definovaný objekt','S',this.proc,last_lc);
               obj= Ezer.obj_ref(cc.i,o);
               obj= obj===null ? '' : obj;
               this.stack[++this.top]= obj;
@@ -2105,7 +2107,7 @@ class Eval {
               // nalezení a aktivace volané procedury
               obj= [];
               if ( Ezer.run_name(cc.i,this.context,obj)!=1 )
-                Ezer.error('nenalezena procedura '+cc.i+' v "'+this.context.type+' '+this.context.id+'"',
+                this.say_error('nenalezena procedura '+cc.i+' v "'+this.context.type+' '+this.context.id+'"',
                   'S',this.proc,last_lc);
               this.proc= obj[0];
               // pro C použijeme kód z popisu formuláře
@@ -2113,7 +2115,7 @@ class Eval {
               this.c= 0;
               this.nargs= cc.o=='C' ? this.proc.npar : (this.proc.desc ? this.proc.desc.npar : 0);
               if ( (cc.a||0)<this.nargs )
-                Ezer.error('procedura '+cc.i+' je volána s '+(cc.a||0)+' argumenty místo s '+this.nargs,
+                this.say_error('procedura '+cc.i+' je volána s '+(cc.a||0)+' argumenty místo s '+this.nargs,
                   'S',this.proc,last_lc);
               this.nvars= cc.o=='C' ? this.proc.nvar : (this.proc.desc ? this.proc.desc.nvar : 0);
               this.context= this.proc.owner;
@@ -2158,7 +2160,7 @@ class Eval {
               this.top-= nargs;
               fce= Ezer.fce[cc.i];
               if ( typeof(fce)!='function' )
-                Ezer.error('EVAL: '+cc.i+' není funkce','S',this.proc,last_lc);
+                this.say_error('EVAL: '+cc.i+' není funkce','S',this.proc,last_lc);
               Ezer.calee= this.proc;
               val= fce.apply(this.context,args);
               Ezer.calee= null;
@@ -2182,7 +2184,7 @@ class Eval {
               this.top-= nargs;
               obj= Ezer.str[cc.i];
               if ( typeof(obj)!='function' )
-                Ezer.error('EVAL: '+cc.i+' není řídící struktura','S',this.proc,last_lc);
+                this.say_error('EVAL: '+cc.i+' není řídící struktura','S',this.proc,last_lc);
               this.c= c+1;
               val= obj.apply(null,args);
               this.simple= false;
@@ -2210,13 +2212,13 @@ class Eval {
               this.top-= nargs;
               obj= this.stack[this.top--]; // odstraň objekt
               if ( typeof(obj)!='object' )
-                Ezer.error('EVAL: '+cc.i+' nemá definovaný objekt','S',this.proc,last_lc);
+                this.say_error('EVAL: '+cc.i+' nemá definovaný objekt','S',this.proc,last_lc);
               // metodu call vyřešíme zvlášť
               if ( cc.i=='_call' ) {
                 if ( obj.type=='var' )
                   obj= obj.value;
                 if ( !obj || !obj._call )
-                  Ezer.error('EVAL: call nemá definovaný objekt','S',this.proc,last_lc);
+                  this.say_error('EVAL: call nemá definovaný objekt','S',this.proc,last_lc);
                 fce= obj._call;
                 Ezer.calee= this.proc;
                 args.unshift(cc.s);
@@ -2228,9 +2230,9 @@ class Eval {
                   fce= obj[cc.i];
                 if ( typeof(fce)!='function' )
                   if ( obj )
-                    Ezer.error('EVAL: '+cc.i+' není metoda '+obj.type,'S',this.proc,last_lc);
+                    this.say_error('EVAL: '+cc.i+' není metoda '+obj.type,'S',this.proc,last_lc);
                   else
-                    Ezer.error('EVAL: '+cc.i+' není metoda','S',this.proc,last_lc);
+                    this.say_error('EVAL: '+cc.i+' není metoda','S',this.proc,last_lc);
                 Ezer.calee= this.proc;
                 val= fce.apply(obj,args);
               }
@@ -2249,9 +2251,9 @@ class Eval {
               this.top-= nargs;
               obj= this.stack[this.top--]; // odstraň objekt
               if ( typeof(obj)!='object' )
-                Ezer.error('EVAL: '+cc.i+' nemá definovaný objekt','S',this.proc,last_lc);
+                this.say_error('EVAL: '+cc.i+' nemá definovaný objekt','S',this.proc,last_lc);
               if ( typeof(obj[cc.i])!='function' )
-                Ezer.error('EVAL: '+cc.i+' není metoda '+obj.type,'S',this.proc,last_lc);
+                this.say_error('EVAL: '+cc.i+' není metoda '+obj.type,'S',this.proc,last_lc);
               obj= obj[cc.i].apply(obj,args);
               if ( obj && Ezer.to_trace && Ezer.is_trace.x ) this.trace_fce(cc.s,obj.id+'.'+cc.i,obj,args,'x1');
               if ( obj ) {
@@ -2277,7 +2279,7 @@ class Eval {
               this.top-= nargs;
               fce= Ezer.fce[cc.i];
               if ( typeof(fce)!='function' )
-                Ezer.error('EVAL: '+cc.i+' není funkce','S',this.proc,last_lc);
+                this.say_error('EVAL: '+cc.i+' není funkce','S',this.proc,last_lc);
               val= fce.apply(this.context,args);
               if ( val ) {
                 // pokud se start přerušení povedl
@@ -2301,16 +2303,16 @@ class Eval {
               this.top-= nargs;
               obj= this.stack[this.top--];      // odstraň objekt
               if ( typeof(obj)!='object' )
-                Ezer.error('EVAL: '+cc.i+' nemá definovaný objekt','S',this.proc,last_lc);
+                this.say_error('EVAL: '+cc.i+' nemá definovaný objekt','S',this.proc,last_lc);
               // cc.i je buďto metoda proměnné nebo metoda objektu, který je hodnotou proměnné
               if ( !(fce= obj[cc.i]) && obj.type=='var' ) {
                 if ( (obj= obj.value) )
                   fce= obj[cc.i];
                 else
-                  Ezer.error('EVAL: '+cc.i+' nemá definovaný objekt','S',this.proc,last_lc);
+                  this.say_error('EVAL: '+cc.i+' nemá definovaný objekt','S',this.proc,last_lc);
               }
               if ( typeof(fce)!='function' )
-                Ezer.error('EVAL: '+cc.i+' není metoda '+obj.type,'S',this.proc,last_lc);
+                this.say_error('EVAL: '+cc.i+' není metoda '+obj.type,'S',this.proc,last_lc);
               val= fce.apply(obj,args);
               if ( Ezer.to_trace && Ezer.is_trace.x ) this.trace_fce(cc.s,obj.id+'.'+cc.i,obj,args,'x1');
               if ( Ezer.to_trace && Ezer.is_trace.X ) this.trace_debug(val,'fx:'+cc.i+'>',cc.i);
@@ -2417,11 +2419,11 @@ class Eval {
                 }
               }
               else {
-                Ezer.error('EVAL: 1. parametr foreach není ani pole ani objekt','S',this.proc,last_lc);
+                this.say_error('EVAL: 1. parametr foreach není ani pole ani objekt','S',this.proc,last_lc);
               }
               break;
             default:
-              Ezer.error('EVAL: '+cc.o+' není kód','S',this.proc,last_lc);
+              this.say_error('EVAL: '+cc.o+' není kód','S',this.proc,last_lc);
             }
           }
           // proveď akci go - pokud je přítomna - beze změny zásobníku
@@ -2432,7 +2434,7 @@ class Eval {
           // proveď akce jmp, iff, ift - pokud jsou přítomny - jinak nech na vrcholu zásobníku hodnotu
           else if ( cc.ift || cc.iff || cc.jmp || cc.next ) {
             if ( this.top<0 )
-              Ezer.error('EVAL: stack underflow');
+              this.say_error('EVAL: stack underflow');
             top= this.stack[this.top--];
             if ( top=='0' )
               top= 0;
@@ -2525,18 +2527,18 @@ class Eval {
     }
     catch (e) {
       if (e=='stop')                                  // uživatelský stop
-        Ezer.error('aplikace byla stopnuta','msg');
+        this.say_error('aplikace byla stopnuta','msg');
       else {
         this.eval_();                                       // ukončení objektu Eval
         Ezer.app.evals_check();
-        if ( e=='S' ) {                                     // volání Ezer.error v eval
+        if ( e=='S' ) {                                     // volání this.say_error v eval
         }
         else if (typeof(e)=='object' && e.level=='user') {  // chyba ošetřená uživatelem: Ezer.fce.error
-          Ezer.error(e.msg||'','s',this.proc,null,this.calls);
+          this.say_error(e.msg||'','s',this.proc,null,this.calls);
         }
         else {
           if (e.level=='system')
-            alert(e.msg);                        // chyba ošetřená testem: Ezer.error
+            alert(e.msg);                        // chyba ošetřená testem: this.say_error
           else if ( this.no_trow ) {
             var msg= '';
             if ( e.message && e.fileName && e.lineNumber && e.name)
@@ -2545,16 +2547,16 @@ class Eval {
               msg= ' - '+e.message;
             if ( e.stack )
               msg+= '<br>'+e.stack;
-            Ezer.error('Ezerscript error in '+this.id+msg,'s',this.proc);
+            this.say_error('Ezerscript error in '+this.id+msg,'s',this.proc);
           }
           else {
             if ( Ezer.browser=='CH' ) {
 //               var astack= e.stack.split("\n");
-//               Ezer.error(e?'Javascript '+(astack[0]+astack[1]||e):'error in eval','E',e);
-              Ezer.error(e ? 'Javascript '+(e.message||'')+e.stack : 'error in eval','E',e);
+//               this.say_error(e?'Javascript '+(astack[0]+astack[1]||e):'error in eval','E',e);
+              this.say_error(e ? 'Javascript '+(e.message||'')+e.stack : 'error in eval','E',e);
             }
             else
-              Ezer.error(e?'Javascript '+(e.msg||e):'error in eval','E',e);
+              this.say_error(e?'Javascript '+(e.msg||e):'error in eval','E',e);
           }
         }
       }
@@ -2597,7 +2599,7 @@ class Eval {
         this.onComplete(y,obj,fce,'x',ms);
       }.bind(this),
       error: function(xhr){
-        Ezer.error('SERVER failure (4)','s',this.proc,this.proc?this.proc.desc._lc:null);
+        this.say_error('SERVER failure (4)','s',this.proc,this.proc?this.proc.desc._lc:null);
       }.bind(this)
     },this);
     Ezer.App._ajax(1);
@@ -2619,7 +2621,7 @@ class Eval {
         this.onComplete(y,null,fce,'a',ms);
       }.bind(this),
       error: function(xhr){
-        Ezer.error('EVAL: chyba na serveru:'+xhr.responseText,'s',this.proc,this.proc?this.proc.desc._lc:null);
+        this.say_error('EVAL: chyba na serveru:'+xhr.responseText,'s',this.proc,this.proc?this.proc.desc._lc:null);
       }.bind(this)
     },this);
 //     ajax.send();
@@ -2633,7 +2635,7 @@ class Eval {
 //     try { y= JSON.decode(ay); } catch (e) { y= null; }
     if ( Ezer.to_trace && Ezer.is_trace.X ) this.trace_debug(y,'fx:>'+fce,fce);
     if ( !y || typeof(y)==="string" )
-      Ezer.error('EVAL: syntaktická chyba na serveru:'+y,'s',this.proc,this.proc?this.proc.desc._lc:null);
+      this.say_error('EVAL: syntaktická chyba na serveru:'+y,'s',this.proc,this.proc?this.proc.desc._lc:null);
     else {
       if ( Ezer.options.to_speed ) {
         Ezer.obj.speed.net+= ms - y.php_ms;             // čistý čas přenosu dat
@@ -2646,7 +2648,7 @@ class Eval {
       if ( Ezer.App.options.ae_trace.indexOf('M')>=0 && y.qry )
         Ezer.trace('M',y.qry,null,Math.round(y.qry_ms*1000)/1000);
       if ( y.error ) {
-        Ezer.error('EVAL: '+y.error,'s',this.proc,this.proc?this.proc.desc._lc:null);
+        this.say_error('EVAL: '+y.error,'s',this.proc,this.proc?this.proc.desc._lc:null);
 //        this.stack[++this.top]= y.value || 0;
         return;
       }

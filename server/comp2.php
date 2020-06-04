@@ -1948,7 +1948,7 @@ function gen($pars,$vars,$c,$icall=0,&$struct) { #trace();
 # lexikální a syntaktická analýza
 # -------------------------------------------------------------------------------------------------- ezer
 # top  - prázdný objekt, pro library neprázdný ale označkovaný jako _old
-# top2 - pro běžný překlad null, pro debugger objekt pro vložení procedury dbg
+# top2 - pro běžný překlad null, pro debugger objekt pro vložení procedury _dbg_
 function get_ezer (&$top,&$top2,$dbg=false) {
   global $tree, $lex, $head, $attribs1, $attribs2, $keywords, $errors, $const_list;
   $const_list= array();

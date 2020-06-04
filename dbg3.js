@@ -24,16 +24,20 @@ function dbg_onclick_start(file) {
     })
     // -----------------------------------==> .. dvojclick na zdrojový text
     .dblclick( el => {
-      console.log(2);
-      var //x= dbg_context(el.target),
+      var l= dbg_context(el.target),
           sel= window.getSelection(),
           range= sel.getRangeAt(0);
       var text= range ? range.startContainer.data.substring(range.startOffset,range.endOffset) : '';
       if ( text ) {
-        dbg.help
-          .css({display:'block'})
-          .html(text);
-        dbg.dbg_help(dbg.typ,text);
+        dbg.dbg_write(text);
+        if ( text=='ask' ) {
+          let line= dbg.src[l].text(),
+              fce= line.match(/'(.*)'/)[1];
+          dbg.dbg_write(`ask of PHP function ${fce}`);
+        }
+        else {
+          dbg.dbg_find_help(dbg.typ,text);
+        }
       }
     })
     // -----------------------------------==> .. kontextové menu pro zdrojový text
@@ -133,23 +137,20 @@ function dbg_onclick_start(file) {
                 touch('break',0);
                 return false;
             }],
-//            ["-alert('ahoj!')", function(el) {
-//                dbg_script("alert('ahoj!');return('Ahoj šéfe ...');",block);
-//                return false;
-//            }],
-//            ["zalozka.get", function(el) {
-//                dbg_script("zalozka.get",block);
-//                return false;
-//            }],
-//            ["string.get", function(el) {
-//                dbg_script("string.get",block);
-//                return false;
-//            }],
             ["-vyhodnoť výraz", function(el) {
                 dbg_prompt(`výraz je v kontextu procedury ${elem.id}`,dbg_last_script,
                     function(script){
                       dbg_last_script= script;
-                      dbg_script(script,block);
+                      dbg_script(script,block,0);
+                      return false;
+                    },menu_el);
+                return false;
+            }],
+            [" ... s trasováním", function(el) {
+                dbg_prompt(`výraz je v kontextu procedury ${elem.id}`,dbg_last_script,
+                    function(script){
+                      dbg_last_script= script;
+                      dbg_script(script,block,1);
                       return false;
                     },menu_el);
                 return false;
@@ -165,14 +166,14 @@ function dbg_onclick_start(file) {
 // zavření okna
 function dbg_onunload(typ,position) {
   if ( typ==='ezer' ) {
-    Ezer.sys.dbg.win_ezer= null;
-    Ezer.sys.dbg.file= '';
+    doc.Ezer.sys.dbg.win_ezer= null;
+    doc.Ezer.sys.dbg.file= '';
     // zápis polohy a rozměru do cookies ezer_dbg_win=l,t,w,h ==> . dbg unload
-    Ezer.fce.set_cookie('ezer_dbg_win',position);
+    doc.Ezer.fce.set_cookie('ezer_dbg_win',position);
   }
   else if ( typ=='php' )  {
-    Ezer.sys.dbg.win_php= null;
-    Ezer.fce.set_cookie('ezer_dbg_win2',position);
+    doc.Ezer.sys.dbg.win_php= null;
+    doc.Ezer.fce.set_cookie('ezer_dbg_win2',position);
   }
 }
 // ------------------------------------------------------------------------------- dbg_oncontextmenu
@@ -511,8 +512,7 @@ function dbg_show_proc(cnt,on) {
       msg= 'proc '+cnt.proc.id+' continued';
     }
   }
-  dbg.help.html(msg);
-  dbg.help.show();
+  dbg.dbg_write(msg);
 }
 // ----------------------------------------------------------------------------------- dbg_show_help
 // ukáže HELP - voláno z App.dbg_help
@@ -524,7 +524,7 @@ function dbg_show_help(ret) {
     doc.Ezer.sys.dbg.win_php.dbg_php_item(ret.item);
   }
   else {
-    dbg.help.html(ret.html);
+    dbg.dbg_write(ret.html);
   }
 }
 // ------------------------------------------------------------------------------==> . dbg show_text
@@ -636,14 +636,25 @@ function dbg_prompt(txt,deflt,ret_fce,e) {
     }
   });
 }
-// ---------------------------------------------------------------------------------------- dbg help
-// dotaz na server o help pro daný item
-function dbg_help (typ,item) {
-  if ( typ=='ezer' ) {
-    dbg.doc_ask('item_help',[item],_dbg_help);
+// --------------------------------------------------------------------------------------- dbg write
+// napíše (pro append=1 přidá) text do okna help
+function dbg_write (msg,append=false) {
+  if ( append ) {
+    dbg.help.html(dbg.help.html()+msg);
+  }
+  else {
+    dbg.help.html(msg);
+    dbg.help.show();
   }
 }
-function _dbg_help(y) { //Ezer.fce.echo(Ezer.fce.debug(y,"help"));
+// ----------------------------------------------------------------------------------- dbg find_help
+// dotaz na server o help pro daný item
+function dbg_find_help (typ,item) {
+  if ( typ=='ezer' ) {
+    dbg.doc_ask('item_help',[item],_dbg_find_help);
+  }
+}
+function _dbg_find_help(y) { //Ezer.fce.echo(Ezer.fce.debug(y,"help"));
 //  Ezer.fce.echo(y.value);
   doc.Ezer.sys.dbg.win_ezer.dbg_show_help(y.value);
   return y.value;
@@ -671,9 +682,11 @@ function set_caret(node,caret) {
 // kompilace Ezerscriptu zadaného řetězcem a jeho zahájení v kontextu this.
 // Metoda je určena především pro ladění programu z trasovacího okna,
 // pokud je voláno z programu, vrací hodnotu 1 - nečeká na ukončení ezescriptu.
-var dbg_script_block= null;
-function dbg_script (script,block) {
+var dbg_script_block= null,
+    dbg_script_trace= false;
+function dbg_script (script,block,trace=false) {
   dbg_script_block= block;
+  dbg_script_trace= trace;
   var s= block.app_file();     // zjistí {app:app,file:file,root:root}
   var self= '';
   for (var o= block; o.owner; o= o.owner) {
@@ -685,6 +698,9 @@ function dbg_script (script,block) {
     }
   }
   self= self ? (o._library ? '#.' : '$.')+self : '$';
+  let msg= `ezerscript: ${script}`+(dbg_script_trace ? `<br>c-context: ${self}` : '');
+  dbg.dbg_write(msg);
+  dbg.help.show();
   var x= {cmd:'dbg_compile',context:{self:self,app:s.app,file:s.file},script:script};
   doc_ask('','',dbg_script_,x);
   return 1;
@@ -692,16 +708,34 @@ function dbg_script (script,block) {
 function dbg_script_ (y) {
   var val= '';
   if ( typeof(y)=='object' ) {
-    if ( y.ret.code ) {
-      new doc.Ezer.EvalClass(y.ret.code,dbg_script_block,[],'dbg',
-          {fce:dbg_script_end,args:[],stack:[]});
-    }
     if ( y.ret.err ) {
-      dbg.help.html(y.ret.err);
-      dbg.help.show();
+      dbg.dbg_write('<hr>'+y.ret.err,1);
     }
     if ( y.ret.trace ) {
       doc.Ezer.trace('C',y.ret.trace);
+    }
+    if ( y.ret.list && dbg_script_trace ) {
+      dbg.dbg_write('<hr>'+y.ret.list.substr(1).replace(/(\d\d:)/g,'<br>$1').substr(4)+'<hr>',1);
+    }
+    if ( y.ret.code ) {
+      try {
+        if ( dbg_script_block.type=='proc' && dbg_script_block.owner.type!='form' ) {
+          dbg_script_block= dbg_script_block.owner;
+        }
+        let self= dbg_script_block.self();
+        if ( dbg_script_trace ) {
+          dbg.dbg_write(`r-context: ${self}`,1);
+        }
+        new doc.Ezer.EvalClass(y.ret.code,dbg_script_block,[],'dbg',
+            {fce:dbg_script_end,args:[],stack:[]},false,null,0,
+            function(msg){
+              dbg.dbg_write('<hr>ERROR in '+msg,1);
+              throw 'S';
+            });
+      }
+      catch (e) {
+        dbg.dbg_write('<hr>'+(e.message||'error'),1);
+      }
     }
   }
   else {
@@ -710,8 +744,7 @@ function dbg_script_ (y) {
   return val;
 }
 function dbg_script_end (value) {
-  dbg.help.html(`returns ${value}`);
-  dbg.help.show();
+  dbg.dbg_write(`<br>returns: ${value}`,1);
 }
 // ===========================================================================================> AJAX
 // --------------------------------------------------------------------------------------- dbg error
