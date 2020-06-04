@@ -1,0 +1,66 @@
+/* EZER verze 3.1, (c) Martin Smidek <martin@smidek.eu>, 2020
+   styly pro příkaz report */
+
+.report         { display:block; background-color:white; position:relative;  }
+.report         { font-family:"Times CE", Times, "Times New Roman", serif; }
+.area           { display:block; position:relative;  }
+
+/* styly pro Ezer-preview tisku */
+
+@media screen {
+  body          { display:block; width:220mm; }
+  .page         { display:block; width:210mm; height:297mm; border:1mm solid #999;
+                  border-right:1mm solid #333; border-bottom:1mm solid #333; }
+  .page_sh      { display:block; left:5mm; margin:1mm 0mm; width:210mm; height:292mm;
+                  border-right:2mm solid #333; border-bottom:2mm solid #333; }
+  .report       { display:block; left:0mm; width:190mm; top:-5mm; height:277mm;
+                  background-color:white; margin:10mm; border:1px dotted silver;}
+  .box_outline1 { outline:1px dotted red; }
+  .box_outline2 { outline:1px dotted silver; }
+  button.cmd    { position:fixed; left:5px; }
+}
+
+/* styly pro vlastní tisk resp. preview v prohlížeči */
+
+@media print {
+/**               { display:none; }*/
+  body,br,
+  #obsah,#qe,
+  .area,.page,.page_sh,
+  .ae_pane,.ae_frm,.ae_box,.ae_txt,.report
+                { display:block !important; padding:0 !important;
+                  left:0 !important; top:0 !important; margin:0 !important; }
+  button.cmd    { display:none; }
+}
+
+/* obecné styly boxů */
+
+.box            { font-size:8pt; display:block; position:absolute; color:black; }
+
+.box_text       { }
+.box_bold       { font-weight:bold; }
+.box_br         { font-weight:bold; text-align:right; }
+.box_numb       { text-align:right; }
+
+.box_O          { border:1pt solid black; }
+.box_U          { border-left:1pt solid black; border-right:1pt solid black;
+                  border-bottom:1pt solid black; }
+.box_I          { border-left:1pt solid black; }
+.box__          { border-bottom:1pt solid black; }
+
+/* styly specifické pro aplikaci */
+
+.box_org        { font-size:8pt; font-weight:bold; }
+
+/* styly pro rozesílání */
+
+.box_dop_hlavicka       { font-size:20pt; font-weight:bold; }
+.box_dop_logo           { font-size:10pt; line-height:9pt; }
+.box_dop_frekvence      { font-size:9pt; line-height:9pt; }
+.box_dop_znacky         { font-size:16pt; border:1pt solid black; font-family:"Arial"; font-weight:bold;
+                          text-align:center; line-height:9mm; }
+.box_dop_adresa         { font-size:14pt; }
+.box_dop_obsah          { font-size:11pt; line-height:12pt; text-align:justify; }
+.box_dop_obsah_huste    { font-size:10pt; line-height:10pt; text-align:justify; }
+.box_dop_paticka        { font-size:10pt; line-height:9pt; }
+

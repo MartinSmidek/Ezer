@@ -100,7 +100,8 @@
   require_once("$app.inc.php");
   
   $cms= "$http://$rel_root/$ezer_root";
-  $client= "$http://$rel_root/{$EZER->version}/client";
+  $ezer31= "$http://$rel_root/ezer3.1";
+  $client= "$http://$rel_root/ezer3.1/client";
   $licensed= "$client/licensed";
 
   // klíče, pokud jsou dostupné
@@ -151,7 +152,8 @@
     'path_files_href' => "'$path_files_href'",  // relativní cesta do složky docs/{root}
     'path_files_s' => "'$path_files_s'",        // absolutní cesta do složky docs/{root}
     'path_files_h' => "'$path_files_h'",        // absolutní cesta do složky ../files/{root}
-    'server_url'   => "'$http_rel_root/{$EZER->version}/server/ezer2.php'"
+    'server_url'   => "'$ezer31/server/ezer2.php'",
+    'kernel_url'   => "'$ezer31'"
   );
 
   $pars= (object)array(

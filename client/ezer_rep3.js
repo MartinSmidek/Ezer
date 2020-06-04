@@ -1,3 +1,5 @@
+/* global Ezer */
+
 // Tento modul obsahuje implementaci bloků REPORT a BOX jako doplněk k ezer.js
 // =========================================================================================> REPORT
 //c: Report (typ,id,owner,root,symb)
@@ -237,22 +239,18 @@ class Report extends Block {
         alert("Nelze otevřít okno s náhledem tisku, nejsou zakázána 'vyskakovací' okna?");
       }
       else {
-        pw.document.open();
-        html+= "<!DOCTYPE html PUBLIC '-//W3C//DTD XHTML 1.0 Transitional//EN' 'http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd'>\n";
-        html+= "<html xmlns='http://www.w3.org/1999/xhtml' lang='cs' xml:lang='en'>\n";
-        html+= " <head><title>Náhled tisku</title>\n";
-        html+= "  <meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />\n";
-        html+= "  <link type='text/css' rel='stylesheet' href='ezer3.1/client/report.css.css' />\n";
-        html+= "  <script>function keyPressHandler(e) {var kC= (window.event) ? event.keyCode : e.keyCode;var Esc= (window.event) ? 27 : e.DOM_VK_ESCAPE;if ( kC==Esc ) {window.close();}}\n";
-        html+= " </script></head><body onkeypress='keyPressHandler(event)'>";
-        html+= "\n";
-        html+= this.type=='batch' ? this.batch : this.print_page();
-        html+= "\n</body></html>";
+        let print= preview ? '' : "window.print();";
+        // hlavička
+        pw.document.head.innerHTML= 
+`<title>Náhled tisku</title>
+  <meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />
+  <link type='text/css' rel='stylesheet' href='${Ezer.options.kernel_url}/client/report.css.css' />
+`;
+        // tělo
+        pw.document.body.innerHTML= (this.type=='batch' ? this.batch : this.print_page())
+            + `<button class='cmd' onclick='window.print();' style='top:5px'>TISK</button>`
+            + `<button class='cmd' onclick='window.close();' style='top:35px'>ZPĚT</button>`;
         pw.focus();
-        pw.document.write(html);
-        pw.document.close();
-        pw.focus();
-        if ( !preview) pw.print();
       }
     }
     else Ezer.error(this.id+".print: report nebyl připraven funkcí report_check",0);
@@ -381,11 +379,14 @@ class Bob {
                   tbob.css('width',bob.w+'mm');
                 else
                   tbob.css('height',bob.h+'mm');
-                wpx= tbob.offsetWidth;
-                hpx= tbob.offsetHeight;
+//                wpx= tbob.offsetWidth; moo
+//                hpx= tbob.offsetHeight; moo
+                wpx= tbob.outerWidth();
+                hpx= tbob.outerHeight();
                 s= a=='h' ? (hpx+3)*bob.w/wpx : (wpx+3)*bob.h/hpx;
                 relative= false;
-                trep.removeChild(tbob);
+//                trep.removeChild(tbob); moo
+                tbob.remove();
                 break;
       }
     }
