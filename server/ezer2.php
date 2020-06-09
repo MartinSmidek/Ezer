@@ -986,12 +986,12 @@
       $qry2= "SELECT count(*) as _pocet_ $qry2_fields FROM $table $joins WHERE $cond $scond $group $order";
       $res2= mysql_qry($qry2);
 //      $from= 0+pdo_fetch_assoc($res2)['_pocet_'];
-      if($group=='') {
-        $from= 0+pdo_fetch_assoc($res2)['_pocet_'];
-      } 
-      else {
+      if ( isset($x->optimize->fetch) && $x->optimize->fetch=='all' && $group!='' ) {
         $a= pdo_fetch_all($res2);
         $from= 0+count($a);
+      }
+      else {
+        $from= 0+pdo_fetch_assoc($res2)['_pocet_'];
       }
        $from= max(0,$from-1);
 //                                                         display("from(1)=$from");

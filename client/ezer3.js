@@ -7716,7 +7716,10 @@ class Browse extends Block {
 //-
 //on: Browse.wheel      - počet řádků přeskočených kolečkem myši (default=počet řádků/2)
 //-
-//oo: Browse.optimize   - objekt předávaný na server, popis je v ezer3.php
+//oo: Browse.optimize   - objekt předávaný na server, implementovány jsou 3 varianty
+//       ask:php_funkce - serverové části metod nejsou v eze2.php ale miplementuje je zadaná funkce
+//       qry:noseek - ovlivňuje metody browse_seek, browse_load, browse_scroll, browse_status
+//       fetch:all - ovlivňuje metodu browse_seek v případě použití group_by
 //-
 //i: Browse.onrowclick - klik na řádku (parametrem je index řádku, první má index 1)
 //-
@@ -8521,6 +8524,7 @@ class Browse extends Block {
 //      pokud je cond definováno tak zobrazí vyhovující řádky tak aby byl vidět řádek vyhovující i seek_cond;
 //      pokud řádek vyhovující seek_cond neexistuje, ponechá zobrazení beze změny a vrátí false,
 //      pokud řádek existuje, vrátí jeho klíč
+//    3.v závislosti na atributu optimize=°{fetch:'all'} se chová jinak při použití group_by
 //a: seek_cond   - podmínka pro zviditelněný řádek
 //   cond        - podmínka pro všechny řádky browse, je-li vynechána bude užita stávající
 //   having      - podmínka pro všechny řádky browse umístěná za HAVING v GROUP BY
