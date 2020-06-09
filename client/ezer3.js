@@ -6590,10 +6590,7 @@ class Chat extends Elem {
 // ------------------------------------------------------------------------------------ DOM append
 //      přidá řádek do chat
   DOM_append (index,head,tail) {
-    // trik k rozlišení click a dblclk pomocí timeru
-    // viz http://groups.google.com/group/mootools-users/browse_thread/thread/f873371716d338c9
-    var timer, node, elem;
-    elem= jQuery(
+    var elem= jQuery(
       `<div class="Chat_1" tabIndex="-1">${head}</div>
        <div class="Chat_2" tabIndex="-1">${tail}</div>`)
       .appendTo(this.DOM_Hist);
@@ -6601,21 +6598,18 @@ class Chat extends Elem {
       elem
         .click ( el => {
           if ( el.shiftKey ) return dbg_onshiftclick(this);  /* chat */
-          clearTimeout(timer);
-          clearInterval(timer);
-          timer= (function(){
-          }).delay(200, this);
         })
         .dblclick ( event => {
           event.stopPropagation();
-          clearTimeout(timer);
-          clearInterval(timer);
           if ( !this._changed ) {
-            if ( (node= event.target.parent()) )
-              if ( (node= node.find('.focus')) )
-                node.removeClass('focus');
-            event.target.next().addClass('focus');
-            this.DOM_Input.val(event.target.next().html());
+            let target= jQuery(event.target),
+                chat= target.parent();
+            chat.find('.focus').removeClass('focus');
+            if ( target.hasClass('Chat_1') ) {
+              target= target.next();
+            }
+            target.addClass('focus');
+            this.DOM_Input.val(target.html());
             this.DOM_Input.removeClass('empty');
             this._changedRow= {row:index};
             this.fire('onrowclick',[index,head,tail],event);
@@ -10238,7 +10232,8 @@ class Show extends Elem {
           if ( this.DOM_qry[i] ) {
             this.DOM_qry[i]
               .click( event => {
-                  event.target.focus(); // kvůli Chrome - FF focus vyvolává i při neošetřeném click
+                  event.target.focus(); 
+                  jQuery(event.target).select();
               })
               .focus( event => {
                   this.owner.DOM_table.addClass('changed');
