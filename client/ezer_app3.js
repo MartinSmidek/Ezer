@@ -2353,13 +2353,15 @@ class Eval {
               }
               break;
             // K - inicializace pro foreach iterující objekt, na zásobník přidá
-            //     pole klíčů objektu nebo počet prvků pole
+            //     pole klíčů objektu nebo počet prvků pole nebo postupně vnořená ListRow
             case 'K':
               obj= this.stack[this.top];                  // objekt nebo pole nebo form
               if ( Array.isArray(obj) )
                 this.stack[++this.top]= 0;                // první index pole
               else if ( obj instanceof Form )
                 this.stack[++this.top]= Object.keys(obj.part); // pole form.part
+              else if ( obj instanceof List )
+                this.stack[++this.top]= 0;                // index prvního ListRow
               else if ( typeof(obj)=='object' )
                 this.stack[++this.top]= Object.keys(obj); // pole klíčů objektu
               else
@@ -2400,6 +2402,21 @@ class Eval {
                   this.stack[++this.top]= obj.part[val];  // a dej na vrchol jeho hodnotu
                   if ( cc.i==2 ) {                        // pokud má procedura 2 parametry
                     this.stack[++this.top]= val;          // přidej klíč
+                  }
+                  c-= cc.go-1;                            // a eliminuj příkaz skoku
+                }
+              }
+              else if ( obj instanceof List ) {
+                if ( keys>obj.last ) {                    // pokud je index za posledním
+                  this.top-= 2;                           // tak je i objekt odstraň ze zásobníku
+                  Ezer.eval_jump= '*';                    // a skonči cyklus skokem za foreach
+                }
+                else {                                    // jinak
+                  this.stack[this.top]++;                 // posuň index pro příští průchod
+                  val= obj.part[keys];                    // získej aktuální ListRow 
+                  this.stack[++this.top]= val;            // a dej na vrchol 
+                  if ( cc.i==2 ) {                        // pokud má procedura 2 parametry
+                    this.stack[++this.top]= keys;         // přidej i index
                   }
                   c-= cc.go-1;                            // a eliminuj příkaz skoku
                 }
