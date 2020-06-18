@@ -61,9 +61,10 @@ function dbg_onshiftclick(block) {
       //fname= pos.app+'/tut.the.php';  -- test otevření PHP
       //fname= pos.app+'/i_fce.js';     -- test otevření JS
       // pokud je poloha a rozměr v cookies ezer_dbg_win=l,t,w,h ==> . dbg open
-      var ltwh= Ezer.fce.get_cookie('ezer_dbg_win','0,0,770,500');
-      var x= ltwh.split(',');
-      var position= 'left='+x[0]+',top='+x[1]+',width='+x[2]+',height='+x[3];
+      var ltwh= Ezer.fce.get_cookie('ezer_dbg_win','1*1*770*500');
+      var x= ltwh.split('*'), 
+          l= x[0], t= x[1], w= x[2]-16, h= x[3]-67;
+      var position= `left=${l},top=${t},width=${w},height=${h}`;
       Ezer.sys.dbg.win_ezer= window.open(
         `./ezer3.1/dbg3.php?err=1&app=${Ezer.root}&src=${fname}&file=${pos.file}&pick=${line}`,'dbg',
         position+',resizable=1,titlebar=0,menubar=0');

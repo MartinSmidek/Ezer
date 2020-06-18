@@ -32,8 +32,9 @@ function dbg_onclick_start(file) {
         dbg.dbg_write(text);
         if ( text=='ask' ) {
           let line= dbg.src[l].text(),
-              fce= line.match(/'(.*)'/)[1];
-          dbg.dbg_write(`ask of PHP function ${fce}`);
+              fce= line.match(/ask\('(.*?)'/)[1];
+//          dbg.dbg_write(`ask of PHP function ${fce}`);
+          dbg_find_help ('php',fce);
         }
         else {
           dbg.dbg_find_help(dbg.typ,text);
@@ -164,17 +165,18 @@ function dbg_onclick_start(file) {
 // ------------------------------------------------------------------------------------ dbg_onunload
 // DBG - voláno z dbg3.php
 // zavření okna
-function dbg_onunload(typ,position) {
+function dbg_onunload(typ) {
+  let position= `${window.screenLeft}*${window.screenTop}*${window.outerWidth}*${window.outerHeight}`;
   if ( typ==='ezer' ) {
-    doc.Ezer.sys.dbg.win_ezer= null;
-    doc.Ezer.sys.dbg.file= '';
-    // zápis polohy a rozměru do cookies ezer_dbg_win=l,t,w,h ==> . dbg unload
+    doc.Ezer.sys.dbg= null;
+    // zápis polohy a rozměru do cookies ezer_dbg_win=l/t/w/h ==> . dbg unload
     doc.Ezer.fce.set_cookie('ezer_dbg_win',position);
   }
   else if ( typ=='php' )  {
     doc.Ezer.sys.dbg.win_php= null;
     doc.Ezer.fce.set_cookie('ezer_dbg_win2',position);
   }
+  Ezer.sys.dbg= null;
 }
 // ------------------------------------------------------------------------------- dbg_oncontextmenu
 // DBG - voláno z dbg3.php
@@ -518,10 +520,10 @@ function dbg_show_proc(cnt,on) {
 // ukáže HELP - voláno z App.dbg_help
 function dbg_show_help(ret) {
   if ( ret.typ=='php' ) {
-    if ( !doc.Ezer.sys.dbg.win_php ) {
-      dbg_php_open(ret.php,ret.item);
-    }
-    doc.Ezer.sys.dbg.win_php.dbg_php_item(ret.item);
+//    if ( !doc.Ezer.sys.dbg.win_php ) {
+//      dbg_php_open(ret.php,ret.item);
+//    }
+//    doc.Ezer.sys.dbg.win_php.dbg_php_item(ret.item);
   }
   else {
     dbg.dbg_write(ret.html);
@@ -619,11 +621,13 @@ function dbg_context(el) {
   return i;
 }
 // --------------------------------------------------------------------------------------- dbg touch
+// zobrazí informaci pod kurzorem
 function dbg_touch(value,e) {
   dbg.log.css({display:'block',top:e.pageY||e.page.y,left:e.pageX||e.page.x})
      .html(value);
 }
 // -------------------------------------------------------------------------------------- dbg prompt
+// přečte hodnotu
 function dbg_prompt(txt,deflt,ret_fce,e) {
   dbg.prompt.css({display:'block',top:e.pageY||e.page.y,left:e.pageX||e.page.x});
   dbg.prompt.find('span').html(txt);
@@ -650,13 +654,15 @@ function dbg_write (msg,append=false) {
 // ----------------------------------------------------------------------------------- dbg find_help
 // dotaz na server o help pro daný item
 function dbg_find_help (typ,item) {
-  if ( typ=='ezer' ) {
-    dbg.doc_ask('item_help',[item],_dbg_find_help);
-  }
+  dbg.doc_ask('item_help',[typ,item],_dbg_find_help);
 }
-function _dbg_find_help(y) { //Ezer.fce.echo(Ezer.fce.debug(y,"help"));
-//  Ezer.fce.echo(y.value);
-  doc.Ezer.sys.dbg.win_ezer.dbg_show_help(y.value);
+function _dbg_find_help(y) { 
+  if ( y.args[0]=='php' ) {
+    dbg.dbg_write(y.value.html);
+  }
+  else {
+    doc.Ezer.sys.dbg.win_ezer.dbg_show_help(y.value);
+  }
   return y.value;
 }
 // --------------------------------------------------------------------------------------- get caret
@@ -807,7 +813,7 @@ function doc_ask (fce,args,then,x) {
 // -------------------------------------------------------------------------------==> . dbg php_open
 // zobrazení textu ve struktuře
 function dbg_php_open(fname,item) {
-  var ltwh= Cookie.read('ezer_dbg_win2');
+  var ltwh= doc.Ezer.fce.get_cookie('ezer_dbg_win2');
   ltwh= ltwh ? ltwh : '0,0,770,500';
   var x= ltwh.split(',');
   var position= 'left='+x[0]+',top='+x[1]+',width='+x[2]+',height='+x[3];

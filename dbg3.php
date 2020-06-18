@@ -83,6 +83,10 @@
     lines=  jQuery('#lines');
     notes=  jQuery('#notes');
     files=  jQuery('#files');
+    // reakce na zavření dbg okna 
+    window.addEventListener('beforeunload', function (e) {
+      dbg.dbg_onunload('ezer');
+    });
     // inicializace 
     dbg_onclick_start('$file');
   });
@@ -114,7 +118,10 @@
       /* ----------------------- source */
       div#lines {
         padding: 0; overflow-y: scroll; height: 100%;
-        left: 120px; right: 0px; position: absolute;}
+        left: 120px; right: 0px; position: absolute; }
+      div#border {
+        position: fixed; left: 747px; width: 0; top: 0; height: 100%; 
+        border-right: 1px solid #ff00004a; }
       #lines ul {
         padding: 0; margin-top: 0; scroll-behavior: smooth;}
       li span.text {
@@ -153,7 +160,7 @@
       /* ----------------------- debug */
       #log {
         position:absolute; display: none; background-color:#eee; box-shadow:5px 5px 10px #567;
-        padding: 5px; z-index: 4; }
+        padding: 5px; z-index: 4; max-height: 300px; overflow: auto; }
       #prompt {
         position:absolute; display: none; background-color:#eee; box-shadow:5px 5px 10px #567;
         padding: 5px; z-index: 3; }
@@ -198,6 +205,7 @@
         <ul id="notes"><li>notes</li></ul>
       </div>
       <div id='lines'>
+        <div id='border'></div>
         <ul><li>lines</li></ul>
       </div>
       <span id='log'></span>

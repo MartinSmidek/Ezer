@@ -2689,20 +2689,24 @@ function save_file($path,$text) {
   return "$ok, saved:$path2";
 }
 # ---------------------------------------------------------------------------------------- item_help
-function item_help($item) {
+# typ=ezer|php
+function item_help($typ,$item) {
   global $ezer_path_serv, $ezer_root;
   $ret= (object)array(
     'html'=>$item,
     'item'=>$item
   );
-  // prohledání php-modulů
-  $ret->trace= $names= doc_ezer(true);
-  if ( isset($names[$item]) && $names[$item]->typ=='php' ) {
-    $ret->html= "$item je PHP funkce z {$names[$item]->php}";
-    $ret->typ= 'php';
-    $ret->php= $names[$item]->php;
-  }
-  else {
+  switch ($typ) {
+  case 'php':
+    // prohledání php-modulů
+    $ret->trace= $names= doc_ezer(true);
+    if ( isset($names[$item]) && $names[$item]->typ=='php' ) {
+      $ret->html= "$item je PHP funkce z {$names[$item]->php}";
+      $ret->typ= 'php';
+      $ret->php= $names[$item]->php;
+    }
+    break;
+  case 'ezer':
     // otevření databáze a tabulky
     $ezer_db= @mysql_connect('localhost','gandi','');
     $res= @mysql_select_db('ezer_kernel',$ezer_db);
@@ -2711,6 +2715,7 @@ function item_help($item) {
     if ( $rt && $t= pdo_fetch_object($rt) ) {
       $ret->html= $t->text;
     }
+    break;
   }
   return $ret;
 }

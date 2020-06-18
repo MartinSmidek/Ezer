@@ -1394,7 +1394,7 @@ function export_tail($show_xls=0) { trace();
   return $ret;
 }
 # ----------------------------------------------------------------------------------------------- wu
-# na UTF8 na win1250
+# na UTF8 z win1250
 function wu($x,$user2sql=0) { #trace();
   if ( $user2sql ) {
     // převeď uživatelskou podobu na sql tvar
