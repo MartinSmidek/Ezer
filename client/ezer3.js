@@ -2780,17 +2780,11 @@ class Var extends Block {
           'get s parametrem lze použít jen na objekty nebo pole',this);
         v= this.value;
         if ( Number.isInteger(part) ) {
-          if ( v[part]=='' )
-            v= '';
-          else
-            v= v[part]===undefined ? '' : v[part];
+          v= v[part]===undefined ? '' : v[part];
         }
         else {
           for (const i of part.split('.')) {
-            if ( v[i]=='' )
-              v= '';
-            else
-              v= v[i]===undefined ? '' : v[i];
+            v= v[i]===undefined ? '' : v[i];
           }
         }
       }
