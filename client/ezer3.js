@@ -7651,9 +7651,21 @@ class List extends Block {
   load () {
     return 1;
   }
-// ===========================================================================================> List
-//c: List-DOM
-//   řádkové zobrazení dat
+// ------------------------------------------------------------------------------------ plain
+//fm: List.plain ()
+//      odstraní příznak změny ze všech přístupných  řádků
+  plain () {
+    for (let ir in this.part) {        // projdi řádky
+      let part= this.part[ir].part;
+      for (var ie in part) {           // projdi elementy
+        let elem= part[ie];
+        if ( elem.skill && elem.plain ) {
+          elem.plain();
+        }
+      }
+    }
+    return 1;
+  }
 // ------------------------------------------------------------------------------------ DOM add
 // vytvoří kontejner na řádky
   DOM_add () {
