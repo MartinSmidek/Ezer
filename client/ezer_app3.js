@@ -41,7 +41,19 @@ Ezer.excited= 0;                // >0 pokud bylo již použito Ezer.options.star
 Ezer.konst= Ezer.konst || {};   // hodnoty nedefinovaných konsta(const x;y;z)
 Ezer.curr= {panel:null};        // zobrazený panel
 // systémové proměnné (root,user,ezer,options)
-Ezer.sys= {root:Ezer.root,user:{},ezer:{},version:Ezer.version,options:Ezer.options,dbg:null};
+Ezer.sys= {
+  root:Ezer.root,
+  user:{},
+  ezer:{},
+  version:Ezer.version,
+  options:Ezer.options,
+  dbg: {                    // stav debugeru DBG3
+    win_ezer:null,            // - window se zobrazenými moduly ezerscriptu nebo null
+    file:'',                  // - aktuálně zobrazený soubor
+    files:{},                 // - všechny soubory se stavem
+    path:[Ezer.root]          // - cesta ke zdrojovým souborům doplnitelná přes Ezer.options.dbg
+  }
+};
 Ezer.is_trace= {};                              // zapínání typů trasování
 Ezer.is_dump= {};                               // zapínání typů výpisů
 // ------------------------------------------------------------------------------------- const_value
@@ -102,6 +114,8 @@ jQuery(document)
   .ready( () => {
     Ezer.app= new Application(Ezer.options);
     Ezer.app._mini_debug(Ezer.app.options.mini_debug);
+    // převzetí případně parametrizace debuggeru
+    if ( Ezer.options.dbg ) jQuery.extend(Ezer.sys.dbg,Ezer.options.dbg);
     if ( Ezer.app.options.ondomready ) ondomready();
   });
 // ----------------------------------------------------------------------------- ON popstate

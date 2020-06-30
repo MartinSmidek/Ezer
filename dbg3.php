@@ -168,8 +168,8 @@
         display:block; }
       #prompt input {
         width:200px; font-size: 8pt; font-family: monospace,consolas; }
-      .dbg {
-        margin:0; overflow-y:auto; font-size:8pt; line-height:13px; }
+      div.dbg {
+        font-size:8pt; line-height:13px; position:relative;}
       table.dbg {
         border-collapse:collapse; margin:1px 0;}
       .dbg td {

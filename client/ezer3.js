@@ -964,6 +964,7 @@ class Block {
 //               case 'map':           part= new Ezer.Map(this,desc,null,id); break;
               case 'map':           part= new EzerMap(this,desc,null,id); break;
 //               case 'proc':          part= new Ezer.Proc(this,desc,this); break;
+              case 'func': 
               case 'proc':          part= new Proc(this,desc,this); break;
               // přeskakované (informace dostupné přes Ezer.code)
               case 'area':          break;

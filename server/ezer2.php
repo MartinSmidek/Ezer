@@ -1806,61 +1806,86 @@
         $includes[$ids]->id= $id;
       }
     }
-    # -------------------------- najde objekt pojmenovaný úplným jménem a přebuduje kontext překladu
-    function dbg_find_obj($full) { //trace();
+/*
+//    # -------------------------- najde objekt pojmenovaný úplným jménem a přebuduje kontext překladu
+//    function dbg_find_obj($full) { //trace();
+//      global $context;
+//      $obj= $context[0]->ctx;
+//      $obj_id= $context[0]->id;
+//      $context= array();
+//      $ids= explode('.',$full);
+//      $id0= array_shift($ids);
+//      $fname= "";
+//      if ( $id0=='$' || $id0=='#' ) {
+//        for ($i= 0; $i<count($ids); $i++) {
+//          $id= $ids[$i];
+//          $fname.= $fname ? ".$id" : $id;
+//          if ( $id && isset($obj->part->$id) ) {
+//          }
+//          elseif ($obj->options->include) {
+//            $obj= null;
+//            goto end;
+//          }
+//          else {
+//            $obj= null; 
+//            goto end;
+//          }
+//          context_push($obj_id,$obj);
+//          $obj_id= $id;
+//          $obj= $obj->part->$id;
+//        }
+//      }
+//      else $obj= null;
+//      context_push($id,$obj);
+//    end:
+//      return $obj;
+//    }
+//    # ---------------------------------------------------------------- přidá kontext, jde-li zjistit
+//    function context_push($id,$obj) { //trace();
+//      # obohatí kontext
+//      global $context, $includes;
+//      foreach($includes as $include) {
+//        if ( $id == $include->id) {
+//          array_push($context,(object)array('id'=>$id,'ctx'=>$include));
+//          return;
+//        }
+//      }
+//      array_push($context,(object)array('id'=>$id,'ctx'=>$obj));
+//    }
+ 
+*/
+    # -------------------------- najde objekt pojmenovaný úplným jménem a doplní kontext překladu
+    function dbg_find_obj2($full) { //trace();
       global $context;
-      $obj= $context[0]->ctx;
-      $obj_id= $context[0]->id;
-      $context= array();
+      // doplníme kontext vybudovaný dbg_context_load podle $full
       $ids= explode('.',$full);
-      $id0= array_shift($ids);
-      $fname= "";
-      if ( $id0=='$' || $id0=='#' ) {
-        for ($i= 0; $i<count($ids); $i++) {
-          $id= $ids[$i];
-          $fname.= $fname ? ".$id" : $id;
-          if ( $id && isset($obj->part->$id) ) {
-          }
-          elseif ($obj->options->include) {
-            $obj= null;
-            goto end;
-          }
-          else {
-            $obj= null; 
-            goto end;
-          }
-          context_push($obj_id,$obj);
-          $obj_id= $id;
-          $obj= $obj->part->$id;
+      for ($i= count($context); $i<count($ids); $i++) {
+        $owner= $context[$i-1]->ctx;
+        $id= $ids[$i];
+        if ( $id && isset($owner->part->$id) ) {
+          $obj= $owner->part->$id;
+          // prodloužíme context
+          array_push($context,(object)array('id'=>$id,'ctx'=>$obj));
+        }
+        else {
+          $obj= null; 
+          goto end;
         }
       }
-      else $obj= null;
-      context_push($id,$obj);
     end:
       return $obj;
     }
-    # ---------------------------------------------------------------- přidá kontext, jde-li zjistit
-    function context_push($id,$obj) { //trace();
-      # obohatí kontext
-      global $context, $includes;
-      foreach($includes as $include) {
-        if ( $id == $include->id) {
-          array_push($context,(object)array('id'=>$id,'ctx'=>$include));
-          return;
-        }
-      }
-      array_push($context,(object)array('id'=>$id,'ctx'=>$obj));
-    }
-    # ----------- překlad skriptu $x->script do procedury _dbg_ v zadaném kontextu $x->context->self
+    # ----------- překlad skriptu $x->script do procedury _dbg_  resp. do funkce _dbg_
+    # v zadaném kontextu $x->context->self
     $log= $cd= $err= "";
     $log.= dbg_context_load($x->context);
-    dbg_includes();
+//    dbg_includes();
     try {
       $ezer= $x->script;
       $_SESSION[$ezer_root]['dbg_script']= $ezer;
-      $obj= dbg_find_obj($x->context->self);
+      $obj= dbg_find_obj2($x->context->self);
       if ( !$obj ) { $err= "Warning: nelze určit kontext překladu"; $obj= (object)array(); }
-      $ok= get_ezer($top,$obj,true);
+      $ok= get_ezer($top,$obj,$x->context->code);
       if ( $ok ) {
         $block= $obj->part->_dbg_;
         proc($block,'_dbg_');

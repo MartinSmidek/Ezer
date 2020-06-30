@@ -16,12 +16,7 @@ function isElementInViewport(el) {
 // -------------------------------------------------------------------------------- dbg_onshiftclick
 function dbg_onshiftclick(block) {
   if ( !Ezer.options.dbg ) return false;
-  if ( !Ezer.sys.dbg )
-    Ezer.sys.dbg= {
-      win_ezer:null,    // podřízené okno s debugrem
-      file:'',          // aktuálně zobrazený soubor
-      files:{},         // všechny soubory se stavem
-      win_php:null};
+  if ( !Ezer.sys.dbg ) fce_error("DBG3 structure missing");
   var pos= block.app_file(),
       state0= {stops:[],stop:0,traces:[],pick:0}; // stopadresy - stop, trasování, aktuální ř.
   if ( pos.file ) {
@@ -71,7 +66,7 @@ function dbg_onshiftclick(block) {
       if ( Ezer.sys.dbg.win_ezer ) {
 //        dbg_reload(pos.file);
         Ezer.sys.dbg.file= pos.file;
-        Ezer.sys.dbg.typ= 'ezer';
+//        Ezer.sys.dbg.typ= 'ezer';
         Ezer.sys.dbg.noevent= false;
       }
     }

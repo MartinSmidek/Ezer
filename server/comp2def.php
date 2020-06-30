@@ -6,7 +6,7 @@ global $blocs, $specs, $attribs, $uni_attribs, $blocs_help, $attribs_type, $attr
 global $tab_id_symb, $cmd_ajax, $cmd_gen, $cmd_lib, $cmd_metd, $gen_prefix, $use_list, $js1, $js2, $js3, $js3_ic;
 global $id_anonymous, $first_panel, $attribs1, $attribs2, $keywords, $dels, $tok2lex;
 global $pragma_attrs;
-global $blocs2, $blocs3, $ezer_path_code, $ezer_path_root, $names;
+global $blocs2, $blocs3,$block_get, $ezer_path_code, $ezer_path_root, $names;
 if ( file_exists("$ezer_path_code/comp2tab.php") )
   require_once("$ezer_path_code/comp2tab.php");
 else
@@ -21,7 +21,7 @@ $blocs3 = array (                                    // universálně zanořitel
 );
 $blocs2 = array (                                    // překládají se na AE_<part>
   ''            =>  explode(",",'pragma,group,system,module,ezer,table,report,form,area,map,panel.main,'
-                               .'panel.plain,panel.right,panel.popup,menu.main,menu.left,tabs,var,use,proc'),
+                               .'panel.plain,panel.right,panel.popup,menu.main,menu.left,tabs,var,use,proc,func'),
 # pragma a souvislosti
   'pragma'      =>  explode(",",''),
   'module'      =>  explode(",",'panel,panel.right,panel.popup'),
@@ -35,7 +35,7 @@ $blocs2 = array (                                    // překládají se na AE_<
   'menu.context'  =>  explode(",",'proc,item,item.clipboard'),
   'item'        =>  explode(",",'proc'),
 #  top
-  'panel'       =>  explode(",",'use,proc,var,form,panel.popup'),
+  'panel'       =>  explode(",",'use,proc,func,var,form,panel.popup'),
   'panel.popup' =>  explode(",",'use,proc,var,form,menu.left'),
   'panel.free'  =>  explode(",",'use,proc,var,form'),
   'panel.plain' =>  explode(",",'use,proc,var,form,panel'),
@@ -81,10 +81,11 @@ $blocs2 = array (                                    // překládají se na AE_<
   'radio'       =>  explode(",",'proc,case'),
   'case'        =>  explode(",",''),
 #  list
-  'list'   =>  explode(",",'proc,label,button,select,select.auto,select.map,select.map0,field,'
+  'list'   =>  explode(",",'proc,func,label,button,select,select.auto,select.map,select.map0,field,'
                           .'field.date,field.list,menu,check,radio'),
 #  proc
   'proc'        =>  explode(",",''),
+  'func'        =>  explode(",",''),
 );
 # definice povolených vnořených bloků
 $blocs = array (                                    // překládají se na AE_<part>
@@ -136,6 +137,7 @@ $blocs = array (                                    // překládají se na AE_<p
   'list'   =>  explode(",",'proc,label,button,select,field,menu,check'),
 #  proc
   'proc'   =>  explode(",",''),
+  'func'   =>  explode(",",''),
 );
 # definice povolených speciálních bloků
 $specs = array (
@@ -189,6 +191,23 @@ $specs = array (
   'list'   =>  explode(",",'part,coor+,cmnt,proc'),
 #  proc
   'proc'   =>  explode(",",'par,code,note'),
+  'func'   =>  explode(",",'par,code2,note'),
+);
+# definice bloků s implementovanou metodou get
+$block_get= array( 
+  'const'  => 1,
+  'var'    => 1,
+  'field'  => 1,
+  'label'  => 1,
+  'button' => 1,
+  'edit'   => 1,
+  'html'   => 1,
+  'select' => 1,
+  'chat'   => 1,
+  'check'  => 1,
+#  radio
+  'radio'  => 1,
+  'case'   => 1
 );
 # definice univerzálních atributů
 $uni_attribs = explode(",",'_sys:s,tag:s');
@@ -361,6 +380,7 @@ jméno souboru ''prog_modul.wiki'' s dokumentací (''prog'' je jméno programu).
   'show'   =>  "Jeden řádek browse",
 #  proc
   'proc'   =>  "Procedura",
+  'func'   =>  "Funkce",
 );
 }
 ?>
