@@ -767,53 +767,25 @@ function proc(&$c,$name) { #trace();
     if ($trace_me) $before= debugx($c);
     $desc= (object)array('id'=>$name);
     $procs[]= $desc;
-//                                                 display("proc $name");
+    $PROC= strtoupper($c->options->code);
     try {
-//                                                 debug($context,"proc($name)",(object)array('depth'=>3));
-      gen_proc($c,$desc,$name);
+      if ( $c->options->code=='proc')
+        gen_proc($c,$desc,$name);
+      elseif ( $c->options->code=='func')
+        gen_func($c,$desc,$name);
+      else comp_error("CODE: '$name' nemá jasný typ kódu");
       $c->par= $desc->par;
       $c->npar= count((array)$c->par);
       $c->nvar= count((array)$c->vars);
       $c->code= $desc->code;
-//       unset($c->par,$c->vars);
       if ( strpos($c->id,'.')!==false )            // bude se volat plným jménem
         $c->_init= $name;
-//                                                 debug($c,"c");
-//                                                 debug($desc,"proc $name npar:{$c->npar},nvar:{$c->nvar}");
     } catch(Exception $e) {
-      if ($trace_me) display("<table class='proc'><tr><td colspan=2>PROC $name</td></tr>".
+      if ($trace_me) display("<table class='proc'><tr><td colspan=2>$PROC $name</td></tr>".
         "<tr><td valign='top'>$before</td><td valign='top'>ERROR</td></tr></table>");
       throw $e;
     }
-    if ($trace_me) display("<table class='proc'><tr><td colspan=2>PROC $name</td></tr>".
-      "<tr><td valign='top'>$before</td><td valign='top'>".debugx($c)."</td></tr></table>");
-  }
-  else if ( $c->type=='func' ) {
-    $c->type= 'proc';
-    $trace_me= $_GET['trace']==1; //&& $c->id=='xonclick';
-    
-    if ($trace_me) $before= debugx($c);
-    $desc= (object)array('id'=>$name);
-    $procs[]= $desc;
-//                                                 display("proc $name");
-    try {
-//                                                 debug($context,"proc($name)",(object)array('depth'=>3));
-      gen_func($c,$desc,$name);
-      $c->par= $desc->par;
-      $c->npar= count((array)$c->par);
-      $c->nvar= count((array)$c->vars);
-      $c->code= $desc->code;
-//       unset($c->par,$c->vars);
-      if ( strpos($c->id,'.')!==false )            // bude se volat plným jménem
-        $c->_init= $name;
-//                                                 debug($c,"c");
-//                                                 debug($desc,"proc $name npar:{$c->npar},nvar:{$c->nvar}");
-    } catch(Exception $e) {
-      if ($trace_me) display("<table class='proc'><tr><td colspan=2>PROC $name</td></tr>".
-        "<tr><td valign='top'>$before</td><td valign='top'>ERROR</td></tr></table>");
-      throw $e;
-    }
-    if ($trace_me) display("<table class='proc'><tr><td colspan=2>PROC $name</td></tr>".
+    if ($trace_me) display("<table class='proc'><tr><td colspan=2>$PROC $name</td></tr>".
       "<tr><td valign='top'>$before</td><td valign='top'>".debugx($c)."</td></tr></table>");
   }
   else if ( $c->part ) {
@@ -913,7 +885,7 @@ function proc(&$c,$name) { #trace();
 //                                                 display("oi attr $id $name = $full ($obj->type)");
     }
   }
-};
+}
 # -------------------------------------------------------------------------------------------------- export
 # kopíruje pouze informace pro interpreta
 # vynech části označené jako _old
@@ -1235,16 +1207,31 @@ function gen2($pars,$vars,$c,$icall,&$struct) {
       }
       $code= gen_name($c->op,$pars,$vars,$obj,$icall==0,$c,$npar);
       $cend= count($code)-1;
-      $call= $code[$cend];
-      for ($i= 0; $i<$npar; $i++) {
-        $code[$i+$cend]= gen2($pars,$vars,$c->par[$i],0,$struct1);
+      if ( $code[$cend-1]->o=='a' && substr($c->op,-4)=='.set' && $npar==1 ) {
+        // překládáme příkaz objekt.atribut=výraz
+        // změna atributu se provede metodou set_attrib místo set
+        $code= array(
+            $code[0],
+            (object)array('o'=>'v','v'=>$code[1]->i),
+            gen2($pars,$vars,$c->par[0],0,$struct1),
+            (object)array('o'=>'m','i'=>'set_attrib','a'=>2)
+        );
+        $cend= count($code)-1;
         $struct1->argx= $cend+1;                       // zabránění vložení IFT nebo IFF do kódu
         $struct->arr[]= $struct1;
       }
-      if ( $call->o!='w' )
-        $call->a= $npar;
+      else {
+        $call= $code[$cend];
+        for ($i= 0; $i<$npar; $i++) {
+          $code[$i+$cend]= gen2($pars,$vars,$c->par[$i],0,$struct1);
+          $struct1->argx= $cend+1;                       // zabránění vložení IFT nebo IFF do kódu
+          $struct->arr[]= $struct1;
+        }
+        if ( $call->o!='w' )
+          $call->a= $npar;
+        $code[$cend+$npar]= $call;
+      }
       if ( $c->lc ) $call->s= $c->lc;
-      $code[$cend+$npar]= $call;
       $code_top-= $npar;
     }
     break;
@@ -2279,6 +2266,9 @@ function get_if_block ($root,&$block,&$id) {
       $block= new stdClass;
       $block->type= $key;
       $block->options= (object)array();
+      if ( $block->type=='func' ) {
+        $block->type= 'proc';
+      }
       if ( isset($specs[$key]) ) {
         if ( in_array('map_table' ,$specs[$key])
              && get_delimiter(':') && get_keyed_name('table',$copy,$lc,$nt) ) $block->table= $copy;
@@ -2307,12 +2297,14 @@ function get_if_block ($root,&$block,&$id) {
         if ( in_array('par'  ,$specs[$key]) && get_if_pars($pars)  ) $block->par= $pars;
         if ( in_array('code' ,$specs[$key])
              && get_code($pars,$code,$vars,$prior,$lc_)          ) { $block->code= $code;
+                                                                     $block->options->code= 'proc';
                                                                      $block->vars= $vars;
                                                      if ( $doxygen ) $block->lc_= $lc_;
                                                        if ( $prior ) $block->options->prior= $prior;
         }
         if ( in_array('code2',$specs[$key])
              && get_code2($pars,$code,$vars,$prior,$lc_)         ) { $block->code= $code;
+                                                                     $block->options->code= 'func';
                                                                      $block->vars= $vars;
                                                      if ( $doxygen ) $block->lc_= $lc_;
                                                        if ( $prior ) $block->options->prior= $prior;
@@ -3090,17 +3082,17 @@ function get_slist($context,&$st) {
 #          | id '=' expr2                       --> {expr:call,op:id.set,par:[G(expr2)]}
 #          | 'if' '(' expr2 ')' stmnt [ 'else' stmnt ]  --> {expr:if,test:G(expr2),then:G(stmnt/1),else:G(stmnt/2)}
 #          | call2                              --> G(call2)
+#          |
 function get_stmnt($context,&$st) {
   global $tree;
   $ok= false;
+  $id= '';
   # '{' slist '}' --> G(slist)
   if ( get_if_delimiter('{') ) {
     $ok= get_slist($context,$st);
     get_delimiter('}');
   }
-  else {
-    $id= '';
-    get_id_or_key($id);
+  elseif ( get_if_id($id) ) {
     # id '=' expr2 --> {expr:call,op:id.set,par:[G(expr2)]}
     if ( get_if_delimiter('=') ) {
       $expr='';
@@ -3129,6 +3121,8 @@ function get_stmnt($context,&$st) {
       }
     }
     else {
+      # prázdný příkaz
+      $ok= true;
     }
   }
   $tree.= ' s';

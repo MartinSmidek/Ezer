@@ -341,7 +341,7 @@ function sys_backup_make($par) {  trace();
                                                         display("path_backup=$path_backup, ezer_root=$ezer_root, mysql=$ezer_mysql_path");
   $html= '';
   $sign= date("Ymd_Hi");
-  if ( $EZER->options->local )
+  if ( isset($EZER->options->local) && $EZER->options->local )
     $sign.= "_local";
   switch ($par->typ) {
   case 'download':
