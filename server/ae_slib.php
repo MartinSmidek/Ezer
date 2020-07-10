@@ -527,6 +527,30 @@ function test_session() {
                                                 debug($_SESSION,'$_SESSION');
   return $html;
 }
+# ------------------------------------------------------------------------------------------ session
+# getter a setter pro _SESSION
+function session($is,$value=null) {
+  $i= explode(',',$is);
+  if ( is_null($value) ) {
+    // getter
+    switch (count($i)) {
+    case 1: $value= $_SESSION[$i[0]]; break;
+    case 2: $value= $_SESSION[$i[0]][$i[1]]; break;
+    case 3: $value= $_SESSION[$i[0]][$i[1]][$i[2]]; break;
+    }
+  }
+  else {
+    // setter
+    switch (count($i)) {
+    case 1: $_SESSION[$i[0]]= $value; break;
+    case 2: $_SESSION[$i[0]][$i[1]]= $value; break;
+    case 3: $_SESSION[$i[0]][$i[1]][$i[2]]= $value; break;
+    }
+//    session_commit();
+    $value= 1;
+  }
+  return $value;
+}
 # -------------------------------------------------------------------------------------- simple glob
 /** Jednodušší náhrada funkce glob()
 * @param string $mask vyhledávací maska může v názvu souboru obsahovat znak * a ?
@@ -557,9 +581,9 @@ function simple_glob($mask) {
 #   array (data => $val, ...)
 function map_cis($druh,$val='zkratka',$order='poradi',$db='') {
   global $mysql_db;
-  $db= $db?:$mysql_db;
+  ezer_connect($db?:$mysql_db);
   $cis= array();
-  $qry= "SELECT * FROM $db._cis WHERE druh='$druh' ORDER BY $order";
+  $qry= "SELECT * FROM _cis WHERE druh='$druh' ORDER BY $order";
   $res= mysql_qry($qry);
   while ( $res && $row= pdo_fetch_assoc($res) ) {
     $cis[$row['data']]= $row[$val];
