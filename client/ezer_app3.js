@@ -3280,7 +3280,7 @@ Ezer.fce.sys= function () {
     y= Ezer.sys;
   }
   for (i; i<arguments.length; i++) {
-    if ( y[arguments[i]] ) {
+    if ( y[arguments[i]]!==undefined ) {
       y= y[arguments[i]];
     }
     else {
