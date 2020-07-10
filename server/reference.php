@@ -11,12 +11,12 @@ function i_doc($typ,$fnames='') {   trace();
   $i_doc_info= array(); $i_doc_class= $i_doc_id= $i_doc_ref= $i_doc_err= ''; $i_doc_n= 0;
 //                                                 display("i_doc($typ,$fnames)");
   global $EZER, $mysql_db;
-  $db= $mysql_db;
+  ezer_connect($mysql_db);
   $text= '';
   switch ( $typ ) {
   case 'show':
     $text= '';
-    $qry= "SELECT * FROM $db.ezer_doc2 WHERE 1";
+    $qry= "SELECT * FROM ezer_doc2 WHERE 1";
 //                                                 display("mysql_qry($qry)");
     $res= mysql_qry($qry);
     while ( $res && ($row= pdo_fetch_assoc($res)) ) {
@@ -55,20 +55,20 @@ function i_doc($typ,$fnames='') {   trace();
         i_doc_final($i_doc_class,$i_doc_id,$i_doc_info["$i_doc_class.$i_doc_id"],$i_doc_t);
       $text.= nl2br($i_doc_err);
       // doplnění sekce elementům ne-třídám, které ji nemají definovanou, ale jejich třída má
-      $qry= "SELECT class FROM $db.ezer_doc2
+      $qry= "SELECT class FROM ezer_doc2
              WHERE chapter='reference' AND section='' GROUP BY class";
       $res= mysql_qry($qry);
       while ( $res && ($row= pdo_fetch_assoc($res)) ) {
         $class= $row['class'];
         // projdi elementy s chybějící sekcí se stejnou třídou
-        $qry2= "SELECT section FROM $db.ezer_doc2
+        $qry2= "SELECT section FROM ezer_doc2
                 WHERE chapter='reference' AND elem='class' AND class='$class' AND section!='' ";
         $res2= mysql_qry($qry2);
         // zjisti sekci té třídy, jde-li to
         if ( $res2 && ($row2= pdo_fetch_assoc($res2)) ) {
           $section= $row2['section'];
           // a doplň ji, kde chybí
-          $qry3= "UPDATE $db.ezer_doc2 SET section='$section'
+          $qry3= "UPDATE ezer_doc2 SET section='$section'
                   WHERE chapter='reference' AND section='' AND class='$class'";
           $res3= mysql_qry($qry3);
         }
@@ -78,7 +78,7 @@ function i_doc($typ,$fnames='') {   trace();
     $text.= "<br><h3>Generování tabulky jmen pro kompilátor</h3>";
     $comp2= '$names= array(';
     $parts= array();
-    $qry= "SELECT part,comp FROM $db.ezer_doc2 WHERE char_length(comp)=2 ORDER BY part";
+    $qry= "SELECT part,comp FROM ezer_doc2 WHERE char_length(comp)=2 ORDER BY part";
     $res= mysql_qry($qry);
     while ( $res && ($o= pdo_fetch_object($res)) ) {
       list($ps,$pi)= explode('/',$o->part);
@@ -112,7 +112,7 @@ function i_doc($typ,$fnames='') {   trace();
     $text.= $app_text ? $app_text : "";
     break;
   case 'survay':
-    $qry= "SELECT chapter,COUNT(*) AS _pocet FROM $db.ezer_doc2 GROUP BY chapter";
+    $qry= "SELECT chapter,COUNT(*) AS _pocet FROM ezer_doc2 GROUP BY chapter";
     $res= mysql_qry($qry);
     while ( $res && ($o= pdo_fetch_object($res)) ) {
       $text.= "{$o->chapter} má {$o->_pocet} záznamů<br>";
@@ -262,7 +262,8 @@ function i_doc_app($fnameslist,$chapter,$to_save=true) { trace();
   global $i_doc_info, $i_doc_class, $i_doc_id, $i_doc_ref, $i_doc_err, $i_doc_n, $i_doc_file;
   global $i_doc_text, $form, $map, $ezer_path_root,$ezer_path_serv;
   require_once("$ezer_path_serv/licensed/ezer_wiki.php");
-  global $mysql_db; $db= $mysql_db;
+  global $mysql_db; 
+  ezer_connect($mysql_db);
   $parser= new EzerWiki();
   $parser->reference_wiki = '';
   $parser->image_uri = './';
@@ -410,7 +411,7 @@ function i_doc_app($fnameslist,$chapter,$to_save=true) { trace();
           $class= "{$fname}_".str_pad((($i-1)/2),2,'0',STR_PAD_LEFT);
           $set= "elem='modul',class='$class',part='',file='$fname',chapter='$chapter',"
             . "section='$modul',title='$title',sorting=$sort,text=\"$esc_text\"";
-          $qry= "REPLACE $db.ezer_doc2 SET $set ";
+          $qry= "REPLACE ezer_doc2 SET $set ";
           $res= mysql_qry($qry);
         }
         else
@@ -503,7 +504,8 @@ function i_doc_line($ln) {
 function i_doc_final($class,$id,$info,$t) { #if ($t=='i') trace();
   global $i_doc_info, $i_doc_class, $i_doc_id, $i_doc_ref, $i_doc_err, $i_doc_n, $i_doc_file;
 //   debug($info,$id);
-  global $mysql_db; $db= $mysql_db;
+  global $mysql_db; 
+  ezer_connect($mysql_db);
   $msg= '';
   foreach ($info as $name => $x) switch ( $name ) {
   case 'Class':        // tabulka:  (1.řádek)(zbylý text)
@@ -673,7 +675,7 @@ function i_doc_final($class,$id,$info,$t) { #if ($t=='i') trace();
   }
   $extd= pdo_real_escape_string($extd);
   $set.= "class='$class',extends='$extd',part='$id',file='$i_doc_file',chapter='reference',sorting=99";
-  $qry= "REPLACE $db.ezer_doc2 SET $set ";
+  $qry= "REPLACE ezer_doc2 SET $set ";
   $res= mysql_qry($qry);
   // inicializace proměnných
   $i_doc_class= $i_doc_id= $i_doc_ref= '';
@@ -736,7 +738,8 @@ function i_doc_subs_attribs ($blok,$to_show_sub=1) {
 #       part   :: block | attr
 function i_doc_lang() { //trace();
   global $blocs, $specs, $attribs, $blocs_help, $attribs_type, $attribs_help,$ezer_path_serv;
-  global $mysql_db; $db= $mysql_db;
+  global $mysql_db; 
+  ezer_connect($mysql_db);
   require_once("$ezer_path_serv/comp2def.php");
   require_once("$ezer_path_serv/comp2.php");
   compiler_init();
@@ -746,7 +749,7 @@ function i_doc_lang() { //trace();
   $parser->image_uri = './';
   $parser->ignore_images = false;
   // zrušení staré verze popisu jazyka
-  $qry= "DELETE FROM $db.ezer_doc2 WHERE chapter='reference' AND section='ezerscript' ";
+  $qry= "DELETE FROM ezer_doc2 WHERE chapter='reference' AND section='ezerscript' ";
   $res= mysql_qry($qry);
   // seznam bloků jazyka
   $text.= "<div class='CSection CTopic'>";
@@ -776,16 +779,16 @@ function i_doc_lang() { //trace();
     $text.= "</div>";
   }
   $esc_text= pdo_real_escape_string($text);
-  $qry= "REPLACE $db.ezer_doc2 (chapter,section,elem,class,sorting,title,text)
+  $qry= "REPLACE ezer_doc2 (chapter,section,elem,class,sorting,title,text)
          VALUES ('reference','ezerscript','text','language',1,'popis jazyka',\"$esc_text\") ";
   $res= mysql_qry($qry);
-  $qry= "REPLACE $db.ezer_doc2 (chapter,section,elem,class,sorting,title,text)
+  $qry= "REPLACE ezer_doc2 (chapter,section,elem,class,sorting,title,text)
          VALUES ('reference','ezerscript','text','library',2,'knihovna funkcí',\"$esc_text\") ";
   $res= mysql_qry($qry);
-  $qry= "REPLACE $db.ezer_doc2 (chapter,section,elem,class,sorting,title,text)
+  $qry= "REPLACE ezer_doc2 (chapter,section,elem,class,sorting,title,text)
          VALUES ('reference','ezerscript','text','attribs',3,'seznam atributů',\"$esc_text\") ";
   $res= mysql_qry($qry);
-  $qry= "REPLACE $db.ezer_doc2 (chapter,section,elem,class,sorting,title,text)
+  $qry= "REPLACE ezer_doc2 (chapter,section,elem,class,sorting,title,text)
          VALUES ('reference','ezerscript','text','events',4,'seznam událostí',\"$esc_text\") ";
   $res= mysql_qry($qry);
   return "ezerscript - generated";
@@ -793,11 +796,12 @@ function i_doc_lang() { //trace();
 # -------------------------------------------------------------------------------------------------- i_doc_reset
 # inicializuje generovanou část dokumentace
 function i_doc_reset($chapter=null) {
-  global $mysql_db; $db= $mysql_db;
+  global $mysql_db; 
+  ezer_connect($mysql_db);
   if ( $chapter )
-    $qry= "DELETE FROM $db.ezer_doc2 WHERE chapter='$chapter'";
+    $qry= "DELETE FROM ezer_doc2 WHERE chapter='$chapter'";
   else
-    $qry= "TRUNCATE TABLE $db.ezer_doc2";
+    $qry= "TRUNCATE TABLE ezer_doc2";
   $res= mysql_qry($qry);
   return "Nápověda ".($chapter ? "pro $chapter" : "")." byla resetována";
 }
@@ -806,8 +810,9 @@ function i_doc_reset($chapter=null) {
 function i_doc_show_chapter($chapter,$section,$class) {
 //                                                 display("i_doc_show_chapter($chapter,$section,$class)");
   $text= '';
-  global $mysql_db; $db= $mysql_db;
-  $qry= "SELECT class,part,elem,text FROM $db.ezer_doc2
+  global $mysql_db; 
+  ezer_connect($mysql_db);
+  $qry= "SELECT class,part,elem,text FROM ezer_doc2
          WHERE chapter='$chapter' AND section='$section' AND class='$class' ";
   $res= mysql_qry($qry);
   while ( $res && ($row= pdo_fetch_assoc($res)) ) {
@@ -820,11 +825,12 @@ function i_doc_show_chapter($chapter,$section,$class) {
 function i_doc_show_lang($chapter,$section,$class) {
 //                                                 display("i_doc_show_lang($chapter,$section,$class)");
   $text= '';
-  global $mysql_db; $db= $mysql_db;
+  global $mysql_db; 
+  ezer_connect($mysql_db);
   switch ($class) {
   case 'language':
     // text
-    $qry= "SELECT class,part,elem,text FROM $db.ezer_doc2
+    $qry= "SELECT class,part,elem,text FROM ezer_doc2
            WHERE chapter='$chapter' AND section='$section' AND class='$class' ";
     $res= mysql_qry($qry);
     while ( $res && ($row= pdo_fetch_assoc($res)) ) {
@@ -837,7 +843,7 @@ function i_doc_show_lang($chapter,$section,$class) {
     $text.= "<h2 class='CTitle'>Funkce použitelné v procedurách EzerScriptu</h2>";
     // seznam všech funkcí
     $text.= "<table border='0' cellspacing='0' cellpadding='0' class='STable'>";
-    $qry= "SELECT * FROM $db.ezer_doc2
+    $qry= "SELECT * FROM ezer_doc2
            WHERE chapter='reference' AND char_length(comp)=2 AND elem='function'
            ORDER BY part";
     $res= mysql_qry($qry);
@@ -860,7 +866,7 @@ function i_doc_show_lang($chapter,$section,$class) {
     $text.= "<h2 class='CTitle'>Události vznikající v blocích EzerScriptu</h2>";
     // seznam všech funkcí
     $text.= "<table border='0' cellspacing='0' cellpadding='0' class='STable'>";
-    $qry= "SELECT * FROM $db.ezer_doc2
+    $qry= "SELECT * FROM ezer_doc2
            WHERE chapter='reference' AND elem='fire'
            ORDER BY part";
     $res= mysql_qry($qry);
@@ -883,7 +889,7 @@ function i_doc_show_lang($chapter,$section,$class) {
     $text.= "<h2 class='CTitle'>Atributy použitelné v blocích EzerScriptu</h2>";
     // seznam všech funkcí
     $text.= "<table border='0' cellspacing='0' cellpadding='0' class='STable'>";
-    $qry= "SELECT * FROM $db.ezer_doc2
+    $qry= "SELECT * FROM ezer_doc2
            WHERE chapter='reference' AND char_length(comp)=2 AND elem='options'
            ORDER BY part";
     $res= mysql_qry($qry);
@@ -912,7 +918,8 @@ function i_doc_show($chapter,$section,$class) {
   require_once("$ezer_path_serv/comp2.php");
   compiler_init();
   $text= '';
-  global $mysql_db; $db= $mysql_db;
+  global $mysql_db; 
+  ezer_connect($mysql_db);
   $section= utf2win($section);
   switch ( $chapter ) {
   case 'application':
@@ -924,7 +931,7 @@ function i_doc_show($chapter,$section,$class) {
     else {
       $part= '';
       // hlavička
-      $qry= "SELECT class,part,elem,text,file FROM $db.ezer_doc2
+      $qry= "SELECT class,part,elem,text,file FROM ezer_doc2
              WHERE chapter='$chapter' AND section='$section' AND class='$class'
              AND ( elem='class' OR file!='' )";
       $res= mysql_qry($qry);
@@ -950,7 +957,7 @@ function i_doc_show($chapter,$section,$class) {
         $attrs.= "</div>";
       }
       // zjištění Extends (t:)
-      $qry= "SELECT extends FROM $db.ezer_doc2
+      $qry= "SELECT extends FROM ezer_doc2
              WHERE chapter='$chapter' AND section='$section' AND elem='class' AND class='$class' ";
       $res= mysql_qry($qry);
       if ( !$res )   return "<div id='Content'>Chybný formát ezer_doc pro $chapter.$section.$class</div>";
@@ -958,7 +965,7 @@ function i_doc_show($chapter,$section,$class) {
       $extends= $row['extends'];
       $cond= $extends ? "(class='$class' OR FIND_IN_SET(class,'$extends'))" : "class='$class'";
       // přehled atributů se zohledněním Extends (t:)
-      $qry= "SELECT * FROM $db.ezer_doc2
+      $qry= "SELECT * FROM ezer_doc2
              WHERE chapter='$chapter' AND section='$section' AND elem='options' AND $cond
              ORDER BY part";
       $res= mysql_qry($qry);
@@ -986,7 +993,7 @@ function i_doc_show($chapter,$section,$class) {
       if ( $n > 1 ) $text.= $sum;
 
       // přehled událostí se zohledněním Extends (t:)
-      $qry= "SELECT * FROM $db.ezer_doc2
+      $qry= "SELECT * FROM ezer_doc2
              WHERE chapter='$chapter' AND section='$section' AND elem='fire' AND $cond
              ORDER BY part";
       $res= mysql_qry($qry);
@@ -1014,7 +1021,7 @@ function i_doc_show($chapter,$section,$class) {
       if ( $n > 1 ) $text.= $sum;
 
       // přehled metod se zohledněním Extends (t:)
-      $qry= "SELECT * FROM $db.ezer_doc2
+      $qry= "SELECT * FROM ezer_doc2
              WHERE chapter='$chapter' AND section='$section' AND elem='function' AND $cond
              ORDER BY part";
       $res= mysql_qry($qry);
@@ -1055,10 +1062,11 @@ function i_doc_show($chapter,$section,$class) {
 # $chapters (seznam jmen),
 # $section,$class udávají počáteční stav
 function i_doc_menu($chapters,$section0,$class0) {
-  global $mysql_db; $db= $mysql_db;
+  global $mysql_db; 
   $mn= (object)array('type'=>'menu.left'
       ,'options'=>(object)array(),'part'=>(object)array());
-  $qry= "SELECT DISTINCT section FROM $db.ezer_doc2
+  ezer_connect($mysql_db);
+  $qry= "SELECT DISTINCT section FROM ezer_doc2
          WHERE FIND_IN_SET(chapter,'$chapters') GROUP BY sorting,section ";
   $res= mysql_qry($qry);
   while ( $res && ($row= pdo_fetch_assoc($res)) ) {
@@ -1067,7 +1075,7 @@ function i_doc_menu($chapters,$section0,$class0) {
     $gr= (object)array('type'=>'menu.group'
       ,'options'=>(object)array('title'=>$section),'part'=>(object)array());
     $mn->part->$id= $gr;
-    $qry2= "SELECT class, title FROM $db.ezer_doc2
+    $qry2= "SELECT class, title FROM ezer_doc2
             WHERE FIND_IN_SET(chapter,'$chapters') AND section='$section'
             GROUP BY class ORDER BY sorting, class";
     $res2= mysql_qry($qry2);
