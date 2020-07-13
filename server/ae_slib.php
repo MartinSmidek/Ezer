@@ -581,9 +581,9 @@ function simple_glob($mask) {
 #   array (data => $val, ...)
 function map_cis($druh,$val='zkratka',$order='poradi',$db='') {
   global $mysql_db;
-  ezer_connect($db?:$mysql_db);
+  $db= $db?:$mysql_db;
   $cis= array();
-  $qry= "SELECT * FROM _cis WHERE druh='$druh' ORDER BY $order";
+  $qry= "SELECT * FROM $db._cis WHERE druh='$druh' ORDER BY $order";
   $res= mysql_qry($qry);
   while ( $res && $row= pdo_fetch_assoc($res) ) {
     $cis[$row['data']]= $row[$val];
