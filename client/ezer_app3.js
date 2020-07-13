@@ -1956,6 +1956,7 @@ class Eval {
 //   a i     - sníží zásobník o referenci objektu a na zásobník dá hodnotu jeho atributu c.i
 //   K       - zahájení cyklu foreach pro složky pole nebo objektu
 //   L i     - test pro foreach, volání procedury s jedním či dvěma parametry
+//   F i     - test pro for-of 
 //   S       - test pro switch
 //   + [jmp] [iff] [ift] - obsahují offset pro posun čitače v závislosti na hodnotě na vrcholu zásobníku
 //   + [go] - obsahuje offset pro posun čitače (bez změny a závislosti na zásobníku)
@@ -1999,32 +2000,33 @@ class Eval {
               last_lc= cc.s;
             switch ( cc.o ) {
             // prázdná operace
-            case 0:
+            case 0: {
               break;
-            case 'v':
+            }
+            case 'v': {
               this.stack[++this.top]= cc.v;
-              break;
+              break; }
             //   z i   - sníží zásobník o i, pokud je i==0 pak jej vyprázdní
-            case 'z':
+            case 'z': {
               if ( cc.i>0 )
                 this.top-= cc.i;
               else if ( cc.i==0 )
                 this.top= -1;
-              break;
+              break; }
             //   p i   - parametr nebo lokální proměnná na zásobník
             //           i = pořadí parametru nebo proměnné pod aktivačním záznamem
-            case 'p':
+            case 'p': {
               val= this.stack[this.act-cc.i];
               this.stack[++this.top]= val;
-              break;
+              break; }
             //   w i   - zásobník do lokální proměnné
             //           i = pořadí proměnné pod aktivačním záznamem
-            case 'w':
+            case 'w': {
               val= this.stack[this.top--];
               this.stack[this.act-cc.i]= val;
-              break;
+              break; }
             // objekt na zásobník (i='@' dá Ezer.app)
-            case 'o':
+            case 'o': {
               obj= [];
               val= Ezer.run_name(cc.i,this.context,obj);
               if ( val==3 )
@@ -2034,16 +2036,16 @@ class Eval {
                 this.say_error('jméno '+cc.i+' nemá v "'+this.context.type+' '+this.context.id+'" smysl (o)',
                   'S',this.proc,last_lc);
               this.stack[++this.top]= obj[0];
-              break;
-            case 'd':
+              break; }
+            case 'd': {
               obj= [];
               if ( Ezer.run_name(cc.i,this.context,obj)!=1 )
                 this.say_error('jméno '+cc.i+' nemá v "'+this.context.type+' '+this.context.id+'" smysl (d)',
                   'S',this.proc,last_lc);
               this.context= obj[0];
-              break;
+              break; }
             // this na zásobník
-            case 't':
+            case 't': {
               if ( cc.i ) {
                 // formát1: this('f'|'p'|'a')  -- form|panel|area
                 obj= null;
@@ -2085,9 +2087,9 @@ class Eval {
                 }
               }
               this.stack[++this.top]= obj;
-              break;
+              break; }
             //   q i    - sníží zásobník o referenci objektu Ezer-třídy a dá na něj hodnotu o[i1][i2]...
-            case 'q':
+            case 'q': {
               o= this.stack[this.top--]; // odstraň objekt
               if ( typeof(o)!='object' )
                 this.say_error('EVAL: '+cc.i+' nemá definovaný objekt','S',this.proc,last_lc);
@@ -2096,9 +2098,9 @@ class Eval {
                 this.say_error('nenalezen odkaz '+cc.i+' v "'+o.type+' '+o.id+'"',
                   'S',this.proc,last_lc);
               this.stack[++this.top]= obj;
-              break;
+              break; }
             //   r i    - sníží zásobník o referenci objektu a dá na něj hodnotu o[i1][i2]...
-            case 'r':
+            case 'r': {
               o= this.stack[this.top--]; // odstraň objekt
               if ( o instanceof ListRow || o instanceof Form )
                 o= o.part;
@@ -2107,13 +2109,13 @@ class Eval {
               obj= Ezer.obj_ref(cc.i,o);
               obj= obj===null ? '' : obj;
               this.stack[++this.top]= obj;
-              break;
+              break; }
             //   c|C i a v - Ezer funkce: na zásobníku jsou argumenty - po volání hodnota funkce 'i'
             //               a=počet parametrů, v=počet proměnných (ale to se bere z proc.desc)
             //               je-li instrukce C, použije se kód z popisu procedury (tj. z form)
             //==> . eval c
-            case 'c':
-            case 'C':
+            case 'c': 
+            case 'C': {
               val= false;
               // úschova aktivačního rámce volající procedury
               this.calls.push({code:this.code,c:this.c,nargs:this.nargs,nvars:this.nvars,
@@ -2161,12 +2163,12 @@ class Eval {
                 if ( Ezer.options.to_speed ) this.speed(eval_start);
                 return;
               }
-              continue last_level;
-            case 'u':
+              continue last_level; };
+            case 'u': {
               this.value= {value:this.stack[this.top]};
-              break last_level;
+              break last_level; }
             // funkce: na zásobníku jsou argumenty - po volání hodnota funkce 'i'
-            case 'f':
+            case 'f': {
               val= false;
               nargs= cc.a || 0;
               for (i= nargs-1, args= []; i>=0; i--)
@@ -2180,13 +2182,13 @@ class Eval {
               Ezer.calee= null;
               if ( Ezer.to_trace && Ezer.is_trace.f ) this.trace_fce(cc.s,cc.i,this.context,args,'f',val);
               if ( val!==false ) this.stack[++this.top]= val;
-              break;
+              break; }
             // struktura: na zásobník dá kód pro výpočet
-            case 'y':
+            case 'y': {
               this.stack[++this.top]= cc.c;
-              break;
+              break; }
             // řídící struktura: na zásobníku jsou argumenty - po volání hodnota funkce 'i'
-            case 's':
+            case 's': {
               val= false;
               nargs= cc.a || 0;
               var pars= []; // do pars dej aktivační záznam aktivní procedury včetně proměnných
@@ -2203,9 +2205,9 @@ class Eval {
               val= obj.apply(null,args);
               this.simple= false;
               if ( Ezer.options.to_speed ) this.speed(eval_start);
-              return;
+              return; }
             // funkce na serveru přes 'ask': na zásobníku jsou argumenty - po volání hodnota funkce 'i'
-            case 'e':
+            case 'e': {
               val= false;
               nargs= cc.a || 0;
               for (i= nargs-1, args= []; i>=0; i--)
@@ -2216,9 +2218,9 @@ class Eval {
               this.c= c;
               this.simple= false;
               if ( Ezer.options.to_speed ) this.speed(eval_start);
-              return;
+              return; }
             // metoda: na zásobníku jsou argumenty a pod nimi objekt - po volání hodnota metody 'i'
-            case 'm':
+            case 'm': {
               Ezer.value= false;
               nargs= cc.a || 0;
               for (i= nargs-1, args= []; i>=0; i--)
@@ -2255,9 +2257,9 @@ class Eval {
               if ( Ezer.to_trace && Ezer.is_trace.m )
                 this.trace_fce(cc.s,obj.id+'.'+cc.i,obj,args,'m',val,0,obj);
               this.stack[++this.top]= val;
-              break;
+              break; }
             // přerušení: stav se uloží do context.continuation
-            case 'i':
+            case 'i': {
               Ezer.value= false;
               nargs= cc.a || 0;
               for (i= nargs-1, args= []; i>=0; i--)
@@ -2283,9 +2285,9 @@ class Eval {
                 this.stack[++this.top]= 0;
                 break;
               }
-              break;
+              break; }
             // přerušení: stav se uloží do context.continuation ... není metoda ale funkce
-            case 'j':
+            case 'j': {
               Ezer.value= false;
               nargs= cc.a || 0;
               for (i= nargs-1, args= []; i>=0; i--)
@@ -2307,9 +2309,9 @@ class Eval {
                 // pokud ne, vrať 0 jako výsledek
                 this.stack[++this.top]= 0;
               }
-              break;
+              break; }
             // metoda na serveru: na zásobníku jsou argumenty a pod nimi objekt - po volání hodnota metody 'i'
-            case 'x':
+            case 'x': {
               Ezer.value= false;
               nargs= cc.a || 0;
               for (i= nargs-1, args= []; i>=0; i--)
@@ -2342,9 +2344,9 @@ class Eval {
               }
               // pokud první část funkce selže, dej 0 na zásobník - jinak 1
               this.stack[++this.top]= val ? 1 : 0;
-              break;
+              break; }
             // atribut: na zásobníku je objekt - po volání hodnota atributu 'i'
-            case 'a':
+            case 'a': {
               Ezer.value= false;
               obj= this.stack[this.top--]; // odstraň objekt
               if ( cc.i=='_id' )
@@ -2354,10 +2356,10 @@ class Eval {
               else
                 val= obj[cc.i];
               this.stack[++this.top]= val;
-              break;
+              break; }
             // S - test pro switch; při rovnosti horních 2 elementů je odstraní a pokračuje,
             //                      při nerovnosti sníží zásobník a skočí
-            case 'S':
+            case 'S': {
               val= this.stack[this.top--];
               if ( this.stack[this.top]==val ) {
                 no_iff= true;   // iff jen sníží zásobník
@@ -2365,10 +2367,10 @@ class Eval {
               else {
                 this.stack[++this.top]= 0;
               }
-              break;
+              break; }
             // K - inicializace pro foreach iterující objekt, na zásobník přidá
             //     pole klíčů objektu nebo počet prvků pole nebo postupně vnořená ListRow
-            case 'K':
+            case 'K': {
               obj= this.stack[this.top];                  // objekt nebo pole nebo form
               if ( Array.isArray(obj) )
                 this.stack[++this.top]= 0;                // první index pole
@@ -2380,7 +2382,40 @@ class Eval {
                 this.stack[++this.top]= Object.keys(obj); // pole klíčů objektu
               else
                 this.stack[++this.top]= null;             // nic
-              break;
+              break; }
+            // F i - test pro for-of: na zásobníku je objekt a jeho kontext
+            //       pokud znamená konec cyklu vyprázdní zásobník a skočí za cyklus 
+            //       jinak z kontextu získá hodnotu a uloží do proměnné <var> 
+            //       (definované jménem pro globální nebo indexem pro lokální proměnné) 
+            //       a nastaví kontext pro další průchod
+            case 'F': {
+              obj= this.stack[this.top-1];                // objekt nebo pole
+              if ( Array.isArray(obj) ) {
+                i= this.stack[this.top];                  // kontextem je index do pole
+                if ( i>=obj.length ) {                    // pokud ukazuje za pole
+                  this.top-= 2;                           // tak odstraň ze zásobníku pole i index
+                  Ezer.eval_jump= '*';                    // a skonči cyklus skokem za foreach
+                }
+                else {                                    // jinak 
+                  val= obj[i];                            // nastav indexovanou hodnotu do
+                  if ( Number.isInteger(cc.i) ) {         // lokální proměnné
+                    this.stack[this.act-cc.i]= val;
+                  }
+                  else {                                  // nebo do globální proměnné
+                    let v= [];
+                    Ezer.run_name(cc.i,this.context,v);
+                    if ( !v[0] instanceof(Block) || typeof v[0].set !== 'function' )
+                      this.say_error('jméno '+cc.i+' není proměnná','S',this.proc,last_lc);
+                    v[0].set(val);                    
+                  }
+                  this.stack[this.top]++;                 // posuň index
+                  c-= cc.go-1;                            // a eliminuj příkaz skoku
+                }
+              }
+              else {
+                this.say_error('EVAL: parametr for-of není pole','S',this.proc,last_lc);
+              }
+              break; }
             // L i - test pro foreach: na zásobníku je pole p a index,
             //       pokud je pole prázdné sníží zásobník o 2 a skočí, pokud je p neprázdné
             //       dá na vrchol pro i=1 p.shift a pro i=2 ještě index a zvýší index
@@ -2389,7 +2424,7 @@ class Eval {
             //       pokud je pole klíčů prázdné sníží zásobník o 2 a skočí, pokud je p neprázdné
             //       dá na vrchol hodnotu objekt(pk.shift) a a pro i=2 přidá i klíč
             //       a zavolá proceduru s i parametry
-            case 'L':
+            case 'L': {
               keys= this.stack[this.top];                 // pole klíčů nebo index
               obj= this.stack[this.top-1];                // objekt nebo pole
               if ( Array.isArray(obj) ) {
@@ -2452,7 +2487,7 @@ class Eval {
               else {
                 this.say_error('EVAL: 1. parametr foreach není ani pole ani objekt','S',this.proc,last_lc);
               }
-              break;
+              break; }
             default:
               this.say_error('EVAL: '+cc.o+' není kód','S',this.proc,last_lc);
             }

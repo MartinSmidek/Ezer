@@ -1132,7 +1132,7 @@ function gen_func($c,&$desc,$name) {
   clean_code($desc->code);
 }
 # -------------------------------------------------------------------------------------------------- gen2
-# generuje kód výrazu
+# generuje kód příkazů
 #   $i je použit pro překladu call
 #   $struct = {...} výstup
 function gen2($pars,$vars,$c,$icall,&$struct) { 
@@ -1161,7 +1161,7 @@ function gen2($pars,$vars,$c,$icall,&$struct) {
     $code= (object)array('o'=>'p','i'=>$ipar);
     $code_top++;
     break;
-  // -------------------------------------- id ( expr1, ... )
+  // -------------------------------------- id ( expr1, ... ) ? value
   case 'call':
     $code= array();
     $npar= count($c->par);
@@ -1234,6 +1234,8 @@ function gen2($pars,$vars,$c,$icall,&$struct) {
       if ( $c->lc ) $call->s= $c->lc;
       $code_top-= $npar;
     }
+    if ( !$c->value ) 
+      $code[]= (object)array('o'=>'z','i'=>1);
     break;
   // -------------------------------------- st1 ; st2 ; ...
   case 'slist':
@@ -1269,6 +1271,21 @@ function gen2($pars,$vars,$c,$icall,&$struct) {
       $code[]= array($ctest,$cthen);
       $struct->typ= 'if2';
     }
+    break;
+  // -------------------------------------- for ( var of expr ) { stmnts }
+  case 'for':
+    // {expr:for,var:id,of:G(expr),stmnt:(slist)}
+    // překlad složek
+    $var= gen_name($c->var,$pars,$vars,$obj,true,$c->var);
+    $expr= gen2($pars,$vars,$c->of,0,$struct1);
+    $stmnt= gen2($pars,$vars,$c->stmnt,0,$struct1);
+    // pomocné instrukce
+    $inic= (object)array('o'=>'K');
+    $test= (object)array('o'=>'F','i'=>$var[0]->i,'go'=>count((array)$stmnt)+2);
+    $go= (object)array('o'=>0,'go'=>-count($stmnt)-1);
+    $code[]= array($expr,$inic,$test,$stmnt,$go);      // pro pole i objekty
+    $struct->arr[]= $struct1;
+    $struct->typ= 'fof';
     break;
   }
   $pc= array();
@@ -1449,6 +1466,19 @@ function walk_struct($down,$pcode,$beg,$end,$ift,$iff,$is_arg=0) {
 //                                         debug($pcode,"if");
     def_jumps($down,$pcode);
 //                                         display("if end:$beg,$end,$ift,$iff");
+  }
+  elseif ( $typ=='fof' ) {  // for - of (ve func)
+//    $test= $down->arr[0];
+//    $then= $down->arr[1]; $then->is_go= 1;
+//    $t_len= $test->len;
+//    $tt_len= $t_len + $then->len;
+//    $te_len= $then->len;
+//    walk_struct($test,$pcode,$icode,$end,$icode+$t_len,$icode+$tt_len,0);
+//    $icode+= $t_len;
+//    walk_struct($then,$pcode,$icode,$end,
+//      $is_arg ? $icode+$te_len : $ift,$is_arg ? $icode+$te_len : $ift,1);
+//    $icode+= $tt_len;
+    def_jumps($down,$pcode);
   }
   elseif ( $typ=='if2' ) {  // if - then (ve func)
     $test= $down->arr[0];
@@ -2815,6 +2845,15 @@ function get_delimiter ($del) {
   return true;
 }
 # --------------------------------------------------------------------------------------------------
+# přečte očekávané klíčové slovo, není-li, ohlásí chybu
+function get_key ($key) {
+  global $head, $lex, $typ, $tree;
+  $ok= $lex[$head]==$key;
+  if ( $ok ) { $head++; $tree.= " $del"; }
+  if ( !$ok ) comp_error("SYNTAX: bylo očekáván '$key'");
+  return true;
+}
+# --------------------------------------------------------------------------------------------------
 # zjistí následuje-li v textu oddělovač (neposunuje čtecí hlavu)
 function look_delimiter ($del) {
   global $head, $lex, $typ;
@@ -2863,30 +2902,21 @@ function get_if_comma_id (&$id) {
 # identifikátorem může být i hvězdička - se speciálním významem, podle sémantického kontextu
 # v režimu debuggeru lze použít na začátku i dolar
 function get_if_id (&$id) {
-  global $head, $lex, $typ, $pos, $tree, $last_lc, $debugger;
-  if ( $debugger && get_if_delimiter('$') && $typ[$head]=='num' ) {
-    // přístup ke generovaným jménům elementů v debuggeru
-    $id= '$'.$lex[$head];
+  global $head, $lex, $typ, $pos, $tree, $last_lc;
+  $ok= $typ[$head]=='id'
+    || ($typ[$head]=='key' && $lex[$head]=='form')
+    || $typ[$head]=='del' && $lex[$head]=='*';
+  if ( $ok ) {
+    $id= $lex[$head];
     $last_lc= $pos[$head];
     $head++; $tree.= " i";
-    $ok= true;
-  }
-  else {
-    $ok= $typ[$head]=='id'
-      || ($typ[$head]=='key' && $lex[$head]=='form')
-      || $typ[$head]=='del' && $lex[$head]=='*';
-    if ( $ok ) {
-      $id= $lex[$head];
-      $last_lc= $pos[$head];
-      $head++; $tree.= " i";
-    }
   }
   return $ok;
 }
 # --------------------------------------------------------------------------------------------------
 # jen identifikátor, který není klíčovým slovem
 function get_if_id_not_keyword (&$id) {
-  global $head, $lex, $typ, $pos, $tree, $last_lc, $keyword;
+  global $head, $lex, $typ, $pos, $tree, $last_lc;
   $ok= $typ[$head]=='id';
   if ( $ok ) {
     $id= $lex[$head];
@@ -2909,21 +2939,12 @@ function get_id (&$id) {
 }
 # --------------------------------------------------------------------------------------------------
 function get_id_or_key (&$id) {
-  global $head, $lex, $typ, $pos, $tree, $last_lc, $debugger;
-  if ( $debugger && get_if_delimiter('$') && $typ[$head]=='num' ) {
-    // přístup ke generovaným jménům elementů v debuggeru
-    $id= '$'.$lex[$head];
+  global $head, $lex, $typ, $pos, $tree, $last_lc;
+  $ok= $typ[$head]=='id' || $typ[$head]=='key';
+  if ( $ok ) {
+    $id= $lex[$head];
     $last_lc= $pos[$head];
     $head++; $tree.= " i";
-    $ok= true;
-  }
-  else {
-    $ok= $typ[$head]=='id' || $typ[$head]=='key';
-    if ( $ok ) {
-      $id= $lex[$head];
-      $last_lc= $pos[$head];
-      $head++; $tree.= " i";
-    }
   }
   if ( !$ok ) comp_error("SYNTAX: byl očekáván identifikátor nebo klíčové slovo");
   return true;
@@ -3081,6 +3102,7 @@ function get_slist($context,&$st) {
 # stmnt   :: '{' slist '}'                      --> G(slist)
 #          | id '=' expr2                       --> {expr:call,op:id.set,par:[G(expr2)]}
 #          | 'if' '(' expr2 ')' stmnt [ 'else' stmnt ]  --> {expr:if,test:G(expr2),then:G(stmnt/1),else:G(stmnt/2)}
+#          | 'for' '(' 'let' id 'of' expr ')' '{' slist '}' --> {expr:for,var:id,of:G(expr),stmnt:(slist)}
 #          | call2                              --> G(call2)
 #          |
 function get_stmnt($context,&$st) {
@@ -3114,10 +3136,22 @@ function get_stmnt($context,&$st) {
           $st->else= $else;
         }
       }
+      elseif ( $id=='for' ) {
+        # 'for' '(' 'let' id 'of' expr ')' '{' slist '}' --> {expr:for,var:id,of:G(expr),stmnt:(slist)}
+        $stmnts= $var= $expr= null;
+        get_id($var);
+        get_key('of');
+        $ok= get_expr2($context,$expr);
+        get_delimiter(')');
+        get_delimiter('{');
+        get_slist($context,$stmnts);
+        get_delimiter('}');
+        $st= (object)array('expr'=>'for','var'=>$var,'of'=>$expr,'stmnt'=>$stmnts);
+      }
       # call2 --> G(call2)
       else {
         $expr='';
-        $ok= get_call2_id($context,$st,$id);
+        $ok= get_call2_id($context,$st,$id,0);
       }
     }
     else {
@@ -3138,7 +3172,7 @@ function get_expr2($context,&$expr) {
   if ( get_if_id($id) ) {
     # call2 --> G(call2)
     if ( get_if_delimiter('(') ) {
-      get_call2_id($context,$expr,$id);
+      get_call2_id($context,$expr,$id,1);
     }
     else {
       # id --> {expr:name,name:id}              // id znamená vlastně id.get
@@ -3158,13 +3192,14 @@ function get_expr2($context,&$expr) {
   return true;
 }
 # -------------------------------------------------------------------------------------------------- call2
-# call2   :: id '(' ')' | id '(' expr2 ( ',' expr2 )* ')' --> {expr:call,op:id,par:[G(expr2),...]}
-function get_call2_id($context,&$expr,$id) {
+# call2   :: id '(' ')' | id '(' expr2 ( ',' expr2 )* ')' 
+#         --> {expr:call,op:id,par:[G(expr2),...],value:$valued}  -- valued=0 => clear stack
+function get_call2_id($context,&$expr,$id,$valued) {
   global $tree, $last_lc;
   // volání funkce $id s parametry
   # id '(' ')' | id '(' expr2 ( ',' expr2 )* ')' --> {expr:call,op:id,par:[G(expr2),...]}
   $ok= true;
-  $expr= (object)array('expr'=>'call','op'=>$id,'lc'=>$last_lc,'par'=>array());
+  $expr= (object)array('expr'=>'call','op'=>$id,'lc'=>$last_lc,'par'=>array(),'value'=>$valued);
   if ( !get_if_delimiter(')') ) {
     while ( $ok ) {
       $subexpr= null;

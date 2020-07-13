@@ -205,7 +205,7 @@ $block_get= array(
   'select' => 1,
   'chat'   => 1,
   'check'  => 1,
-#  radio
+  'show'   => 1,
   'radio'  => 1,
   'case'   => 1
 );
