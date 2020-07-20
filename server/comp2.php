@@ -9,13 +9,11 @@ function note_time() {}
 # přeloží $aname do $cname pokud je překlad bez chyby
 # v případě chyby nechá $cname beze změny
 function comp ($src) {
-  global $ezer, $tree, $errors, $code;
+  global $ezer, $code;
   $ezer= $src;
   $yobj= (object)array();
   $dbgobj= null;
   $ycomp= get_ezer($yobj,$dbgobj) ? 'ok' : 'ko';
-//   $code= gen_code($yobj);
-  if ( $errors ) display($tree);
   $code= $yobj;
   return $ycomp;
 }
@@ -247,8 +245,6 @@ function comp_file ($name,$root='',$list_only='',$_comp_php=false) {  #trace();
   }
   catch (Exception $e) {
     $code= (object)array();
-//    display($e->getMessage());
-//     display($tree);
     $ok= 'ko';
     $errors++;
     $err= $e->getMessage().' in '.$e->getFile().';'.$e->getLine();
@@ -2028,7 +2024,7 @@ function gen($pars,$vars,$c,$icall,&$struct) { #trace();
 # top2 - pro běžný překlad null pro debugger objekt pro vložení procedury resp. funkce _dbg_
 # dbg = false|'proc'|func' - specifikace zda jde o proceduru nebo funkci
 function get_ezer (&$top,&$top2,$dbg=false) {
-  global $tree, $lex, $head, $attribs1, $attribs2, $keywords, $errors, $const_list, $debugger;
+  global $lex, $head, $attribs1, $attribs2, $keywords, $errors, $const_list, $debugger;
   $const_list= array();
   get_ezer_keys($keywords,$attribs1,$attribs2);
   note_time('tables');
@@ -2036,8 +2032,7 @@ function get_ezer (&$top,&$top2,$dbg=false) {
   $ok= lex_analysis2($dbg);
   note_time('lexical');
   if ( $ok ) {
-    $head= 0; $tree= '';
-    $tree= ':';
+    $head= 0; 
     $ok= true;
 //     $top= new stdClass;
     while ( $ok && !$errors ) {
@@ -2105,7 +2100,7 @@ function get_ezer_keys (&$keywords,&$attribs1,&$attribs2) {
 function get_if_block ($root,&$block,&$id) {
 //                                                 debug($root,"get_if_block",(object)array('depth'=>2));
   global $doxygen, $pos, $head;
-  global $blocs2, $blocs3, $specs, $tree, $last_lc;
+  global $blocs2, $blocs3, $specs, $last_lc;
   global $pragma_syntax, $pragma_group, $pragma_box, $call_php;
   global $errors; if ( $errors ) return false;
   $TEST_NEW_VAR= 1;  // ------------------------------------------------- testování var !!!!!!!
@@ -2113,7 +2108,6 @@ function get_if_block ($root,&$block,&$id) {
   $ok= get_if_keyed_name ($key,$id,$lc,$nt);
   $lc_= '';
   if ( $ok ) {
-    $tree.= " ({$root->type}.$key";
     if ( $TEST_NEW_VAR && $key=='var' ) {
       get_vars($block,$id,$lc);
     }
@@ -2284,7 +2278,6 @@ function get_if_block ($root,&$block,&$id) {
       }
     }
 //                                                 debug($root,"vars old");
-    $tree.= ' b)';
   }
   return $ok;
 }
@@ -2293,8 +2286,7 @@ function get_if_block ($root,&$block,&$id) {
 # attr :: id [':' val | ':' id]         -- id musí být jméno konstanty, typ atributu musí mít c
 # defaultní val=1
 function get_if_attrib ($root,&$id,&$val) {
-  global $attribs1, $attribs2, $pragma_box, $tree, $errors; 
-  $tree.= ' ?a';
+  global $attribs1, $attribs2, $pragma_box, $errors; 
   if ( $errors ) return false;
   $val= 1;
   $ok= get_if_id_not_keyword($id);
@@ -2331,7 +2323,6 @@ function get_if_attrib ($root,&$id,&$val) {
           else comp_error("SYNTAX po jménu hodnotového atributu $id nenásleduje konstanta");
         }
       }
-      $tree.= ' a';
     }
     else { comp_error("SYNTAX atribut '$id' není povolený v bloku '$root' (2)"); return false; }
   }
@@ -2340,7 +2331,6 @@ function get_if_attrib ($root,&$id,&$val) {
 # -------------------------------------------------------------------------------------------------- par
 # pars  :: '(' par (',' par)* ')'       -- vrací pole
 function get_if_pars (&$opars) {
-  global $tree;
   $ok= get_if_delimiter('(');
   if ( $ok ) {
     $pars= array();
@@ -2354,7 +2344,6 @@ function get_if_pars (&$opars) {
     }
     get_delimiter(')');
     $ok= true;
-    $tree.= ' p';
   }
   // přeložení pars do opars {id:offset,...}
   $opars= (object)array();
@@ -2372,7 +2361,6 @@ function get_pars (&$pars) {
 # -------------------------------------------------------------------------------------------------- arg
 # args  :: '(' val (',' val)* ')'      -- vrací pole
 function get_if_args (&$args) {
-  global $tree;
   $ok= get_if_delimiter('(');
   if ( $ok ) {
     while ( $ok ) {
@@ -2384,7 +2372,6 @@ function get_if_args (&$args) {
       if ( !$ok ) get_delimiter(')');
     }
     $ok= true;
-    $tree.= ' g';
   }
   return $ok;
 }
@@ -2392,7 +2379,7 @@ function get_if_args (&$args) {
 # numvalue :: [-]num | constant_name   --> $value
 # vrací 1.písmeno typu
 function get_numvalue (&$val,&$id) {
-  global $head, $lex, $typ, $tree, $const_list;
+  global $head, $lex, $typ, $const_list;
   $ok= false;
   $val= $lex[$head];
   if ( $typ[$head]=='del' && $val=='-' ) {
@@ -2407,7 +2394,7 @@ function get_numvalue (&$val,&$id) {
     if ( $typ[$head]!='num' ) comp_error("SYNTAX: po + byla očekávána numerická hodnota");
     $id= null;
     $val= 0+$val;
-    $head++; $tree.= " v";
+    $head++; 
   }
   else if ( $typ[$head]=='id' ) {     // jméno konstanty
     $id= $val;
@@ -2424,7 +2411,7 @@ function get_numvalue (&$val,&$id) {
 # vardef  :: id ':' type | id '=' value
 function get_vars (&$root,$id,$lc) {
   // připojí proměnné do bloku, id je identifikátor první proměnné
-  global $tree, $last_lc;
+  global $last_lc;
   $types= array('n'=>'number','s'=>'text','o'=>'object','a'=>'array');
   $root= array();
   while (1) {
@@ -2456,7 +2443,6 @@ function get_vars (&$root,$id,$lc) {
     break;
   }
 //                                                 debug($root,"vars");
-  $tree.= ' v';
   return true;
 }
 # -------------------------------------------------------------------------------------------------- const
@@ -2465,7 +2451,7 @@ function get_vars (&$root,$id,$lc) {
 #     cvalue :: const | nvalue
 #     nvalue :: number | nid | nvalue [ ('+'|'-') nvalue ] -- kde nid je jméno kontrolované za běhu
 function get_def ($id,&$value,&$is_expr) {
-  global $tree, $const_list;
+  global $const_list;
   $value= null; $type= 'global';
   $id1= null;
   $ok= get_if_delimiter('=');
@@ -2505,7 +2491,6 @@ function get_def ($id,&$value,&$is_expr) {
   }
   else
     comp_error("SYNTAX: konstanta $id má duplicitní definici ($id={$const_list[$id]['value']})");
-  $tree.= ' k';
   return true;
 }
 # -------------------------------------------------------------------------------------------------- coord+
@@ -2513,7 +2498,7 @@ function get_def ($id,&$value,&$is_expr) {
 # cexpr       :: ( '^' | '$' | '$v' | '*' | '~' | const_id | id '.' ('l'|'r'|'t'|'b'|'w'|'h') | num )
 #                [ ('+'|'-') cexpr ]
 function get_if_coorp ($block) {
-  global $tree, $pos, $head;
+  global $pos, $head;
   $ok= get_if_delimiter('[');
   $block->_c= $pos[$head-1];
   if ( $ok ) {
@@ -2528,7 +2513,6 @@ function get_if_coorp ($block) {
     if ( get_cexpr($cexpr,'$','!','*') ) $block->options->_h= $cexpr;
     get_delimiter(']');
     $block->_c.= ",".$pos[$head-1];
-    $tree.= ' c';
   }
   return $ok;
 }
@@ -2573,7 +2557,6 @@ function get_cexpr (&$cexpr,$rel1,$rel2='',$rel3='') {
 # -------------------------------------------------------------------------------------------------- coord
 # coord :: '[' [num|*] ',' [num|*] ',' [num|*] ',' [num|*] ']'
 function get_if_coord ($block) {
-  global $tree;
   $ok= get_if_delimiter('[');
   if ( $ok ) {
     $num= null;
@@ -2589,25 +2572,23 @@ function get_if_coord ($block) {
     if ( get_if_number($num) ) $block->options->_h= $num;
     else if ( get_if_delimiter ('*') ) $block->options->_h= "'*'";
     get_delimiter(']');
-    $tree.= ' c';
   }
   return $ok;
 }
 # -------------------------------------------------------------------------------------------------- type
 # type  :: number | text | form | area | object | array
 function get_type (&$type) {
-  global $head, $lex, $tree;
+  global $head, $lex;
   $type= $lex[$head];
   $ok= ($type=='number'||$type=='text'||$type=='array'||$type=='object'||$type=='form'||$type=='area');
   $head++;
-  $tree.= " t";
   if ( !$ok ) comp_error("SYNTAX: bylo očekáváno jméno typu");
   return $ok;
 }
 # -------------------------------------------------------------------------------------------------- key id
 # key [ id ] -- pokud je id vynecháno je vrácen anonymní idntifikátor _n
 function get_if_keyed_name (&$key,&$id,&$lc,&$note) {
-  global $head, $lex, $typ, $pos, $not, $tree, $id_anonymous;
+  global $head, $lex, $typ, $pos, $not, $id_anonymous;
 //                                           display(":: {$typ[$head]} {$lex[$head]}");
   $ok= $typ[$head]=='key_id';
   if ( $ok ) {
@@ -2615,23 +2596,22 @@ function get_if_keyed_name (&$key,&$id,&$lc,&$note) {
     $id= $lex[$head]->id;
     $lc= $pos[$head];
     $note= isset($not[$head]) ? $not[$head] : null;
-    $head++; $tree.= ' ki';
+    $head++; 
   }
   if ( !$ok ) {
     $ok= $typ[$head]=='key';
     if ( $ok ) {
       $lc= $pos[$head];
       $note= isset($not[$head]) ? $not[$head] : null;
-      $key= $lex[$head]; $head++; $tree.= ' k';
+      $key= $lex[$head]; $head++; 
       $ok= $typ[$head]=='id' || $typ[$head]=='key' ;
       if ( $ok ) {
         $lc= $pos[$head];
-        $id= $lex[$head]; $head++; $tree.= 'i';
+        $id= $lex[$head]; $head++; 
       }
       else {
         $id_anonymous++;
         $id= '$'.$id_anonymous;
-        $tree.= '$';
         $ok= true;
       }
     }
@@ -2649,40 +2629,40 @@ function get_keyed_name ($should,&$id,&$lc,&$note) {
 # -------------------------------------------------------------------------------------------------- 'key'
 # 'key' -- klíčové slovo je omezeno hodnotou
 function get_if_the_key ($key,&$lc) {
-  global $head, $lex, $typ, $pos, $tree;
+  global $head, $lex, $typ, $pos;
 //                                           display(":: {$typ[$head]} {$lex[$head]->key}");
   $ok= $typ[$head]=='key' && $key==$lex[$head];
   if ( $ok ) {
     $lc= $pos[$head];
-    $head++; $tree.= ' ki2';
+    $head++; 
   }
   return $ok;
 }
 # -------------------------------------------------------------------------------------------------- delimiter
 # zjistí následuje-li v textu oddělovač, jestli ano přečte jej
 function get_if_delimiter ($del) {
-  global $head, $lex, $typ, $tree;
+  global $head, $lex, $typ;
   $ok= $typ[$head]=='del' && $lex[$head]==$del;
   if ( $ok ) {
-    $head++; $tree.= " $del";
+    $head++; 
   }
   return $ok;
 }
 # --------------------------------------------------------------------------------------------------
 # přečte oddělovač, není-li, ohlásí chybu
 function get_delimiter ($del) {
-  global $head, $lex, $typ, $tree;
+  global $head, $lex, $typ;
   $ok= $typ[$head]=='del' && $lex[$head]==$del;
-  if ( $ok ) { $head++; $tree.= " $del"; }
+  if ( $ok ) { $head++; }
   if ( !$ok ) comp_error("SYNTAX: byl očekáván oddělovač '$del'");
   return true;
 }
 # --------------------------------------------------------------------------------------------------
 # přečte očekávané klíčové slovo, není-li, ohlásí chybu
 function get_key ($key) {
-  global $head, $lex, $tree;
+  global $head, $lex;
   $ok= $lex[$head]==$key;
-  if ( $ok ) { $head++; $tree.= " $key"; }
+  if ( $ok ) { $head++; }
   if ( !$ok ) comp_error("SYNTAX: bylo očekáván '$key'");
   return true;
 }
@@ -2703,14 +2683,14 @@ function look_id_or_key ($id) {
 # -------------------------------------------------------------------------------------------------- number
 # num :: [-] <num>
 function get_if_number (&$number) {
-  global $head, $lex, $typ, $tree;
+  global $head, $lex, $typ;
   $number= '';
   $ok= $typ[$head]=='del' && $lex[$head]=='-';
   if ( $ok ) { $head++; $number= '-'; }
   $ok= $typ[$head]=='num';
   if ( $ok ) {
     $number.= $lex[$head];
-    $head++; $tree.= " n";
+    $head++; 
     // kontrola levostranné nuly
     $number= 0+$number;
   }
@@ -2718,7 +2698,7 @@ function get_if_number (&$number) {
 }
 # -------------------------------------------------------------------------------------------------- ,id
 function get_if_comma_id (&$id) {
-  global $head, $lex, $typ, $pos, $last_lc, $tree;
+  global $head, $lex, $typ, $pos, $last_lc;
   $ok= $typ[$head]=='del' && $lex[$head]==',';
   if ( $ok ) {
     $ok= $typ[$head+1]=='id';
@@ -2726,7 +2706,7 @@ function get_if_comma_id (&$id) {
       $head++;
       $id= $lex[$head];
       $last_lc= $pos[$head];
-      $head++; $tree.= " i";
+      $head++; 
     }
   }
   return $ok;
@@ -2735,49 +2715,49 @@ function get_if_comma_id (&$id) {
 # identifikátorem může být i hvězdička - se speciálním významem, podle sémantického kontextu
 # v režimu debuggeru lze použít na začátku i dolar
 function get_if_id (&$id) {
-  global $head, $lex, $typ, $pos, $tree, $last_lc;
+  global $head, $lex, $typ, $pos, $last_lc;
   $ok= $typ[$head]=='id'
     || ($typ[$head]=='key' && $lex[$head]=='form')
     || $typ[$head]=='del' && $lex[$head]=='*';
   if ( $ok ) {
     $id= $lex[$head];
     $last_lc= $pos[$head];
-    $head++; $tree.= " i";
+    $head++; 
   }
   return $ok;
 }
 # --------------------------------------------------------------------------------------------------
 # jen identifikátor, který není klíčovým slovem
 function get_if_id_not_keyword (&$id) {
-  global $head, $lex, $typ, $pos, $tree, $last_lc;
+  global $head, $lex, $typ, $pos, $last_lc;
   $ok= $typ[$head]=='id';
   if ( $ok ) {
     $id= $lex[$head];
     $last_lc= $pos[$head];
-    $head++; $tree.= " i";
+    $head++; 
   }
   return $ok;
 }
 # --------------------------------------------------------------------------------------------------
 function get_id (&$id) {
-  global $head, $lex, $typ, $pos, $tree, $last_lc;
+  global $head, $lex, $typ, $pos, $last_lc;
   $ok= $typ[$head]=='id' || $typ[$head]=='del' && $lex[$head]=='*';
   if ( $ok ) {
     $id= $lex[$head];
     $last_lc= $pos[$head];
-    $head++; $tree.= " i";
+    $head++; 
   }
   if ( !$ok ) comp_error("SYNTAX: byl očekáván identifikátor");
   return true;
 }
 # --------------------------------------------------------------------------------------------------
 function get_id_or_key (&$id) {
-  global $head, $lex, $typ, $pos, $tree, $last_lc;
+  global $head, $lex, $typ, $pos, $last_lc;
   $ok= $typ[$head]=='id' || $typ[$head]=='key';
   if ( $ok ) {
     $id= $lex[$head];
     $last_lc= $pos[$head];
-    $head++; $tree.= " i";
+    $head++; 
   }
   if ( !$ok ) comp_error("SYNTAX: byl očekáván identifikátor nebo klíčové slovo");
   return true;
@@ -2786,7 +2766,7 @@ function get_id_or_key (&$id) {
 # value :: [-]num | str | object | array | constant_name   --> $value
 # vrací 1.písmeno typu
 function get_value (&$val,&$type) {
-  global $head, $lex, $typ, $tree, $const_list, $pragma_strings;
+  global $head, $lex, $typ, $const_list, $pragma_strings;
   $ok= false;
   $val= $lex[$head];
   if ( $typ[$head]=='del' && $val=='-' ) {
@@ -2805,7 +2785,7 @@ function get_value (&$val,&$type) {
     $val= $type=='s'
         ? substr(substr($val,1),0,-1)
         : 0+$val;
-    $head++; $tree.= " v";
+    $head++; 
   }
   else if ( $val=='°' ) {         // objektová konstanta
     $ok= true;
@@ -2844,7 +2824,6 @@ function look_value () {
 # -------------------------------------------------------------------------------------------- array
 # array :: '[' value ( ',' value )* ']'          --> $array
 function get_array (&$obj,&$type) {
-  global $tree;
   get_delimiter('[');
   $obj= array();
   $type= 'o';
@@ -2857,7 +2836,6 @@ function get_array (&$obj,&$type) {
     if ( !$comma ) break;
   }
   get_delimiter(']');
-  $tree.= ' a';
   if ( !$ok ) comp_error("SYNTAX: byl očekáván literál pole");
   return true;
 }
@@ -2865,7 +2843,6 @@ function get_array (&$obj,&$type) {
 # object :: '{' pair ( ',' pair )* '}'          --> $object
 # pair   :: id ':' value
 function get_object (&$obj,&$type) {
-  global $tree;
   get_delimiter('{');
   $obj= (object)array();
   $type= 'o';
@@ -2880,7 +2857,6 @@ function get_object (&$obj,&$type) {
     if ( !$comma ) break;
   }
   get_delimiter('}');
-  $tree.= ' o';
   if ( !$ok ) comp_error("SYNTAX: byl očekáván objektový literál");
   return true;
 }
@@ -2891,7 +2867,7 @@ function get_object (&$obj,&$type) {
 # -------------------------------------------------------------------------------------------------- code2
 # $context je objekt se jmény formálních parametrů - překládaných jako {id:offset,...}
 function get_code2($context,&$code,&$vars,&$prior,&$lc_) { 
-  global $tree, $pos, $head;
+  global $pos, $head;
   $code= null;
   $prior= 0;
   $vars= array();
@@ -2912,13 +2888,11 @@ function get_code2($context,&$code,&$vars,&$prior,&$lc_) {
   }
   $lc_= $pos[$head];
   get_delimiter('}');
-  $tree.= ' 2';
   return true;
 }
 # -------------------------------------------------------------------------------------------------- slist
 # slist   :: stmnt ( ';' stmnt )*               --> {expr:slist,body:[G(stmnt),...]} 
 function get_slist($context,&$st) {
-  global $tree;
   $st= (object)array('expr'=>'slist');
   $st->body= array();
   $ok= true;
@@ -2931,7 +2905,6 @@ function get_slist($context,&$st) {
     if ( !$ok ) { $ok= true; break; }
   }
   $st= count($st->body)==1 ? $st->body[0] : $st;
-  $tree.= ' l';
   return $ok;
 }
 # -------------------------------------------------------------------------------------------------- stmnt
@@ -2942,7 +2915,6 @@ function get_slist($context,&$st) {
 #          | call2                              --> G(call2)
 #          |
 function get_stmnt($context,&$st) {
-  global $tree;
   $ok= false;
   $id= '';
   # '{' slist '}' --> G(slist)
@@ -2995,15 +2967,34 @@ function get_stmnt($context,&$st) {
       $ok= true;
     }
   }
-  $tree.= ' s';
   return $ok;
 }
 # -------------------------------------------------------------------------------------------------- expr2
-# expr2   :: call2                              --> G(call2)
+# expr2   :: expr3                              --> G(expr3) 
+#          | expr3 op expr3                     --> G(expr:call,op:G(op),par:[G(expr3),G(expr3)]
+# op       | '+' | '-' | '*' | '/'              --> sum | minus | multiply | divide
+# expr3   :: call2                              --> G(call2)
 #          | id                                 --> {expr:par,par:id} | {expr:name,name:id}
 #          | value                              --> {expr:value,value:v,type:t}
+#          | '(' expr2 ')'                      --> G(expr2) 
 function get_expr2($context,&$expr) {
-  global $tree, $last_lc;
+  global $last_lc;
+  $ok= get_expr3($context,$expr);
+  $op= $expr2= null;
+  if (     get_if_delimiter('+') )  $op= 'sum';
+  elseif ( get_if_delimiter('-') )  $op= 'minus';
+  elseif ( get_if_delimiter('*') )  $op= 'multiply';
+  elseif ( get_if_delimiter('/') )  $op= 'divide';
+  if ( $op ) {
+    # expr3 op expr3 --> G(expr:call,op:G(op),par:[G(expr3),G(expr3)]
+    $ok= get_expr3($context,$expr2);
+    $expr= (object)array('expr'=>'call','op'=>$op,'lc'=>$last_lc,
+        'par'=>array($expr,$expr2),'value'=>1);
+  }
+  return $ok;
+}
+function get_expr3($context,&$expr) {
+  global $last_lc;
   $id= '';
   if ( get_if_id($id) ) {
     # call2 --> G(call2)
@@ -3018,20 +3009,23 @@ function get_expr2($context,&$expr) {
       $ok= true;
     }
   }
+  else if ( get_if_delimiter('(') ) {
+    get_expr2($context,$expr);
+    get_delimiter(')');
+  }
   else {
     # value --> {expr:value,value:v,type:t}
     $expr= (object)array('expr'=>'value');
     get_value($expr->value,$expr->type);
     $ok= true;
   }
-  $tree.= ' e';
   return true;
 }
 # -------------------------------------------------------------------------------------------------- call2
 # call2   :: id '(' ')' | id '(' expr2 ( ',' expr2 )* ')' 
 #         --> {expr:call,op:id,par:[G(expr2),...],value:$valued}  -- valued=0 => clear stack
 function get_call2_id($context,&$expr,$id,$valued) {
-  global $tree, $last_lc;
+  global $last_lc;
   // volání funkce $id s parametry
   # id '(' ')' | id '(' expr2 ( ',' expr2 )* ')' --> {expr:call,op:id,par:[G(expr2),...]}
   $ok= true;
@@ -3045,7 +3039,6 @@ function get_call2_id($context,&$expr,$id,$valued) {
     }
     get_delimiter(')');
   }
-  $tree.= ' c';
   return true;
 }
 # ================================================================================================== code
@@ -3065,7 +3058,7 @@ function get_call2_id($context,&$expr,$id,$valued) {
 # -------------------------------------------------------------------------------------------------- code
 # $context je objekt se jmény formálních parametrů - překládaných jako {id:offset,...}
 function get_code($context,&$code,&$vars,&$prior,&$lc_) {
-  global $tree, $pos, $head;
+  global $pos, $head;
   $code= null;
   $prior= 0;
   $vars= array();
@@ -3091,7 +3084,6 @@ function get_code($context,&$code,&$vars,&$prior,&$lc_) {
     }
     $lc_= $pos[$head];
     get_delimiter('}');
-    $tree.= ' C';
 //   }
   return true;
 }
@@ -3134,7 +3126,7 @@ function get_seq($context,&$code) {
 # -------------------------------------------------------------------------------------------------- call
 # call  :: id '(' expr ( ',' expr* ) ')'        --> {op:$id,par:[G(expr),...]}
 function get_call($context,&$expr,$id) {
-  global $tree, $last_lc;
+  global $last_lc;
   // id => volání funkce s parametry
   $ok= true;
   $expr= (object)array();
@@ -3150,13 +3142,12 @@ function get_call($context,&$expr,$id) {
     $ok= get_if_delimiter(',');
     if ( !$ok ) get_delimiter(')');
   }
-  $tree.= ' C';
   return true;
 }
 # -------------------------------------------------------------------------------------------------- expr
 # expr  :: id '(' expr ( ',' expr* ) ')' | id | value | '{' alt '}' | '[' alt ']'
 function get_expr($context,&$expr) {
-  global $tree, $last_lc;
+  global $last_lc;
   $ok= get_if_delimiter('{');
   if ( $ok ) {
     # expr  :: '{' alt '}'                      --> G(alt)
@@ -3231,7 +3222,6 @@ function get_expr($context,&$expr) {
       }
     }
   }
-  $tree.= ' E';
   return true;
 }
 # ================================================================================================== LEXICAL
