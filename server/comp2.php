@@ -2666,6 +2666,16 @@ function look_id_or_key ($id) {
   $ok= $lex[$head]==$id && ($typ[$head]=='id'|| $typ[$head]=='key');
   return $ok;
 }
+# --------------------------------------------------------------------------------------------------
+# zjistí následuje-li v textu daný identifikátor resp. klíčové slovo, pokud ano posune hlavu
+function get_if_id_or_key ($id) {
+  global $head, $lex, $typ;
+  $ok= $lex[$head]==$id && ($typ[$head]=='id'|| $typ[$head]=='key');
+  if ( $ok ) {
+    $head++; 
+  }
+  return $ok;
+}
 # -------------------------------------------------------------------------------------------------- number
 # num :: [-] <num>
 function get_if_number (&$number) {
@@ -2846,11 +2856,11 @@ function get_object (&$obj,&$type) {
   if ( !$ok ) comp_error("SYNTAX: byl očekáván objektový literál");
   return true;
 }
-# ================================================================================================== code2
+# ================================================================================================== FUNC code
 # body2 :: '{' [ 'var' varlist ] slist '}'
 # vlist :: vdef | vdef (','|'var') vlist
 # vdef  :: id ':' type
-# -------------------------------------------------------------------------------------------------- code2
+# -------------------------------------------------------------------------------------------- code2
 # $context je objekt se jmény formálních parametrů - překládaných jako {id:offset,...}
 function get_code2($context,&$code,&$vars,&$prior,&$lc_) { 
   global $pos, $head;
@@ -2876,7 +2886,7 @@ function get_code2($context,&$code,&$vars,&$prior,&$lc_) {
   get_delimiter('}');
   return true;
 }
-# -------------------------------------------------------------------------------------------------- slist
+# -------------------------------------------------------------------------------------------- slist
 # slist   :: stmnt ( ';' stmnt )*               --> {expr:slist,body:[G(stmnt),...]} 
 function get_slist($context,&$st) {
   $st= (object)array('expr'=>'slist');
@@ -2893,11 +2903,12 @@ function get_slist($context,&$st) {
   $st= count($st->body)==1 ? $st->body[0] : $st;
   return $ok;
 }
-# -------------------------------------------------------------------------------------------------- stmnt
+# -------------------------------------------------------------------------------------------- stmnt
 # stmnt   :: '{' slist '}'                      --> G(slist)
 #          | id '=' expr2                       --> {expr:call,op:id.set,par:[G(expr2)]}
 #          | 'if' '(' expr2 ')' stmnt [ 'else' stmnt ]  --> {expr:if,test:G(expr2),then:G(stmnt/1),else:G(stmnt/2)}
 #          | 'for' '(' 'let' id 'of' expr ')' '{' slist '}' --> {expr:for,var:id,of:G(expr),stmnt:(slist)}
+#          | 'switch (' expr2 ') {' cases '}'   --> {expr:switch,of:G(expr2),cases:G(cases)}
 #          | call2                              --> G(call2)
 #          |
 function get_stmnt($context,&$st) {
@@ -2924,11 +2935,20 @@ function get_stmnt($context,&$st) {
         get_delimiter(')');
         get_stmnt($context,$then);
         $st= (object)array('expr'=>'if','test'=>$test,'then'=>$then);
-        if ( look_id_or_key('else') ) {
-          get_id($else);
+        if ( get_if_id_or_key('else') ) {
           get_stmnt($context,$else);
           $st->else= $else;
         }
+      }
+      elseif ( $id=='switch' ) {
+        # 'switch' '(' expr2 ')' '{' cases '}' --> {expr:switch,of:G(expr2),cases:G(cases)}
+        $expr= $cases= null;
+        $ok= get_expr2($context,$expr);
+        get_delimiter(')');
+        get_delimiter('{');
+        get_cases($context,$cases);
+        get_delimiter('}');
+        $st= (object)array('expr'=>'switch','of'=>$expr,'cases'=>$cases);
       }
       elseif ( $id=='for' ) {
         # 'for' '(' 'let' id 'of' expr ')' '{' slist '}' --> {expr:for,var:id,of:G(expr),stmnt:(slist)}
@@ -2955,7 +2975,66 @@ function get_stmnt($context,&$st) {
   }
   return $ok;
 }
-# -------------------------------------------------------------------------------------------------- expr2
+# -------------------------------------------------------------------------------------------- cases
+# cases   :: case* [ default ]                  --> [G(case),..G(default)]
+# case    :: 'case' value ':' slist ['break;']  --> {case:value,body:G(slist),break:0/1}
+# default :: 'default'    ':' slist ['break;']  --> {body:G(slist),break:0/1}
+function get_cases($context,&$cs) {
+  $cs= array();
+  $ok= true;
+  # case* [ default ] --> [G(case),..G(default)]
+  while ( $ok ) {
+    $ok= get_if_id_or_key('case');
+    if ( $ok ) {
+      # 'case' value ':' slist ['break;'] --> {case:value,body:G(slist),break:0/1}
+      $val= $type= $slist= null;
+      get_value ($val,$type);
+      get_delimiter(':');
+      $case= (object)array('case'=>$val,'body'=>array(),'break'=>0);
+      while ( $ok ) {
+        if ( look_id_or_key('break') || look_id_or_key('case') 
+          || look_id_or_key('default') || look_delimiter('}')) {
+          break;
+        }
+        $stmnt= null;
+        $ok= get_stmnt($context,$stmnt);
+        if ( $ok ) {
+          $case->body[]= $stmnt;
+        }
+        $ok= get_if_delimiter(';');
+      }
+      if ( get_if_id_or_key('break') ) {
+        get_delimiter(';');
+        $case->break= 1;
+      }
+      $cs[]= $case;
+    }
+  }
+  $ok= get_if_id_or_key('default');
+  if ( $ok ) {
+    # 'default' ':' slist ['break;'] --> {body:G(slist),break:0/1}
+    get_delimiter(':');
+    $default= (object)array('body'=>array(),'break'=>0);
+    while ( $ok ) {
+      if ( look_id_or_key('break') || look_delimiter('}') ) {
+        break;
+      }
+      $stmnt= null;
+      $ok= get_stmnt($context,$stmnt);
+      if ( $ok ) {
+        $default->body[]= $stmnt;
+      }
+      $ok= get_if_delimiter(';');
+    }
+    if ( get_if_id_or_key('break') ) {
+      get_delimiter(';');
+      $default->break= 1;
+    }
+    $cs[]= $default;
+  }
+  return true;
+}
+# -------------------------------------------------------------------------------------------- expr2
 # expr2   :: expr3                              --> G(expr3) 
 #          | expr3 op expr3                     --> G(expr:call,op:G(op),par:[G(expr3),G(expr3)]
 # op       | '+' | '-' | '*' | '/'              --> sum | minus | multiply | divide
@@ -3007,7 +3086,7 @@ function get_expr3($context,&$expr) {
   }
   return true;
 }
-# -------------------------------------------------------------------------------------------------- call2
+# -------------------------------------------------------------------------------------------- call2
 # call2   :: id '(' ')' | id '(' expr2 ( ',' expr2 )* ')' 
 #         --> {expr:call,op:id,par:[G(expr2),...],value:$valued}  -- valued=0 => clear stack
 function get_call2_id($context,&$expr,$id,$valued) {
@@ -3027,7 +3106,7 @@ function get_call2_id($context,&$expr,$id,$valued) {
   }
   return true;
 }
-# ================================================================================================== code
+# ================================================================================================== PROC code
 # body  :: [ 'var' varlist ] code
 # vlist :: vdef | vdef (','|'var') vlist
 # vdef  :: id ':' type
