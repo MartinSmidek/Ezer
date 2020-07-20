@@ -1521,8 +1521,10 @@ function gen_name($name,$pars,$vars,&$obj,$first,$c=null,$nargs=null) {  #trace(
   }
   else if ( ($type= $names[$id]->op) ) {
     // na začátku ($first==true) nesmí být metoda - jinak může, její objekt je na zásobníku
-    if ($first && ($type=='fm'||$type=='fx'||$type=='fi')) comp_error("CODE: volání metody '$id' bez objektu",0);
-    if ($first && $type[0]=='o' ) comp_error("CODE: hodnota atributu bez objektu",0);
+    if ($first && ($type=='fm'||$type=='fx'||$type=='fi')) 
+      comp_error("CODE: volání metody '$id' bez objektu",0);
+    if ($first && $type[0]=='o' ) 
+      comp_error("CODE: hodnota atributu bez objektu",0);
     $o= $type[0]=='o' ? 'a' : $type[1];
     $code[0]= (object)array('o'=>$o,'i'=>isset($names[$id]->js) ? $names[$id]->js : $id);
     if ( $c && $c->lc ) $code[0]->s= $c->lc;
@@ -1919,22 +1921,6 @@ function gen($pars,$vars,$c,$icall,&$struct) { #trace();
       }
       else comp_error("CODE: new_area má chybné parametry");
     }
-//     elseif ( $c->op=='new_area' ) {
-//       if ( count($c->par)>=2 && $c->par[0]->expr=='name' ) {
-//         $area= find_part_abs($c->par[0]->name,$fullname,'area');
-//         if ( $area && $area->type=='area' ) {
-//           $code[]= (object)array('o'=>'y','c'=>array((object)array('o'=>'v','v'=>$fullname)));
-//           for ($i= 1; $i<$npar; $i++) {
-//             $code[]= (object)array('o'=>'y','c'=>gen($pars,$vars,$c->par[$i],0,$struct1),
-//               'str_c'=>$c->par[$i],'str_s'=>$struct1);
-//             $struct->arr[]= $struct1;
-//           }
-//           $code[]= (object)array('o'=>'s','i'=>'new_area','a'=>$npar);
-//         }
-//         else comp_error("CODE: výraz new_area nemá jako 1 parametr area");
-//       }
-//       else comp_error("CODE: new_area má chybné parametry");
-//     }
     // -------------------------------------- call fs
     elseif ( $names[$c->op]->op=='fs' ) {
       $code_top0= $code_top;
@@ -3395,12 +3381,12 @@ function get_source($start,$stop) {
 }
 # ================================================================================================== ERROR
 # -------------------------------------------------------------------------------------------------- comp_error
-function comp_error ($msg,$offset=0) {
+function comp_error ($msg) {
   global $pos, $head, $errors, $err, $error_code_lc, $ezer_name, $ezer_app;
   $errors++;
   // zobraz řádek $line s okolím
   $in_code= preg_match("/CODE/",$msg);
-  list($line,$clmn)= explode(',',$in_code ? $error_code_lc : $pos[$head]+$offset);
+  list($line,$clmn)= explode(',',$in_code ? $error_code_lc : $pos[$head]);
   $msg2= "<b>".($in_code ? "SYNTAX " : '')."$msg</b> in $ezer_name;$line,$clmn<br>";
   if ( $ezer_name ) {
     $msg2.= source_line($ezer_name,$ezer_app,$line,$clmn);
