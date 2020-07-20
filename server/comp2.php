@@ -1,7 +1,7 @@
 <?php # (c) 2007-2015 Martin Smidek <martin@smidek.eu>
 
 global $x, $y, $trace, $err,$ezer_path_code, $debugger;
-// $debugger= false; // true => kompilátor spuštěn v okně debug
+
 # zaslepení funkcí
 function note_time() {}
 # ================================================================================================== COMPILER
@@ -454,7 +454,7 @@ function dbg_context_load ($ctx) {  #trace();
     }
   }
   catch (Exception $e) {
-    $log= "ERROR";
+    $log= "ERROR ".$e->getMessage();
   }
 end:
   return $log;
@@ -1727,6 +1727,7 @@ function gen($pars,$vars,$c,$icall,&$struct) { #trace();
     for ($i= 0; $i<count($c->body); $i++) {
       $ci= $c->body[$i];
       if ( $ci->expr=='call' ) {
+        $struct1= null;
         $cc= gen($pars,$vars,$ci,$i,$struct1);
         $struct->arr[]= $struct1;
       }
@@ -1794,9 +1795,9 @@ function gen($pars,$vars,$c,$icall,&$struct) { #trace();
         for ($i= 1; $i<$n-1; $i+=2) {
           $label= gen($pars,$vars,$c->par[$i],0,$struct1);
           $struct->arr[]= $struct1;
-          $test= (object)array('o'=>'S','iff'=>count((array)$stmnt)+2);
           $struct->arr[]= (object)array('typ'=>'?','i'=>-1,'ift'=>-1,'iff'=>-1,'len'=>1);
           $stmnt= gen($pars,$vars,$c->par[$i+1],0,$struct1);
+          $test= (object)array('o'=>'S','iff'=>count((array)$stmnt)+2);
           $struct->arr[]= $struct1;
           $code[]= array($label,$test,$stmnt);
         }
@@ -1837,8 +1838,8 @@ function gen($pars,$vars,$c,$icall,&$struct) { #trace();
             if ( $nfpar==1 || $nfpar==2 ) {
               $x= gen($pars,$vars,$c->par[0],0,$struct1);
               $inic= (object)array('o'=>'K');
-              $test= (object)array('o'=>'L','i'=>$nfpar,'go'=>count((array)$f)+3);
               $f= gen_name($c->par[1]->name,$pars,$vars,$obj,true,$c->par[1]);
+              $test= (object)array('o'=>'L','i'=>$nfpar,'go'=>count((array)$f)+3);
               $f[count($f)-1]->a= $nfpar;
               $f[count($f)-1]->ift= -count($f);
               $popx= (object)array('o'=>'z','i'=>1,'nojmp'=>1);
