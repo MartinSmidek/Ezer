@@ -278,7 +278,7 @@ class Application {
     this.domIcon_server= jQuery('#StatusIcon_server');
     this._ajax(0);                                // počet neukončených požadavků na server
     Ezer.App= this;
-    Object.assign(this.options,options); // moo: this.setOptions(options);
+    Object.assign(Ezer.App.options,options); // moo: this.setOptions(options);
 //     Ezer.Shield= new Mask('shield',{hideOnClick:false,
 //       style:{opacity:0.2,backgroundColor:'#333',zIndex:2}});
     Ezer.Shield= jQuery('#form_mask3');

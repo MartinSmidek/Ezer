@@ -27,7 +27,7 @@ function comp_file ($name,$root='',$list_only='',$_comp_php=false) {  #trace();
   global $ezer, $ezer_path_root, $err, $comp_php,
     $code, $module, $procs, $context, $ezer_name, $ezer_app, $errors, $includes, $onloads;
   global $pragma_library, $pragma_syntax, $pragma_attrs, $pragma_names, $pragma_get, $pragma_prefix,
-    $pragma_group, $pragma_box, $pragma_if, $pragma_strings, $pragma_switch;
+    $pragma_group, $pragma_box, $pragma_if, $pragma_switch;
   global $call_php;
   global $doxygen;    // $doxygen=1 pokud se má do složky data generovat *.cpp pro doxygen
   $comp_php= $_comp_php;
@@ -47,7 +47,7 @@ function comp_file ($name,$root='',$list_only='',$_comp_php=false) {  #trace();
     // oddělení případného #pragma names,syntax,prefix
     // (musí být na začátku souboru)
     $pragma_library= $pragma_syntax= $pragma_attrs= $pragma_names= $pragma_get= $pragma_prefix=
-    $pragma_group= $pragma_box= $pragma_if= $pragma_strings= $pragma_switch= false;
+    $pragma_group= $pragma_box= $pragma_if= $pragma_switch= false;
     if ( substr($ezer,0,7)=='#pragma' ) {
       $pragma= explode(',',trim(substr($ezer,8,strpos($ezer,"\n")-8)));
 //                                                             debug($pragma,"pragma");
@@ -61,7 +61,6 @@ function comp_file ($name,$root='',$list_only='',$_comp_php=false) {  #trace();
       if ( in_array('test',$pragma) )   $pragma_if= $pragma_switch= true;
       if ( in_array('if',$pragma) )     $pragma_if= true;
       if ( in_array('switch',$pragma) ) $pragma_switch= true;
-      if ( in_array('strings',$pragma)) $pragma_strings= true;
 //       if ( in_array('using',$pragma) ) {
 //         $i= array_search('using',$pragma);
 //         $pragma_using= $pragma[$i+1];
@@ -1029,6 +1028,18 @@ function gen2($pars,$vars,$c,$icall,&$struct) {
       : (object)array('o'=>'v','v'=>$c->value);
     $code_top++;
     break;
+  // -------------------------------------- ` string ${expr} string ... `
+  case 'templ':
+    // {expr:templ,par:[G(templ),...]}
+    $npar= count($c->par);
+    foreach($c->par as $par) {
+      $struct1= null;
+      $code[]= gen2($pars,$vars,$par,0,$struct1);
+      $struct->arr[]= $struct1;
+    }
+    $conc= (object)array('o'=>'f','i'=>'conc','a'=>$npar);
+    $code[]= $conc;
+    break;
   // -------------------------------------- ?
   case 'name':                                               // id ( '.' id )*
     $code= gen_name($c->name,$pars,$vars,$obj,true,$c);
@@ -1831,12 +1842,13 @@ function gen($pars,$vars,$c,$icall,&$struct) { #trace();
         $expr= gen($pars,$vars,$c->par[0],0,$struct1);
         $struct->arr[]= $struct1;
         $code[]= $expr;
+        $stmnt= array();
         for ($i= 1; $i<$n-1; $i+=2) {
           $label= gen($pars,$vars,$c->par[$i],0,$struct1);
           $struct->arr[]= $struct1;
+          $test= (object)array('o'=>'S','iff'=>count((array)$stmnt)+2);
           $struct->arr[]= (object)array('typ'=>'?','i'=>-1,'ift'=>-1,'iff'=>-1,'len'=>1);
           $stmnt= gen($pars,$vars,$c->par[$i+1],0,$struct1);
-          $test= (object)array('o'=>'S','iff'=>count((array)$stmnt)+2);
           $struct->arr[]= $struct1;
           $code[]= array($label,$test,$stmnt);
         }
@@ -1876,9 +1888,10 @@ function gen($pars,$vars,$c,$icall,&$struct) { #trace();
             $nfpar= count((array)$fce->par);
             if ( $nfpar==1 || $nfpar==2 ) {
               $x= gen($pars,$vars,$c->par[0],0,$struct1);
+              $f= array();
               $inic= (object)array('o'=>'K');
-              $f= gen_name($c->par[1]->name,$pars,$vars,$obj,true,$c->par[1]);
               $test= (object)array('o'=>'L','i'=>$nfpar,'go'=>count((array)$f)+3);
+              $f= gen_name($c->par[1]->name,$pars,$vars,$obj,true,$c->par[1]);
               $f[count($f)-1]->a= $nfpar;
               $f[count($f)-1]->ift= -count($f);
               $popx= (object)array('o'=>'z','i'=>1,'nojmp'=>1);
@@ -2118,7 +2131,6 @@ function get_ezer_keys (&$keywords,&$attribs1,&$attribs2) {
     }
   }
 }
-/** ========================================================================================> SYNTAX */
 # -------------------------------------------------------------------------------------------- block
 # $root je nadřazený blok
 # block  :: vars | 'func' pars body2 | key [ id ] [':' key id] [pars|args] [coord] [code] [struct]
@@ -2803,7 +2815,7 @@ function get_id_or_key (&$id) {
 # value :: [-]num | str | object | array | constant_name   --> $value
 # vrací 1.písmeno typu
 function get_value (&$val,&$type) {
-  global $head, $lex, $typ, $const_list, $pragma_strings;
+  global $head, $lex, $typ, $const_list;
   $ok= false;
   $val= $lex[$head];
   if ( $typ[$head]=='del' && $val=='-' ) {
@@ -2815,9 +2827,9 @@ function get_value (&$val,&$type) {
     $ok= $typ[$head]=='num' || $typ[$head]=='str';
   }
   if ( $ok ) {
-    if ( $pragma_strings && $typ[$head]=='str' ) {
-      // zpracování vnitřku stringu
-    }
+//    if ( $pragma_strings && $typ[$head]=='str' ) {
+//      // zpracování vnitřku stringu
+//    }
     $type= substr($typ[$head],0,1);
     $val= $type=='s'
         ? substr(substr($val,1),0,-1)
@@ -3083,8 +3095,11 @@ function get_cases($context,&$cs) {
 # op       | '+' | '-' | '*' | '/'              --> sum | minus | multiply | divide
 # expr3   :: call2                              --> G(call2)
 #          | id                                 --> {expr:par,par:id} | {expr:name,name:id}
+#          | '`' template* '`'                  --> {expr:templ,par:[G(templ),...]}
 #          | value                              --> {expr:value,value:v,type:t}
 #          | '(' expr2 ')'                      --> G(expr2) 
+# templ   :: string                             --> {expr:value,value:v,type:t}
+#          | '${' ( id | call2 ) '`'            --> G(id) | G(call2)
 function get_expr2($context,&$expr) {
   global $last_lc;
   $ok= get_expr3($context,$expr);
@@ -3102,7 +3117,7 @@ function get_expr2($context,&$expr) {
   return $ok;
 }
 function get_expr3($context,&$expr) {
-  global $last_lc;
+  global $last_lc, $typ, $lex, $head;
   $id= '';
   if ( get_if_id($id) ) {
     # call2 --> G(call2)
@@ -3120,6 +3135,27 @@ function get_expr3($context,&$expr) {
   else if ( get_if_delimiter('(') ) {
     get_expr2($context,$expr);
     get_delimiter(')');
+  }
+  else if ( get_if_delimiter('`') ) {
+    # '`' template* '`' --> {expr:templ,par:[G(templ),...]}
+    $expr= (object)array('expr'=>'templ','par'=>array());
+    $ok= true;
+    while ( $ok && !look_delimiter('`') ) {
+      $ok= $typ[$head]=='str';
+      if ( $ok ) {
+        $expr->par[]= (object)array('expr'=>'value','value'=>$lex[$head],'type'=>'s');
+        $head++; 
+      }
+      elseif ( get_if_delimiter('${') ) {
+        $par= null;
+        $ok= get_expr2($context,$par);
+        if ( $ok ) {
+          $expr->par[]= $par;
+          get_delimiter('}');
+        }
+      }
+    }
+    get_delimiter('`');
   }
   else {
     # value --> {expr:value,value:v,type:t}
@@ -3336,18 +3372,18 @@ function get_expr($context,&$expr) {
 # ------------------------------------------------------------------------------------ lex_analysis2
 # $dbg = false nebo pro debugger proc|func
 function lex_analysis2 ($dbg=false) {
-  global $tok2lex, $ezer, $keywords, $specs, $lex, $typ, $pos, $not, $gen_source, 
-      $pragma_strings, $debugger;
+  global $tok2lex, $ezer, $keywords, $specs, $lex, $typ, $pos, $not, $gen_source, $debugger;
 
   // rozbor na tokeny podle PHP
   $tok= token_get_all( $dbg
     ? ("<"."?php\n $dbg _dbg_() ".'{'."$ezer \n} ?".">")
     : ("<"."?php\n $ezer ?".">"));
+  $inside_template= false;
 //                                                             debug($tok,'tok');
   note_time('lexical1');
   tok_positions($tok);
   note_time('lexical2');
-  if ( $pragma_strings ) tok_strings($tok);
+//  if ( $pragma_strings ) tok_strings($tok);
   note_time('lexical3');
 //                                                             debug($tok,'tok');
   $lex= $typ= $pos= $not= $str= array(); $k= 0;
@@ -3382,6 +3418,9 @@ function lex_analysis2 ($dbg=false) {
     }
     switch ( $tp ) {
     case 'blank':
+      if ( $inside_template ) {
+        $typ[$k]= 'str'; $lex[$k]= $t[1]; $pos[$k]= "{$t[2]},{$t[3]}"; $k++;
+      }
       break;
     case 'cmnt':
       if ( $gen_source ) {
@@ -3415,19 +3454,22 @@ function lex_analysis2 ($dbg=false) {
       $typ[$k]= $tp; $lex[$k]= $ident; $pos[$k]= "{$t[2]},{$t[3]}"; $k++;
       break;
     case 'del':
+      if ( $t[1]=='`' ) {
+        $inside_template= !$inside_template;
+      }
     case 'num':
       $typ[$k]= $tp; $lex[$k]= $t[1]; $pos[$k]= "{$t[2]},{$t[3]}"; $k++;
       break;
     case 'str':
       $typ[$k]= $tp; $lex[$k]= $t[1];
-      if ( $pragma_strings && isset($tok[$i][5]) ) {
-        // složený string
-        $str[$k]= array();
-        foreach($tok[$i][5] as $x) {
-          if ( $x[1]!='{' && $x[1]!='}' )
-            $str[$k][]= $x[1];
-        }
-      }
+//      if ( $pragma_strings && isset($tok[$i][5]) ) {
+//        // složený string
+//        $str[$k]= array();
+//        foreach($tok[$i][5] as $x) {
+//          if ( $x[1]!='{' && $x[1]!='}' )
+//            $str[$k][]= $x[1];
+//        }
+//      }
       $pos[$k]= "{$t[2]},{$t[3]}"; $k++;
       break;
     default:
@@ -3435,32 +3477,37 @@ function lex_analysis2 ($dbg=false) {
       break;
     }
   }
+//                                                             debug($lex,'lex');
+//                                                             debug($str,'str');
+//                                                             debug($typ,'typ');
+//                                                             debug($pos,'pos');
+//                                                             debug($not,'not');
   return true;
 }
-# --------------------------------------------------------------------------------------------- ezer
-function tok_strings(&$tok) {
-  $count= count($tok);
-  for ($i= 0; $i<$count; $i++) {
-    if ($tok[$i][0]==-1 && $tok[$i][1]=='"') {
-      $tok[$i][5]= array();
-      for ($j= $i; $j<$count; $j++) {
-        $tok[$i][4]= 'T_CONSTANT_ENCAPSED_STRING';
-        $tok[$i][5][]= $tok[$j];
-        if ($j>$i ) {
-          $tok[$i][1].= $tok[$j][1];
-          if ( $tok[$j][1]=='"') {
-            $tok[$i][0]= 316;
-            $i= $j+1;
-            unset($tok[$j]);
-            break;
-          }
-          unset($tok[$j]);
-        }
-      }
-    }
-  }
-  return true;
-}
+//# --------------------------------------------------------------------------------------------- ezer
+//function tok_strings(&$tok) {
+//  $count= count($tok);
+//  for ($i= 0; $i<$count; $i++) {
+//    if ($tok[$i][0]==-1 && $tok[$i][1]=='"') {
+//      $tok[$i][5]= array();
+//      for ($j= $i; $j<$count; $j++) {
+//        $tok[$i][4]= 'T_CONSTANT_ENCAPSED_STRING';
+//        $tok[$i][5][]= $tok[$j];
+//        if ($j>$i ) {
+//          $tok[$i][1].= $tok[$j][1];
+//          if ( $tok[$j][1]=='"') {
+//            $tok[$i][0]= 316;
+//            $i= $j+1;
+//            unset($tok[$j]);
+//            break;
+//          }
+//          unset($tok[$j]);
+//        }
+//      }
+//    }
+//  }
+//  return true;
+//}
 # --------------------------------------------------------------------------------------------- ezer
 function tok_positions(&$tok) {
   $line= 0; $col= 1; $count= count($tok);

@@ -317,7 +317,7 @@ $tok2lex= array(
   T_CLASS => 'id', T_CLASS_C => 'x', T_CLOSE_TAG => 'x', T_COMMENT => 'cmnt', T_CONCAT_EQUAL => 'x',
   T_CONST => 'id', T_CONSTANT_ENCAPSED_STRING => 'str', T_CONTINUE => 'id', T_CURLY_OPEN => 'del',
   T_DEC => 'x', T_DECLARE => 'id', T_DEFAULT => 'id', T_DIV_EQUAL => 'x', T_DNUMBER => 'num',
-  T_DO => 'id', T_DOLLAR_OPEN_CURLY_BRACES => 'x', T_DOUBLE_ARROW => 'x', T_DOUBLE_CAST => 'x',
+  T_DO => 'id', T_DOLLAR_OPEN_CURLY_BRACES => 'del', T_DOUBLE_ARROW => 'x', T_DOUBLE_CAST => 'x',
   T_ECHO => 'id', T_ELSE => 'id', T_ELSEIF => 'id', T_EMPTY => 'id',
   T_ENCAPSED_AND_WHITESPACE => 'blank', T_END_HEREDOC => 'x', T_ENDDECLARE => 'id',
   T_ENDFOR => 'id', T_ENDFOREACH => 'id', T_ENDIF => 'id', T_ENDSWITCH => 'id', T_ENDWHILE => 'id',
