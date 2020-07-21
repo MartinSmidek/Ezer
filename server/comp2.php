@@ -5,7 +5,7 @@ global $x, $y, $trace, $err,$ezer_path_code, $debugger;
 # zaslepení funkcí
 function note_time() {}
 # ================================================================================================== COMPILER
-# -------------------------------------------------------------------------------------------------- comp
+# --------------------------------------------------------------------------------------------- comp
 # přeloží $aname do $cname pokud je překlad bez chyby
 # v případě chyby nechá $cname beze změny
 function comp ($src) {
@@ -17,7 +17,7 @@ function comp ($src) {
   $code= $yobj;
   return $ycomp;
 }
-# -------------------------------------------------------------------------------------------------- comp_file
+# ---------------------------------------------------------------------------------------- comp_file
 # přeloží $aname do $cname pokud je překlad bez chyby
 # v případě chyby nechá $cname beze změny
 # $root je jméno hlavního objektu aplikace a může být uvedeno jen pro $name='$'
@@ -267,7 +267,7 @@ function comp_file ($name,$root='',$list_only='',$_comp_php=false) {  #trace();
 end:
   return "$ok = kompilace a link $ename => $cname";
 }
-# -------------------------------------------------------------------------------------------------- xlist
+# -------------------------------------------------------------------------------------------- xlist
 # listing modulu
 function xlist($x,$ind,$list_only='') {
   $lst= '';
@@ -296,7 +296,7 @@ function xlist($x,$ind,$list_only='') {
   }
   return $lst;
 }
-# -------------------------------------------------------------------------------------------------- xcode
+# -------------------------------------------------------------------------------------------- xcode
 # listing kódu procedury
 function xcode($x,$ind=0) {
   $tr= '';
@@ -328,7 +328,7 @@ function xcode($x,$ind=0) {
   }
   return $tr;
 }
-# -------------------------------------------------------------------------------------------------- xattr
+# -------------------------------------------------------------------------------------------- xattr
 # listing atributů
 function xattr($x) {
   $tr= '';
@@ -342,7 +342,7 @@ function xattr($x) {
   }
   return $tr;
 }
-# -------------------------------------------------------------------------------------------------- list
+# --------------------------------------------------------------------------------------------- list
 # listing částí
 function list_parts($x) {
   $lst= 'xxx';
@@ -455,7 +455,7 @@ function dbg_context_load ($ctx) {  #trace();
 end:
   return $log;
 }
-# -------------------------------------------------------------------------------------------------- doxygen
+# ------------------------------------------------------------------------------------------ doxygen
 # export souboru pro doxygen
 function doxygen($x) {
   global $doxy_cpp, $doxy_ln; 
@@ -487,7 +487,7 @@ function doxygen($x) {
   return $cpp;
 }
 # ================================================================================================== LINK
-# -------------------------------------------------------------------------------------------------- pragma_names
+# ------------------------------------------------------------------------------------- pragma_names
 # připrav opravy při pragma
 # tabulka jednoznačných jmen:
 #   $pragma_names[id]= {name:full.id,obj:...}   -- pokud je jednoznačné a dosažitelné
@@ -508,7 +508,7 @@ function pragma_names($c,$path= '$') {
     }
   }
 }
-# -------------------------------------------------------------------------------------------------- pragma_syntax
+# ------------------------------------------------------------------------------------ pragma_syntax
 # opravy při pragma
 # pragma_syntax
 #       - zruší module
@@ -525,7 +525,7 @@ function pragma_syntax($c) {
   }
   return $c;
 }
-# -------------------------------------------------------------------------------------------------- pragma_attrs
+# ------------------------------------------------------------------------------------- pragma_attrs
 # opravy při pragma - úpravy atributů
 # pragma_attrs
 #       - select: přidání type:map
@@ -551,7 +551,7 @@ function pragma_attrs($c) {
     pragma_attrs($cpart);
   }
 }
-# -------------------------------------------------------------------------------------------------- link_code
+# ---------------------------------------------------------------------------------------- link_code
 # řeší některé reference v kódu a řeší options:_l,_t,_w,_h
 #   var <i> : form <f>  -- pokud je <f> lokální
 #   var <i> : table <f> -- pokud je <t> lokální
@@ -668,7 +668,7 @@ function link_code(&$c,$name,$isroot,$block) {
     }
   }
 }
-# -------------------------------------------------------------------------------------------------- proc
+# --------------------------------------------------------------------------------------------- proc
 # volá kompilátor procedur a převádí relativní na absolutní cesty pro table, map, report
 # $context= [id=>objekt,...]
 function proc(&$c,$name) { #trace();
@@ -773,7 +773,7 @@ function proc(&$c,$name) { #trace();
     }
   }
 }
-# -------------------------------------------------------------------------------------------------- export
+# ------------------------------------------------------------------------------------------- export
 # kopíruje pouze informace pro interpreta
 # vynech části označené jako _old
 # $type slouží ke zdědění typu 'smart' z browse na vnořené show
@@ -840,7 +840,7 @@ function export(&$c,$id) {
   return $e;
 }
 # ================================================================================================== NAMES
-# -------------------------------------------------------------------------------------------------- find_obj
+# ----------------------------------------------------------------------------------------- find_obj
 // included = array ( // soubor -> code
 # najde objekt pojmenovaný úplným jménem tzn. začínajícím kořenem '$' nebo '#'
 function find_obj($full) {
@@ -871,7 +871,7 @@ function find_obj($full) {
 //                                         display("find_obj: $full => {$obj->type} {$obj->id}");
   return $obj;
 }
-# -------------------------------------------------------------------------------------------------- find_part_abs
+# ------------------------------------------------------------------------------------ find_part_abs
 # najde pojmenovaný objekt podle aktuálního kontextu a vrátí úplné bezkontextové jméno
 # tzn. začínající kořenem '$' nebo '#'
 # context :: [ id:part, ... ]
@@ -918,7 +918,7 @@ function find_part_abs($name,&$full,$type='') {
   }
   return $obj;
 }
-# -------------------------------------------------------------------------------------------------- find_part_rel
+# ------------------------------------------------------------------------------------ find_part_rel
 # najde pojmenovaný objekt podle aktuálního kontextu a vrátí úplné kontextové jméno
 # tzn. jméno relativní vzhledem k místu dotazu
 # context :: [ id:part, ... ]
@@ -979,7 +979,7 @@ function find_part_rel($name,&$full,$type='') { #trace();
   return $obj;
 }
 # ================================================================================================== GEN func
-# -------------------------------------------------------------------------------------------------- gen func
+# ----------------------------------------------------------------------------------------- gen func
 # generuje kód funkcí
 function gen_func($c,&$desc,$name) {
   global $error_code_context, $error_code_lc, $code_top;
@@ -1013,7 +1013,7 @@ function gen_func($c,&$desc,$name) {
   walk_y($desc->code);
   clean_code($desc->code);
 }
-# -------------------------------------------------------------------------------------------------- gen2
+# --------------------------------------------------------------------------------------------- gen2
 # generuje kód příkazů
 #   $i je použit pro překladu call
 #   $struct = {...} výstup
@@ -1169,6 +1169,44 @@ function gen2($pars,$vars,$c,$icall,&$struct) {
     $struct->arr[]= $struct1;
     $struct->typ= 'fof';
     break;
+  // -------------------------------------- switch ( expr ) { case val: stmnt ... break .. }
+  case 'switch':
+    // switch  = {expr:switch,of:G(expr2),cases:G(cases)}
+    // cases   = [G(case),..G(default)]
+    // case    = {case:value,body:G(slist),break:0/1}
+    // default = {body:G(slist),break:0/1}    
+    // překlad složek
+    $expr= gen2($pars,$vars,$c->of,0,$struct1);
+    $code[]= $expr;
+    $ncase= count($c->cases);
+    $cases= array();
+    for ($i= 0; $i<$ncase; $i++) {
+      $case= $c->cases[$i];
+      $stmnt= gen2($pars,$vars,$case,0,$struct1);
+      $cases[$i]= (object)array('slist'=>$stmnt,'case'=>$case->case,'break'=>$case->break);
+    }
+    // konstrukce skoků
+    for ($i= 0; $i<$ncase; $i++) {
+      $case= $cases[$i];
+      $test= $case->case 
+          ? (object)array('o'=>'S','v'=>$case->case,
+              'go'=>count($case->slist)+($case->break ? 1 : 0)+1) 
+          : array();
+      $block= array($test,$case->slist);
+      if ( $case->break ) {
+        $n= 1;
+        for ($k= $i+1; $k<$ncase; $k++) {
+          $n+= count($cases[$k]->slist) + ($cases[$k]->case ? 1 : 0) + ($cases[$k]->break ? 1 : 0);
+        }
+        $go= (object)array('o'=>0,'go'=>$n);
+        $block[]= $go;
+      }
+      $code[]= $block;
+    }
+    $code[]= (object)array('o'=>'z','i'=>1);  // pop expr
+    $struct->arr[]= $struct1;
+    $struct->typ= 'sw';
+    break;
   }
   $pc= array();
   plain($code,$pc);
@@ -1176,7 +1214,7 @@ function gen2($pars,$vars,$c,$icall,&$struct) {
   return $pc;
 }
 # ================================================================================================== GEN proc
-# -------------------------------------------------------------------------------------------------- gen proc
+# ----------------------------------------------------------------------------------------- gen proc
 # generuje kód procedur
 function gen_proc($c,&$desc,$name) {
   global $error_code_context, $error_code_lc, $code_top;
@@ -1210,7 +1248,7 @@ function gen_proc($c,&$desc,$name) {
   walk_y($desc->code);
   clean_code($desc->code);
 }
-# -------------------------------------------------------------------------------------------------- optimize_fs
+# -------------------------------------------------------------------------------------- optimize_fs
 # optimalizuje překlad pro: switch
 // function optimize_fs($code) {
 //   if ( is_array($code) ) {
@@ -1222,7 +1260,7 @@ function gen_proc($c,&$desc,$name) {
 //     optimize_fs($code->c);
 //   }
 // }
-# -------------------------------------------------------------------------------------------------- walk_y
+# ------------------------------------------------------------------------------------------- walk_y
 # definuje v kódu vygenerovaném z $down pole ift, iff jako pokračování pro úspěch či neúspěch
 # pro části kódu interpretované strukturami tj. o.y=code
 function walk_y($code) {
@@ -1240,7 +1278,7 @@ function walk_y($code) {
     }
   }
 }
-# -------------------------------------------------------------------------------------------------- clean_code
+# --------------------------------------------------------------------------------------- clean_code
 # odstraní atributy skoku, pokud je přítomno nojmp (tzn. výpočet argumentu)
 function clean_code($code) {
   if ( is_array($code) ) {
@@ -1261,7 +1299,7 @@ function clean_code($code) {
     clean_code($code->c);
   }
 }
-# -------------------------------------------------------------------------------------------------- walk_struct
+# -------------------------------------------------------------------------------------- walk_struct
 # definuje v kódu vygenerovaném z $down pole ift, iff jako pokračování pro úspěch či neúspěch
 # down - struktura
 # pcode - celé pole kódu
@@ -1319,6 +1357,9 @@ function walk_struct($down,$pcode,$beg,$end,$ift,$iff,$is_arg=0) {
     def_jumps($down,$pcode);
   }
   elseif ( $typ=='fof' ) {  // for - of (ve func)
+    def_jumps($down,$pcode);
+  }
+  elseif ( $typ=='sw' ) {  // switch (ve func)
     def_jumps($down,$pcode);
   }
   elseif ( $typ=='if2' ) {  // if - then (ve func)
@@ -1385,7 +1426,7 @@ function walk_struct($down,$pcode,$beg,$end,$ift,$iff,$is_arg=0) {
 //                                         display("walk_struct($down->typ,,$beg,$end,$ift,$iff)=$i_next");
   return $i_next;
 }
-# -------------------------------------------------------------------------------------------------- def_jumps
+# ---------------------------------------------------------------------------------------- def_jumps
 # definuje v kódu iff, ift, jmp
 function def_jumps($c,$pcode) {
   $t= $c->ift;
@@ -1433,7 +1474,7 @@ function def_jumps($c,$pcode) {
 //                                         debug($pcode,"def_jumps B");
 //                                         display("<pre>".xcode($pcode)."</pre>");
 }
-# -------------------------------------------------------------------------------------------------- plain
+# -------------------------------------------------------------------------------------------- plain
 # odstraní vnořenost polí
 function plain($c,&$pc) {
   if ( is_array($c) ) {
@@ -1447,7 +1488,7 @@ function plain($c,&$pc) {
     $pc[]= $c;
   }
 }
-# -------------------------------------------------------------------------------------------------- gen_name
+# ----------------------------------------------------------------------------------------- gen_name
 # přeloží výraz utvořený (složeným) jménem (bez argumentů)
 # name :: id ( '.' id )*
 function gen_name($name,$pars,$vars,&$obj,$first,$c=null,$nargs=null) {  #trace();
@@ -1698,7 +1739,7 @@ function gen_name($name,$pars,$vars,&$obj,$first,$c=null,$nargs=null) {  #trace(
   plain($code,$pc);
   return $pc;
 }
-# -------------------------------------------------------------------------------------------------- gen
+# ---------------------------------------------------------------------------------------------- gen
 # generuje kód výrazu
 #   $i je použit pro překladu call
 #   $struct = {...} výstup
@@ -2005,7 +2046,7 @@ function gen($pars,$vars,$c,$icall,&$struct) { #trace();
 }
 # ================================================================================================== SYNTAX
 # lexikální a syntaktická analýza
-# -------------------------------------------------------------------------------------------------- get ezer
+# ----------------------------------------------------------------------------------------- get ezer
 # top  - prázdný objekt, pro library neprázdný ale označkovaný jako _old
 # top2 - pro běžný překlad null pro debugger objekt pro vložení procedury resp. funkce _dbg_
 # dbg = false|'proc'|func' - specifikace zda jde o proceduru nebo funkci
@@ -2050,7 +2091,7 @@ function get_ezer (&$top,&$top2,$dbg=false) {
   note_time('syntax');
   return $ok;
 }
-# -------------------------------------------------------------------------------------------------- ezer
+# --------------------------------------------------------------------------------------------- ezer
 # naplní pole $attribs1, $attribs2
 function get_ezer_keys (&$keywords,&$attribs1,&$attribs2) {
   global $ezer_path_serv, $blocs, $attribs, $uni_attribs;
@@ -2078,7 +2119,7 @@ function get_ezer_keys (&$keywords,&$attribs1,&$attribs2) {
   }
 }
 /** ========================================================================================> SYNTAX */
-# -------------------------------------------------------------------------------------------------- block
+# -------------------------------------------------------------------------------------------- block
 # $root je nadřazený blok
 # block  :: vars | 'func' pars body2 | key [ id ] [':' key id] [pars|args] [coord] [code] [struct]
 # struct :: '{' part (',' part)* '}' ]
@@ -2267,7 +2308,7 @@ function get_if_block ($root,&$block,&$id) {
   }
   return $ok;
 }
-# -------------------------------------------------------------------------------------------------- attrib
+# ------------------------------------------------------------------------------------------- attrib
 # $root je nadřazený blok
 # attr :: id [':' val | ':' id]         -- id musí být jméno konstanty, typ atributu musí mít c
 # defaultní val=1
@@ -2314,7 +2355,7 @@ function get_if_attrib ($root,&$id,&$val) {
   }
   return $ok;
 }
-# -------------------------------------------------------------------------------------------------- par
+# ---------------------------------------------------------------------------------------------- par
 # pars  :: '(' par (',' par)* ')'       -- vrací pole
 function get_if_pars (&$opars) {
   $ok= get_if_delimiter('(');
@@ -2344,7 +2385,7 @@ function get_pars (&$pars) {
   if ( !$ok ) comp_error("SYNTAX: byl očekáván seznam parametrů");
   return true;
 }
-# -------------------------------------------------------------------------------------------------- arg
+# ---------------------------------------------------------------------------------------------- arg
 # args  :: '(' val (',' val)* ')'      -- vrací pole
 function get_if_args (&$args) {
   $ok= get_if_delimiter('(');
@@ -2391,7 +2432,7 @@ function get_numvalue (&$val,&$id) {
   if ( !$ok ) comp_error("SYNTAX: bylo očekávána číslo nebo konstanta místo {$typ[$head]} $val");
   return true;
 }
-# -------------------------------------------------------------------------------------------------- vars
+# --------------------------------------------------------------------------------------------- vars
 # vars    :: 'var' varlist
 # varlist :: vardef | vardef ',' varlist
 # vardef  :: id ':' type | id '=' value
@@ -2431,7 +2472,7 @@ function get_vars (&$root,$id,$lc) {
 //                                                 debug($root,"vars");
   return true;
 }
-# -------------------------------------------------------------------------------------------------- const
+# -------------------------------------------------------------------------------------------- const
 # (a) const :: 'const' id '=' cvalue            -- začátek
 # (b) const :: (';'|',') id '=' cvalue          -- pokračování
 #     cvalue :: const | nvalue
@@ -2479,7 +2520,7 @@ function get_def ($id,&$value,&$is_expr) {
     comp_error("SYNTAX: konstanta $id má duplicitní definici ($id={$const_list[$id]['value']})");
   return true;
 }
-# -------------------------------------------------------------------------------------------------- coord+
+# ------------------------------------------------------------------------------------------- coord+
 # coord_plus+ :: '[' cexpr ',' cexpr ',' cexpr ',' cexpr ']'
 # cexpr       :: ( '^' | '$' | '$v' | '*' | '~' | const_id | id '.' ('l'|'r'|'t'|'b'|'w'|'h') | num )
 #                [ ('+'|'-') cexpr ]
@@ -2540,7 +2581,7 @@ function get_cexpr (&$cexpr,$rel1,$rel2='',$rel3='') {
 //                                                 debug($cexpr,'cexpr');
   return count($cexpr);
 }
-# -------------------------------------------------------------------------------------------------- coord
+# -------------------------------------------------------------------------------------------- coord
 # coord :: '[' [num|*] ',' [num|*] ',' [num|*] ',' [num|*] ']'
 function get_if_coord ($block) {
   $ok= get_if_delimiter('[');
@@ -2561,7 +2602,7 @@ function get_if_coord ($block) {
   }
   return $ok;
 }
-# -------------------------------------------------------------------------------------------------- type
+# --------------------------------------------------------------------------------------------- type
 # type  :: number | text | form | area | object | array
 function get_type (&$type) {
   global $head, $lex;
@@ -2571,7 +2612,7 @@ function get_type (&$type) {
   if ( !$ok ) comp_error("SYNTAX: bylo očekáváno jméno typu");
   return $ok;
 }
-# -------------------------------------------------------------------------------------------------- key id
+# ------------------------------------------------------------------------------------------- key id
 # key [ id ] -- pokud je id vynecháno je vrácen anonymní idntifikátor _n
 function get_if_keyed_name (&$key,&$id,&$lc,&$note) {
   global $head, $lex, $typ, $pos, $not, $id_anonymous;
@@ -2612,7 +2653,7 @@ function get_keyed_name ($should,&$id,&$lc,&$note) {
   if ( !$ok ) comp_error("SYNTAX: bylo očekáváno '$should'");
   return true;
 }
-# -------------------------------------------------------------------------------------------------- 'key'
+# -------------------------------------------------------------------------------------------- 'key'
 # 'key' -- klíčové slovo je omezeno hodnotou
 function get_if_the_key ($key,&$lc) {
   global $head, $lex, $typ, $pos;
@@ -2624,7 +2665,7 @@ function get_if_the_key ($key,&$lc) {
   }
   return $ok;
 }
-# -------------------------------------------------------------------------------------------------- delimiter
+# ---------------------------------------------------------------------------------------- delimiter
 # zjistí následuje-li v textu oddělovač, jestli ano přečte jej
 function get_if_delimiter ($del) {
   global $head, $lex, $typ;
@@ -2676,7 +2717,7 @@ function get_if_id_or_key ($id) {
   }
   return $ok;
 }
-# -------------------------------------------------------------------------------------------------- number
+# ------------------------------------------------------------------------------------------- number
 # num :: [-] <num>
 function get_if_number (&$number) {
   global $head, $lex, $typ;
@@ -2692,7 +2733,7 @@ function get_if_number (&$number) {
   }
   return $ok;
 }
-# -------------------------------------------------------------------------------------------------- ,id
+# ---------------------------------------------------------------------------------------------- ,id
 function get_if_comma_id (&$id) {
   global $head, $lex, $typ, $pos, $last_lc;
   $ok= $typ[$head]=='del' && $lex[$head]==',';
@@ -2707,7 +2748,7 @@ function get_if_comma_id (&$id) {
   }
   return $ok;
 }
-# -------------------------------------------------------------------------------------------------- id
+# ----------------------------------------------------------------------------------------------- id
 # identifikátorem může být i hvězdička - se speciálním významem, podle sémantického kontextu
 # v režimu debuggeru lze použít na začátku i dolar
 function get_if_id (&$id) {
@@ -2758,7 +2799,7 @@ function get_id_or_key (&$id) {
   if ( !$ok ) comp_error("SYNTAX: byl očekáván identifikátor nebo klíčové slovo");
   return true;
 }
-# -------------------------------------------------------------------------------------------------- value
+# -------------------------------------------------------------------------------------------- value
 # value :: [-]num | str | object | array | constant_name   --> $value
 # vrací 1.písmeno typu
 function get_value (&$val,&$type) {
@@ -2906,8 +2947,10 @@ function get_slist($context,&$st) {
 # -------------------------------------------------------------------------------------------- stmnt
 # stmnt   :: '{' slist '}'                      --> G(slist)
 #          | id '=' expr2                       --> {expr:call,op:id.set,par:[G(expr2)]}
-#          | 'if' '(' expr2 ')' stmnt [ 'else' stmnt ]  --> {expr:if,test:G(expr2),then:G(stmnt/1),else:G(stmnt/2)}
-#          | 'for' '(' 'let' id 'of' expr ')' '{' slist '}' --> {expr:for,var:id,of:G(expr),stmnt:(slist)}
+#          | 'if' '(' expr2 ')' stmnt [ 'else' stmnt ]  
+#                                               --> {expr:if,test:G(expr2),then:G(st1),else:G(st2)}
+#          | 'for' '(' 'let' id 'of' expr ')' '{' slist '}' 
+#                                               --> {expr:for,var:id,of:G(expr),stmnt:(slist)}
 #          | 'switch (' expr2 ') {' cases '}'   --> {expr:switch,of:G(expr2),cases:G(cases)}
 #          | call2                              --> G(call2)
 #          |
@@ -2990,7 +3033,7 @@ function get_cases($context,&$cs) {
       $val= $type= $slist= null;
       get_value ($val,$type);
       get_delimiter(':');
-      $case= (object)array('case'=>$val,'body'=>array(),'break'=>0);
+      $case= (object)array('expr'=>'slist','body'=>array(),'case'=>$val,'break'=>0);
       while ( $ok ) {
         if ( look_id_or_key('break') || look_id_or_key('case') 
           || look_id_or_key('default') || look_delimiter('}')) {
@@ -3014,7 +3057,7 @@ function get_cases($context,&$cs) {
   if ( $ok ) {
     # 'default' ':' slist ['break;'] --> {body:G(slist),break:0/1}
     get_delimiter(':');
-    $default= (object)array('body'=>array(),'break'=>0);
+    $default= (object)array('expr'=>'slist','body'=>array(),'break'=>0);
     while ( $ok ) {
       if ( look_id_or_key('break') || look_delimiter('}') ) {
         break;
@@ -3120,7 +3163,7 @@ function get_call2_id($context,&$expr,$id,$valued) {
 #        | value                                --> $value
 #        | '{' alt '}'                          --> G(alt)
 #        | '[' alt ']'                          --> G(alt)
-# -------------------------------------------------------------------------------------------------- code
+# --------------------------------------------------------------------------------------------- code
 # $context je objekt se jmény formálních parametrů - překládaných jako {id:offset,...}
 function get_code($context,&$code,&$vars,&$prior,&$lc_) {
   global $pos, $head;
@@ -3152,7 +3195,7 @@ function get_code($context,&$code,&$vars,&$prior,&$lc_) {
 //   }
   return true;
 }
-# -------------------------------------------------------------------------------------------------- alt
+# ---------------------------------------------------------------------------------------------- alt
 # alt   :: seq ( '|' seq )*                     --> {alt:[G(expr),...]}
 function get_alt($context,&$code) {
   $alt= (object)array('expr'=>'alt');
@@ -3169,7 +3212,7 @@ function get_alt($context,&$code) {
   $code= count($alt->body)==1 ? $alt->body[0] : $alt;
   return $ok;
 }
-# -------------------------------------------------------------------------------------------------- seq
+# ---------------------------------------------------------------------------------------------- seq
 # seq   :: expr ( ';' expr )*                   --> {seq:[G(expr),...]}
 function get_seq($context,&$code) {
   $seq= (object)array('expr'=>'seq');
@@ -3188,7 +3231,7 @@ function get_seq($context,&$code) {
   $code= count($seq->body)==1 ? $seq->body[0] : $seq;
   return $ok;
 }
-# -------------------------------------------------------------------------------------------------- call
+# --------------------------------------------------------------------------------------------- call
 # call  :: id '(' expr ( ',' expr* ) ')'        --> {op:$id,par:[G(expr),...]}
 function get_call($context,&$expr,$id) {
   global $last_lc;
@@ -3209,7 +3252,7 @@ function get_call($context,&$expr,$id) {
   }
   return true;
 }
-# -------------------------------------------------------------------------------------------------- expr
+# --------------------------------------------------------------------------------------------- expr
 # expr  :: id '(' expr ( ',' expr* ) ')' | id | value | '{' alt '}' | '[' alt ']'
 function get_expr($context,&$expr) {
   global $last_lc;
@@ -3290,7 +3333,7 @@ function get_expr($context,&$expr) {
   return true;
 }
 # ================================================================================================== LEXICAL
-# -------------------------------------------------------------------------------------------------- lex_analysis2
+# ------------------------------------------------------------------------------------ lex_analysis2
 # $dbg = false nebo pro debugger proc|func
 function lex_analysis2 ($dbg=false) {
   global $tok2lex, $ezer, $keywords, $specs, $lex, $typ, $pos, $not, $gen_source, 
@@ -3394,7 +3437,7 @@ function lex_analysis2 ($dbg=false) {
   }
   return true;
 }
-# -------------------------------------------------------------------------------------------------- ezer
+# --------------------------------------------------------------------------------------------- ezer
 function tok_strings(&$tok) {
   $count= count($tok);
   for ($i= 0; $i<$count; $i++) {
@@ -3418,7 +3461,7 @@ function tok_strings(&$tok) {
   }
   return true;
 }
-# -------------------------------------------------------------------------------------------------- ezer
+# --------------------------------------------------------------------------------------------- ezer
 function tok_positions(&$tok) {
   $line= 0; $col= 1; $count= count($tok);
   for ($i= 0; $i<$count; $i++) {
@@ -3448,7 +3491,7 @@ function tok_positions(&$tok) {
     $col+= strlen($c);
   }
 }
-# -------------------------------------------------------------------------------------------------- get_source
+# --------------------------------------------------------------------------------------- get_source
 # generování úseku zdrojového kódu
 function get_source($start,$stop) {
   global $lex;
@@ -3459,7 +3502,7 @@ function get_source($start,$stop) {
   return $src;
 }
 # ================================================================================================== ERROR
-# -------------------------------------------------------------------------------------------------- comp_error
+# --------------------------------------------------------------------------------------- comp_error
 function comp_error ($msg) {
   global $pos, $head, $errors, $err, $error_code_lc, $ezer_name, $ezer_app;
   $errors++;

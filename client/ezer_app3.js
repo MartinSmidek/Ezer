@@ -1957,7 +1957,8 @@ class Eval {
 //   K       - zahájení cyklu foreach pro složky pole nebo objektu
 //   L i     - test pro foreach, volání procedury s jedním či dvěma parametry
 //   F i     - test pro for-of 
-//   S       - test pro switch
+//   S       - test pro switch v proc
+//   S v     - test pro switch ve func
 //   + [jmp] [iff] [ift] - obsahují offset pro posun čitače v závislosti na hodnotě na vrcholu zásobníku
 //   + [go] - obsahuje offset pro posun čitače (bez změny a závislosti na zásobníku)
 //   + [s] - pozice ve zdrojovém textu ve tvaru  l,c
@@ -2357,15 +2358,25 @@ class Eval {
                 val= obj[cc.i];
               this.stack[++this.top]= val;
               break; }
-            // S - test pro switch; při rovnosti horních 2 elementů je odstraní a pokračuje,
+            // S - test pro switch/proc; při rovnosti horních 2 elementů je odstraní a pokračuje,
             //                      při nerovnosti sníží zásobník a skočí
+            // S v - test pro switch/func; testuje vrchol zásobníku proti konstantě
+            //                      při nerovnosti skočí
             case 'S': {
-              val= this.stack[this.top--];
-              if ( this.stack[this.top]==val ) {
-                no_iff= true;   // iff jen sníží zásobník
+              if ( cc.v ) {
+                val= this.stack[this.top];
+                if ( Ezer.fce.eq(cc.v,val) ) {            // při rovnosti
+                  c-= cc.go-1;                            // eliminuj příkaz skoku
+                }
               }
               else {
-                this.stack[++this.top]= 0;
+                val= this.stack[this.top--];
+                if ( this.stack[this.top]==val ) {
+                  no_iff= true;   // iff jen sníží zásobník
+                }
+                else {
+                  this.stack[++this.top]= 0;
+                }
               }
               break; }
             // K - inicializace pro foreach iterující objekt, na zásobník přidá
