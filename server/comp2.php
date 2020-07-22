@@ -212,8 +212,8 @@ function comp_file ($name,$root='',$list_only='',$_comp_php=false) {  #trace();
     }
     // export pro doxygen
     if ( $doxygen ) {
-      global $doxy_cpp, $doxy_ln; 
-      $doxy_cpp= ''; $doxy_ln= 1; 
+      global $doxy_cpp, $doxy_ln;
+      $doxy_cpp= ''; $doxy_ln= 1;
       doxygen($start);
       $xname= "$ezer_path_root/$root/code/$name.cpp";
       file_put_contents($xname,$doxy_cpp);
@@ -445,7 +445,7 @@ function dbg_context_load ($ctx) {  #trace();
           $owner->part= $modul->part;
         }
       }
-      
+
     }
   }
   catch (Exception $e) {
@@ -457,7 +457,7 @@ end:
 # ------------------------------------------------------------------------------------------ doxygen
 # export souboru pro doxygen
 function doxygen($x) {
-  global $doxy_cpp, $doxy_ln; 
+  global $doxy_cpp, $doxy_ln;
   $out= function($lc,$str) use (&$doxy_cpp,&$doxy_ln) {
     list($l)= explode(',',$lc);
     if ( $l > $doxy_ln ) {
@@ -559,7 +559,7 @@ function pragma_attrs($c) {
 # doplní _abs (absolutní jména)
 # $context= [id=>objekt,...]
 # a naváže includované části
-function link_code(&$c,$name,$isroot,$block) { 
+function link_code(&$c,$name,$isroot,$block) {
   global $context, $error_code_lc, $call_php;
   $c->_abs= $name;
   if ( $c->type=='view' ) {
@@ -826,7 +826,7 @@ function export(&$c,$id) {
       }
     }
     $e->_lc= $c->_lc;
-    if ( isset($c->lc_) ) 
+    if ( isset($c->lc_) )
       $e->lc_= $c->lc_;
     if ( $c->_c )
       $e->_c= $c->_c;
@@ -898,8 +898,8 @@ function find_part_abs($name,&$full,$type='') {
       if ( isset($context[$i]->ctx->part->$id)
         && ($type && !$end_id ? $context[$i]->ctx->part->$id->type==$type : true) ) {
 //                                                 display("find_part_abs B/$i-$end_id: $name - {$context[$i]->id} - ?$id ");
-        for ($k= 0; $k<=$i; $k++)  { 
-          $full.= ($full ? '.' : '') . $context[$k]->id;         
+        for ($k= 0; $k<=$i; $k++)  {
+          $full.= ($full ? '.' : '') . $context[$k]->id;
         }
         $full.= ".$id";
         $obj= $context[$i]->ctx->part->$id;
@@ -1005,19 +1005,13 @@ function gen_func($c,&$desc,$name) {
     $c->par->{$id}+= $n;
   }
 // prázdná procedura obsahuje jen return
-  $struct= null;
-  $c= $c->code ? gen2($c->par,$c->var,$c->code,0,$struct) : array((object)array('o'=>'f','i'=>'stop'));
+  $c= $c->code ? gen2($c->par,$c->var,$c->code,0) : array((object)array('o'=>'f','i'=>'stop'));
   $desc->code= $c;
-  walk_struct($struct,$desc->code,0,$struct->len,$struct->len,$struct->len);
-  walk_y($desc->code);
-  clean_code($desc->code);
 }
 # --------------------------------------------------------------------------------------------- gen2
 # generuje kód příkazů
 #   $i je použit pro překladu call
-#   $struct = {...} výstup
-function gen2($pars,$vars,$c,$icall,&$struct) { 
-  $struct= (object)array('typ'=>$c->expr,'i'=>-1,'ift'=>-1,'iff'=>-1,'len'=>-1);
+function gen2($pars,$vars,$c,$icall) {
   global $names, $code_top, $call_php, $block_get;
   $obj= null;
   switch ( $c->expr ) {
@@ -1033,26 +1027,17 @@ function gen2($pars,$vars,$c,$icall,&$struct) {
     // {expr:templ,par:[G(templ),...]}
     $npar= count($c->par);
     foreach($c->par as $par) {
-      $struct1= null;
-      $code[]= gen2($pars,$vars,$par,0,$struct1);
-      $struct->arr[]= $struct1;
+      $code[]= gen2($pars,$vars,$par,0);
     }
     $conc= (object)array('o'=>'f','i'=>'conc','a'=>$npar);
     $code[]= $conc;
     break;
-  // -------------------------------------- ?
-  case 'name':                                               // id ( '.' id )*
+  // -------------------------------------- id ( '.' id )*
+  case 'name':
     $code= gen_name($c->name,$pars,$vars,$obj,true,$c);
     if ( $obj && isset($obj->type) && isset($block_get[$obj->type]) ) {
       $code[]= (object)array('o'=>'m','i'=>'get');
     }
-    break;
-  // -------------------------------------- ?
-  case 'par':
-    $par= $c->par;
-    $ipar= /*$code_top+*/$pars->$par;
-    $code= (object)array('o'=>'p','i'=>$ipar);
-    $code_top++;
     break;
   // -------------------------------------- id ( expr1, ... ) ? value
   case 'call':
@@ -1066,28 +1051,12 @@ function gen2($pars,$vars,$c,$icall,&$struct) {
       }
       else comp_error("CODE: příkaz ask má chybné jméno funkce na serveru");
       for ($i= 1; $i<$npar; $i++) {
-        $struct1= null;
-        $code[]= gen2($pars,$vars,$c->par[$i],0,$struct1);
-        $struct->arr[]= $struct1;
+        $code[]= gen2($pars,$vars,$c->par[$i],0);
       }
       $call= (object)array('o'=>'e','i'=>$c->par[0]->value,'a'=>count($c->par)-1);
       if ( $c->lc ) $call->s= $c->lc;
       $code[]= $call;
       $code_top-= $npar;
-    }
-    // -------------------------------------- call fs
-    elseif ( $names[$c->op]->op=='fs' ) {
-      $code_top0= $code_top;
-      for ($i= 0; $i<$npar; $i++) {
-        $code_top= 0;
-        $code[]= (object)array('o'=>'y','c'=>gen2($pars,$vars,$c->par[$i],0,$struct1),
-          'str_c'=>$c->par[$i],'str_s'=>$struct1);
-      }
-      $code_top= $code_top0;
-      $call= (object)array('o'=>'s','i'=>$c->op,'a'=>$npar);
-      $struct->typ= 'struct';
-      if ( $c->lc ) $call->s= $c->lc;
-      $code[]= $call;
     }
     else {
       if ( ($cname= substr($c->op,-5))=='.make' || ($cname= substr($c->op,-11))=='.browse_map') {
@@ -1106,19 +1075,15 @@ function gen2($pars,$vars,$c,$icall,&$struct) {
         $code= array(
             $code[0],
             (object)array('o'=>'v','v'=>$code[1]->i),
-            gen2($pars,$vars,$c->par[0],0,$struct1),
+            gen2($pars,$vars,$c->par[0],0),
             (object)array('o'=>'m','i'=>'set_attrib','a'=>2)
         );
         $cend= count($code)-1;
-        $struct1->argx= $cend+1;                       // zabránění vložení IFT nebo IFF do kódu
-        $struct->arr[]= $struct1;
       }
       else {
         $call= $code[$cend];
         for ($i= 0; $i<$npar; $i++) {
-          $code[$i+$cend]= gen2($pars,$vars,$c->par[$i],0,$struct1);
-          $struct1->argx= $cend+1;                       // zabránění vložení IFT nebo IFF do kódu
-          $struct->arr[]= $struct1;
+          $code[$i+$cend]= gen2($pars,$vars,$c->par[$i],0);
         }
         if ( $call->o!='w' )
           $call->a= $npar;
@@ -1127,7 +1092,7 @@ function gen2($pars,$vars,$c,$icall,&$struct) {
       if ( $c->lc ) $call->s= $c->lc;
       $code_top-= $npar;
     }
-    if ( !$c->value ) 
+    if ( !$c->value )
       $code[]= (object)array('o'=>'z','i'=>1);
     break;
   // -------------------------------------- st1 ; st2 ; ...
@@ -1136,8 +1101,7 @@ function gen2($pars,$vars,$c,$icall,&$struct) {
     $len= array();
     $l= 0;
     for ($i= 0; $i<count($c->body); $i++) {
-      $cc= gen2($pars,$vars,$c->body[$i],0,$struct1);
-      $struct->arr[]= $struct1;
+      $cc= gen2($pars,$vars,$c->body[$i],0);
       $l= count($cc);                   // $l = skutečná délka kódu $cc
       $len[$i]= $l;
       $code[$i]= $cc;
@@ -1149,59 +1113,64 @@ function gen2($pars,$vars,$c,$icall,&$struct) {
     break;
   // -------------------------------------- if ( e ) st1 [ else st2 ]
   case 'if':
-    $ctest= gen2($pars,$vars,$c->test,0,$struct1);
-    $struct->arr[]= $struct1;
-    $cthen= gen2($pars,$vars,$c->then,0,$struct1);
-    $struct->arr[]= $struct1;
+    $ctest= gen2($pars,$vars,$c->test,0);
+    $cthen= gen2($pars,$vars,$c->then,0);
     if ( $c->else ) { // if then else
-      $celse= gen2($pars,$vars,$c->else,0,$struct1);
-      $struct->arr[]= $struct1;
+      $iff= (object)array('o'=>0,'iff'=>count($cthen)+2);
+      $celse= gen2($pars,$vars,$c->else,0);
       $go= (object)array('o'=>0,'go'=>count($celse)+1);
-      $code[]= array($ctest,$cthen,$go,$celse);
-      $struct->typ= 'if3';
+      $code[]= array($ctest,$iff,$cthen,$go,$celse);
     }
     else { // if then
-      $code[]= array($ctest,$cthen);
-      $struct->typ= 'if2';
+      $iff= (object)array('o'=>0,'iff'=>count($cthen)+1);
+      $code[]= array($ctest,$iff,$cthen);
     }
+    break;
+  // -------------------------------------- e ? e : e
+  case 'tern':
+    # G(expr:tern,par:[G(expr3),G(expr3),G(expr3)]
+    $ctest= gen2($pars,$vars,$c->par[0],0);
+    $cthen= gen2($pars,$vars,$c->par[1],0);
+    $iff= (object)array('o'=>0,'iff'=>count($cthen)+2);
+    $celse= gen2($pars,$vars,$c->par[2],0);
+    $go= (object)array('o'=>0,'go'=>count($celse)+1);
+    $code[]= array($ctest,$iff,$cthen,$go,$celse);
     break;
   // -------------------------------------- for ( var of expr ) { stmnts }
   case 'for':
     // {expr:for,var:id,of:G(expr),stmnt:(slist)}
     // překlad složek
     $var= gen_name($c->var,$pars,$vars,$obj,true,$c->var);
-    $expr= gen2($pars,$vars,$c->of,0,$struct1);
-    $stmnt= gen2($pars,$vars,$c->stmnt,0,$struct1);
+    $expr= gen2($pars,$vars,$c->of,0);
+    $stmnt= gen2($pars,$vars,$c->stmnt,0);
     // pomocné instrukce
     $inic= (object)array('o'=>'K');
     $test= (object)array('o'=>'F','i'=>$var[0]->i,'go'=>count((array)$stmnt)+2);
     $go= (object)array('o'=>0,'go'=>-count($stmnt)-1);
     $code[]= array($expr,$inic,$test,$stmnt,$go);      // pro pole i objekty
-    $struct->arr[]= $struct1;
-    $struct->typ= 'fof';
     break;
   // -------------------------------------- switch ( expr ) { case val: stmnt ... break .. }
   case 'switch':
     // switch  = {expr:switch,of:G(expr2),cases:G(cases)}
     // cases   = [G(case),..G(default)]
     // case    = {case:value,body:G(slist),break:0/1}
-    // default = {body:G(slist),break:0/1}    
+    // default = {body:G(slist),break:0/1}
     // překlad složek
-    $expr= gen2($pars,$vars,$c->of,0,$struct1);
+    $expr= gen2($pars,$vars,$c->of,0);
     $code[]= $expr;
     $ncase= count($c->cases);
     $cases= array();
     for ($i= 0; $i<$ncase; $i++) {
       $case= $c->cases[$i];
-      $stmnt= gen2($pars,$vars,$case,0,$struct1);
+      $stmnt= gen2($pars,$vars,$case,0);
       $cases[$i]= (object)array('slist'=>$stmnt,'case'=>$case->case,'break'=>$case->break);
     }
     // konstrukce skoků
     for ($i= 0; $i<$ncase; $i++) {
       $case= $cases[$i];
-      $test= $case->case 
+      $test= $case->case
           ? (object)array('o'=>'S','v'=>$case->case,
-              'go'=>count($case->slist)+($case->break ? 1 : 0)+1) 
+              'go'=>count($case->slist)+($case->break ? 1 : 0)+1)
           : array();
       $block= array($test,$case->slist);
       if ( $case->break ) {
@@ -1215,13 +1184,10 @@ function gen2($pars,$vars,$c,$icall,&$struct) {
       $code[]= $block;
     }
     $code[]= (object)array('o'=>'z','i'=>1);  // pop expr
-    $struct->arr[]= $struct1;
-    $struct->typ= 'sw';
     break;
   }
   $pc= array();
   plain($code,$pc);
-  $struct->len= count($pc);
   return $pc;
 }
 # ================================================================================================== GEN proc
@@ -1349,7 +1315,7 @@ function walk_struct($down,$pcode,$beg,$end,$ift,$iff,$is_arg=0) {
       walk_struct($stmnt,$pcode,$icode,$end,$ift,$ift,1);
     }
     def_jumps($down,$pcode);
-  } 
+  }
   elseif ( $typ=='if' ) {  // if - then - else (v proc)
     $test= $down->arr[0];
     $then= $down->arr[1]; $then->is_go= 1;
@@ -1357,43 +1323,7 @@ function walk_struct($down,$pcode,$beg,$end,$ift,$iff,$is_arg=0) {
     $t_len= $test->len;
     $tt_len= $t_len + $then->len;
     $te_len= $then->len + $else->len;
-    $tte_len= $tt_len + $else->len;
-    walk_struct($test,$pcode,$icode,$end,$icode+$t_len,$icode+$tt_len,0);
-    $icode+= $t_len;
-    walk_struct($then,$pcode,$icode,$end,
-      $is_arg ? $icode+$te_len : $ift,$is_arg ? $icode+$te_len : $ift,1);
-    $icode+= $tt_len;
-    walk_struct($else,$pcode,$icode,$end,
-      $is_arg ? $icode+$te_len : $ift,$is_arg ? $icode+$te_len : $ift,1);
-    def_jumps($down,$pcode);
-  }
-  elseif ( $typ=='fof' ) {  // for - of (ve func)
-    def_jumps($down,$pcode);
-  }
-  elseif ( $typ=='sw' ) {  // switch (ve func)
-    def_jumps($down,$pcode);
-  }
-  elseif ( $typ=='if2' ) {  // if - then (ve func)
-    $test= $down->arr[0];
-    $then= $down->arr[1]; $then->is_go= 1;
-    $t_len= $test->len;
-    $tt_len= $t_len + $then->len;
-    $te_len= $then->len;
-    walk_struct($test,$pcode,$icode,$end,$icode+$t_len,$icode+$tt_len,0);
-    $icode+= $t_len;
-    walk_struct($then,$pcode,$icode,$end,
-      $is_arg ? $icode+$te_len : $ift,$is_arg ? $icode+$te_len : $ift,1);
-    $icode+= $tt_len;
-    def_jumps($down,$pcode);
-  }
-  elseif ( $typ=='if3' ) {  // if - then - else (ve func)
-    $test= $down->arr[0];
-    $then= $down->arr[1]; $then->is_go= 1;
-    $else= $down->arr[2]; $else->is_go= 1;
-    $t_len= $test->len;
-    $tt_len= $t_len + $then->len + 1;
-    $te_len= $then->len + $else->len;
-    $tte_len= $tt_len + $else->len;
+//    $tte_len= $tt_len + $else->len;
     walk_struct($test,$pcode,$icode,$end,$icode+$t_len,$icode+$tt_len,0);
     $icode+= $t_len;
     walk_struct($then,$pcode,$icode,$end,
@@ -1436,7 +1366,7 @@ function walk_struct($down,$pcode,$beg,$end,$ift,$iff,$is_arg=0) {
   }
 //                                         display("walk_struct($down->typ,,$beg,$end,$ift,$iff)=$i_next");
   return $i_next;
-}
+}//walk_struct
 # ---------------------------------------------------------------------------------------- def_jumps
 # definuje v kódu iff, ift, jmp
 function def_jumps($c,$pcode) {
@@ -1573,9 +1503,9 @@ function gen_name($name,$pars,$vars,&$obj,$first,$c=null,$nargs=null) {  #trace(
   }
   else if ( ($type= $names[$id]->op) ) {
     // na začátku ($first==true) nesmí být metoda - jinak může, její objekt je na zásobníku
-    if ($first && ($type=='fm'||$type=='fx'||$type=='fi')) 
+    if ($first && ($type=='fm'||$type=='fx'||$type=='fi'))
       comp_error("CODE: volání metody '$id' bez objektu",0);
-    if ($first && $type[0]=='o' ) 
+    if ($first && $type[0]=='o' )
       comp_error("CODE: hodnota atributu bez objektu",0);
     $o= $type[0]=='o' ? 'a' : $type[1];
     $code[0]= (object)array('o'=>$o,'i'=>isset($names[$id]->js) ? $names[$id]->js : $id);
@@ -1610,7 +1540,7 @@ function gen_name($name,$pars,$vars,&$obj,$first,$c=null,$nargs=null) {  #trace(
 //                                                                                         $note.= "[$abs]";
         }
         else {
-          for ($k= $i; $k>=0; $k--) { 
+          for ($k= $i; $k>=0; $k--) {
             $abs= $context[$k]->id.'.'.$abs;
           }
         }
@@ -2072,7 +2002,7 @@ function get_ezer (&$top,&$top2,$dbg=false) {
   $ok= lex_analysis2($dbg);
   note_time('lexical');
   if ( $ok ) {
-    $head= 0; 
+    $head= 0;
     $ok= true;
 //     $top= new stdClass;
     while ( $ok && !$errors ) {
@@ -2325,7 +2255,7 @@ function get_if_block ($root,&$block,&$id) {
 # attr :: id [':' val | ':' id]         -- id musí být jméno konstanty, typ atributu musí mít c
 # defaultní val=1
 function get_if_attrib ($root,&$id,&$val) {
-  global $attribs1, $attribs2, $pragma_box, $errors; 
+  global $attribs1, $attribs2, $pragma_box, $errors;
   if ( $errors ) return false;
   $val= 1;
   $ok= get_if_id_not_keyword($id);
@@ -2433,7 +2363,7 @@ function get_numvalue (&$val,&$id) {
     if ( $typ[$head]!='num' ) comp_error("SYNTAX: po + byla očekávána numerická hodnota");
     $id= null;
     $val= 0+$val;
-    $head++; 
+    $head++;
   }
   else if ( $typ[$head]=='id' ) {     // jméno konstanty
     $id= $val;
@@ -2635,18 +2565,18 @@ function get_if_keyed_name (&$key,&$id,&$lc,&$note) {
     $id= $lex[$head]->id;
     $lc= $pos[$head];
     $note= isset($not[$head]) ? $not[$head] : null;
-    $head++; 
+    $head++;
   }
   if ( !$ok ) {
     $ok= $typ[$head]=='key';
     if ( $ok ) {
       $lc= $pos[$head];
       $note= isset($not[$head]) ? $not[$head] : null;
-      $key= $lex[$head]; $head++; 
+      $key= $lex[$head]; $head++;
       $ok= $typ[$head]=='id' || $typ[$head]=='key' ;
       if ( $ok ) {
         $lc= $pos[$head];
-        $id= $lex[$head]; $head++; 
+        $id= $lex[$head]; $head++;
       }
       else {
         $id_anonymous++;
@@ -2673,7 +2603,7 @@ function get_if_the_key ($key,&$lc) {
   $ok= $typ[$head]=='key' && $key==$lex[$head];
   if ( $ok ) {
     $lc= $pos[$head];
-    $head++; 
+    $head++;
   }
   return $ok;
 }
@@ -2683,7 +2613,7 @@ function get_if_delimiter ($del) {
   global $head, $lex, $typ;
   $ok= $typ[$head]=='del' && $lex[$head]==$del;
   if ( $ok ) {
-    $head++; 
+    $head++;
   }
   return $ok;
 }
@@ -2725,7 +2655,7 @@ function get_if_id_or_key ($id) {
   global $head, $lex, $typ;
   $ok= $lex[$head]==$id && ($typ[$head]=='id'|| $typ[$head]=='key');
   if ( $ok ) {
-    $head++; 
+    $head++;
   }
   return $ok;
 }
@@ -2739,7 +2669,7 @@ function get_if_number (&$number) {
   $ok= $typ[$head]=='num';
   if ( $ok ) {
     $number.= $lex[$head];
-    $head++; 
+    $head++;
     // kontrola levostranné nuly
     $number= 0+$number;
   }
@@ -2755,7 +2685,7 @@ function get_if_comma_id (&$id) {
       $head++;
       $id= $lex[$head];
       $last_lc= $pos[$head];
-      $head++; 
+      $head++;
     }
   }
   return $ok;
@@ -2771,7 +2701,7 @@ function get_if_id (&$id) {
   if ( $ok ) {
     $id= $lex[$head];
     $last_lc= $pos[$head];
-    $head++; 
+    $head++;
   }
   return $ok;
 }
@@ -2783,7 +2713,7 @@ function get_if_id_not_keyword (&$id) {
   if ( $ok ) {
     $id= $lex[$head];
     $last_lc= $pos[$head];
-    $head++; 
+    $head++;
   }
   return $ok;
 }
@@ -2794,7 +2724,7 @@ function get_id (&$id) {
   if ( $ok ) {
     $id= $lex[$head];
     $last_lc= $pos[$head];
-    $head++; 
+    $head++;
   }
   if ( !$ok ) comp_error("SYNTAX: byl očekáván identifikátor");
   return true;
@@ -2806,7 +2736,7 @@ function get_id_or_key (&$id) {
   if ( $ok ) {
     $id= $lex[$head];
     $last_lc= $pos[$head];
-    $head++; 
+    $head++;
   }
   if ( !$ok ) comp_error("SYNTAX: byl očekáván identifikátor nebo klíčové slovo");
   return true;
@@ -2834,7 +2764,7 @@ function get_value (&$val,&$type) {
     $val= $type=='s'
         ? substr(substr($val,1),0,-1)
         : 0+$val;
-    $head++; 
+    $head++;
   }
   else if ( $val=='°' ) {         // objektová konstanta
     $ok= true;
@@ -2864,7 +2794,7 @@ function get_value (&$val,&$type) {
 # zjistí, zda následuje hodnota
 function look_value () {
   global $head, $lex, $typ;
-  $ok= $typ[$head]=='num' || $typ[$head]=='str' 
+  $ok= $typ[$head]=='num' || $typ[$head]=='str'
       || ($typ[$head]=='del' && $lex[$head]=='°')
       || ($typ[$head]=='del' && $lex[$head]=='-')
       ;
@@ -2915,7 +2845,7 @@ function get_object (&$obj,&$type) {
 # vdef  :: id ':' type
 # -------------------------------------------------------------------------------------------- code2
 # $context je objekt se jmény formálních parametrů - překládaných jako {id:offset,...}
-function get_code2($context,&$code,&$vars,&$prior,&$lc_) { 
+function get_code2($context,&$code,&$vars,&$prior,&$lc_) {
   global $pos, $head;
   $code= null;
   $prior= 0;
@@ -2940,7 +2870,7 @@ function get_code2($context,&$code,&$vars,&$prior,&$lc_) {
   return true;
 }
 # -------------------------------------------------------------------------------------------- slist
-# slist   :: stmnt ( ';' stmnt )*               --> {expr:slist,body:[G(stmnt),...]} 
+# slist   :: stmnt ( ';' stmnt )*               --> {expr:slist,body:[G(stmnt),...]}
 function get_slist($context,&$st) {
   $st= (object)array('expr'=>'slist');
   $st->body= array();
@@ -2959,9 +2889,9 @@ function get_slist($context,&$st) {
 # -------------------------------------------------------------------------------------------- stmnt
 # stmnt   :: '{' slist '}'                      --> G(slist)
 #          | id '=' expr2                       --> {expr:call,op:id.set,par:[G(expr2)]}
-#          | 'if' '(' expr2 ')' stmnt [ 'else' stmnt ]  
+#          | 'if' '(' expr2 ')' stmnt [ 'else' stmnt ]
 #                                               --> {expr:if,test:G(expr2),then:G(st1),else:G(st2)}
-#          | 'for' '(' 'let' id 'of' expr ')' '{' slist '}' 
+#          | 'for' '(' 'let' id 'of' expr ')' '{' slist '}'
 #                                               --> {expr:for,var:id,of:G(expr),stmnt:(slist)}
 #          | 'switch (' expr2 ') {' cases '}'   --> {expr:switch,of:G(expr2),cases:G(cases)}
 #          | call2                              --> G(call2)
@@ -2982,7 +2912,7 @@ function get_stmnt($context,&$st) {
       $st= (object)array('expr'=>'call','op'=>"$id.set",'par'=>array($expr));
     }
     elseif ( get_if_delimiter('(') ) {
-      # 'if' '(' expr2 ')' stmnt [ 'else' stmnt ]  
+      # 'if' '(' expr2 ')' stmnt [ 'else' stmnt ]
       #      --> {expr:if,test:G(expr2),then:G(stmnt/1),else:G(stmnt/2)}
       if ( $id=='if' ) {
         $test= $then= $else= null;
@@ -3047,7 +2977,7 @@ function get_cases($context,&$cs) {
       get_delimiter(':');
       $case= (object)array('expr'=>'slist','body'=>array(),'case'=>$val,'break'=>0);
       while ( $ok ) {
-        if ( look_id_or_key('break') || look_id_or_key('case') 
+        if ( look_id_or_key('break') || look_id_or_key('case')
           || look_id_or_key('default') || look_delimiter('}')) {
           break;
         }
@@ -3090,24 +3020,39 @@ function get_cases($context,&$cs) {
   return true;
 }
 # -------------------------------------------------------------------------------------------- expr2
-# expr2   :: expr3                              --> G(expr3) 
+# expr2   :: expr3                              --> G(expr3)
 #          | expr3 op expr3                     --> G(expr:call,op:G(op),par:[G(expr3),G(expr3)]
-# op       | '+' | '-' | '*' | '/'              --> sum | minus | multiply | divide
+#          | expr3 ? expr2 : expr2              --> G(expr:tern,par:[G(e/1),G(e/2),G(e/3)]
+# op      :: '+' | '-' | '*' | '/'              --> sum | minus | multiply | divide | gt | eq
+#          | '>' | '<' | '=='                   --> gt | lt | eq
+#          | '&&' | '||'                        --> and | or
 # expr3   :: call2                              --> G(call2)
 #          | id                                 --> {expr:par,par:id} | {expr:name,name:id}
 #          | '`' template* '`'                  --> {expr:templ,par:[G(templ),...]}
 #          | value                              --> {expr:value,value:v,type:t}
-#          | '(' expr2 ')'                      --> G(expr2) 
+#          | '(' expr2 ')'                      --> G(expr2)
 # templ   :: string                             --> {expr:value,value:v,type:t}
 #          | '${' ( id | call2 ) '`'            --> G(id) | G(call2)
 function get_expr2($context,&$expr) {
   global $last_lc;
   $ok= get_expr3($context,$expr);
-  $op= $expr2= null;
+  $op= $expr2= $expr3= null;
   if (     get_if_delimiter('+') )  $op= 'sum';
   elseif ( get_if_delimiter('-') )  $op= 'minus';
   elseif ( get_if_delimiter('*') )  $op= 'multiply';
   elseif ( get_if_delimiter('/') )  $op= 'divide';
+  elseif ( get_if_delimiter('>') )  $op= 'gt';
+  elseif ( get_if_delimiter('<') )  $op= 'lt';
+  elseif ( get_if_delimiter('==') ) $op= 'eq';
+  elseif ( get_if_delimiter('&&') ) $op= 'and';
+  elseif ( get_if_delimiter('||') ) $op= 'or';
+  elseif ( get_if_delimiter('?') )  {
+    # G(expr:tern,par:[G(expr3),G(expr3),G(expr3)]
+    get_expr2($context,$expr2);
+    get_delimiter(':');
+    $ok= get_expr2($context,$expr3);
+    $expr= (object)array('expr'=>'tern','lc'=>$last_lc,'par'=>array($expr,$expr2,$expr3),'value'=>1);
+  }
   if ( $op ) {
     # expr3 op expr3 --> G(expr:call,op:G(op),par:[G(expr3),G(expr3)]
     $ok= get_expr3($context,$expr2);
@@ -3144,7 +3089,7 @@ function get_expr3($context,&$expr) {
       $ok= $typ[$head]=='str';
       if ( $ok ) {
         $expr->par[]= (object)array('expr'=>'value','value'=>$lex[$head],'type'=>'s');
-        $head++; 
+        $head++;
       }
       elseif ( get_if_delimiter('${') ) {
         $par= null;
@@ -3166,7 +3111,7 @@ function get_expr3($context,&$expr) {
   return true;
 }
 # -------------------------------------------------------------------------------------------- call2
-# call2   :: id '(' ')' | id '(' expr2 ( ',' expr2 )* ')' 
+# call2   :: id '(' ')' | id '(' expr2 ( ',' expr2 )* ')'
 #         --> {expr:call,op:id,par:[G(expr2),...],value:$valued}  -- valued=0 => clear stack
 function get_call2_id($context,&$expr,$id,$valued) {
   global $last_lc;
