@@ -2,8 +2,8 @@
 # ================================================================================================== DEFINICE
 function compiler_init () {
 global $wiki;
-global $blocs, $specs, $attribs, $uni_attribs, $blocs_help, $attribs_type, $attribs_help, $def_gen, $tab_symb_obj;
-global $tab_id_symb, $cmd_ajax, $cmd_gen, $cmd_lib, $cmd_metd, $gen_prefix, $use_list, $js1, $js2, $js3, $js3_ic;
+global $blocs, $specs, $attribs, $uni_attribs, $blocs_help, $attribs_type, $tab_symb_obj;
+global $tab_id_symb, $cmd_ajax, $cmd_gen, $cmd_lib, $gen_prefix, $use_list, $js1, $js2, $js3, $js3_ic;
 global $id_anonymous, $first_panel, $attribs1, $attribs2, $keywords, $dels, $tok2lex;
 global $pragma_attrs;
 global $blocs2, $blocs3,$block_get, $ezer_path_code, $ezer_path_root, $names;
@@ -294,7 +294,7 @@ $cmd_lib= // funkce nad stringy
 //          . 'graft,button_display,button_enable,ref_attr,def_attr,display';
 # inicializace skalárních proměnných (kvůli dávkové kompilaci)
 $first_panel= '';
-$cmd_type= array();                                 // pomocné: op_id -> ajax|
+//$cmd_type= array();                                 // pomocné: op_id -> ajax|
 $gen_prefix= '';                                    // prefix všech generovaných symbolů
 $use_list= array();                                 // zobrazeni form_id -> use_symbol*
 $js1= $js2= $js3= '';                               // první a druhá posloupnost JS
@@ -311,28 +311,29 @@ if (!defined('T_OLD_FUNCTION'))  define('T_OLD_FUNCTION', 'T_FUNCTION');
 if (!defined('T_ML_COMMENT'))    define('T_ML_COMMENT',   'T_COMMENT');
 else                             define('T_DOC_COMMENT',  'T_ML_COMMENT');
 
+define('T_SMALLER_OR_EQUAL',287); // definice v PHP prostě chybí
 $tok2lex= array(
   T_AND_EQUAL => 'del', T_ARRAY => 'id', T_ARRAY_CAST => 'x', T_AS => 'id', //T_BAD_CHARACTER => 'x',
   T_BOOL_CAST => 'x', T_BOOLEAN_AND => 'del', T_BOOLEAN_OR => 'del', T_BREAK => 'id', T_CASE => 'id',
   T_CLASS => 'id', T_CLASS_C => 'x', T_CLOSE_TAG => 'x', T_COMMENT => 'cmnt', T_CONCAT_EQUAL => 'x',
   T_CONST => 'id', T_CONSTANT_ENCAPSED_STRING => 'str', T_CONTINUE => 'id', T_CURLY_OPEN => 'del',
-  T_DEC => 'x', T_DECLARE => 'id', T_DEFAULT => 'id', T_DIV_EQUAL => 'x', T_DNUMBER => 'num',
+  T_DEC => 'del', T_DECLARE => 'id', T_DEFAULT => 'id', T_DIV_EQUAL => 'x', T_DNUMBER => 'num',
   T_DO => 'id', T_DOLLAR_OPEN_CURLY_BRACES => 'del', T_DOUBLE_ARROW => 'x', T_DOUBLE_CAST => 'x',
   T_ECHO => 'id', T_ELSE => 'id', T_ELSEIF => 'id', T_EMPTY => 'id',
   T_ENCAPSED_AND_WHITESPACE => 'blank', T_END_HEREDOC => 'x', T_ENDDECLARE => 'id',
   T_ENDFOR => 'id', T_ENDFOREACH => 'id', T_ENDIF => 'id', T_ENDSWITCH => 'id', T_ENDWHILE => 'id',
   T_EVAL => 'id', T_EXIT => 'id', T_EXTENDS => 'id', T_FILE => 'x', T_FOR => 'id',
   T_FOREACH => 'id', T_FUNC_C => 'x', T_FUNCTION => 'id', T_GLOBAL => 'id', //T_CHARACTER => 'del',
-  T_IF => 'id', T_INC => 'x', T_INCLUDE => 'id', T_INCLUDE_ONCE => 'id', T_INLINE_HTML => 'x',
-  T_INT_CAST => 'x', T_IS_EQUAL => 'del', T_IS_GREATER_OR_EQUAL => 'x', T_IS_IDENTICAL => 'x',
-  T_IS_NOT_EQUAL => 'x', T_IS_NOT_IDENTICAL => 'x', T_ISSET => 'id', T_LINE => 'x', T_LIST => 'id',
+  T_IF => 'id', T_INC => 'del', T_INCLUDE => 'id', T_INCLUDE_ONCE => 'id', T_INLINE_HTML => 'x',
+  T_INT_CAST => 'x', T_IS_EQUAL => 'del', T_IS_GREATER_OR_EQUAL => 'del', T_IS_IDENTICAL => 'x',
+  T_IS_NOT_EQUAL => 'del', T_IS_NOT_IDENTICAL => 'x', T_ISSET => 'id', T_LINE => 'x', T_LIST => 'id',
   T_LNUMBER => 'num', T_LOGICAL_AND => 'id', T_LOGICAL_OR => 'id', T_LOGICAL_XOR => 'id',
   T_MINUS_EQUAL => 'x', T_ML_COMMENT => 'cmnt', T_MOD_EQUAL => 'x', T_MUL_EQUAL => 'x',
   T_NEW => 'id', T_NUM_STRING => 'num', T_OBJECT_CAST => 'x', T_OBJECT_OPERATOR => 'x',
   T_OLD_FUNCTION => 'id', T_OPEN_TAG => 'x', T_OPEN_TAG_WITH_ECHO => 'x', T_OR_EQUAL => 'x',
   T_PAAMAYIM_NEKUDOTAYIM => 'x', T_PLUS_EQUAL => 'x', T_PRINT => 'id', T_REQUIRE => 'id',
   T_REQUIRE_ONCE => 'id', T_RETURN => 'id', T_SL => 'x', T_SL_EQUAL => 'x',
-  /*T_SMALLER_OR_EQUAL => 'x',*/ T_SR => 'x', T_SR_EQUAL => 'x', T_START_HEREDOC => 'x',
+  T_SMALLER_OR_EQUAL => 'del', T_SR => 'x', T_SR_EQUAL => 'x', T_START_HEREDOC => 'x',
   T_STATIC => 'id', T_STRING => 'id', T_STRING_CAST => 'str', T_STRING_VARNAME => 'str',
   T_SWITCH => 'id', T_UNSET => 'id', T_UNSET_CAST => 'x', T_USE => 'id', T_VAR => 'id',
   T_VARIABLE => 'id', T_WHILE => 'id', T_WHITESPACE => 'blank',  T_XOR_EQUAL => 'x',

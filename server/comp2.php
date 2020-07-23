@@ -1045,6 +1045,7 @@ function gen2($pars,$vars,$c,$icall) {
   case 'call':
     $code= array();
     $npar= count($c->par);
+    $w_set= false; // výraz lokální_proměnná.set (instrukce 'w i') nedává nic na zásobník
     if ( $c->op=='ask' ) {
       if ( $c->par[0] && $c->par[0]->value && $c->par[0]->type=='s' ) {
         $ask= $c->par[0]->value;
@@ -1087,14 +1088,16 @@ function gen2($pars,$vars,$c,$icall) {
         for ($i= 0; $i<$npar; $i++) {
           $code[$i+$cend]= gen2($pars,$vars,$c->par[$i],0);
         }
-        if ( $call->o!='w' )
+        if ( $call->o=='w' )
+          $w_set= true;
+        else
           $call->a= $npar;
         $code[$cend+$npar]= $call;
       }
       if ( $c->lc ) $call->s= $c->lc;
       $code_top-= $npar;
     }
-    if ( !$c->value )
+    if ( !$w_set && !$c->value )
       $code[]= (object)array('o'=>'z','i'=>1);
     break;
   // -------------------------------------- st1 ; st2 ; ...
@@ -1138,8 +1141,21 @@ function gen2($pars,$vars,$c,$icall) {
     $go= (object)array('o'=>0,'go'=>count($celse)+1);
     $code[]= array($ctest,$iff,$cthen,$go,$celse);
     break;
-  // -------------------------------------- for ( var of expr ) { stmnts }
+  // -------------------------------------- for ( expr ; expr ; stmnt ) { stmnts }
   case 'for':
+    // {expr:for,init:stmnt,test:expr,incr:stmnt,stmnt:slist}
+    // překlad složek
+    $init= gen2($pars,$vars,$c->init,0);
+    $test= gen2($pars,$vars,$c->test,0);
+    $incr= gen2($pars,$vars,$c->incr,0);
+    $stmnt= gen2($pars,$vars,$c->stmnt,0);
+    // pomocné instrukce
+    $iff= (object)array('o'=>0,'iff'=>count($incr)+count($stmnt)+2);
+    $back= (object)array('o'=>0,'go'=>-count($stmnt)-count($incr)-count($test)-1);
+    $code[]= array($init,$test,$iff,$stmnt,$incr,$back); 
+    break;
+  // -------------------------------------- for ( var of expr ) { stmnts }
+  case 'for-of':
     // {expr:for,var:id,of:G(expr),stmnt:(slist)}
     // překlad složek
     $var= gen_name($c->var,$pars,$vars,$obj,true,$c->var);
@@ -1150,6 +1166,16 @@ function gen2($pars,$vars,$c,$icall) {
     $test= (object)array('o'=>'F','i'=>$var[0]->i,'go'=>count((array)$stmnt)+2);
     $go= (object)array('o'=>0,'go'=>-count($stmnt)-1);
     $code[]= array($expr,$inic,$test,$stmnt,$go);      // pro pole i objekty
+    break;
+  // -------------------------------------- while ( expr ) { stmnts }
+  case 'while':
+    // {expr:while,while:G(expr),stmnt:(slist)}
+    // překlad složek
+    $expr= gen2($pars,$vars,$c->while,0);
+    $stmnt= gen2($pars,$vars,$c->stmnt,0);
+    $test= (object)array('o'=>0,'iff'=>count($stmnt)+2);
+    $go= (object)array('o'=>0,'go'=>-count($stmnt)-count($test)-2);
+    $code[]= array($expr,$test,$stmnt,$go);  
     break;
   // -------------------------------------- switch ( expr ) { case val: stmnt ... break .. }
   case 'switch':
@@ -2879,10 +2905,16 @@ function get_slist($context,&$st) {
 # -------------------------------------------------------------------------------------------- stmnt
 # stmnt   :: '{' slist '}'                      --> G(slist)
 #          | id '=' expr2                       --> {expr:call,op:id.set,par:[G(expr2)]}
+#          | id '++' | id '--'                  --> id=id+1 | id=id-1
 #          | 'if' '(' expr2 ')' stmnt [ 'else' stmnt ]
 #                                               --> {expr:if,test:G(expr2),then:G(st1),else:G(st2)}
-#          | 'for' '(' 'let' id 'of' expr ')' '{' slist '}'
-#                                               --> {expr:for,var:id,of:G(expr),stmnt:(slist)}
+#          | 'for' '(' id '=' expr ';' expr ';' stmnt ')' '{' slist '}'
+#                                               --> {expr:for,init:G(id=expr),test:G(e/2),incr:G(s),
+#                                                    stmnt:(slist)}
+#          | 'for' '(' id 'of' expr ')' '{' slist '}'
+#                                               --> {expr:for-of,var:id,of:G(expr),stmnt:(slist)}
+#          | 'while' '(' expr ')' '{' slist '}'
+#                                               --> {expr:while,while:G(expr),stmnt:(slist)}
 #          | 'switch (' expr2 ') {' cases '}'   --> {expr:switch,of:G(expr2),cases:G(cases)}
 #          | call2                              --> G(call2)
 #          |
@@ -2900,6 +2932,15 @@ function get_stmnt($context,&$st) {
       $expr='';
       $ok= get_expr2($context,$expr);
       $st= (object)array('expr'=>'call','op'=>"$id.set",'par'=>array($expr));
+    }
+    elseif ( ($plus= get_if_delimiter('++')) || get_if_delimiter('--') ) {
+      # id++ | id-- 
+      $st=  (object)array('expr'=>'call','op'=>"$id.set",'par'=>array(
+              (object)array('expr'=>'call','op'=>$plus?'sum':'minus','par'=>array(
+                (object)array('expr'=>'name','name'=>$id),
+                (object)array('expr'=>'value','value'=>1,'type'=>'n')
+            ),'value'=>1)));
+      $ok= true;
     }
     elseif ( get_if_delimiter('(') ) {
       # 'if' '(' expr2 ')' stmnt [ 'else' stmnt ]
@@ -2926,16 +2967,46 @@ function get_stmnt($context,&$st) {
         $st= (object)array('expr'=>'switch','of'=>$expr,'cases'=>$cases);
       }
       elseif ( $id=='for' ) {
-        # 'for' '(' 'let' id 'of' expr ')' '{' slist '}' --> {expr:for,var:id,of:G(expr),stmnt:(slist)}
-        $stmnts= $var= $expr= null;
+        $stmnts= $var= $expr= $inc= null;
         get_id($var);
-        get_key('of');
+        if ( get_if_delimiter('=') ) {
+          # 'for' '(' id '=' expr ';' expr ';' stmnt ')' '{' slist '}'
+          # --> {expr:for,init:G(id=expr),test:G(e/2),incr:G(s),stmnt:(slist)}
+          get_expr2($context,$expr);
+          $init= (object)array('expr'=>'call','op'=>"$var.set",'par'=>array($expr));
+          get_delimiter(';');
+          get_expr2($context,$expr);
+          get_delimiter(';');
+          get_stmnt($context,$inc);
+          get_delimiter(')');
+          get_delimiter('{');
+          get_slist($context,$stmnts);
+          get_delimiter('}');
+          $st= (object)array('expr'=>'for','init'=>$init,'test'=>$expr,'incr'=>$inc,'stmnt'=>$stmnts);
+          $ok= true;
+        }
+        else {
+          # 'for' '(' 'let' id 'of' expr ')' '{' slist '}' 
+          # --> {expr:for,var:id,of:G(expr),stmnt:(slist)}
+          get_key('of');
+          get_expr2($context,$expr);
+          get_delimiter(')');
+          get_delimiter('{');
+          get_slist($context,$stmnts);
+          get_delimiter('}');
+          $st= (object)array('expr'=>'for-of','var'=>$var,'of'=>$expr,'stmnt'=>$stmnts);
+          $ok= true;
+        }
+      }
+      elseif ( $id=='while' ) {
+        # 'while' '(' expr ')' '{' slist '}' --> {expr:while,while:G(expr),stmnt:(slist)}
+        $stmnts= $var= $expr= null;
         $ok= get_expr2($context,$expr);
         get_delimiter(')');
         get_delimiter('{');
         get_slist($context,$stmnts);
         get_delimiter('}');
-        $st= (object)array('expr'=>'for','var'=>$var,'of'=>$expr,'stmnt'=>$stmnts);
+        $st= (object)array('expr'=>'while','while'=>$expr,'stmnt'=>$stmnts);
       }
       # call2 --> G(call2)
       else {
@@ -3014,7 +3085,7 @@ function get_cases($context,&$cs) {
 #          | expr3 op expr3                     --> G(expr:call,op:G(op),par:[G(expr3),G(expr3)]
 #          | expr3 ? expr2 : expr2              --> G(expr:tern,par:[G(e/1),G(e/2),G(e/3)]
 # op      :: '+' | '-' | '*' | '/'              --> sum | minus | multiply | divide | gt | eq
-#          | '>' | '<' | '=='                   --> gt | lt | eq
+#          | '>' | '>=' | '<' | '<=' | '==' | '!=' --> gt | lt | eq ...
 #          | '&&' | '||'                        --> and | or
 # expr3   :: call2                              --> G(call2)
 #          | id                                 --> {expr:par,par:id} | {expr:name,name:id}
@@ -3026,16 +3097,19 @@ function get_cases($context,&$cs) {
 function get_expr2($context,&$expr) {
   global $last_lc;
   $ok= get_expr3($context,$expr);
-  $op= $expr2= $expr3= null;
+  $op= $xop= $nop= $expr2= $expr3= null;
   if (     get_if_delimiter('+') )  $op= 'sum';
   elseif ( get_if_delimiter('-') )  $op= 'minus';
   elseif ( get_if_delimiter('*') )  $op= 'multiply';
   elseif ( get_if_delimiter('/') )  $op= 'divide';
   elseif ( get_if_delimiter('>') )  $op= 'gt';
   elseif ( get_if_delimiter('<') )  $op= 'lt';
+  elseif ( get_if_delimiter('>=') ) $xop= 'lt';
+  elseif ( get_if_delimiter('<=') ) $xop= 'gt';
   elseif ( get_if_delimiter('==') ) $op= 'eq';
   elseif ( get_if_delimiter('&&') ) $op= 'and';
   elseif ( get_if_delimiter('||') ) $op= 'or';
+  elseif ( get_if_delimiter('!=') ) $nop= 'eq';
   elseif ( get_if_delimiter('?') )  {
     # G(expr:tern,par:[G(expr3),G(expr3),G(expr3)]
     get_expr2($context,$expr2);
@@ -3044,10 +3118,22 @@ function get_expr2($context,&$expr) {
     $expr= (object)array('expr'=>'tern','lc'=>$last_lc,'par'=>array($expr,$expr2,$expr3),'value'=>1);
   }
   if ( $op ) {
-    # expr3 op expr3 --> G(expr:call,op:G(op),par:[G(expr3),G(expr3)]
+    # exprA op exprB --> G(expr:call,op:G(op),par:[G(expr3),G(expr3)]
     $ok= get_expr3($context,$expr2);
     $expr= (object)array('expr'=>'call','op'=>$op,'lc'=>$last_lc,
         'par'=>array($expr,$expr2),'value'=>1);
+  }
+  elseif ( $xop ) { // prohozené operandy
+    # exprB op exprA --> G(expr:call,op:G(op),par:[G(expr3),G(expr3)]
+    $ok= get_expr3($context,$expr2);
+    $expr= (object)array('expr'=>'call','op'=>$xop,'lc'=>$last_lc,
+        'par'=>array($expr2,$expr),'value'=>1);
+  }
+  elseif ( $nop ) { // negace relace
+    # not(exprA op exprB) --> G(expr:call,op:G(op),par:[G(expr3),G(expr3)]
+    $ok= get_expr3($context,$expr2);
+    $expr= (object)array('expr'=>'call','op'=>'not','lc'=>$last_lc,'par'=>array(
+        (object)array('expr'=>'call','op'=>$nop,'par'=>array($expr2,$expr),'value'=>1)),'value'=>1);
   }
   return $ok;
 }
@@ -3447,7 +3533,7 @@ function tok_positions(&$tok) {
   $line= 0; $col= 1; $count= count($tok);
   for ($i= 0; $i<$count; $i++) {
     if (is_array($tok[$i])) {
-      $tok[$i][4]= token_name($tok[$i][0]);
+//      $tok[$i][4]= token_name($tok[$i][0]); // jen pro debug v lex_analysis2
       $c= $tok[$i][1];
     }
     else if (is_string($tok[$i])) {
