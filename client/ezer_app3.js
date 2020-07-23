@@ -2009,8 +2009,11 @@ class Eval {
               break; }
             //   z i   - sníží zásobník o i, pokud je i==0 pak jej vyprázdní
             case 'z': {
-              if ( cc.i>0 )
+              if ( cc.i>0 ) {
+                if ( cc.i>this.top) this.say_error(
+                    'došlo k podtečení zásobníku ','S',this.proc,last_lc);
                 this.top-= cc.i;
+              }
               else if ( cc.i==0 )
                 this.top= -1;
               break; }
