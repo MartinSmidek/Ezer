@@ -1032,10 +1032,12 @@ function gen2($pars,$vars,$c,$icall) {
     $conc= (object)array('o'=>'f','i'=>'conc','a'=>$npar);
     $code[]= $conc;
     break;
-  // -------------------------------------- id ( '.' id )*
+  // -------------------------------------- id ( '.' id )* | '&' id // může být jen jako argument
   case 'name':
     $code= gen_name($c->name,$pars,$vars,$obj,true,$c);
-    if ( $obj && isset($obj->type) && isset($block_get[$obj->type]) ) {
+    if ( $c->ref && $code[0]->o=='p' ) 
+      comp_error("CODE: jméno předávané referencí nesmí být lokální");
+    if ( !$c->ref && $obj && isset($obj->type) && isset($block_get[$obj->type]) ) {
       $code[]= (object)array('o'=>'m','i'=>'get');
     }
     break;
@@ -3124,9 +3126,17 @@ function get_call2_id($context,&$expr,$id,$valued) {
   }
   if ( !get_if_delimiter(')') ) {
     while ( $ok ) {
-      $subexpr= null;
-      get_expr2($context,$subexpr);
-      $expr->par[]= $subexpr;
+      $arg= null;
+      if ( get_if_delimiter('&') ) {
+        get_id($arg);
+        if ( count(explode('.',$arg)) > 1 ) 
+            comp_error("SYNTAX: jméno předávané referencí nesmí být složené ");
+        $expr->par[]= (object)array('expr'=>'name','name'=>$arg,'ref'=>1);
+      }
+      else {
+        get_expr2($context,$arg);
+        $expr->par[]= $arg;
+      }
       $ok= get_if_delimiter(',');
     }
     get_delimiter(')');
