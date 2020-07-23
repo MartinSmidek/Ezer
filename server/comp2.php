@@ -1038,7 +1038,23 @@ function gen2($pars,$vars,$c,$icall) {
     if ( $c->ref && $code[0]->o=='p' ) 
       comp_error("CODE: jméno předávané referencí nesmí být lokální");
     if ( !$c->ref && $obj && isset($obj->type) && isset($block_get[$obj->type]) ) {
-      $code[]= (object)array('o'=>'m','i'=>'get');
+      $ids= explode('.',$c->name);
+      $i= array_search($obj->id,$ids)+1;
+      if ( $obj->type=='var' && $obj->_of=='object' && $i!==false && $i<count($ids)
+          && count($code)==1 && $code[0]->o=='o' ) {
+        $ids1= array_slice($ids,0,$i);
+        $ids2= array_slice($ids,$i);
+        $id1= implode('.',$ids1);
+        $id2= implode('.',$ids2);
+        $code= array(
+            (object)array('o'=>'o','i'=>$id1),
+            (object)array('o'=>'v','v'=>$id2),
+            (object)array('o'=>'m','i'=>'get','a'=>1)
+          );
+      }
+      else {
+        $code[]= (object)array('o'=>'m','i'=>'get');
+      }
     }
     break;
   // -------------------------------------- id ( expr1, ... ) ? value
@@ -1062,26 +1078,37 @@ function gen2($pars,$vars,$c,$icall) {
       $code_top-= $npar;
     }
     else {
-      if ( ($cname= substr($c->op,-5))=='.make' || ($cname= substr($c->op,-11))=='.browse_map') {
-        if ( $c->par[0] && $c->par[0]->value && $c->par[0]->type=='s' ) {
-          $make= $c->par[0]->value;
-          if ( !in_array($make,$call_php) )
-            $call_php[]= $make;
-        }
-        else comp_error("CODE: metoda '$cname' má chybné jméno funkce na serveru");
-      }
       $code= gen_name($c->op,$pars,$vars,$obj,$icall==0,$c,$npar);
       $cend= count($code)-1;
-      if ( $code[$cend-1]->o=='a' && substr($c->op,-4)=='.set' && $npar==1 ) {
-        // překládáme příkaz objekt.atribut=výraz
-        // změna atributu se provede metodou set_attrib místo set
-        $code= array(
-            $code[0],
-            (object)array('o'=>'v','v'=>$code[1]->i),
-            gen2($pars,$vars,$c->par[0],0),
-            (object)array('o'=>'m','i'=>'set_attrib','a'=>2)
-        );
-        $cend= count($code)-1;
+      if ( substr($c->op,-4)=='.set' && $npar==1 ) {
+        $ids= explode('.',$c->op);
+        $i= array_search($obj->id,$ids)+1;
+        if ( $code[$cend-1]->o=='a' ) {
+          // překládáme příkaz objekt.atribut=výraz
+          // změna atributu se provede metodou set_attrib místo set
+          $code= array(
+              $code[0],
+              (object)array('o'=>'v','v'=>$code[1]->i),
+              gen2($pars,$vars,$c->par[0],0),
+              (object)array('o'=>'m','i'=>'set_attrib','a'=>2)
+          );
+          $cend= count($code)-1;
+        }
+        elseif ( $obj->type=='var' && $obj->_of=='object' && $i!==false && $i<count($ids)
+            && count($code)==2 && $code[0]->o=='o' ) {
+          // překládáme dosazení do objektové proměnné
+          $ids1= array_slice($ids,0,$i);
+          $ids2= array_slice($ids,$i,-1);
+          $id1= implode('.',$ids1);
+          $id2= implode('.',$ids2);
+          $value= gen2($pars,$vars,$c->par[0],1);
+          $code= array(
+              (object)array('o'=>'o','i'=>$id1),
+              $value,
+              (object)array('o'=>'v','v'=>$id2),
+              (object)array('o'=>'m','i'=>'set','a'=>2)
+            );
+        }
       }
       else {
         $call= $code[$cend];
