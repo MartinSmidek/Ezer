@@ -4193,6 +4193,21 @@ Ezer.fce.prints= function (width,height,css_file) {
   }
   return true;
 };
+// ------------------------------------------------------------------------------------ apply
+//ff: fce.apply (fce[,arg1,...])
+//      zavolá funkce 'fce' zadanou stringem a vrátí její hodnotu
+//s: funkce
+Ezer.fce.apply= function(fce_name) {
+  let value= 0, args= [], n= arguments.length, fce= window[fce_name];
+  for (var i= 1; i<n; i++) {
+    args.push(arguments[i]);
+  }
+  if ( typeof fce === 'function' ) {
+    value= fce.apply(null,args);
+  }
+  else Ezer.error(`EVAL ${fce_name} není jméno funkce`,'S');    
+  return value;
+};
 // -------------------------------------------------------------------------------------- javascript
 //ff: fce.javascript (code[,value])
 //      pokud je specifikované value, stane se návratovou hodnotou, jinak se použije výsledek kódu

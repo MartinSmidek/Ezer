@@ -1012,7 +1012,7 @@ function gen_func($c,&$desc,$name) {
 # generuje kód příkazů
 #   $i je použit pro překladu call
 function gen2($pars,$vars,$c,$icall) {
-  global $names, $code_top, $call_php, $block_get;
+  global $code_top, $call_php, $block_get;
   $obj= null;
   switch ( $c->expr ) {
   // -------------------------------------- value
@@ -1225,18 +1225,6 @@ function gen_proc($c,&$desc,$name) {
   walk_y($desc->code);
   clean_code($desc->code);
 }
-# -------------------------------------------------------------------------------------- optimize_fs
-# optimalizuje překlad pro: switch
-// function optimize_fs($code) {
-//   if ( is_array($code) ) {
-//     foreach ($code as $i => $c) {
-//       optimize_fs($c);
-//     }
-//   }
-//   elseif ( $code->o=='y' ) {
-//     optimize_fs($code->c);
-//   }
-// }
 # ------------------------------------------------------------------------------------------- walk_y
 # definuje v kódu vygenerovaném z $down pole ift, iff jako pokračování pro úspěch či neúspěch
 # pro části kódu interpretované strukturami tj. o.y=code
@@ -3111,14 +3099,29 @@ function get_expr3($context,&$expr) {
   return true;
 }
 # -------------------------------------------------------------------------------------------- call2
-# call2   :: id '(' ')' | id '(' expr2 ( ',' expr2 )* ')'
-#         --> {expr:call,op:id,par:[G(expr2),...],value:$valued}  -- valued=0 => clear stack
+# call2   :: id  args                           --> {expr:call,op:id,par:G(args),value:$valued} 
+#          | 'php' '.' id args                  --> {expr:call,op:ask,par:G("id")+G(args),value:$valued} 
+#          | 'js' '.' id args                   --> {expr:call,op:apply,par:G("id")+G(args),value:$valued} 
+#                                                   valued=0 => clear stack
+# args    :: '(' [ arg ( ',' arg )* ] ')'       --> [G(arg),...]
+# arg     :: expr2 | &id                        --> G(expr) | {expr:name,name:id,ref:1}
 function get_call2_id($context,&$expr,$id,$valued) {
   global $last_lc;
   // volání funkce $id s parametry
   # id '(' ')' | id '(' expr2 ( ',' expr2 )* ')' --> {expr:call,op:id,par:[G(expr2),...]}
   $ok= true;
   $expr= (object)array('expr'=>'call','op'=>$id,'lc'=>$last_lc,'par'=>array(),'value'=>$valued);
+  $fce= explode('.',$id);
+  if ( $fce[0]=='php' ) {
+    if ( $fce[2] ) comp_error("SYNTAX: jméno funkce v PHP nesmí být složené ");
+    $expr->op= 'ask';
+    $expr->par[]= (object)array('expr'=>'value','value'=>$fce[1],'type'=>'s');
+  }
+  elseif ( $fce[0]=='js' ) {
+    if ( $fce[2] ) comp_error("SYNTAX: jméno funkce v javascriptu nesmí být složené ");
+    $expr->op= 'apply';
+    $expr->par[]= (object)array('expr'=>'value','value'=>$fce[1],'type'=>'s');
+  }
   if ( !get_if_delimiter(')') ) {
     while ( $ok ) {
       $subexpr= null;
@@ -3429,30 +3432,6 @@ function lex_analysis2 ($dbg=false) {
 //                                                             debug($not,'not');
   return true;
 }
-//# --------------------------------------------------------------------------------------------- ezer
-//function tok_strings(&$tok) {
-//  $count= count($tok);
-//  for ($i= 0; $i<$count; $i++) {
-//    if ($tok[$i][0]==-1 && $tok[$i][1]=='"') {
-//      $tok[$i][5]= array();
-//      for ($j= $i; $j<$count; $j++) {
-//        $tok[$i][4]= 'T_CONSTANT_ENCAPSED_STRING';
-//        $tok[$i][5][]= $tok[$j];
-//        if ($j>$i ) {
-//          $tok[$i][1].= $tok[$j][1];
-//          if ( $tok[$j][1]=='"') {
-//            $tok[$i][0]= 316;
-//            $i= $j+1;
-//            unset($tok[$j]);
-//            break;
-//          }
-//          unset($tok[$j]);
-//        }
-//      }
-//    }
-//  }
-//  return true;
-//}
 # --------------------------------------------------------------------------------------------- ezer
 function tok_positions(&$tok) {
   $line= 0; $col= 1; $count= count($tok);
