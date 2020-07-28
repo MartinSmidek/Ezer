@@ -1030,6 +1030,7 @@ function gen2($pars,$vars,$c,$icall) {
   // -------------------------------------- ` string ${expr} string ... `
   case 'templ':
     // {expr:templ,par:[G(templ),...]}
+    $code= array();
     $npar= count($c->par);
     foreach($c->par as $par) {
       $code[]= gen2($pars,$vars,$par,0);
@@ -1039,13 +1040,12 @@ function gen2($pars,$vars,$c,$icall) {
     break;
   // -------------------------------------- id ( '.' id )* | '&' id // může být jen jako argument
   case 'name':
-    $code= gen_name2($c->name,$pars,$vars,$obj,true,$c,0);
-    if ( in_array($code[count($code)-1]->o,array('m','f')) ) 
+    $code= gen_name2($c->name,$pars,$vars,$obj,true,$c,false); // nemá parametry
+    $last= $code[count($code)-1]; 
+    if ( in_array($last->o,array('m','f','c')) ) 
       comp_error("CODE: ve volání '$c->name' chybí závorky");
     if ( $c->ref && $code[0]->o=='p' ) 
       comp_error("CODE: jméno předávané referencí nesmí být lokální");
-    if ( $c->expr=='name' && $code[0]->o=='c' ) 
-      comp_error("CODE: ve volání funkce '$c->name' chybí závorky ");
     if ( !$c->ref && $obj && isset($obj->type) && isset($block_get[$obj->type]) ) {
       $ids= explode('.',$c->name);
       $i= array_search($obj->id,$ids)+1;
@@ -1110,16 +1110,18 @@ function gen2($pars,$vars,$c,$icall) {
           // překládáme dosazení do objektové proměnné
           $ids1= array_slice($ids,0,$i);
           $ids2= array_slice($ids,$i,-1);
-          $id1= implode('.',$ids1);
-          $id2= implode('.',$ids2);
-          $value= gen2($pars,$vars,$c->par[0],1);
-          $code= array(
-              (object)array('o'=>'o','i'=>$id1),
-              $value,
-              (object)array('o'=>'v','v'=>$id2),
-              (object)array('o'=>'m','i'=>'set','a'=>2)
-            );
-          $spec= true;
+          if ( count($ids2) ) {
+            $id1= implode('.',$ids1);
+            $id2= implode('.',$ids2);
+            $value= gen2($pars,$vars,$c->par[0],1);
+            $code= array(
+                (object)array('o'=>'o','i'=>$id1),
+                $value,
+                (object)array('o'=>'v','v'=>$id2),
+                (object)array('o'=>'m','i'=>'set','a'=>2)
+              );
+            $spec= true;
+          }
         }
       }
       if ( !$spec ) {
@@ -1158,22 +1160,36 @@ function gen2($pars,$vars,$c,$icall) {
     break;
   // -------------------------------------- if ( e ) st1 [ else st2 ]
   case 'if':
-    $ctest= gen2($pars,$vars,$c->test,0);
-    $cthen= gen2($pars,$vars,$c->then,0);
-    if ( $c->else ) { // if then else
-      $iff= (object)array('o'=>0,'iff'=>count($cthen)+2);
-      $celse= gen2($pars,$vars,$c->else,0);
-      $go= (object)array('o'=>0,'go'=>count($celse)+1);
-      $code[]= array($ctest,$iff,$cthen,$go,$celse);
+    // výpočet všech částí test-then
+    $code= array();
+    $tests= array(gen2($pars,$vars,$c->test,0));
+    $thens= array(gen2($pars,$vars,$c->then,0));
+    if ( $c->elif ) { // if then elseif+ [else] 
+      foreach ( $c->elif as $e ) {
+        $tests[]= gen2($pars,$vars,$e->test,0);
+        $thens[]= gen2($pars,$vars,$e->then,0);
+      }
     }
-    else { // if then
-      $iff= (object)array('o'=>0,'iff'=>count($cthen)+1);
-      $code[]= array($ctest,$iff,$cthen);
+    // případný kód else
+    $else= $c->else ? gen2($pars,$vars,$c->else,0) : array();
+    // sestavení se skoky
+    for ($i= 0; $i<count($tests); $i++) {
+      $toend= count($else);
+      for ($k= $i+1; $k<count($tests); $k++) {
+        $toend+= count($tests[$k])+count($thens[$k])+2;
+      }
+      $iff= (object)array('o'=>0,'iff'=>count($thens[$i])+2);
+      $go= (object)array('o'=>0,'go'=>$toend+1);
+      $code[]= array($tests[$i],$iff,$thens[$i],$go);
+    }
+    if ( $c->else ) { // if then else
+      $code[]= $else;
     }
     break;
   // -------------------------------------- e ? e : e
   case 'tern':
     # G(expr:tern,par:[G(expr3),G(expr3),G(expr3)]
+    $code= array();
     $ctest= gen2($pars,$vars,$c->par[0],0);
     $cthen= gen2($pars,$vars,$c->par[1],0);
     $iff= (object)array('o'=>0,'iff'=>count($cthen)+2);
@@ -1185,6 +1201,7 @@ function gen2($pars,$vars,$c,$icall) {
   case 'for':
     // {expr:for,init:stmnt,test:expr,incr:stmnt,stmnt:slist}
     // překlad složek
+    $code= array();
     $init= gen2($pars,$vars,$c->init,0);
     $test= gen2($pars,$vars,$c->test,0);
     $incr= gen2($pars,$vars,$c->incr,0);
@@ -1198,6 +1215,7 @@ function gen2($pars,$vars,$c,$icall) {
   case 'for-of':
     // {expr:for,var:id,of:G(expr),stmnt:(slist)}
     // překlad složek
+    $code= array();
     $var= gen_name2($c->var,$pars,$vars,$obj,true,$c->var);
     if ( $obj && $obj->type=='proc' ) 
       comp_error("CODE: očekávalo se jméno proměnné místo '$c->var'",$c->of->lc);
@@ -1213,6 +1231,7 @@ function gen2($pars,$vars,$c,$icall) {
   case 'while':
     // {expr:while,while:G(expr),stmnt:(slist)}
     // překlad složek
+    $code= array();
     $expr= gen2($pars,$vars,$c->while,0);
     $stmnt= gen2($pars,$vars,$c->stmnt,0);
     $test= (object)array('o'=>0,'iff'=>count($stmnt)+2);
@@ -1226,6 +1245,7 @@ function gen2($pars,$vars,$c,$icall) {
     // case    = {case:value,body:G(slist),break:0/1}
     // default = {body:G(slist),break:0/1}
     // překlad složek
+    $code= array();
     $expr= gen2($pars,$vars,$c->of,0);
     $code[]= $expr;
     $ncase= count($c->cases);
@@ -1432,6 +1452,9 @@ function gen_name2($name,$pars,$vars,&$obj,$first,$c=null,$nargs=null) {  #trace
       $code_top++;
     }
   }
+  // pokud je to proměnná, další referencování se provede v runtime - viz kód v gen2
+  if ( $nargs===false && $obj && $obj->type=='var' && $obj->_of=='object' ) 
+    goto end;
   // pokračování může upřesňovat objekt - dokud o něm něco víme
   for ($k= $k1; $k<=$end_id; $k++) {                // k1=1, pouze pro form.desc k1=2
     $id= $ids[$k];
@@ -1517,6 +1540,7 @@ function gen_name2($name,$pars,$vars,&$obj,$first,$c=null,$nargs=null) {  #trace
       }
     }
   }
+end:
   $pc= array();
   plain($code,$pc);
   return $pc;
@@ -2962,6 +2986,13 @@ function look_delimiter ($del) {
   return $ok;
 }
 # --------------------------------------------------------------------------------------------------
+# zjistí následuje-li v textu v daném ofsetu element (neposunuje čtecí hlavu)
+function look_ahead_for ($txt,$offset=0) {
+  global $head, $lex;
+  $ok= $lex[$head+$offset]==$txt;
+  return $ok;
+}
+# --------------------------------------------------------------------------------------------------
 # zjistí následuje-li v textu daný identifikátor resp. klíčové slovo
 function look_id_or_key ($id) {
   global $head, $lex, $typ;
@@ -3198,7 +3229,8 @@ function get_slist($context,&$st) {
     $seq= null;
     $ok= get_stmnt($context,$seq);
     if ( !$ok ) break;
-    $st->body[]= $seq;
+    if ( $seq )
+      $st->body[]= $seq;
     $ok= get_if_delimiter(';') || in_array($seq->expr,array('if','for','for_of','while','switch'));
     if ( !$ok ) { $ok= true; break; }
   }
@@ -3211,6 +3243,8 @@ function get_slist($context,&$st) {
 #          | id '++' | id '--'                  --> id=id+1 | id=id-1
 #          | 'if' '(' expr2 ')' stmnt [ 'else' stmnt ]
 #                                               --> {expr:if,test:G(expr2),then:G(st1),else:G(st2)}
+#          | 'if' '(' expr2 ')' stmnt elseif* [ 'else' stmnt ]
+#                                               --> {expr:if,test:G(expr2),elif:[..],then:G(st1),else:G(st2)}
 #          | 'for' '(' id '=' expr ';' expr ';' stmnt ')' '{' slist '}'
 #                                               --> {expr:for,init:G(id=expr),test:G(e/2),incr:G(s),
 #                                                    stmnt:(slist)}
@@ -3221,6 +3255,7 @@ function get_slist($context,&$st) {
 #          | 'switch (' expr2 ') {' cases '}'   --> {expr:switch,of:G(expr2),cases:G(cases)}
 #          | call2                              --> G(call2)
 #          |
+# elseif  :: 'elseif' '(' expr2 ')' stmnt       --> {expr:elif,test:G(expr2),then:G(st1)}
 function get_stmnt($context,&$st) {
   $ok= false;
   $id= '';
@@ -3253,7 +3288,29 @@ function get_stmnt($context,&$st) {
         $ok= get_expr2($context,$test);
         get_delimiter(')');
         get_stmnt($context,$then);
+        # vnořená elseif
+        $elif= array();
+        $elifs= true;
+        while ( $elifs ) {
+          // toleruj if () stmnt; else ...
+          if ( look_ahead_for(';') && (look_ahead_for('else',1 ) || look_ahead_for('elseif',1 )) )
+            get_delimiter(';');
+          # 'elseif' '(' expr2 ')' stmnt --> {expr:elif,test:G(expr2),then:G(st1)}
+          if ( get_if_id_or_key('elseif') ) {
+            get_if_id_or_key('elseif');
+            $elif_test= $elif_stmnt= null;
+            get_delimiter('(');
+            $ok= get_expr2($context,$elif_test);
+            get_delimiter(')');
+            get_stmnt($context,$elif_stmnt);
+            $elif[]= (object)array('expr'=>'elif','test'=>$elif_test,'then'=>$elif_stmnt);
+          }
+          else 
+            $elifs= false;
+        }
         $st= (object)array('expr'=>'if','test'=>$test,'then'=>$then);
+        if ( count($elif) )
+          $st->elif= $elif;
         if ( get_if_id_or_key('else') ) {
           get_stmnt($context,$else);
           $st->else= $else;
