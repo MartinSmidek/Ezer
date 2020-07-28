@@ -1,4 +1,4 @@
-<?php # (c) 2007-2015 Martin Smidek <martin@smidek.eu>
+<?php # (c) 2007-2020 Martin Smidek <martin@smidek.eu>
 
 global $x, $y, $trace, $err,$ezer_path_code, $debugger;
 
@@ -306,8 +306,8 @@ function xcode($x,$ind=0) {
     $tr.= "\n$sp$sc: $o";
     if ($cc) foreach ($cc as $i => $cci) {
       if ( $i=='iff' || $i=='ift' || $i=='jmp' || $i=='go' ) {
-        $sc= str_pad($ic+$cci,2,'0',STR_PAD_LEFT);
-        $tr.= " $i=$sc";
+        $cci= str_pad($ic+$cci,2,'0',STR_PAD_LEFT);
+        $tr.= " $i=$cci";
       }
       elseif ( $i=='v' ) {
         $tr.= is_string($cci) ? " '$cci'" : ' '.json_encode($cci);
@@ -1009,8 +1009,9 @@ function gen_func($c,&$desc,$name) {
   foreach($c->par as $id=>$typ) {
     $c->par->{$id}+= $n;
   }
-// prázdná procedura obsahuje jen return
+  // prázdná procedura obsahuje jen return
   $c= $c->code ? gen2($c->par,$c->var,$c->code,0) : array((object)array('o'=>'f','i'=>'stop'));
+  $c= optimize($c);
   $desc->code= $c;
 }
 # --------------------------------------------------------------------------------------------- gen2
@@ -1279,6 +1280,76 @@ function gen2($pars,$vars,$c,$icall) {
   $pc= array();
   plain($code,$pc);
   return $pc;
+}
+# ----------------------------------------------------------------------------------------- optimiZe
+# optimalizuje kód
+function optimize($code) {
+  $c= $code;
+  $nc= count($c);
+  // přesun skoků {o:0,skok} na předchozí instrukci a náhrada za prázdnou operaci {o:0,off:1}
+  for ($i= 0; $i<$nc; $i++) {
+    if ( $c[$i]->o=='0' ) {
+      if ( $c[$i]->go ) {
+        $c[$i-1]->go= $c[$i]->go+1;
+        unset($c[$i]->go);
+        $c[$i]->off= '-';
+      }
+      elseif ( $c[$i]->iff ) {
+        $c[$i-1]->iff= $c[$i]->iff+1;
+        unset($c[$i]->iff);
+        $c[$i]->off= '-';
+      }
+      elseif ( $c[$i]->ift ) {
+        $c[$i-1]->ift= $c[$i]->ift+1;
+        unset($c[$i]->ift);
+        $c[$i]->off= '-';
+      }
+    }
+  }
+//  goto end;
+  // odstranění prázdných operací
+  for ($i= 0; $i<$nc; $i++) {
+    if ( $c[$i]->off ) {
+      for ($k= 0; $k<$nc; $k++) {
+        if ( ($g= $c[$k]->iff) ) {
+          $g+= $k;
+          if ( $k<$i && $g>=$i ) {
+            $c[$k]->iff-= 1;
+          }
+          elseif ( $k>$i && $g<=$i ) {
+            $c[$k]->iff+= 1;
+          }
+        }
+        if ( ($g= $c[$k]->ift) ) {
+          $g+= $k;
+          if ( $k<$i && $g>=$i ) {
+            $c[$k]->ift-= 1;
+          }
+          elseif ( $k>$i && $g<=$i ) {
+            $c[$k]->ift+= 1;
+          }
+        }
+        if ( ($g= $c[$k]->go) ) {
+          $g+= $k;
+          if ( $k<$i && $g>=$i ) {
+            $c[$k]->go-= 1;
+          }
+          elseif ( $k>$i && $g<=$i ) {
+            $c[$k]->go+= 1;
+          }
+        }
+      }
+    }
+  }
+  // odstranění prázdných operací
+  for ($i= 0; $i<$nc; $i++) {
+    if ( $c[$i]->off=='-') {
+      array_splice($c,$i,1); // odstraň prázdnou operaci 
+      $nc--;
+    }
+  }
+end:
+  return $c;
 }
 # ---------------------------------------------------------------------------------------- gen name2
 # přeloží výraz utvořený (složeným) jménem (bez argumentů)
