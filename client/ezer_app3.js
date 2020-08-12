@@ -1956,6 +1956,7 @@ class Eval {
 //   a i     - sníží zásobník o referenci objektu a na zásobník dá hodnotu jeho atributu c.i
 //   K       - zahájení cyklu foreach pro složky pole nebo objektu
 //   L i     - test pro foreach, volání procedury s jedním či dvěma parametry
+//   M       - zahájení cyklu for-of pro složky pole nebo objektu nebo elementy form ...
 //   F i     - test pro for-of 
 //   S       - test pro switch v proc
 //   S v     - test pro switch ve func
@@ -2389,7 +2390,7 @@ class Eval {
               if ( Array.isArray(obj) )
                 this.stack[++this.top]= 0;                // první index pole
               else if ( obj instanceof Form )
-                this.stack[++this.top]= Object.keys(obj.part); // pole form.part
+                this.stack[++this.top]= Object.keys(obj.part); // pole klíčů form.part
               else if ( obj instanceof List )
                 this.stack[++this.top]= 0;                // index prvního ListRow
               else if ( typeof(obj)=='object' )
@@ -2397,37 +2398,58 @@ class Eval {
               else
                 this.stack[++this.top]= null;             // nic
               break; }
+            // M - inicializace pro for-of iterující objekt, na zásobník přidá: objekt, x, i
+            //     pro pole x=0, i=0 
+            //     pro form x=klíče form.part, i=0
+            case 'M': {
+              obj= this.stack[this.top];
+              if ( Array.isArray(obj) ) {                 // Array
+                this.stack[++this.top]= obj;              // Array
+                this.stack[++this.top]= 0;                //   0
+              }
+              else if ( obj instanceof Form ) {           // Form
+                this.stack[this.top]= Object.keys(obj.part); // pole klíčů form.part
+                this.stack[++this.top]= 0;                // 0
+              }
+//              else if ( obj instanceof List )
+//                this.stack[++this.top]= 0;                // index prvního ListRow
+//              else if ( typeof(obj)=='object' )
+//                this.stack[++this.top]= Object.keys(obj); // pole klíčů objektu
+              else {
+                this.say_error('EVAL: parametr for-of není pole nebo form','S',this.proc,last_lc);
+              }
+              break; }
             // F i - test pro for-of: na zásobníku je objekt a jeho kontext
             //       pokud znamená konec cyklu vyprázdní zásobník a skočí za cyklus 
             //       jinak z kontextu získá hodnotu a uloží do proměnné <var> 
             //       (definované jménem pro globální nebo indexem pro lokální proměnné) 
             //       a nastaví kontext pro další průchod
             case 'F': {
-              obj= this.stack[this.top-1];                // objekt nebo pole
-              if ( Array.isArray(obj) ) {
-                i= this.stack[this.top];                  // kontextem je index do pole
-                if ( i>=obj.length ) {                    // pokud ukazuje za pole
-                  this.top-= 2;                           // tak odstraň ze zásobníku pole i index
-                  Ezer.eval_jump= '*';                    // a skonči cyklus skokem za foreach
-                }
-                else {                                    // jinak 
-                  val= obj[i];                            // nastav indexovanou hodnotu do
-                  if ( Number.isInteger(cc.i) ) {         // lokální proměnné
-                    this.stack[this.act-cc.i]= val;
-                  }
-                  else {                                  // nebo do globální proměnné
-                    let v= [];
-                    Ezer.run_name(cc.i,this.context,v);
-                    if ( !v[0] instanceof(Block) || typeof v[0].set !== 'function' )
-                      this.say_error('jméno '+cc.i+' není proměnná','S',this.proc,last_lc);
-                    v[0].set(val);                    
-                  }
-                  this.stack[this.top]++;                 // posuň index
-                  c-= cc.go-1;                            // a eliminuj příkaz skoku
-                }
+              obj= this.stack[this.top-2]; 
+              let arr= this.stack[this.top-1]; 
+              i= this.stack[this.top]++;                // kontextem je index do pole
+              if ( i>=arr.length ) {                    // pokud ukazuje za pole
+                this.top-= 3;                           // tak odstraň ze zásobníku pole i index
+                Ezer.eval_jump= '*';                    // a skonči cyklus skokem za foreach
               }
-              else {
-                this.say_error('EVAL: parametr for-of není pole','S',this.proc,last_lc);
+              else {                                    // jinak 
+                if ( Array.isArray(obj) ) {             // pro pole
+                  val= obj[i];                          // 
+                }
+                else if ( obj instanceof Form ) {       // pro form
+                  val= obj.part[arr[i]];
+                }
+                if ( Number.isInteger(cc.i) ) {         // lokální proměnné
+                  this.stack[this.act-cc.i]= val;
+                }
+                else {                                  // nebo do globální proměnné
+                  let v= [];
+                  Ezer.run_name(cc.i,this.context,v);
+                  if ( !v[0] instanceof(Block) || typeof v[0].set !== 'function' )
+                    this.say_error('jméno '+cc.i+' není proměnná','S',this.proc,last_lc);
+                  v[0].set(val);                    
+                }
+                c-= cc.go-1;                            // a eliminuj příkaz skoku
               }
               break; }
             // L i - test pro foreach: na zásobníku je pole p a index,

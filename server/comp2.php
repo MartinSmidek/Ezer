@@ -1011,7 +1011,7 @@ function gen_func($c,&$desc,$name) {
   }
   // prázdná procedura obsahuje jen return
   $c= $c->code ? gen2($c->par,$c->var,$c->code,0) : array((object)array('o'=>'f','i'=>'stop'));
-  $c= optimize($c);
+//  $c= optimize($c);
   $desc->code= $c;
 }
 # --------------------------------------------------------------------------------------------- gen2
@@ -1047,7 +1047,7 @@ function gen2($pars,$vars,$c,$icall) {
       comp_error("CODE: ve volání '$c->name' chybí závorky");
     if ( $c->ref && $code[0]->o=='p' ) 
       comp_error("CODE: jméno předávané referencí nesmí být lokální");
-    if ( !$c->ref && $obj && isset($obj->type) && isset($block_get[$obj->type]) ) {
+    if ( !$c->ref && $obj && isset($obj->type) && isset($block_get[$obj->type]) && $last->o!='a') {
       $ids= explode('.',$c->name);
       $i= array_search($obj->id,$ids)+1;
       if ( $obj->type=='var' && $obj->_of=='object' && $i!==false && $i<count($ids)
@@ -1223,7 +1223,7 @@ function gen2($pars,$vars,$c,$icall) {
     $expr= gen2($pars,$vars,$c->of,0);
     $stmnt= gen2($pars,$vars,$c->stmnt,0);
     // pomocné instrukce
-    $inic= (object)array('o'=>'K');
+    $inic= (object)array('o'=>'M');
     $test= (object)array('o'=>'F','i'=>$var[0]->i,'go'=>count((array)$stmnt)+2);
     $go= (object)array('o'=>0,'go'=>-count($stmnt)-1);
     $code[]= array($expr,$inic,$test,$stmnt,$go);      // pro pole i objekty
@@ -1284,68 +1284,63 @@ function gen2($pars,$vars,$c,$icall) {
 # ----------------------------------------------------------------------------------------- optimiZe
 # optimalizuje kód
 function optimize($code) {
+  $skok= function($ci) {
+    $o= isset($ci->go) ? 'go' : (isset($ci->iff) ? 'iff' : (isset($ci->ift) ? 'ift' : null));
+    return $o ? (object)array('o'=>$o,'g'=>$ci->$o) : null;
+  };
   $c= $code;
   $nc= count($c);
-  // přesun skoků {o:0,skok} na předchozí instrukci a náhrada za prázdnou operaci {o:0,off:1}
+//  goto end;
+  // přesun skoků {o:0,skok} do předchozí instrukce (pokud již skok neobsahuje) 
+  // ??? a náhrada za prázdnou operaci {o:0,off:1}
+  $skok_i= false;
   for ($i= 0; $i<$nc; $i++) {
-    if ( $c[$i]->o=='0' ) {
-      if ( $c[$i]->go ) {
-        $c[$i-1]->go= $c[$i]->go+1;
-        unset($c[$i]->go);
+    $og= $skok($c[$i]);
+    if ( $c[$i]->o=='0' && $og ) {
+      $o= $og->o;
+      if ( $og && !$skok_i ) {
+        $c[$i-1]->$o= $c[$i]->$o+1;
+        unset($c[$i]->$o);
         $c[$i]->off= '-';
+//        $c[$i]->off= "($o=$og->g)";
       }
-      elseif ( $c[$i]->iff ) {
-        $c[$i-1]->iff= $c[$i]->iff+1;
-        unset($c[$i]->iff);
-        $c[$i]->off= '-';
-      }
-      elseif ( $c[$i]->ift ) {
-        $c[$i-1]->ift= $c[$i]->ift+1;
-        unset($c[$i]->ift);
-        $c[$i]->off= '-';
+    }
+    $skok_i= $og;
+  }
+//  goto end;
+  // náhrada i:{o:0,go i+1} za prázdnou operaci
+  for ($i= 0; $i<$nc; $i++) {
+    if ( $c[$i]->o=='0' && $c[$i]->go==1 ) {
+      unset($c[$i]->go);
+//      $c[$i]->off= '-';
+    }
+  }
+  goto end;
+  // odstranění prázdných operací
+  for ($i= 0; $i<$nc; $i++) {
+    if ( $c[$i]->off ) {
+      for ($k= 0; $k<$nc; $k++) {
+        $og= $skok($c[$k]);
+        if ( $og ) {
+          $o= $og->o;
+          $g= $k+$og->g;
+          if ( $k<$i && $g>=$i ) {
+            $c[$k]->$o-= 1;
+          }
+          elseif ( $k>$i && $g<=$i ) {
+            $c[$k]->$o+= 1;
+          }
+        }
       }
     }
   }
 //  goto end;
   // odstranění prázdných operací
-  for ($i= 0; $i<$nc; $i++) {
-    if ( $c[$i]->off ) {
-      for ($k= 0; $k<$nc; $k++) {
-        if ( ($g= $c[$k]->iff) ) {
-          $g+= $k;
-          if ( $k<$i && $g>=$i ) {
-            $c[$k]->iff-= 1;
-          }
-          elseif ( $k>$i && $g<=$i ) {
-            $c[$k]->iff+= 1;
-          }
-        }
-        if ( ($g= $c[$k]->ift) ) {
-          $g+= $k;
-          if ( $k<$i && $g>=$i ) {
-            $c[$k]->ift-= 1;
-          }
-          elseif ( $k>$i && $g<=$i ) {
-            $c[$k]->ift+= 1;
-          }
-        }
-        if ( ($g= $c[$k]->go) ) {
-          $g+= $k;
-          if ( $k<$i && $g>=$i ) {
-            $c[$k]->go-= 1;
-          }
-          elseif ( $k>$i && $g<=$i ) {
-            $c[$k]->go+= 1;
-          }
-        }
-      }
-    }
-  }
-  // odstranění prázdných operací
-  for ($i= 0; $i<$nc; $i++) {
+  for ($i= 0; $i<count($c); $i++) {
     if ( $c[$i]->off=='-') {
       array_splice($c,$i,1); // odstraň prázdnou operaci 
-      $nc--;
+      if ( $c[$i]->off=='-' ) 
+        $i--;
     }
   }
 end:
@@ -3939,15 +3934,8 @@ function lex_analysis2 ($dbg=false) {
       $typ[$k]= $tp; $lex[$k]= $t[1]; $pos[$k]= "{$t[2]},{$t[3]}"; $k++;
       break;
     case 'str':
-      $typ[$k]= $tp; $lex[$k]= $t[1];
-//      if ( $pragma_strings && isset($tok[$i][5]) ) {
-//        // složený string
-//        $str[$k]= array();
-//        foreach($tok[$i][5] as $x) {
-//          if ( $x[1]!='{' && $x[1]!='}' )
-//            $str[$k][]= $x[1];
-//        }
-//      }
+      $lex[$k]= $t[1];
+      $typ[$k]= $inside_template && preg_match('/^\w+$/',$t[1]) ? 'id' : $tp;
       $pos[$k]= "{$t[2]},{$t[3]}"; $k++;
       break;
     default:
@@ -3955,11 +3943,11 @@ function lex_analysis2 ($dbg=false) {
       break;
     }
   }
-//                                                             debug($lex,'lex');
-//                                                             debug($str,'str');
-//                                                             debug($typ,'typ');
-//                                                             debug($pos,'pos');
-//                                                             debug($not,'not');
+                                                             debug($lex,'lex');
+                                                             debug($str,'str');
+                                                             debug($typ,'typ');
+                                                             debug($pos,'pos');
+                                                             debug($not,'not');
   return true;
 }
 # --------------------------------------------------------------------------------------------- ezer

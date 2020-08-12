@@ -2617,7 +2617,7 @@ class PanelPopup extends Panel {
     this.DOM.fadeOut(Ezer.options.fade_speed);
     return this;
   }
-// ---------------------------------------------------------------------------------- _hide
+// ---------------------------------------------------------------------------------- close
   close () {
     return this.hide();
   }
