@@ -28,12 +28,12 @@
   // err=2 ... v PHP7 vlastní handler: E_ALL & ~E_NOTICE     
   // err=3 ... v PHP7 vlastní handler: E_ALL
   if ( isset($_GET['err']) && ($err= $_GET['err']) ) {
-    setcookie('error_reporting',$err);
+    setcookie('error_reporting',$err, ['secure' => true, 'httponly' => true, 'samesite' => 'strict']);
     error_reporting($err==3 ? E_ALL : E_ALL & ~E_NOTICE);
     ini_set('display_errors', 'On');
   }
   else {
-    setcookie('error_reporting',1);
+    setcookie('error_reporting',1, ['secure' => true, 'httponly' => true, 'samesite' => 'strict']);
     error_reporting(E_ALL & ~E_NOTICE);
     ini_set('display_errors', 'Off');
   }
