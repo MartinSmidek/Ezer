@@ -1522,11 +1522,17 @@ function gen_name2($name,$pars,$vars,&$obj,$first,$c=null,$nargs=null) {  #trace
   if ( $nargs===false && $obj && $obj->type=='var' && $obj->_of=='object' ) 
     goto end;
   // pokračování může upřesňovat objekt - dokud o něm něco víme
+  $v= ''; // index pro odkaz
   for ($k= $k1; $k<=$end_id; $k++) {                // k1=1, pouze pro form.desc k1=2
     $id= $ids[$k];
-    if ( $is_var && $id=='set' ) {
-      unset($code[0]);
-      $code[]= (object)array('o'=>'w','i'=>$ivar);  // je to koncový kód s výjimkou - nedává stav na zásobník
+    if ( ($is_var||$is_par) && $id=='set' ) {
+      if ( $v ) { // přiřazení do lokální proměnné s indexací pole nebo selekcí podobjektu
+        $code= (object)array('o'=>'w','i'=>$ivar,'v'=>substr($v,1));  
+      }
+      else { // jednoduché přiřazení do lokální proměnné
+        unset($code[0]);
+        $code[]= (object)array('o'=>'w','i'=>$ivar);  // je to koncový kód s výjimkou - nedává stav na zásobník
+      }
     }
     elseif ( $is_var && $id=='get' ) {
     }
@@ -1548,6 +1554,7 @@ function gen_name2($name,$pars,$vars,&$obj,$first,$c=null,$nargs=null) {  #trace
       }
     }
     else {
+      $v.= ".$id";
       if ( $obj->type=='var' ) {
         if ( $obj->_init && in_array($obj->_of,array('table','form','area') ) ) {
           $obj= find_obj($obj->_init);
@@ -3943,11 +3950,11 @@ function lex_analysis2 ($dbg=false) {
       break;
     }
   }
-                                                             debug($lex,'lex');
-                                                             debug($str,'str');
-                                                             debug($typ,'typ');
-                                                             debug($pos,'pos');
-                                                             debug($not,'not');
+//                                                             debug($lex,'lex');
+//                                                             debug($str,'str');
+//                                                             debug($typ,'typ');
+//                                                             debug($pos,'pos');
+//                                                             debug($not,'not');
   return true;
 }
 # --------------------------------------------------------------------------------------------- ezer

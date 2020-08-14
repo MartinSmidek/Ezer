@@ -1945,6 +1945,7 @@ class Eval {
 //   q i     - sníží zásobník o referenci objektu Ezer-třídy a dá na něj hodnotu o[i1][i2]...
 //   r i     - sníží zásobník o referenci objektu a dá na něj hodnotu o[i1][i2]...
 //   w i     - sníží zásobník a uloží do lokální proměnné (i je offset)
+//   w i v   - sníží zásobník a uloží do složky lokální proměnné (i je offset) - pole nebo objektu
 //   c i a v - zavolá Ezer funkci i s a argumenty a na zásobník dá její hodnotu (v je počet lok.proměnných)
 //   C i a v - zavolá Ezer funkci (její kód z popisu form) i s a argumenty a na zásobník dá její hodnotu (v je počet lok.proměnných)
 //   f i a   - zavolá Ezer.fce c.i s a argumenty a na zásobník dá její hodnotu
@@ -2024,11 +2025,41 @@ class Eval {
               val= this.stack[this.act-cc.i];
               this.stack[++this.top]= val;
               break; }
-            //   w i   - zásobník do lokální proměnné
+            //   w i   - zásobník do lokální proměnné, 
             //           i = pořadí proměnné pod aktivačním záznamem
+            //   w i v - zásobník do řádku pole nebo do složky objektové lokální proměnné, 
+            //           v = číselný index pro array nebo string s cestou ke složce objektu
             case 'w': {
               val= this.stack[this.top--];
-              this.stack[this.act-cc.i]= val;
+              if ( cc.v==undefined ) {
+                this.stack[this.act-cc.i]= val;
+              }
+              else {
+                obj= this.stack[this.act-cc.i];
+                if ( Array.isArray(obj) ) {
+                  let n= Number(cc.v);
+                  if ( isNaN(n) )
+                    this.say_error('index '+cc.v+' pole není číslo','S',this.proc,last_lc);
+                  obj[n]= val;
+                }
+                else if ( typeof(obj)=='object' ) {
+                  if ( typeof(cc.v)!='string' )
+                    this.say_error('označení položky objektu '+cc.v+' není string',
+                      'S',this.proc,last_lc);
+                  let n= cc.v.split('.');
+                  for (var i= 0; i<n.length-1; i++) {
+                    if ( typeof(obj[n[i]])!='object' )
+                      obj= obj[n[i]]= {};
+                    else
+                      obj= obj[n[i]];
+                  }
+                  obj[n[i]]= val;
+                }
+                else {
+                  this.say_error('indexovaná lokální proměnná není ani pole ani objekt',
+                    'S',this.proc,last_lc);
+                }
+              }
               break; }
             // objekt na zásobník (i='@' dá Ezer.app)
             case 'o': {
