@@ -3434,7 +3434,7 @@ Ezer.fce.set_cookie= function (id,val='',form=null,refs=null) {
   let duration= 100, // days
       date= new Date();
   date.setTime(date.getTime() + duration * 24 * 60 * 60 * 1000);
-  document.cookie= id + '=' + encodeURIComponent(v) + ';expires=' + date.toGMTString();
+  document.cookie= id + '=' + encodeURIComponent(v) + ';Expires=' + date.toGMTString()+';sameSite=Strict;secure';
   return 1;
 };
 //--------------------------------------------------------------------------------------- get_cookie

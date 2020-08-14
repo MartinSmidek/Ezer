@@ -28,12 +28,12 @@
   // err=2 ... v PHP7 vlastní handler: E_ALL & ~E_NOTICE     
   // err=3 ... v PHP7 vlastní handler: E_ALL
   if ( isset($_GET['err']) && ($err= $_GET['err']) ) {
-    setcookie('error_reporting',$err);
+    setcookie('error_reporting',$err, ['secure' => true, 'httponly' => true, 'samesite' => 'strict']);
     error_reporting($err==3 ? E_ALL : E_ALL & ~E_NOTICE);
     ini_set('display_errors', 'On');
   }
   else {
-    setcookie('error_reporting',1);
+    setcookie('error_reporting',1, ['secure' => true, 'httponly' => true, 'samesite' => 'strict']);
     error_reporting(E_ALL & ~E_NOTICE);
     ini_set('display_errors', 'Off');
   }
@@ -44,7 +44,7 @@
   $jQuery=   isset($_GET['jquery'])  ? $_GET['jquery']  : (isset($_COOKIE['jquery']) ? $_COOKIE['jquery']  : '3.3.1');
   $dbg=      isset($_GET['dbg'])     ? $_GET['dbg']     : 0;
   $gapi=     isset($_GET['gapi'])    ? $_GET['gapi']    : 0; //!($ezer_local || $ezer_ksweb);
-  $gmap=     isset($_GET['gmap'])    ? $_GET['gmap']    : ($is_local?0:1);
+  $gmap=     isset($_GET['gmap'])    ? $_GET['gmap']    : (isset($_COOKIE['gmap']) ? $_COOKIE['gmap']  : ($is_local?0:1));
   $touch=    isset($_GET['touch'])   ? $_GET['touch']   : 1;
 
   // inicializace SESSION
