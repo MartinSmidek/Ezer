@@ -987,7 +987,7 @@ function find_part_rel($name,&$full,$type='') { #trace();
 # generuje kód funkcí
 function gen_func($c,&$desc,$name) {
   global $error_code_context, $error_code_lc, $code_top;
-  global $pragma_names, $proc_path;
+  global $pragma_names, $proc_path, $depth;
 //                                                 debug($c,"gen_proc: $name");
   $error_code_context= " ve funkci $name";  $error_code_lc= $c->_lc;
   $desc->par= $c->par;
@@ -1010,15 +1010,18 @@ function gen_func($c,&$desc,$name) {
     $c->par->{$id}+= $n;
   }
   // prázdná procedura obsahuje jen return
+  $depth= 0;
   $c= $c->code ? gen2($c->par,$c->var,$c->code,0) : array((object)array('o'=>'f','i'=>'stop'));
+  gen_breaks($c);
 //  $c= optimize($c);
   $desc->code= $c;
 }
 # --------------------------------------------------------------------------------------------- gen2
 # generuje kód příkazů
 #   $i je použit pro překladu call
+#   $depth je hloubka zanoření cyklů a switch - používá se pro doplnění překladu break a continue
 function gen2($pars,$vars,$c,$icall) {
-  global $code_top, $call_php, $block_get;
+  global $code_top, $call_php, $block_get, $begs, $ends;
   $obj= null;
   switch ( $c->expr ) {
   // -------------------------------------- value
@@ -1202,6 +1205,7 @@ function gen2($pars,$vars,$c,$icall) {
   case 'for':
     // {expr:for,init:stmnt,test:expr,incr:stmnt,stmnt:slist}
     // překlad složek
+    $begs++; $ends++;
     $code= array();
     $init= gen2($pars,$vars,$c->init,0);
     $test= gen2($pars,$vars,$c->test,0);
@@ -1209,13 +1213,16 @@ function gen2($pars,$vars,$c,$icall) {
     $stmnt= gen2($pars,$vars,$c->stmnt,0);
     // pomocné instrukce
     $iff= (object)array('o'=>0,'iff'=>count($incr)+count($stmnt)+2);
-    $back= (object)array('o'=>0,'go'=>-count($stmnt)-count($incr)-count($test)-1);
+    $continue= -count($stmnt)-count($incr)-count($test)-1;
+    $back= (object)array('o'=>0,'go'=>$continue,'end'=>$begs,'beg'=>$continue);
     $code[]= array($init,$test,$iff,$stmnt,$incr,$back); 
+    $begs--; $ends--;
     break;
   // -------------------------------------- for ( var of expr ) { stmnts }
   case 'for-of':
     // {expr:for,var:id,of:G(expr),stmnt:(slist)}
     // překlad složek
+    $begs++; $ends++;
     $code= array();
     $var= gen_name2($c->var,$pars,$vars,$obj,true,$c->var);
     if ( $obj && $obj->type=='proc' ) 
@@ -1225,27 +1232,33 @@ function gen2($pars,$vars,$c,$icall) {
     // pomocné instrukce
     $inic= (object)array('o'=>'M');
     $test= (object)array('o'=>'F','i'=>$var[0]->i,'go'=>count((array)$stmnt)+2);
-    $go= (object)array('o'=>0,'go'=>-count($stmnt)-1);
-    $code[]= array($expr,$inic,$test,$stmnt,$go);      // pro pole i objekty
+    $continue= -count($stmnt)-1;
+    $go= (object)array('o'=>0,'go'=>$continue);
+    $code[]= array($expr,$inic,$test,$stmnt,$go,'end'=>$begs,'beg'=>$continue);      // pro pole i objekty
+    $begs--; $ends--;
     break;
   // -------------------------------------- while ( expr ) { stmnts }
   case 'while':
     // {expr:while,while:G(expr),stmnt:(slist)}
     // překlad složek
+    $begs++; $ends++;
     $code= array();
     $expr= gen2($pars,$vars,$c->while,0);
     $stmnt= gen2($pars,$vars,$c->stmnt,0);
     $test= (object)array('o'=>0,'iff'=>count($stmnt)+2);
-    $go= (object)array('o'=>0,'go'=>-count($stmnt)-count($test)-2);
+    $continue= -count($stmnt)-count($test)-1;
+    $go= (object)array('o'=>0,'go'=>$continue,'end'=>$begs,'beg'=>$continue);
     $code[]= array($expr,$test,$stmnt,$go);  
+    $begs--; $ends--;
     break;
   // -------------------------------------- switch ( expr ) { case val: stmnt ... break .. }
   case 'switch':
     // switch  = {expr:switch,of:G(expr2),cases:G(cases)}
     // cases   = [G(case),..G(default)]
-    // case    = {case:value,body:G(slist),break:0/1}
-    // default = {body:G(slist),break:0/1}
+    // case    = {case:value,body:G(slist)}
+    // default = {body:G(slist)}
     // překlad složek
+    $ends++;
     $code= array();
     $expr= gen2($pars,$vars,$c->of,0);
     $code[]= $expr;
@@ -1254,34 +1267,89 @@ function gen2($pars,$vars,$c,$icall) {
     for ($i= 0; $i<$ncase; $i++) {
       $case= $c->cases[$i];
       $stmnt= gen2($pars,$vars,$case,0);
-      $cases[$i]= (object)array('slist'=>$stmnt,'case'=>$case->case,'break'=>$case->break);
+      $cases[$i]= (object)array('slist'=>$stmnt,'case'=>$case->case);
     }
     // konstrukce skoků
     for ($i= 0; $i<$ncase; $i++) {
+      $last= $i+1==$ncase;
       $case= $cases[$i];
       $test= $case->case
-          ? (object)array('o'=>'S','v'=>$case->case,
-              'go'=>count($case->slist)+($case->break ? 1 : 0)+1)
+          ? (object)array('o'=>'S','v'=>$case->case,'go'=>count($case->slist)+($last ? 1 : 2))
           : array();
       $block= array($test,$case->slist);
-      if ( $case->break ) {
-        $n= 1;
-        for ($k= $i+1; $k<$ncase; $k++) {
-          $n+= count($cases[$k]->slist) + ($cases[$k]->case ? 1 : 0) + ($cases[$k]->break ? 1 : 0);
-        }
-        $go= (object)array('o'=>0,'go'=>$n);
-        $block[]= $go;
-      }
       $code[]= $block;
+      if ( !$last ) {
+        $code[]= (object)array('o'=>0,'go'=>2); // přeskočení testu - pokud není konec switch
+      }
     }
-    $code[]= (object)array('o'=>'z','i'=>1);  // pop expr
+    $code[]= (object)array('o'=>'z','i'=>1,'end'=>$ends);  // pop expr
+    $ends--;
+    break;
+  // -------------------------------------- break 
+  case 'break':
+    // {expr:break,type:break|continue}
+    if ( $c->type=='break' ) 
+      $go= (object)array('o'=>0,'break'=>$ends);
+    else
+      $go= (object)array('o'=>0,'continue'=>$begs);
+    $code[]= $go;  
     break;
   }
   $pc= array();
   plain($code,$pc);
   return $pc;
 }
-# ----------------------------------------------------------------------------------------- optimiZe
+# --------------------------------------------------------------------------------------- gen breaks
+# doplní skoky pro break a continue a odstraní značky
+function gen_breaks($code) {
+  $breaks= array();  // depth -> break* 
+  $continues= array();   // depth -> continue* 
+  for ($i= 0; $i<count($code); $i++) {
+    $c= $code[$i];
+    // neurčené skoky
+    if ( isset($c->break) ) {
+      $breaks[$c->break][]= $i;
+      unset($c->break);
+    }
+    elseif ( isset($c->continue) ) {
+      $continues[$c->continue][]= $i;
+      unset($c->continue);
+    }
+    // konce bloků for* (mají beg i end) a switch (má jen end)
+    if ( isset($c->end) ) {
+      if ( count($breaks[$c->end]) ) {
+        foreach($breaks[$c->end] as $ibreak) {
+          // definujeme dopad - pro cykly přidáme 1, switch tam má vyčištění zosobníku
+          $code[$ibreak]->go= $i - $ibreak + ($c->beg ? 1 : 0);
+        }
+        unset($breaks[$c->end]);
+      }
+      // řešíme continue - jen v případě cyklů
+      if ( isset($c->beg) ) {
+        if ( count($continues[$c->end]) ) {
+          foreach($continues[$c->end] as $icont) {
+            // definujeme návrat
+            $code[$icont]->go= $c->beg + $i - $icont;
+          }
+          unset($continues[$c->end]);
+        }
+        unset($c->beg);
+      }
+      unset($c->end);
+    }
+  }
+  // zkontrolujeme jestli něco nezbylo
+  foreach ($breaks as $j=>$ibreak) {
+    comp_error("CODE: 'break' mimo kontext");
+  }
+  foreach ($continues as $j=>$icont) {
+    comp_error("CODE: 'continue' mimo kontext");
+  }
+//                                                    debug($breaks,'breaks');
+//                                                    debug($continues,'continues');
+  return $code;
+}
+# ----------------------------------------------------------------------------------------- optimize
 # optimalizuje kód
 function optimize($code) {
   $skok= function($ci) {
@@ -3325,6 +3393,7 @@ function get_slist($context,&$st) {
 #                                               --> {expr:for-of,var:id,of:G(expr),stmnt:(slist)}
 #          | 'while' '(' expr ')' '{' slist '}'
 #                                               --> {expr:while,while:G(expr),stmnt:(slist)}
+#          | 'break' | 'continue'               --> {expr:break,type:break|continue}
 #          | 'switch (' expr2 ') {' cases '}'   --> {expr:switch,of:G(expr2),cases:G(cases)}
 #          | call2                              --> G(call2)
 #          |
@@ -3447,6 +3516,11 @@ function get_stmnt($context,&$st) {
         $ok= get_call2_id($context,$st,$id,0);
       }
     }
+    elseif ( $id=='break' || $id=='continue' ) {
+      # 'break' --> {expr:break,type:break|continue}
+      $st=  (object)array('expr'=>'break','type'=>$id);
+      $ok= true;
+    }
     else {
       comp_error("SYNTAX: chybějící závorky po '$id'?");
     }
@@ -3459,8 +3533,8 @@ function get_stmnt($context,&$st) {
 }
 # -------------------------------------------------------------------------------------------- cases
 # cases   :: case* [ default ]                  --> [G(case),..G(default)]
-# case    :: 'case' value ':' slist ['break;']  --> {case:value,body:G(slist),break:0/1}
-# default :: 'default'    ':' slist ['break;']  --> {body:G(slist),break:0/1}
+# case    :: 'case' value ':' slist             --> {case:value,body:G(slist)}
+# default :: 'default'    ':' slist             --> {body:G(slist)}
 function get_cases($context,&$cs) {
   $cs= array();
   $ok= true;
@@ -3468,14 +3542,13 @@ function get_cases($context,&$cs) {
   while ( $ok ) {
     $ok= get_if_id_or_key('case');
     if ( $ok ) {
-      # 'case' value ':' slist ['break;'] --> {case:value,body:G(slist),break:0/1}
+      # 'case' value ':' slist --> {case:value,body:G(slist)}
       $val= $type= $slist= null;
       get_value ($val,$type);
       get_delimiter(':');
-      $case= (object)array('expr'=>'slist','body'=>array(),'case'=>$val,'break'=>0);
+      $case= (object)array('expr'=>'slist','body'=>array(),'case'=>$val);
       while ( $ok ) {
-        if ( look_id_or_key('break') || look_id_or_key('case')
-          || look_id_or_key('default') || look_delimiter('}')) {
+        if ( look_id_or_key('case') || look_id_or_key('default') || look_delimiter('}')) {
           break;
         }
         $stmnt= null;
@@ -3485,20 +3558,16 @@ function get_cases($context,&$cs) {
         }
         $ok= get_if_delimiter(';');
       }
-      if ( get_if_id_or_key('break') ) {
-        get_delimiter(';');
-        $case->break= 1;
-      }
       $cs[]= $case;
     }
   }
   $ok= get_if_id_or_key('default');
   if ( $ok ) {
-    # 'default' ':' slist ['break;'] --> {body:G(slist),break:0/1}
+    # 'default' ':' slist --> {body:G(slist)}
     get_delimiter(':');
-    $default= (object)array('expr'=>'slist','body'=>array(),'break'=>0);
+    $default= (object)array('expr'=>'slist','body'=>array());
     while ( $ok ) {
-      if ( look_id_or_key('break') || look_delimiter('}') ) {
+      if ( look_delimiter('}') ) {
         break;
       }
       $stmnt= null;
@@ -3507,10 +3576,6 @@ function get_cases($context,&$cs) {
         $default->body[]= $stmnt;
       }
       $ok= get_if_delimiter(';');
-    }
-    if ( get_if_id_or_key('break') ) {
-      get_delimiter(';');
-      $default->break= 1;
     }
     $cs[]= $default;
   }
@@ -3529,7 +3594,7 @@ function get_cases($context,&$cs) {
 #          | value                              --> {expr:value,value:v,type:t}
 #          | '(' expr2 ')'                      --> G(expr2)
 # templ   :: string                             --> {expr:value,value:v,type:t}
-#          | '${' ( id | call2 ) '`'            --> G(id) | G(call2)
+#          | '${' ( id | call2 ) '}'            --> G(id) | G(call2)
 function get_expr2($context,&$expr) {
   global $last_lc;
   $ok= get_expr3($context,$expr);
