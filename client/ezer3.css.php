@@ -15,7 +15,11 @@ $abs_root=  $_SESSION[$ezer_root]['abs_root'];
 require_once("$abs_root/skins/colors.php");
 echo <<<__EOD
 
-/* -------------------------------------------------------------------------------------==> popup */
+/* ----------------------------------------------------------------------------------==> chyby PHP */
+
+table.xdebug-error { position: fixed; z-index: 999999; }
+
+ /* -------------------------------------------------------------------------------------==> popup */
 
 .mask3 { position:absolute; left:0; top:0; width:100%; height:100%; z-index:2000; display:none; }
 
