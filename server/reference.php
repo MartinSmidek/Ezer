@@ -254,11 +254,11 @@ function wiki2html ($wiki) {
   return $html;
 }
 # -------------------------------------------------------------------------------------------------- i_doc_app
-# $fnameslist je maska souborů s dokumentací aplikace ve wiki formátu
+# $fnamestmnts je maska souborů s dokumentací aplikace ve wiki formátu
 # tyto soubory jsou uloženy vzhledem k cestě $ezer_path_root
 # soubor todo.wiki přitom přeskakuje - ten se zobrazuje zpravidla v sekci Novinky
-function i_doc_app($fnameslist,$chapter,$to_save=true) { trace();
-//                                                 display("i_doc_app($fnameslist,$chapter,$to_save)");
+function i_doc_app($fnamestmnts,$chapter,$to_save=true) { trace();
+//                                                 display("i_doc_app($fnamestmnts,$chapter,$to_save)");
   global $i_doc_info, $i_doc_class, $i_doc_id, $i_doc_ref, $i_doc_err, $i_doc_n, $i_doc_file;
   global $i_doc_text, $form, $map, $ezer_path_root,$ezer_path_serv;
   require_once("$ezer_path_serv/licensed/ezer_wiki.php");
@@ -295,13 +295,13 @@ function i_doc_app($fnameslist,$chapter,$to_save=true) { trace();
   // navrácení pro wiki speciálních znaků
   $subst_back= array( '{#3A}' => ':' );
   // test
-  if ( $fnameslist=='.test.' )
+  if ( $fnamestmnts=='.test.' )
     $text= $parser->test();
-  elseif ( $fnameslist=='.wiki.' )
+  elseif ( $fnamestmnts=='.wiki.' )
     $text= i_doc_wiky('try');
   else {
-    $fnames= i_glob("$ezer_path_root/$fnameslist");
-//                                                 debug($fnames,"'$ezer_path_root/$fnameslist'");
+    $fnames= i_glob("$ezer_path_root/$fnamestmnts");
+//                                                 debug($fnames,"'$ezer_path_root/$fnamestmnts'");
     $text= '';
     foreach ( $fnames as $fname ) /*if ( substr($fname,-10)!='/todo.wiki' )*/ {
       $text.= "<h3>modul $fname</h3>";
@@ -731,7 +731,7 @@ function i_doc_subs_attribs ($blok,$to_show_sub=1) {
   }
   return $text;
 }
-# -------------------------------------------------------------------------------------------------- i_doc_lang
+# --------------------------------------------------------------------------------------- i doc_lang
 # vrátí vygenerovaný text dokumentace jazyka podle tabulek kompilátoru
 #       block  :: key [ id ] [':' key id] [pars|args] [coord] [code] [struct]
 #       struct :: '{' part (',' part)* '}' ]
@@ -754,6 +754,44 @@ function i_doc_lang() { //trace();
   // seznam bloků jazyka
   $text.= "<div class='CSection CTopic'>";
   $text.= "<h2 class='CTitle'>Bloky EzerScriptu</h2>";
+  // gramatiky funkcí ezerscriptu
+  $gram_func= <<<__EOT
+Gramatika jazyka ezerscript/func popisuje jazyk rozšiřující podmnožinu javascriptu
+o přístup k blokům ezerscriptu (var, panel, field, label, ...) a k jejich atributům, 
+  jméno bloku lze předávat referencí s & nebo defaultně hodnotou (získanou metodou get)
+o iteraci složek form a list příkazem for-in
+o volání funkcí na serveru napsaných v PHP:      php.funkce(arg,...)
+o volání funkcí klienta napsaných v javascriptu: js.funkce(arg,...)
+není implementováno: precedence operátorů, příkazy s návěštím, ...
+      
+body     :: '{' [ 'var' varlist ] stmnts '}'
+varlist  :: id ':' type ( ',' id ':' type)*
+type     :: 'number' | 'text' | 'object' 
+      
+stmnts   :: stmnt ( ';' stmnt )*
+stmnt    :: '{' stmnts '}' | id '=' expr | id '++' | id '--'
+          | 'if' '(' expr ')' stmnt [ 'else' stmnt ]
+          | 'if' '(' expr ')' stmnt ('elseif' '(' expr ')' stmnt)* [ 'else' stmnt ]
+          | 'for' '(' id '=' expr ';' expr ';' stmnt ')' '{' stmnts '}'
+          | 'for' '(' id 'of' expr ')' '{' stmnts '}'
+          | 'while' '(' expr ')' '{' stmnts '}'
+          | 'break' | 'continue'
+          | 'switch (' expr ') {' ('case' value ':' stmnts)* ['default' ':' stmnts] '}'
+          | call
+          |
+      
+expr     :: subexpr | subexpr op subexpr | subexpr ? expr : expr
+op       :: '+' | '-' | '*' | '/'
+          | '>' | '>=' | '<' | '<=' | '==' | '!='
+          | '&&' | '||'
+subexpr  :: call | id | <string> | '`' template* '`' | <number> | object | '(' expr ')'
+object   :: '°{' id ':' value ( ',' id ':' value )* '}'
+template :: string | '\${' ( id | call ) '}'
+      
+call     :: id  args | 'php' '.' id args | 'js' '.' id args
+args     :: '(' [ arg ( ',' arg )* ] ')'
+arg      :: expr | &id
+__EOT;
   // generování popisů bloků
   foreach ($specs as $blok => $desc) {
     $text.= "<div class='CGroup CTopic'>";
@@ -766,7 +804,8 @@ function i_doc_lang() { //trace();
       $syntax.= in_array('type',$desc) ? " : type" : '';
       $syntax.= in_array('par',$desc) ? " (a1,...)" : '';
       $syntax.= in_array('nest',$desc) ? " { atributy bloky }" : '';
-      $syntax.= in_array('code',$desc) ? " { příkazy }" : '';
+      $syntax.= in_array('code',$desc) ? " { logický výraz }" : '';
+      $syntax.= in_array('code2',$desc) ? " body<br><br>$gram_func" : '';
       $text.= "<blockquote><pre class='javascript'>$syntax</pre></blockquote>";
     }
     // popis bloku

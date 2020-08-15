@@ -193,7 +193,7 @@ $specs = array (
   'list'   =>  explode(",",'part,coor+,cmnt,proc'),
 #  proc
   'proc'   =>  explode(",",'par,code,note'),
-  'func'   =>  explode(",",'par,code2,note'),
+  'func'   =>  explode(",",'par,code2,note')
 );
 # definice bloků s implementovanou metodou get
 $block_get= array( 
@@ -342,6 +342,9 @@ $tok2lex= array(
   T_ABSTRACT => 'id',
   -1 => 'del'
 );
+$func_help= <<<__EOT
+    Funkce tvořená příkazy if, while, for, for-of, switch, break, continue
+__EOT;
 $blocs_help = array (                                     // popis pro dokumentaci
   ''       =>  "Nevnořitelné základní bloky modulu.",
 #  ezer
@@ -382,8 +385,8 @@ jméno souboru ''prog_modul.wiki'' s dokumentací (''prog'' je jméno programu).
   'browse' =>  "Kombinovaný prvek pro zobrazení množiny řádků tabulky, mezi sloupci musí být (třeba se šířkou 0) vřazen primární klíč MySQL tabulky (jinak nebudou korektně fungovat funkce s prefixem browse_)",
   'show'   =>  "Jeden řádek browse",
 #  proc
-  'proc'   =>  "Procedura",
-  'func'   =>  "Funkce",
+  'proc'   =>  "Procedura s kódem zapsaným jako logický výraz - středník je (c)and, svislítko je (c)or ...",
+  'func'   =>  "Funkce s kódem zapsaným v rozšířené podmnožině javascriptu"
 );
 }
 ?>
