@@ -1943,9 +1943,11 @@ class Eval {
 //   o i     - objekt context[i] na zásobník (i='@' dá Ezer.app)
 //   p i     - parametr nebo lokální proměnnou (i je offset) na zásobník
 //   q i     - sníží zásobník o referenci objektu Ezer-třídy a dá na něj hodnotu o[i1][i2]...
+//   r       - sníží zásobník o referenci objektu a o selektor i dá na něj hodnotu o[i1][i2]...
 //   r i     - sníží zásobník o referenci objektu a dá na něj hodnotu o[i1][i2]...
-//   w i     - sníží zásobník a uloží do lokální proměnné (i je offset)
-//   w i v   - sníží zásobník a uloží do složky lokální proměnné (i je offset) - pole nebo objektu
+//   w i     - sníží zásobník o hodnotu a uloží do lokální proměnné (i je offset)
+//   w i v   - sníží zásobník o hodnotu a uloží do složky lokální proměnné (i je offset) - pole nebo objektu
+//   w i a   - sníží zásobník o hodnotu a index a uloží do složky lokální proměnné (i je offset) - pole nebo objektu
 //   c i a v - zavolá Ezer funkci i s a argumenty a na zásobník dá její hodnotu (v je počet lok.proměnných)
 //   C i a v - zavolá Ezer funkci (její kód z popisu form) i s a argumenty a na zásobník dá její hodnotu (v je počet lok.proměnných)
 //   f i a   - zavolá Ezer.fce c.i s a argumenty a na zásobník dá její hodnotu
@@ -2029,10 +2031,28 @@ class Eval {
             //           i = pořadí proměnné pod aktivačním záznamem
             //   w i v - zásobník do řádku pole nebo do složky objektové lokální proměnné, 
             //           v = číselný index pro array nebo string s cestou ke složce objektu
+            //   w i a - sníží zásobník o index a hodnotu a uloží hodnotu do složky lokální proměnné 
+            //           (i je offset) podle indexu 
             case 'w': {
               val= this.stack[this.top--];
               if ( cc.v==undefined ) {
-                this.stack[this.act-cc.i]= val;
+                if ( cc.a ) { // na vrcholu byl index, až pak hodnota
+                  obj= this.stack[this.act-cc.i];
+                  if ( Array.isArray(obj) ) {
+                    i= Number(val);  
+                    if ( isNaN(i) )
+                      this.say_error('index '+i+' pole není číslo','S',this.proc,last_lc);
+                    val= this.stack[this.top--];
+                    obj[i]= val;
+                  }
+                  else {
+                    this.say_error('indexovaná lokální proměnná není pole',
+                      'S',this.proc,last_lc);
+                  }
+                }
+                else {
+                  this.stack[this.act-cc.i]= val;
+                }
               }
               else {
                 obj= this.stack[this.act-cc.i];
@@ -2136,13 +2156,26 @@ class Eval {
               this.stack[++this.top]= obj;
               break; }
             //   r i    - sníží zásobník o referenci objektu a dá na něj hodnotu o[i1][i2]...
+            //   r      - sníží zásobník o selektor i a o referenci objektu a dá na něj hodnotu o[i1][i2]...
             case 'r': {
-              o= this.stack[this.top--]; // odstraň objekt
+              if ( cc.i===undefined ) {
+                i= this.stack[this.top--]; // odstraň index
+                o= this.stack[this.top--]; // odstraň objekt
+              }
+              else {
+                i= cc.i;
+                o= this.stack[this.top--]; // odstraň objekt
+              }
               if ( o instanceof ListRow || o instanceof Form )
                 o= o.part;
               if ( typeof(o)!='object' )
-                this.say_error('EVAL: '+cc.i+' nemá definovaný objekt','S',this.proc,last_lc);
-              obj= Ezer.obj_ref(cc.i,o);
+                this.say_error('EVAL: '+i+' nemá definovaný objekt','S',this.proc,last_lc);
+              if ( Array.isArray(o) ) {
+                obj= o[i];
+              }
+              else {
+                obj= Ezer.obj_ref(i,o);
+              }
               obj= obj===null ? '' : obj;
               this.stack[++this.top]= obj;
               break; }

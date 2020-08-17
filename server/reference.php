@@ -766,10 +766,10 @@ není implementováno: precedence operátorů, příkazy s návěštím, ...
       
 body     :: '{' [ 'var' varlist ] stmnts '}'
 varlist  :: id ':' type ( ',' id ':' type)*
-type     :: 'number' | 'text' | 'object' 
+type     :: 'number' | 'text' | 'object' | 'array'
       
 stmnts   :: stmnt ( ';' stmnt )*
-stmnt    :: '{' stmnts '}' | id '=' expr | id '++' | id '--'
+stmnt    :: '{' stmnts '}' | id [ '[' expr ']' ] =' expr | id '++' | id '--'
           | 'if' '(' expr ')' stmnt [ 'else' stmnt ]
           | 'if' '(' expr ')' stmnt ('elseif' '(' expr ')' stmnt)* [ 'else' stmnt ]
           | 'for' '(' id '=' expr ';' expr ';' stmnt ')' '{' stmnts '}'
@@ -781,10 +781,8 @@ stmnt    :: '{' stmnts '}' | id '=' expr | id '++' | id '--'
           |
       
 expr     :: subexpr | subexpr op subexpr | subexpr ? expr : expr
-op       :: '+' | '-' | '*' | '/'
-          | '>' | '>=' | '<' | '<=' | '==' | '!='
-          | '&&' | '||'
-subexpr  :: call | id | <string> | '`' template* '`' | <number> | object | '(' expr ')'
+op       :: '+' | '-' | '*' | '/' | '>' | '>=' | '<' | '<=' | '==' | '!=' | '&&' | '||'
+subexpr  :: call | id | id '[' expr ']' | <string> | '`' template* '`' | <number> | object | '(' expr ')'
 object   :: '°{' id ':' value ( ',' id ':' value )* '}'
 template :: string | '\${' ( id | call ) '}'
       

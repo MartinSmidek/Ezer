@@ -1070,6 +1070,21 @@ function gen2($pars,$vars,$c,$icall) {
       }
     }
     break;
+  // -------------------------------------- id '[' expr ']'
+  case 'index':
+    $code= gen_name2($c->id,$pars,$vars,$obj,true,$c,false); // nemá parametry
+    if ( $obj && $obj->type=='var' && $obj->_of=='object' ) {
+      $code[]= gen2($pars,$vars,$c->index,0);
+      $code[]= (object)array('o'=>'m','i'=>'get','a'=>1);
+    }
+    elseif ( !$obj ) {
+      $code[]= gen2($pars,$vars,$c->index,0);
+      $code[]= (object)array('o'=>'r');
+    }
+    else {
+      comp_error("CODE: chybné užití indexu pro '$c->id'");
+    }
+    break;
   // -------------------------------------- id ( expr1, ... ) ? value
   case 'call':
     $code= array();
@@ -1134,8 +1149,12 @@ function gen2($pars,$vars,$c,$icall) {
         for ($i= 0; $i<$npar; $i++) {
           $code[$i+$cend]= gen2($pars,$vars,$c->par[$i],0);
         }
-        if ( $call->o=='w' )
+        if ( $call->o=='w' ) {
           $w_set= true;
+          if ( $npar==2 ) {
+            $call->a= 1;
+          }
+        }
         else
           $call->a= $npar;
         $code[$cend+$npar]= $call;
@@ -3381,6 +3400,7 @@ function get_slist($context,&$st) {
 # -------------------------------------------------------------------------------------------- stmnt
 # stmnt   :: '{' slist '}'                      --> G(slist)
 #          | id '=' expr2                       --> {expr:call,op:id.set,par:[G(expr2)]}
+#          | id '[' expr2 ']' '=' expr2         --> {expr:asgn,id:id,index:expr2/1,par:[G(expr2/2)]}
 #          | id '++' | id '--'                  --> id=id+1 | id=id-1
 #          | 'if' '(' expr2 ')' stmnt [ 'else' stmnt ]
 #                                               --> {expr:if,test:G(expr2),then:G(st1),else:G(st2)}
@@ -3412,6 +3432,16 @@ function get_stmnt($context,&$st) {
       $expr='';
       $ok= get_expr2($context,$expr);
       $st= (object)array('expr'=>'call','op'=>"$id.set",'par'=>array($expr));
+    }
+    elseif ( get_if_delimiter('[') ) {
+      # id '[' expr2 ']' '=' expr2 --> {expr:asgn,id:id,index:expr2/1,par:[G(expr2/2)]}
+      $index= $expr= null;
+      $ok= get_expr2($context,$index);
+      if ( !$ok ) goto end;
+      get_delimiter(']');
+      get_delimiter('=');
+      $ok= get_expr2($context,$expr);
+      $st= (object)array('expr'=>'call','op'=>"$id.set",'par'=>array($expr,$index,));
     }
     elseif ( ($plus= get_if_delimiter('++')) || get_if_delimiter('--') ) {
       # id++ | id-- 
@@ -3529,6 +3559,7 @@ function get_stmnt($context,&$st) {
     # prázdný příkaz
     $ok= true;
   }
+end:
   return $ok;
 }
 # -------------------------------------------------------------------------------------------- cases
@@ -3590,6 +3621,7 @@ function get_cases($context,&$cs) {
 #          | '&&' | '||'                        --> and | or
 # expr3   :: call2                              --> G(call2)
 #          | id                                 --> {expr:par,par:id} | {expr:name,name:id}
+#          | id '[' expr2 ']'                   --> {expr:index,id:id,index:G(expr2)}
 #          | '`' template* '`'                  --> {expr:templ,par:[G(templ),...]}
 #          | value                              --> {expr:value,value:v,type:t}
 #          | '(' expr2 ')'                      --> G(expr2)
@@ -3642,9 +3674,16 @@ function get_expr3($context,&$expr) {
   global $last_lc, $typ, $lex, $head;
   $id= '';
   if ( get_if_id($id) ) {
-    # call2 --> G(call2)
     if ( get_if_delimiter('(') ) {
+      # call2 --> G(call2)
       get_call2_id($context,$expr,$id,1);
+    }
+    else if ( get_if_delimiter('[') ) {
+      # id '[' expr2 ']' --> {expr:index,id:id,index:G(expr2)}
+      $index= null;
+      get_expr2($context,$index);
+      get_delimiter(']');
+      $expr= (object)array('expr'=>'index','id'=>$id,'index'=>$index);
     }
     else {
       # id --> {expr:name,name:id}              // id znamená vlastně id.get
@@ -3655,6 +3694,7 @@ function get_expr3($context,&$expr) {
     }
   }
   else if ( get_if_delimiter('(') ) {
+    # '(' expr2 ')' --> G(expr2)
     get_expr2($context,$expr);
     get_delimiter(')');
   }
