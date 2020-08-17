@@ -769,7 +769,7 @@ varlist  :: id ':' type ( ',' id ':' type)*
 type     :: 'number' | 'text' | 'object' | 'array'
       
 stmnts   :: stmnt ( ';' stmnt )*
-stmnt    :: '{' stmnts '}' | id [ '[' expr ']' ] =' expr | id '++' | id '--'
+stmnt    :: '{' stmnts '}' | id [ '[' expr ']' ] '=' expr | id '++' | id '--'
           | 'if' '(' expr ')' stmnt [ 'else' stmnt ]
           | 'if' '(' expr ')' stmnt ('elseif' '(' expr ')' stmnt)* [ 'else' stmnt ]
           | 'for' '(' id '=' expr ';' expr ';' stmnt ')' '{' stmnts '}'

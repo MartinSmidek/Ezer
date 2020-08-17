@@ -17,11 +17,6 @@
   $ezer_server= $_SESSION[$ezer_root]['ezer_server'];
   $is_local= is_null($ezer_local) ? !$ezer_server : $ezer_local;
       
-//  echo("ezer_ajax.php start, ezer_server=$ezer_server");
-//  session_start();
-  session_set_cookie_params(["SameSite" => "Strict"]);
-  session_set_cookie_params(["Secure" => "true"]);
-  session_set_cookie_params(["HttpOnly" => "true"]);
   session_start();
 
   // přepínač pro fáze migrace pod PDO !!! tentýž musí být v $app.php

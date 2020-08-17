@@ -109,7 +109,7 @@
   # ----------------------------------------------------------------------------------------- params
   # cmd    - příkaz
   # x      - parametry
-  if (get_magic_quotes_gpc()) $_POST= stripSlashes_r($_POST);
+//  if (get_magic_quotes_gpc()) $_POST= stripSlashes_r($_POST); // vrací FALSE od PHP 5.4.0
 //   $x= (object)$_POST;
   $x= array2object($_POST);
   switch ( $x->cmd ) {
