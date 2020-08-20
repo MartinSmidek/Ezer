@@ -123,7 +123,7 @@
       "$client/ezer_rep3.js","$client/ezer_lib3.js","$client/ezer_tree3.js"
     ),
     // rozhodnout zda používat online mapy
-    $gmap ? array(
+    $gmap==1 ? array(
       "https://maps.googleapis.com/maps/api/js?libraries=places&key=$api_key") : array(),
 //    $gmap ? array(
 //      "https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js",
