@@ -15,7 +15,7 @@ function cms_form(cmd,par) {
         ? `TEXT '${i}'=>${desc.TEXT[i]}`
         : desc.TEXT[i] ? desc.TEXT[i] : `TEXT '${i}'=>undefined`;
   }
-  var form= jQuery("div.cms_form"), 
+  var form= jQuery("div.cms_form"),
       mail= form.find("[name=mail] input"),
       pin= form.find("[name=pin] input"),
       info= form.find(">div>div:first-child"),
@@ -55,7 +55,7 @@ function cms_form(cmd,par) {
       conf= desc.TYPE.includes('confirm') ? TEXT('cms_confirm') : '';
       famy= desc.TYPE.includes('family') ? TEXT('cms_family_1') : '';
       // vytvoření položek formuláře
-      let items= '', must= "<b class='cms_must'>*</b>";
+      let items= '', must= "<b class='cms_must'>*&nbsp;</b>";
       for (let i in desc.ELEM ) {
         let e= desc.ELEM[i], t= e[0], w= e[3], h= e[4],
             lab= `<span>${e[2]} ${e[1]=='*' || e[1]=='+' ? must : ''}</span>`;
@@ -63,49 +63,49 @@ function cms_form(cmd,par) {
           items+= `<input name='${i}' type='hidden'>`;
         else if ( t=='c' )
           items+= 
-            `<label>${lab}<input name='${i}' type='checkbox'></label>`;
+            `<label class="span_above">${lab}<input name='${i}' type='checkbox'></label>`;
         else
           items+= h 
-            ? `<label>${lab}<textarea name='${i}' style='width:${w}px;height:${h}px'/></label>`
-            : `<label>${lab}<input name='${i}' type='text' style='width:${w}px'></label>`;
+            ? `<label style="display: block;">${lab}<textarea name='${i}' style='width:${w}px;height:${h}px'/></label>`
+            : `<label class="span_above">${lab}<input name='${i}' type='text' style='width:${w}px'></label>`;
       }
       // případné vyžádání potvrzení
       if ( conf ) {
-        conf= `<div name='confirm'><label>
+        conf= `<hr class="clear"><div name='confirm'><label>
                 <input type='checkbox' value='0' onchange="cms_form('cms_confirm');">${conf}
-               </label><hr></div>`;
+               </label></div>`;
       }
       // případné přidání rodinných příslušníků
       if ( famy ) {
-        famy= `<div name='family'><label>
+        famy= `<hr class="clear"><div name='family'><label>
                 <input type='checkbox' value='0' onchange="cms_form('cms_family');">${famy}
-               </label><hr></div>`;      
+               </label></div>`;
       }
       // vytvoření formuláře
       let test= Ezer.cms.test ? `<div>TEST</div>` : '';
       form= jQuery(`
-        <div class='cms_form ${par.form}'>
-          <span>${par.title}${test}</span>
+        <div class='order_popup cms_form ${par.form}'>
+          <span>${par.title}${test}</span><br>
           <div>
             <div>${par.full ? TEXT('cms_create_2') : TEXT('cms_create_1')}<hr></div>
             <div>
-              <label name="mail"><span>mailová adresa ${must}</span>
-                  <input type="text" style='width:190px'></label>
-              <label name="mail">&nbsp;
-                  <button onclick="cms_form('cms_mail');">Odeslat mail</button></label>
-              <label name="pin">PIN
-                  <input type="text" style='width:40px'></label>
-              <label name="pin">&nbsp;
-                  <button onclick="cms_form('cms_pin');">Potvrdit PIN</button></label>
-              <hr>
+              <label name="mail" style="display: block"><span><i class='fa fa-envelope' style="color: #8c8c8c"></i> ${must}</span>
+                  <input type="text" placeholder='mailová adresa' style='width:190px'></label>
+              <label name="mail">
+                  <button class="setkani_padding" onclick="cms_form('cms_mail');">Odeslat mail</button></label>
+              <div class="float-right"> <label name="pin">
+                  <input type="text" style='width:60px' placeholder="PIN"></label>
+              <label name="pin">
+                  <button class="setkani_padding" onclick="cms_form('cms_pin');">Potvrdit PIN</button></label>
+              </div>
             </div>
-            <div name='items'>${items}<hr></div>  
+            <hr class="clear">
+            <div name='items'>${items}</div>  
             ${conf}
             ${famy}
-            <div>
+            <div class="float-right no_padding!">
               <button name='submit' onclick="cms_form('cms_submit');">Odeslat a přihlásit</button>
               <button name='quit' onclick="cms_form('cms_destroy')">Nepřihlašovat</button>
-              <hr>
             </div>      
           </div>      
         </div>
