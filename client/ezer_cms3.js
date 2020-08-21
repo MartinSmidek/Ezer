@@ -18,8 +18,8 @@ function cms_form(cmd,par) {
   var form= jQuery("div.cms_form"),
       mail= form.find("[name=mail] input"),
       pin= form.find("[name=pin] input"),
-      info= form.find(">div>div:first-child"),
-      data= form.find(">div>div:nth-child(3)"),
+      info= form.find("[name=info]"),
+      data= form.find("[name=items]"),
       conf= form.find("[name=confirm] input"),
       famy= form.find("[name=family]"),
       desc, ido
@@ -87,7 +87,7 @@ function cms_form(cmd,par) {
         <div class='order_popup cms_form ${par.form}'>
           <span>${par.title}${test}</span><br>
           <div>
-            <div>${par.full ? TEXT('cms_create_2') : TEXT('cms_create_1')}<hr></div>
+            <div name="info">${par.full ? TEXT('cms_create_2') : TEXT('cms_create_1')}<hr></div>
             <div>
               <label name="mail" style="display: block"><span><i class='fa fa-envelope' style="color: #8c8c8c"></i> ${must}</span>
                   <input type="text" placeholder='mailová adresa' style='width:190px'></label>
