@@ -5275,17 +5275,11 @@ Ezer.obj.DOM= {};
 // ----------------------------------------------------------------------------------- clipboard
 // copy message to the clipboard
 Ezer.fce.DOM.clipboard= function (msg) {
-  var selection,
-      range= document.createRange(),
-      div= jQuery('<div>').text(msg).appendTo(jQuery("body"));
-  // Select temp element.
-  range.selectNodeContents(div.get(0));
-  selection= window.getSelection();
-  selection.removeAllRanges();
-  selection.addRange(range);
-  // Lets copy and remove temp element
-  document.execCommand ("copy", false, null);
-  div.remove();
+  let $temp= jQuery("<textarea>");
+  jQuery("body").append($temp);
+  $temp.val(msg).select();
+  document.execCommand("copy");
+  $temp.remove();
 };
 // -------------------------------------------------------------------------------------- confirm
 // obecné řešení jednoduchých dialogů
