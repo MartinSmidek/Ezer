@@ -523,7 +523,25 @@
 //    }
     // konstrukce JOIN
     $joins= '';
-    if ( isset($x->joins) && ($xjoins= $x->joins) ) foreach ( $xjoins as $join ) $joins.= " $join";
+    if ( isset($x->joins) && ($xjoins= $x->joins) ) {
+      foreach ( $xjoins as $join ) {
+        // $join: [LEFT] JOIN [db.]table ...
+        $join= preg_replace_callback("/^((?:LEFT|) JOIN )(\w+)(\.|)(.*$)/",
+            function($m) use ($ezer_db) {
+              $j= $m[0];
+              if ( $m[3]=='.' ) {
+                $jdb= $m[2];
+                if ( $jdb && isset($ezer_db[$jdb]) ) {
+                  $jdb= (isset($ezer_db[$jdb][5]) ? $ezer_db[$jdb][5] : $jdb);
+                  $j= "$m[1]$jdb.$m[4]";
+                }
+              }
+              return $j;
+            },
+            $join);
+        $joins.= " $join";
+      }
+    }
     $qry= "SELECT $fields,$key_id as the_key FROM $table $joins WHERE $xcond ";
     $res= mysql_qry($qry,$xcond ? 0 : 1);
     if ( $res ) {
@@ -591,7 +609,21 @@
     $joins= '';
     if ( isset($x->joins) ) {
       foreach ( $x->joins as $join ) {
-        $joins .= " $join";
+        // $join: [LEFT] JOIN [db.]table ...
+        $join= preg_replace_callback("/^((?:LEFT|) JOIN )(\w+)(\.|)(.*$)/",
+            function($m) use ($ezer_db) {
+              $j= $m[0];
+              if ( $m[3]=='.' ) {
+                $jdb= $m[2];
+                if ( $jdb && isset($ezer_db[$jdb]) ) {
+                  $jdb= (isset($ezer_db[$jdb][5]) ? $ezer_db[$jdb][5] : $jdb);
+                  $j= "$m[1]$jdb.$m[4]";
+                }
+              }
+              return $j;
+            },
+            $join);
+        $joins.= " $join";
       }
     }
     $qry= "SELECT $key_id AS _klice_ FROM $table $joins WHERE $cond ";
@@ -645,7 +677,21 @@
       $joins= '';
       if ( isset($x->joins) ) {
         foreach ( $x->joins as $join ) {
-          $joins .= " $join";
+          // $join: [LEFT] JOIN [db.]table ...
+          $join= preg_replace_callback("/^((?:LEFT|) JOIN )(\w+)(\.|)(.*$)/",
+              function($m) use ($ezer_db) {
+                $j= $m[0];
+                if ( $m[3]=='.' ) {
+                  $jdb= $m[2];
+                  if ( $jdb && isset($ezer_db[$jdb]) ) {
+                    $jdb= (isset($ezer_db[$jdb][5]) ? $ezer_db[$jdb][5] : $jdb);
+                    $j= "$m[1]$jdb.$m[4]";
+                  }
+                }
+                return $j;
+              },
+              $join);
+          $joins.= " $join";
         }
       }
       // konstrukce ORDER
@@ -801,7 +847,21 @@
       $joins= '';
       if ( $x->joins ) {
         foreach ( $x->joins as $join ) {
-          $joins .= " $join";
+          // $join: [LEFT] JOIN [db.]table ...
+          $join= preg_replace_callback("/^((?:LEFT|) JOIN )(\w+)(\.|)(.*$)/",
+              function($m) use ($ezer_db) {
+                $j= $m[0];
+                if ( $m[3]=='.' ) {
+                  $jdb= $m[2];
+                  if ( $jdb && isset($ezer_db[$jdb]) ) {
+                    $jdb= (isset($ezer_db[$jdb][5]) ? $ezer_db[$jdb][5] : $jdb);
+                    $j= "$m[1]$jdb.$m[4]";
+                  }
+                }
+                return $j;
+              },
+              $join);
+          $joins.= " $join";
         }
       }
       // seznam čtených polí
@@ -921,8 +981,24 @@
     }
     // konstrukce JOIN, WHERE,
     $joins= '';
-    if ( isset($x->joins) && $x->joins ) foreach ( $x->joins as $join ) {
-      $joins .= " $join";
+    if ( isset($x->joins) && $x->joins ) {
+      foreach ( $x->joins as $join ) {
+        // $join: [LEFT] JOIN [db.]table ...
+        $join= preg_replace_callback("/^((?:LEFT|) JOIN )(\w+)(\.|)(.*$)/",
+            function($m) use ($ezer_db) {
+              $j= $m[0];
+              if ( $m[3]=='.' ) {
+                $jdb= $m[2];
+                if ( $jdb && isset($ezer_db[$jdb]) ) {
+                  $jdb= (isset($ezer_db[$jdb][5]) ? $ezer_db[$jdb][5] : $jdb);
+                  $j= "$m[1]$jdb.$m[4]";
+                }
+              }
+              return $j;
+            },
+            $join);
+        $joins .= " $join";
+      }
     }
     // proveď případný sql příkaz
     if ( $x->sql ) mysql_qry($x->sql);
@@ -1121,7 +1197,21 @@
     $joins= '';
     if ( isset($x->joins) ) {
       foreach ( $x->joins as $join ) {
-        $joins .= " $join";
+        // $join: [LEFT] JOIN [db.]table ...
+        $join= preg_replace_callback("/^((?:LEFT|) JOIN )(\w+)(\.|)(.*$)/",
+            function($m) use ($ezer_db) {
+              $j= $m[0];
+              if ( $m[3]=='.' ) {
+                $jdb= $m[2];
+                if ( $jdb && isset($ezer_db[$jdb]) ) {
+                  $jdb= (isset($ezer_db[$jdb][5]) ? $ezer_db[$jdb][5] : $jdb);
+                  $j= "$m[1]$jdb.$m[4]";
+                }
+              }
+              return $j;
+            },
+            $join);
+        $joins.= " $join";
       }
     }
     // konstrukce ORDER
@@ -2220,7 +2310,23 @@ function browse_status($x) {
   // konstrukce JOIN
   $y->joins= '';
   if ( isset($x->joins) ) {
-    foreach ( $x->joins as $join ) $y->joins.= " $join";
+    foreach ( $x->joins as $join ) {
+      // $join: [LEFT] JOIN [db.]table ...
+      $join= preg_replace_callback("/^((?:LEFT|) JOIN )(\w+)(\.|)(.*$)/",
+          function($m) use ($ezer_db) {
+            $j= $m[0];
+            if ( $m[3]=='.' ) {
+              $jdb= $m[2];
+              if ( $jdb && isset($ezer_db[$jdb]) ) {
+                $jdb= (isset($ezer_db[$jdb][5]) ? $ezer_db[$jdb][5] : $jdb);
+                $j= "$m[1]$jdb.$m[4]";
+              }
+            }
+            return $j;
+          },
+          $join);
+      $y->joins.= " $join";
+    }
   }
   // konstrukce ORDER
   $y->order= isset($x->optimize->qry) && $x->optimize->qry=='noseek'
