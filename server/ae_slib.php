@@ -116,7 +116,7 @@ function doc_chngs_show($type='ak',$days=30,$app_name='') { trace();
         $version= str_pad($h->version,10,'0',STR_PAD_LEFT);
         $tit= addslashes($h->help);
         $lines[]= "$h->datum $version"
-                . "<div class='chng'>$hdr<span class='chng_hlp' title='$tit'>$h->help</span></div>";
+                . "<div class='chng'>$hdr <span class='chng_hlp' title='$tit'>$h->help</span></div>";
       }
     }
   };
@@ -150,7 +150,7 @@ function doc_chngs_show($type='ak',$days=30,$app_name='') { trace();
   // redakce
   rsort($lines);
   foreach($lines as $i=>$line) { $lines[$i]= substr($line,30); }
-  $html= implode('<br>',$lines);
+  $html= implode('',$lines);
   return $html;
 }
 /** ========================================================================================= SYSTEM */
