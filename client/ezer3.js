@@ -2908,8 +2908,10 @@ class Table extends Block {
 
 // ============================================================================================> Map
 //c: Map ([options])
-//      map m: table t {where: ... order:... key:...}
+//    map m: table t {where: ... order:... key:...}
 //      zpřístupnění obsahu tabulky v klientovi, používá se zpravidla pro číselníky
+//    map m: text kde text je ve tvaru: hodnota[:klíč:css],... jako pro select.selects
+//      mapa je definována dynamicky metodou selects
 //t: Block
 //s: Block
 class EzerMap extends Block {
@@ -2930,13 +2932,18 @@ class EzerMap extends Block {
   }
   constructor (owner,desc,context,id) {
     super(owner,desc,context,id);
-    this.start_code.code[0].i= this.self();
-    var ctx= Ezer.code_name(desc._init,null,this);
-    Ezer.assert(ctx && ctx[0].type=='table',desc._init+' je chybné jméno table v map '+this.id);
-    this.table= ctx[0];
-    this.db= this.options.db || null;
-    if ( !this.options.key_id )
-      this.options.key_id= firstPropertyId(this.table.part);
+    if ( desc.options.text==='' ) {
+      this.start_code= null;
+    }
+    else {
+      this.start_code.code[0].i= this.self();
+      var ctx= Ezer.code_name(desc._init,null,this);
+      Ezer.assert(ctx && ctx[0].type=='table',desc._init+' je chybné jméno table v map '+this.id);
+      this.table= ctx[0];
+      this.db= this.options.db || null;
+      if ( !this.options.key_id )
+        this.options.key_id= firstPropertyId(this.table.part);
+    }
   }
 // ------------------------------------------------------------------------------------ map load
 //fx: Map.map_load ([cond])
@@ -2978,8 +2985,30 @@ class EzerMap extends Block {
       Ezer.error("map.get '"+map_field+"' je neznámá položka mapy "+this.id);
     return ret;
   }
+// ------------------------------------------------------------------------------------ selects
+//fm: Map.selects (fields,list)
+//a: fields - až trojice jmen popisujících item: text,klíč,css ... css je nepovinné
+//   list - seznam volitelných hodnot pro map ve tvaru: hodnota:klíč[:css],...
+  selects(fields,list) {
+    this.data= {};                              // vyprázdni starý obsah
+    this.data_order= {};
+    let flds= fields.split(',');
+    for (let fld of flds) {
+      this.data[fld]= {};
+    }
+    let key_id= flds[1];
+    // projdeme itemy indexované druhou položkou flds
+    for (let val of list.split(',')) {
+      let vals= val.split(':'),
+          key= vals[1];
+      this.data_order[key]= key;
+      for (let i= 0; i<flds.length; i++) {
+        this.data[flds[i]][vals[1]]= vals[i];
+      }
+    }
+    return true;
+  }
 }
-
 // ===========================================================================================> View
 //c: View
 //      proměnná si ponechává pouze jméno - ostatní znaky přejímá ze své hodnoty
@@ -7446,6 +7475,9 @@ class SelectMap extends Select {
   }
 // -------------------------------------------------------------------------- SelectMap selects
 //fm: SelectMap.selects ([key,[cond]])
+//    pokud se jedná o dynamickou mapu
+//      obnoví options
+//    pro mapy definovanou SQL
 //      obnoví seznam volitelných hodnot z mapy uvedené v options, pokud je definován
 //      argument key bude select nastaveno na tuto hodnotu, jinak bude mít hodnotu 0;
 //      Jako vedlejší efekt obnoví mapy uvedené v příkazu select;
@@ -7457,12 +7489,19 @@ class SelectMap extends Select {
     // najdi mapu uvedenou v options
     var m= [];
     Ezer.run_name(this.options.options,this.owner.owner,m); // m[1] je mapa
-    var code= [
-      {o:'v',v:m[1]}, {o:'v',v:cond}, {o:'x',i:'map_load',a:1},
-      {o:'v',v:this}, {o:'m',i:'_options_load'},
-      {o:'v',v:this}, {o:'v',v:key}, {o:'m',i:'key',a:1}
-    ];
-    new Eval(code,this,[this,null,null,null,null,-1],'selects');
+    if ( m[1].options.text==='' ) {
+      // pro dynamickou mapu obnov options
+      this._options_load();
+    }
+    else {
+      // jinak načti ze souboru
+      var code= [
+        {o:'v',v:m[1]}, {o:'v',v:cond}, {o:'x',i:'map_load',a:1},
+        {o:'v',v:this}, {o:'m',i:'_options_load'},
+        {o:'v',v:this}, {o:'v',v:key}, {o:'m',i:'key',a:1}
+      ];
+      new Eval(code,this,[this,null,null,null,null,-1],'selects');
+    }
     return true;
   }
 // -------------------------------------------------------------------------- SelectMap set
@@ -10400,7 +10439,8 @@ class Show extends Elem {
 // funkce pro nastavení hodnoty dotazu na i-tém qry-řádku
   DOM_qry_set (i,val) {
     if ( this.DOM_qry_select[i] ) {
-      this.DOM_qry_select[i]._key= 0;
+//      this.DOM_qry_select[i]._key= 0;
+      this.DOM_qry_select[i].set(val);
     }
     this.DOM_qry[i].val(val);
   }
