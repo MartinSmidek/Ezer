@@ -758,15 +758,18 @@ function i_doc_lang() { //trace();
   $gram_func= <<<__EOT
 Gramatika jazyka ezerscript/func popisuje jazyk rozšiřující podmnožinu javascriptu
 o přístup k blokům ezerscriptu (var, panel, field, label, ...) a k jejich atributům, 
-  jméno bloku lze předávat referencí s & nebo defaultně hodnotou (získanou metodou get)
-o iteraci složek form a list příkazem for-in
+  blok lze předávat referencí s & nebo defaultně hodnotou (získanou metodou get)
+o iteraci složek form a list příkazem for-of a jejich indexování
 o volání funkcí na serveru napsaných v PHP:      php.funkce(arg,...)
 o volání funkcí klienta napsaných v javascriptu: js.funkce(arg,...)
+o možnost specifikovat typ parametru
+o možnost zacházet s atributy bloku předaného parametrem nebo uloženým do lokální proměnné typu 'block'
 není implementováno: precedence operátorů, příkazy s návěštím, ...
       
-body     :: '{' [ 'var' varlist ] stmnts '}'
+body     :: func '(' params ')' '{' [ 'var' varlist ] stmnts '}'
+params   :: id [':' type] (',' id [':' type] )* 
 varlist  :: id ':' type ( ',' id ':' type)*
-type     :: 'number' | 'text' | 'object' | 'array'
+type     :: 'number' | 'text' | 'object' | 'array' | 'ezer'
       
 stmnts   :: stmnt ( ';' stmnt )*
 stmnt    :: '{' stmnts '}' | id [ '[' expr ']' ] '=' expr | id '++' | id '--'
@@ -782,13 +785,13 @@ stmnt    :: '{' stmnts '}' | id [ '[' expr ']' ] '=' expr | id '++' | id '--'
       
 expr     :: subexpr | subexpr op subexpr | subexpr ? expr : expr
 op       :: '+' | '-' | '*' | '/' | '>' | '>=' | '<' | '<=' | '==' | '!=' | '&&' | '||'
-subexpr  :: call | id | id '[' expr ']' | <string> | '`' template* '`' | <number> | object | '(' expr ')'
+subexpr  :: call | id | '&' id | id '[' expr ']' | '(' expr ')'
+          | <string> | '`' template* '`' | <number> | object 
 object   :: '°{' id ':' value ( ',' id ':' value )* '}'
 template :: string | '\${' ( id | call ) '}'
       
 call     :: id  args | 'php' '.' id args | 'js' '.' id args
-args     :: '(' [ arg ( ',' arg )* ] ')'
-arg      :: expr | &id
+args     :: '(' [ expr ( ',' expr )* ] ')'
 __EOT;
   // generování popisů bloků
   foreach ($specs as $blok => $desc) {

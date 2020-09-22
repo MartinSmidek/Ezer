@@ -2911,6 +2911,7 @@ class Table extends Block {
 //    map m: table t {where: ... order:... key:...}
 //      zpřístupnění obsahu tabulky v klientovi, používá se zpravidla pro číselníky
 //    map m: text kde text je ve tvaru: hodnota[:klíč:css],... jako pro select.selects
+//    map m: text kde text je ve tvaru: klíč:hodnota1:hodnota2... jako pro select.selects
 //      mapa je definována dynamicky metodou selects
 //t: Block
 //s: Block
@@ -2987,8 +2988,8 @@ class EzerMap extends Block {
   }
 // ------------------------------------------------------------------------------------ selects
 //fm: Map.selects (fields,list)
-//a: fields - až trojice jmen popisujících item: text,klíč,css ... css je nepovinné
-//   list - seznam volitelných hodnot pro map ve tvaru: hodnota:klíč[:css],...
+//a: fields - nejméně dvojice jmen definujících mapu: klíč,fld1,fld2,...
+//   list - seznam volitelných hodnot ve tvaru: klíč,val1,val2,...
   selects(fields,list) {
     this.data= {};                              // vyprázdni starý obsah
     this.data_order= {};
@@ -2996,14 +2997,13 @@ class EzerMap extends Block {
     for (let fld of flds) {
       this.data[fld]= {};
     }
-    let key_id= flds[1];
     // projdeme itemy indexované druhou položkou flds
     for (let val of list.split(',')) {
       let vals= val.split(':'),
-          key= vals[1];
+          key= vals[0];
       this.data_order[key]= key;
       for (let i= 0; i<flds.length; i++) {
-        this.data[flds[i]][vals[1]]= vals[i];
+        this.data[flds[i]][key]= vals[i];
       }
     }
     return true;
@@ -10439,10 +10439,12 @@ class Show extends Elem {
 // funkce pro nastavení hodnoty dotazu na i-tém qry-řádku
   DOM_qry_set (i,val) {
     if ( this.DOM_qry_select[i] ) {
-//      this.DOM_qry_select[i]._key= 0;
-      this.DOM_qry_select[i].set(val);
+      if ( val )
+        this.DOM_qry_select[i].set(val);
+      else 
+        this.DOM_qry_select[i].init();
     }
-    this.DOM_qry[i].val(val);
+    this.DOM_qry[i].val(val||'');
   }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  DOM_qry_get+
 // funkce pro vrácení hodnoty dotazu na i-tém qry-řádku

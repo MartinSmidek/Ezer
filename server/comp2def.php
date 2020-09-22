@@ -196,7 +196,7 @@ $specs = array (
   'func'   =>  explode(",",'par,code2,note')
 );
 # definice bloků s implementovanou metodou get
-$block_get= array( 
+$block_get= array(
   'const'  => 1,
   'var'    => 1,
   'field'  => 1, 'field.date' => 1, 'field.list' => 1,

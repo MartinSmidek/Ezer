@@ -1946,8 +1946,8 @@ class Eval {
 //   r       - sníží zásobník o referenci objektu a o selektor i dá na něj hodnotu o[i1][i2]...
 //   r i     - sníží zásobník o referenci objektu a dá na něj hodnotu o[i1][i2]...
 //   w i     - sníží zásobník o hodnotu a uloží do lokální proměnné (i je offset)
-//   w i v   - sníží zásobník o hodnotu a uloží do složky lokální proměnné (i je offset) - pole nebo objektu
-//   w i a   - sníží zásobník o hodnotu a index a uloží do složky lokální proměnné (i je offset) - pole nebo objektu
+//   w i v   - sníží zásobník o hodnotu a uloží do složky lokální proměnné (i je offset) - pole,objektu,bloku
+//   w i a   - sníží zásobník o hodnotu a index a uloží do složky lokální proměnné (i je offset) - pole,objektu,bloku
 //   c i a v - zavolá Ezer funkci i s a argumenty a na zásobník dá její hodnotu (v je počet lok.proměnných)
 //   C i a v - zavolá Ezer funkci (její kód z popisu form) i s a argumenty a na zásobník dá její hodnotu (v je počet lok.proměnných)
 //   f i a   - zavolá Ezer.fce c.i s a argumenty a na zásobník dá její hodnotu
@@ -2062,6 +2062,15 @@ class Eval {
                     this.say_error('index '+cc.v+' pole není číslo','S',this.proc,last_lc);
                   obj[n]= val;
                 }
+                else if ( obj instanceof Block ) {
+                  if ( obj.part[cc.v]==undefined )
+                    this.say_error('podblok '+cc.v+' neexistuje','S',this.proc,last_lc);
+                  obj= obj.part[cc.v];
+                  if ( typeof(obj.set)=='function' )
+                    obj.set(val);
+                  else
+                    this.say_error('podbloku '+cc.v+' nelze přiřadit hodnotu','S',this.proc,last_lc);
+                }
                 else if ( typeof(obj)=='object' ) {
                   if ( typeof(cc.v)!='string' )
                     this.say_error('označení položky objektu '+cc.v+' není string',
@@ -2076,7 +2085,7 @@ class Eval {
                   obj[n[i]]= val;
                 }
                 else {
-                  this.say_error('indexovaná lokální proměnná není ani pole ani objekt',
+                  this.say_error('indexovaná lokální proměnná není ani pole ani objekt ani blok',
                     'S',this.proc,last_lc);
                 }
               }
@@ -2172,6 +2181,11 @@ class Eval {
                 this.say_error('EVAL: '+i+' nemá definovaný objekt','S',this.proc,last_lc);
               if ( Array.isArray(o) ) {
                 obj= o[i];
+              }
+              else if ( o instanceof List ) {
+                if ( o.part[i]==undefined )
+                  this.say_error('EVAL: list '+o.id+' nemá řádek '+i,'S',this.proc,last_lc);
+                obj= o.part[i];
               }
               else {
                 obj= Ezer.obj_ref(i,o);
