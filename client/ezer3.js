@@ -2936,6 +2936,11 @@ class EzerMap extends Block {
     if ( desc.options.text==='' ) {
       this.start_code= null;
     }
+    else if ( desc.options.text ) {
+      this.start_code= null;
+      let def= desc.options.text.split(';');
+      this.selects(def[0],def[1]);
+    }
     else {
       this.start_code.code[0].i= this.self();
       var ctx= Ezer.code_name(desc._init,null,this);
@@ -7489,7 +7494,7 @@ class SelectMap extends Select {
     // najdi mapu uvedenou v options
     var m= [];
     Ezer.run_name(this.options.options,this.owner.owner,m); // m[1] je mapa
-    if ( m[1].options.text==='' ) {
+    if ( m[1].options.text ) {
       // pro dynamickou mapu obnov options
       this._options_load();
     }
@@ -9707,6 +9712,10 @@ class Show extends Elem {
       Ezer.assert(1==Ezer.run_name(id,this.owner,m,ids),
         this.options.map_pipe+' je neznámé jméno map',this);
       this.map_pipe= {map:m[1],field:ids[ids.length-1]};
+      for (let i= 1; i<=this.owner.options.qry_rows||0; i++) {
+        if ( this.DOM_qry_select[i] )
+          this.DOM_qry_select[i]._options_load();
+      }
 //                                                 Ezer.trace('L','map_pipe '+this.options.map_pipe);
     }
   }
