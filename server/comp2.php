@@ -2869,7 +2869,7 @@ function get_if_block ($root,&$block,&$id) {
   global $blocs2, $blocs3, $specs, $last_lc;
   global $pragma_syntax, $pragma_group, $pragma_box, $call_php;
   global $errors; if ( $errors ) return false;
-  $TEST_NEW_VAR= 1;  // ------------------------------------------------- testování var !!!!!!!
+  $TEST_NEW_VAR= 1;  // ------------------------------------------------- testování var 
   $block= null; $nt= null; $key= $lc= $skip= 0;
   $ok= get_if_keyed_name ($key,$id,$lc,$nt);
   $lc_= '';
@@ -2886,15 +2886,22 @@ function get_if_block ($root,&$block,&$id) {
       }
       if ( isset($specs[$key]) ) {
         $copy= $fg= $typ= $pars= $code= $vars= $prior= $args= $value= $is_expr= null;
-//        if ( in_array('map_table' ,$specs[$key])
-//             && get_delimiter(':') && get_keyed_name('table',$copy,$lc,$nt) ) $block->table= $copy;
-        if ( in_array('map_table' ,$specs[$key]) && get_delimiter(':') ) {
-          if ( get_if_id_or_key('text') ) {
-            $block->options->text= '';
+        if ( in_array('map_table' ,$specs[$key]) ) {
+          if ( get_if_delimiter('=') ) {
+            get_value($value,$typ);
+            if ( $typ=='s' ) {
+              $block->options->text= $value;
+            }
+            else comp_error("SYNTAX: po 'map id =' se čeká text 'key,fld,..;k0:v0..,k1:v1:..' ");
           }
-          else {
-            get_keyed_name('table',$copy,$lc,$nt);
-            $block->table= $copy;
+          elseif ( get_if_delimiter(':') ) {
+            if ( get_if_id_or_key('text') ) {
+              $block->options->text= '';
+            }
+            else {
+              get_keyed_name('table',$copy,$lc,$nt);
+              $block->table= $copy;
+            }
           }
         }
         if ( in_array('use_form' ,$specs[$key])
