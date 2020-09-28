@@ -23,13 +23,14 @@ function comp ($src) {
 # $root je jméno hlavního objektu aplikace a může být uvedeno jen pro $name='$'
 # $list_only omezí listing kódu procedur na daná jména (oddělená čárkou)
 # $comp_php znamená volání z comp.php
-function comp_file ($name,$root='',$list_only='',$_comp_php=false) {  #trace();
-  global $ezer, $ezer_path_root, $err, $comp_php,
+function comp_file ($name,$root='',$_list_only='',$_comp_php=false) {  #trace();
+  global $ezer, $ezer_path_root, $err, $comp_php,$list_only,
     $code, $module, $procs, $context, $ezer_name, $ezer_app, $errors, $includes, $onloads;
   global $pragma_library, $pragma_syntax, $pragma_attrs, $pragma_names, $pragma_get, $pragma_prefix,
     $pragma_group, $pragma_box, $pragma_if, $pragma_switch;
   global $call_php;
   global $doxygen;    // $doxygen=1 pokud se má do složky data generovat *.cpp pro doxygen
+  $list_only= $_list_only;
   $comp_php= $_comp_php;
   $doxygen= 1;
   $errors= 0;
@@ -991,10 +992,12 @@ function find_part_rel($name,&$full,$type='') { #trace();
 # ----------------------------------------------------------------------------------------- gen func
 # generuje kód funkcí
 function gen_func($c,&$desc,$name) {
-  global $error_code_context, $error_code_lc, $code_top, $func;
+  global $error_code_context, $error_code_lc, $code_top, $func, $func_name;
   global $pragma_names, $proc_path, $depth;
 //                                                 debug($c,"gen_proc: $name");
   $func= $c;
+  $func_name= explode('.',$name);
+  $func_name= $func_name[count($func_name)-1];
   $error_code_context= " ve funkci $name";  $error_code_lc= $c->_lc;
   $desc->par= $c->par;
   if ( $pragma_names ) {
@@ -1028,6 +1031,18 @@ function gen_func($c,&$desc,$name) {
 #   $depth je hloubka zanoření cyklů a switch - používá se pro doplnění překladu break a continue
 function gen2($pars,$vars,$c,$icall) {
   global $code_top, $call_php, $block_get, $begs, $ends;
+  $expr= function ($c) use ($vars,$pars) {
+    if ( $c->expr=='name' ) {
+      $right= name_split($c->name,$pars,$vars);
+//                                                    if ( isset($_GET['trace']) ) debug($right,$c->name);
+      $value= gen_getter($right);
+//                                                  debug($value,"VALUE of {$right->bas->typ}");
+    }
+    else {
+      $value= gen2($pars,$vars,$c,0);
+    }
+    return $value;
+  };
   $obj= null;
   switch ( $c->expr ) {
   // -------------------------------------- value
@@ -1050,6 +1065,11 @@ function gen2($pars,$vars,$c,$icall) {
     break;
   // -------------------------------------- id ( '.' id )* | '&' id // může být jen jako argument
   case 'name':
+    $code= $expr($c);
+    break;
+/*
+  // -------------------------------------- id ( '.' id )* | '&' id // může být jen jako argument
+  case 'namex':
     $code= gen_name2($c->name,$pars,$vars,$obj,true,$c,false); // nemá parametry
     $last= $code[count($code)-1];
     if ( in_array($last->o,array('m','f','c')) )
@@ -1076,6 +1096,7 @@ function gen2($pars,$vars,$c,$icall) {
       }
     }
     break;
+ */
   // -------------------------------------- '&' id
   case 'ref':
     $code= gen_name2($c->name,$pars,$vars,$obj,true,$c,false); // nemá parametry
@@ -1085,8 +1106,9 @@ function gen2($pars,$vars,$c,$icall) {
     if ( $obj && isset($obj->deref) ) 
       comp_error("CODE: jméno předávané referencí musí být objekt");
     break;
+/*
   // -------------------------------------- id '[' expr ']'
-  case 'index':
+  case 'indexx':
     $code= gen_name2($c->id,$pars,$vars,$obj,true,$c,false); // nemá parametry
     if ( $obj && $obj->type=='var' && $obj->_of=='object' ) {
       $code[]= gen2($pars,$vars,$c->index,0);
@@ -1108,16 +1130,59 @@ function gen2($pars,$vars,$c,$icall) {
       comp_error("CODE: chybné užití indexu pro '$c->id'");
     }
     break;
-  // -------------------------------------- '&' id ~ expr
-  case 'asgn':
-    if ( $c->right->expr=='name' )
-      name_split($c->right->name,$pars,$vars);
-//    $value= $c->right->expr=='name'
-//      ? gen_getter($c->right->name,$pars,$vars)
-//      : array(gen2($pars,$vars,$c->right,0));
-//                                                  debug($value,"VALUE");
-//    $code= gen_setter($c->left,$pars,$vars,$value); 
+ */  
+  // -------------------------------------- id '[' expr ']'
+  case 'index':
+      $name= name_split($c->name,$pars,$vars);
+      $index= gen2($pars,$vars,$c->index,0);
+//                                                    if ( isset($_GET['trace']) ) debug($name,"NAME");
+      $code= gen_getter($name,$index);
+//                                                    debug($code,'VALUE');
     break;
+  // -------------------------------------- [ '&' ] id '=' expr
+  case 'asgn':
+    $left= name_split($c->left,$pars,$vars);
+//                                                    if ( isset($_GET['trace']) ) debug($left,"LEFT=$c->left");
+    $code= gen_setter($left,$expr($c->right)); 
+    break;
+  // -------------------------------------- id ( expr1, ... ) ? value
+  case 'callx':
+    $code= array();
+    $npar= count($c->par);
+    if ( $c->op=='apply' ) {
+      comp_error("CODE: volání funkce js.{$c->par[0]->value} N.Y.I.");
+    }
+    elseif ( $c->op=='ask' ) {
+      $ask= $c->par[0]->value;
+      if ( !in_array($ask,$call_php) )
+        $call_php[]= $ask;
+      for ($i= 1; $i<$npar; $i++) {
+        $code[]= gen2($pars,$vars,$c->par[$i],0);
+      }
+      $call= (object)array('o'=>'e','i'=>$ask,'a'=>$npar-1);
+      if ( $c->lc ) $call->s= $c->lc;
+      $code[]= $call;
+    }
+    else {
+      $op= name_split($c->op,$pars,$vars,true);
+//      $cop= gen_getter($op); 
+//              debug($cop);
+      for ($i= 1; $i<$npar; $i++) {
+        $code[]= gen2($pars,$vars,$c->par[$i],0);
+      }
+      if ( $op->type=='proc' ) {
+        // volání fce ezerscriptu
+        $code[]= $op->call;
+      }
+      elseif ( $op->type=='fce' ) {
+        // volání Ezer.fce
+        $code[]= (object)array('o'=>'m','i'=>$op->itm,'a'=>$npar);
+      }
+    }
+    if ( !$c->value )
+      $code[]= (object)array('o'=>'z','i'=>1);
+    break;
+
   // -------------------------------------- id ( expr1, ... ) ? value
   case 'call':
     $code= array();
@@ -1276,14 +1341,14 @@ function gen2($pars,$vars,$c,$icall) {
     // překlad složek
     $begs++; $ends++;
     $code= array();
-    $var= gen_name2($c->var,$pars,$vars,$obj,true,$c->var);
-    if ( $obj && $obj->type=='proc' )
+    $var= name_split($c->var,$pars,$vars);
+    if ( !($var->tras=='L' || $var->tras=='E' && $var->type=='var' ) )
       comp_error("CODE: očekávalo se jméno proměnné místo '$c->var'",$c->of->lc);
     $expr= gen2($pars,$vars,$c->of,0);
     $stmnt= gen2($pars,$vars,$c->stmnt,0);
     // pomocné instrukce
     $inic= (object)array('o'=>'M');
-    $test= (object)array('o'=>'F','i'=>$var[0]->i,'go'=>count((array)$stmnt)+2);
+    $test= (object)array('o'=>'F','i'=>$var->bas->nam,'go'=>count((array)$stmnt)+2);
     $continue= -count($stmnt)-1;
     $go= (object)array('o'=>0,'go'=>$continue,'end'=>$begs,'beg'=>$continue);
     $code[]= array($expr,$inic,$test,$stmnt,$go);      // pro pole i objekty
@@ -1466,61 +1531,81 @@ function optimize($code) {
 end:
   return $c;
 }
-# --------------------------------------------------------------------------------------- gen setter
-# přeloží (složené) jméno jako levou stranu přiřazení
-# left :: [ '&' ] id ( '.' id )* 
-# v dalším  
-#   V-lokální typu block
-#   v-lokální ne typu block
-#   g-globální typu block 
-#   b-block t-this f-form p-panel r-area 
-#   a-jméno atributu
-#   x-posloupnost jmen
-# překlady přiřazení do * kde () je hodnota umístěná na zásobník
-#   v     => p i        => () w i
-#   vx    => p i; r x   => w i
-#   V     => () w i
-#   Va    => p i; a a
-#   Vxa   => p i; [r x] a a
-#   g     => o g; (); m set 1
-#   gx    => o g; m set 1
-#   gxa   => o g; [r x;] a a ... místo o g je t | t f | t p | t a pro this|form|panel|area
-#
-function name_split($name,$pars,$vars) { trace();
-  // name je rozloženo na trojici [báze,atribut,selektor]
-  // kde báze je 
-  //   L - lokální proměnná typu (e-ezer,o-object,s-scalar tj. number nebo text) 
-  //   E - E-ezer blok zadaný složeným jménem v rámci kontextu, který není proměnnou
-  //   V - - který je globální proměnnou typu e,o,s
-  // nepovinný atribut je jméno z tabulky $names typu oo,os,oi 
-  // nepovinný selektor je posloupnost identifikátorů 
-  global $context, $names, $func;
+# --------------------------------------------------------------------------------------- name split
+# rozloží složené jméno na objekt {báze:{typ,jmeno,_of},atribut,selektor,relativní cesta}
+# kde báze je 
+#   L - lokální proměnná typu (e-ezer,o-object,s-scalar tj. number nebo text) 
+#   T - E-ezer blok zadaný klíčovým slovem panel, area, form, this
+#   E - E-ezer blok zadaný složeným jménem v rámci kontextu, který není proměnnou
+#   V - - který je globální proměnnou typu e,o,s
+# nepovinný atribut je jméno z tabulky $names typu oo,os,oi 
+# nepovinný selektor je posloupnost identifikátorů 
+# rel - cesta z this
+function name_split($name,$pars,$vars,$call=false) { 
+  global $context, $names, $func, $func_name, $list_only;
   // struktura výsledku
-  $s= (object)array('bas'=>(object)array('typ'=>'','nam'=>'','_of'=>''),'atr'=>'','sel'=>'');
+  $s= (object)array(
+      'bas'=>(object)array(
+        'typ'=>'',
+        'nam'=>'',
+        '_of'=>''),
+      'rel'=>'',
+      'atr'=>'',
+      '_of'=>'',
+      'sel'=>'',
+      'tras'=>'',       // charakter jména
+      'itm'=>$name);
   // rozbor jména
   $ids= explode('.',$name);
-  $id= $ids[0];
-  $k= 1;
-  $stop= false;
-  // ----------------------------------------------------------- L - lokální proměnná a parametr
-  if ( isset($vars->$id) || isset($pars->$id) ) { 
+  $id= array_shift($ids);
+  $obj= null;
+  $_of= ''; // e|o|s
+  // ----------------------------------------------------------- F - knihovní funkce nebo metoda
+  if ( isset($names[$id]) ) { 
+    $_of= '';
+    $s->bas->typ= 'F';
+    $s->bas->nam= $id;
+    $s->bas->_of= $_of;
+    comp_error("CODE: N.Y.I. -- $id'",0);
+  }
+  // ----------------------------------------------------------- L - lokální proměnná či parametr
+  elseif ( isset($vars->$id) || isset($pars->$id) ) { 
     $_of= isset($vars->$id) ? $func->vars[$id] : $func->pars->$id ?: 'void';
     $_of= $_of=='ezer' ? 'e' : ($_of=='object' ? 'o' : 's');
     $s->bas->typ= 'L';
-    $s->bas->nam= isset($vars->$id) ? $vars->$id : $pars->$id;
+    $s->bas->nam= isset($vars->$id) ? $vars->$id : $pars->$id; // poloha v zásobníku
     $s->bas->_of= $_of;
-    $stop= $_of=='s';
-    // parsing e->atribut[selektor] nebo o->[selektor]
   }
+  // ----------------------------------------------------------- T - panel, area, form, this
+  elseif ( in_array($id,array('panel','area','form','this')) ) { 
+    $_of= 'e';
+    $s->bas->typ= 'T';
+    $s->bas->nam= $id[0];
+    $s->bas->_of= 'e';
+    // najdeme nejbližší odpovídající kontext 
+    $end_cx= count($context)-1;
+    for ($i= $end_cx; $i>=0; $i--) {
+      list($type)= explode('.',$context[$i]->ctx->type);
+      if ( $type==$id || $id=='this' ) {
+        $full.= '';
+        $abs= '';
+        $obj= $context[$i]->ctx;
+        for ($k= $i; $k>=0; $k--) {
+          $abs= $context[$k]->id.($abs ? '.'.$abs : '');
+        }
+        break;
+      }
+    }
+  }
+  // ----------------------------------------------------------- E - ezer blok daný relativně
   else {
     // první id jméno označuje ezer blok
     $end_cx= count($context)-1;
-    $full= ''; $abs= $id; $in_form= false;
+    $abs= $id;
     for ($i= $end_cx; $i>=0; $i--) {
       if ( $context[$i]->id==$id ) {
         // id je jméno nadřazeného bloku
         $full.= '';
-        $abs= '';
         $obj= $context[$i]->ctx;
         for ($k= $i; $k>=0; $k--) {
           $abs= $context[$k]->id.($abs ? '.'.$abs : '');
@@ -1556,166 +1641,233 @@ function name_split($name,$pars,$vars) { trace();
     if ( !$obj ) comp_error("CODE: neznámé jméno '$name'",0);
     // pokud jsme prošli přes blok 'form' musíme adresovat absolutně
     if ( $in_form ) $full= $abs;
-    // ------------------------------------------------------------------- V - globální proměnná
-    if ( $obj->type=='var' && in_array($obj->_of,array('object','ezer')) ) {
-      $s->bas->typ= 'V';
-      $s->bas->nam= $id;
-      $s->bas->_of= $obj->_of=='object' ? 'o' : 'e';
+    //
+    $s->bas->typ= 'E';
+    $s->bas->nam= $full;
+    $s->bas->_of= 'e';
+    $_of= 'e';
+    if ( $obj && $obj->type=='var' ) {
+      if ( $obj->_init && in_array($obj->_of,array('form','area') ) ) {
+        $obj= find_obj($obj->_init);
+      }
+      elseif ( in_array($obj->_of,array('object','ezer','number','text','array') ) ) {
+        $_of= $obj->_of;
+        $_of= $_of=='ezer' ? 'e' : ($_of=='object' ? 'o' : 's');
+        $s->bas->_of= $_of;
+      }
     }
-    // --------------------------------------------------------------------------- E - ezer blok
-    else {
-      // pokračování může upřesňovat blok - dokud o něm něco víme
-      $k1= 1;
-      $end_id= count($ids)-1;
-      $v= ''; // index pro odkaz
-      for ($k= $k1; $k<=$end_id; $k++) {                // k1=1, pouze pro form.desc k1=2
-        $id= $ids[$k];
-        if ( ($type= $names[$id]->op) ) {
-          // další jméno je funkce nebo atribut - tím končíme
-          break;
-        }
-        else {
-          $v.= ".$id";
-          if ( $obj->type=='var' ) {
-            if ( $obj->_init && in_array($obj->_of,array('table','form','area') ) ) {
-              $obj= find_obj($obj->_init);
-            }
-            // ----------------------------------------------------------- V - globální proměnná
-            else {
-              // pokud je to proměnná převezmeme jméno až na případnou ukončující funkci
-              $full.= ".$id";
-              break;
-            }
-          }
-          if ( $obj ) {
-            // stále upřesňujeme první jméno
+  }
+  // -------------------------------------------------- pokud pokračuje složené jméno
+  if ( $ids ) {
+    // pokud je typ=e následuje další cesta?
+    if ( $_of=='e' ) {
+      $s->rel= ''; $rel_del= ''; 
+      while ( $ids && $_of=='e' ) {
+        // pokud je další jméno atribut cesta končí
+        if ( ($type= $names[$ids[0]]->op) ) break;
+        $id= array_shift($ids);
+        $s->rel.= "$rel_del$id"; $rel_del= '.'; 
+        // pokud známe statickou polohu tzn. E nebo T zkusíme pokračovat
+        if ( $obj ) {
+          if ( isset($obj->part->$id) ) {
             $obj= $obj->part->$id;
-            $full.= ".$id";
+            if ( $obj->type=='var' && in_array($obj->_of,array('object','ezer','number','text','array') ) ) {
+              $_of= $obj->_of;
+              $_of= $_of=='ezer' ? 'e' : ($_of=='object' ? 'o' : 's');
+            }
+            elseif ( $obj ) {
+              // stále upřesňujeme první jméno
+              $full.= ".$id";
+            }
           }
-          else {
-            comp_error("CODE: chybné jméno '$id' v řetězení '$name', i=$i");
-          }
+          elseif ( $obj->type!='var' ) 
+            comp_error("CODE: neznámá část '$id' v '$name'",0);
         }
-      }
-    }
-    if ( $obj->type=='var' && in_array($obj->_of,array('object','ezer')) ) {
-      $s->bas->typ= 'V';
-      $s->bas->nam= $full;
-      $s->bas->_of= $obj->_of=='object' ? 'o' : 'e';
-    }
-    else {
-      $s->bas->typ= 'E';
-      $s->bas->nam= $full;
-      $s->bas->_of= 'e';
+      }      
     }
   }
-  // ----------------------------------------------------------------------- atributy a selektory
-  if ( $k<=$end_id ) {
-    $a= isset($names[$ids[$k]]) ? $names[$ids[$k]]->op : null;
-    if ( $a ) {
-      $s->atr= $ids[$k];
-      if ( $k<$end_id ) {
-        $s->sel= implode('.',array_slice($ids,$k+1));
-      }
+  // -------------------------------------------------- pokud pokračuje atribut nebo funkce
+  if ( ($type= $names[$ids[0]]->op) ) {
+    $id= array_shift($ids);
+    if ( $type[0]=='o' ) {
+      $s->atr= $id;
+      $_of= $type[1]=='o'?'o':'s';
     }
-    else {
-      $s->sel= implode('.',array_slice($ids,$k));
+    elseif ( $type=='ff' ) {
+      $s->type= 'fce';
+      $s->call= (object)array('o'=>$type[1]);
+    }
+    elseif ( $type[0]=='f' ) {
+      $s->type= 'met';
+      $s->call= (object)array('o'=>$type[1]);
+    }
+    else comp_error("CODE: chybné volání funkce '$id' (chybí závorky?)");
+  }
+  // -------------------------------------------------- pokud pokračuje selektor
+  if ( $ids && $_of=='o' ) {
+    $del= '';
+    while ( $ids ) {
+      $id= array_shift($ids);
+      $s->sel.= "$del$id";
+      $del= '.';
     }
   }
-                                                      debug($s,$name);
+  if ( $ids )
+    comp_error("CODE: nepochopená část '$ids[0]' v '$name'",0);
+  // definice tras - typ.rel.atr.sel
+  $s->_of= $_of;
+  $s->tras= $s->bas->typ.($s->rel?'r':'').($s->atr?'a':'').($s->sel?'s':'');
+  // pokud víme více ...
+  if ( $obj ) {
+    $s->type= $obj->type;
+    if ( $obj->type=='proc' ) {
+      $s->call= (object)array('o'=>'c','i'=>$full);
+      $nvars= count((array)$obj->vars);
+      if ( $nvars ) $s->call->v= $nvars;
+//      if ( $c && $c->lc ) $s->call->s= $c->lc;
+    }
+  }
+end:  
+            if ( isset($_GET['trace']) && preg_match("/$list_only/",$func_name) ) debug($s,"$func_name:$name");
   return $s;
 }
-function gen_getter($name,$pars,$vars) {  trace();
+# --------------------------------------------------------------------------------------- gen getter
+# přeloží (složené) jméno jako získání hodnoty na základě informace z name_split
+# $index obsahuje indexační kód nebo null
+# right :: id ( '.' id )* [ '[' expr ']' ]
+function gen_getter($s,$index=null) {
+  global $names, $block_get;
   $code= array();
-  $info= name_split($name,$pars,$vars);
-  switch ($info->typ) {
-  case 'v':
-    $code= (object)array('o'=>'p','i'=>$info->i);
+  $_of= $s->bas->_of;
+  switch ($s->bas->typ) {
+  case 'L':
+    $code[]= (object)array('o'=>'p','i'=>$s->bas->nam);
     break;
-  case 'V':
-    $code= array(
-        (object)array('o'=>'o','i'=>$info->id),
-        (object)array('o'=>'m','i'=>'get','a'=>0));
+  case 'T':
+    $code[]= $s->bas->nam=='t' ? (object)array('o'=>'t') : (object)array('o'=>'t','i'=>$s->bas->nam); 
+//    if ( $s->rel ) {
+//      $code[]= (object)array('o'=>'q','i'=>$s->rel);
+//    }
+//    if ( $s->atr )
+//      $_of= 'e';
+//    else
+//      $code[]= (object)array('o'=>'m','i'=>'get','a'=>0);
     break;
   case 'E':
-    $code= array(
-        (object)array('o'=>'o','i'=>$info->id),
-        (object)array('o'=>'m','i'=>'get','a'=>0));
+    $code[]= (object)array('o'=>'o','i'=>$s->bas->nam);
     break;
-  case 'Ea':
-    $code= array(
-        (object)array('o'=>'o','i'=>$info->full),
-        (object)array('o'=>'a','i'=>$info->atr));
-    break;
-  case 'EA':
-    $part= $info->part ? (object)array('o'=>'r','i'=>$info->part) : null;
-    $code= array(
-        (object)array('o'=>'o','i'=>$info->full),
-        (object)array('o'=>'a','i'=>$info->atr),
-        $part);
-    break;
-//  case 'VA':
-//    $part= $info->x ? (object)array('o'=>'r','i'=>$info->part) : null;
-//    $code= array(
-//        (object)array('o'=>'o','i'=>$info->id),
-//        (object)array('o'=>'v','v'=>$info->atr),
-//        $part);
-//    break;
   default:
     display("CODE: tohle getter neumí přeložit");
   }
+  // na zásobníku je nyní hodnota typu bas->_of
+  // zpřístupnění přes relativní cestu pro typ e
+  if ( $s->rel ) {
+    if ( $_of!='e' ) 
+      comp_error("CODE: asi chybně použitá složka '$s->rel' v '$s->itm'",0);
+    $code[]= (object)array('o'=>'Q','i'=>$s->rel);
+//    $_of= $s->_of;
+  }
+  // zpřístupnění atributů pro typ e
+  if ( $s->atr ) {
+//    if ( $_of!='e' ) 
+//      comp_error("CODE: asi chybně použité jméno atributu '$s->atr' v '$s->itm'",0);
+    $code[]= (object)array('o'=>'a','i'=>$s->atr);
+    $t= $names[$s->atr]->op;
+    $_of= $t[1]=='o' ? 'o' : 's'; // s=scalar
+  }
+  // zpřístupnění selektorů
+  if ( $s->sel ) {
+//    if ( $_of!='o' ) 
+//      comp_error("CODE: asi chybně použitý selektor '$s->sel' v '$s->itm'",0);
+    $code[]= (object)array('o'=>'R','i'=>$s->sel);
+  }
+  // pokud je indexace
+  if ( $index ) {
+    $code[]= $index;
+    $code[]= (object)array('o'=>'R');
+  }
+  // pokud zůstává typ 'e' aplikuj get
+//  elseif ( $s->tras[0]!='L' && !$s->sel && !$s->atr ) {
+  elseif ( $s->type && $block_get[$s->type] && !$s->rel && !$s->sel && !$s->atr ) {
+    $code[]= (object)array('o'=>'m','i'=>'get');
+  }
   return $code;
 }
-function gen_setter($name,$pars,$vars,$value) {  trace();
+# --------------------------------------------------------------------------------------- gen setter
+# přeloží (složené) jméno jako levou stranu přiřazení
+# left :: [ '&' ] id ( '.' id )* 
+# predpokládané varianty tras: 
+function gen_setter($s,$value) {  
   $code= array();
-  $info= name_split($name,$pars,$vars);
-  switch ($info->typ) {
-  case 'v':
+  switch ($s->tras) {
+  case 'L':
     $code= array(
         $value,
-        (object)array('o'=>'w','i'=>$info->i));
+        (object)array('o'=>'w','i'=>$s->bas->nam));
     break;
-  case 'V':
+  case 'Lr':
     $code= array(
-        (object)array('o'=>'o','i'=>$info->id),
+        (object)array('o'=>'p','i'=>$s->bas->nam),
+        (object)array('o'=>'q','i'=>$s->rel),
         $value,
         (object)array('o'=>'m','i'=>'set','a'=>1),
         (object)array('o'=>'z','i'=>1));
     break;
-  case 'Ea':
+  case 'La':
+  case 'Lra':
     $code= array(
-        (object)array('o'=>'o','i'=>$info->full),
-        (object)array('o'=>'v','i'=>$info->atr),
+        (object)array('o'=>'p','i'=>$s->bas->nam),
+        $s->rel ? (object)array('o'=>'q','i'=>$s->rel) : null,
+        (object)array('o'=>'v','v'=>$s->atr),
         $value,
         (object)array('o'=>'m','i'=>'set_attrib','a'=>2),
         (object)array('o'=>'z','i'=>1));
     break;
-//  case 'EA':
-//    $code= array(
-//        (object)array('o'=>'o','i'=>$info->full),
-//        (object)array('o'=>'v','i'=>$info->atr),
-//        $value,
-//        (object)array('o'=>'m','i'=>'set_attrib','a'=>2),
-//        (object)array('o'=>'z','i'=>1));
-//    break;
-//  case 'Va':
-//    $code= array(
-//        (object)array('o'=>'o','i'=>$info->id),
-//        (object)array('o'=>'v','v'=>$info->atr),
-//        $value,
-//        (object)array('o'=>'m','i'=>'set_attrib','a'=>2),
-//        (object)array('o'=>'z','i'=>1));
-//    break;
-//  case 'VA':
-//    $part= $info->part ? (object)array('o'=>'r','i'=>$info->part) : null;
-//    $code= array(
-//        (object)array('o'=>'o','i'=>$info->id),
-//        (object)array('o'=>'v','v'=>$info->atr),
-//        $part,
-//        $value,
-//        (object)array('o'=>'m','i'=>'set_attrib','a'=>2),
-//        (object)array('o'=>'z','i'=>1));
-//    break;
+  case 'Ls':
+    $code= array(
+        $value,
+        (object)array('o'=>'w','i'=>$s->bas->nam,'v'=>$s->sel));
+    break;
+  case 'Tr':
+  case 'Trs':
+    $code= array(
+        $s->bas->nam=='t' ? (object)array('o'=>'t') : (object)array('o'=>'t','i'=>$s->bas->nam),
+        (object)array('o'=>'q','i'=>$s->rel),
+        $value,
+        $s->sel ? (object)array('o'=>'v','i'=>$s->sel) : null,
+        (object)array('o'=>'m','i'=>'set','a'=>$s->sel ? 2 : 1),
+        (object)array('o'=>'z','i'=>1));
+    break;
+  case 'Ta':
+  case 'Tra':
+    $code= array(
+        $s->bas->nam=='t' ? (object)array('o'=>'t') : (object)array('o'=>'t','i'=>$s->bas->nam),
+        $s->rel ? (object)array('o'=>'q','i'=>$s->rel) : null,
+        (object)array('o'=>'v','v'=>$s->atr),
+        $value,
+        (object)array('o'=>'m','i'=>'set_attrib','a'=>2),
+        (object)array('o'=>'z','i'=>1));
+    break;
+  case 'E':
+  case 'Er':
+  case 'Es':
+  case 'Ers':
+    $code= array(
+        (object)array('o'=>'o','i'=>$s->bas->nam.($s->rel?".{$s->rel}":'')),
+        $value,
+        $s->sel ? (object)array('o'=>'v','i'=>$s->sel) : null,
+        (object)array('o'=>'m','i'=>'set','a'=>$s->sel ? 2 : 1),
+        (object)array('o'=>'z','i'=>1));
+    break;
+  case 'Ea':
+  case 'Era':
+    $code= array(
+        (object)array('o'=>'o','i'=>$s->bas->nam.($s->rel?".{$s->rel}":'')),
+        (object)array('o'=>'v','v'=>$s->atr),
+        $value,
+        (object)array('o'=>'m','i'=>'set_attrib','a'=>2),
+        (object)array('o'=>'z','i'=>1));
+    break;
   default:
     display("CODE: tohle setter neumí přeložit");
   }
@@ -3128,7 +3280,7 @@ function get_if_pars (&$opars,$typed=false) {
       if ( $ok ) {
         $pars[]= $id;
         if ( get_if_delimiter(':') )  {
-          get_id($typ);
+          get_type($typ);
           $types[$id]= $typ;
         }
         else {
@@ -3392,6 +3544,18 @@ function get_type (&$type) {
       ||$type=='form'||$type=='area'||$type=='ezer');
   $head++;
   if ( !$ok ) comp_error("SYNTAX: bylo očekáváno jméno typu");
+  return $ok;
+}
+# --------------------------------------------------------------------------------------------- type
+# this  :: form | area | form | this
+function get_if_this (&$id,&$lc) {
+  global $head, $lex;
+  $id= $lex[$head];
+  $ok= ($id=='this'||$id=='form'||$id=='area'||$id=='panel');
+  if ( $ok ) {
+    $lc= $pos[$head];
+    $head++;
+  }
   return $ok;
 }
 # ------------------------------------------------------------------------------------------- key id
@@ -3736,8 +3900,7 @@ function get_slist($context,&$st) {
 }
 # -------------------------------------------------------------------------------------------- stmnt
 # stmnt   :: '{' slist '}'                      --> G(slist)
-#          | ['&'] id '=' expr2                 --> {expr:call,op:id.set,par:[G(expr2)],deref:0/1}
-#          | ['&'] id '~' expr2                 --> {expr:asgn,op:id,expr:G(expr2),deref:0/1}
+#          | id '=' expr2                       --> {expr:asgn,op:id,expr:G(expr2),deref:0/1}
 #          | id '[' expr2 ']' '=' expr2         --> {expr:asgn,id:id,index:expr2/1,par:[G(expr2/2)]}
 #          | id '++' | id '--'                  --> id=id+1 | id=id-1
 #          | 'if' '(' expr2 ')' stmnt [ 'else' stmnt ]
@@ -3769,18 +3932,10 @@ function get_stmnt($context,&$st) {
     get_delimiter('}');
   }
   elseif ( get_if_id($id) ) {
-    # id '=' expr2 --> {expr:call,op:id.set,par:[G(expr2)],deref:0/1}
-    # ['&'] id '=' expr2 --> {expr:asgn,op:id,expr:G(expr2),deref:0/1}
+    # id '=' expr2 --> {expr:asgn,op:id,expr:G(expr2),deref:0/1}
     if ( get_if_delimiter('=') ) {
       $expr='';
       $ok= get_expr2($context,$expr);
-      $st= (object)array('expr'=>'call','op'=>"$id.set",'par'=>array($expr),'deref'=>$deref);
-      $deref= 0;
-    }
-    elseif ( get_if_delimiter('~') ) {
-      $expr='';
-      $ok= get_expr2($context,$expr);
-//      $st= (object)array('expr'=>'call','op'=>"$id.set",'par'=>array($expr),'deref'=>$deref);
       $st= (object)array('expr'=>'asgn','left'=>$id,'right'=>$expr,'deref'=>$deref);
       $deref= 0;
     }
@@ -3972,12 +4127,15 @@ function get_cases($context,&$cs) {
 #          | '>' | '>=' | '<' | '<=' | '==' | '!=' --> gt | lt | eq ...
 #          | '&&' | '||'                        --> and | or
 # expr3   :: call2                              --> G(call2)
-#          | id                                 --> {expr:par,par:id} | {expr:name,name:id}
-#          | '&' id                             --> {expr:ref,name:id}
-#          | id '[' expr2 ']'                   --> {expr:index,id:id,index:G(expr2)}
 #          | '`' template* '`'                  --> {expr:templ,par:[G(templ),...]}
+#          | form | panel | area                --> {expr:name,name:...}
 #          | value                              --> {expr:value,value:v,type:t}
 #          | '(' expr2 ')'                      --> G(expr2)
+#          | '&' expr4                          --> {expr:ref,ref:expr4}
+#          | expr4                              --> G(expr4)
+# expr4   :: id                                 --> {expr:par,par:id} | {expr:name,name:id}
+#          | id '[' expr2 ']'                   --> {expr:index,name:id,index:G(expr2)}
+#          | this
 # templ   :: string                             --> {expr:value,value:v,type:t}
 #          | '${' ( id | call2 ) '}'            --> G(id) | G(call2)
 function get_expr2($context,&$expr) {
@@ -4032,11 +4190,18 @@ function get_expr3($context,&$expr) {
       get_call2_id($context,$expr,$id,1);
     }
     else if ( get_if_delimiter('[') ) {
-      # id '[' expr2 ']' --> {expr:index,id:id,index:G(expr2)}
+      # id '[' expr2 ']' --> {expr:index,name:id,index:G(expr2)}
       $index= null;
-      get_expr2($context,$index);
-      get_delimiter(']');
-      $expr= (object)array('expr'=>'index','id'=>$id,'index'=>$index);
+//      if ( get_if_delimiter('*') ) { // stará verze
+//        get_expr2($context,$index);
+//        get_delimiter(']');
+//        $expr= (object)array('expr'=>'indexx','id'=>$id,'index'=>$index);
+//      }
+//      else {
+        get_expr2($context,$index);
+        get_delimiter(']');
+        $expr= (object)array('expr'=>'index','name'=>$id,'index'=>$index);
+//      }
     }
     else {
       # id --> {expr:name,name:id}              // id znamená vlastně id.get
@@ -4046,12 +4211,12 @@ function get_expr3($context,&$expr) {
       $ok= true;
     }
   }
-  else if ( get_if_delimiter('(') ) {
+  elseif ( get_if_delimiter('(') ) {
     # '(' expr2 ')' --> G(expr2)
     get_expr2($context,$expr);
     get_delimiter(')');
   }
-  else if ( get_if_delimiter('`') ) {
+  elseif ( get_if_delimiter('`') ) {
     # '`' template* '`' --> {expr:templ,par:[G(templ),...]}
     $expr= (object)array('expr'=>'templ','par'=>array());
     $ok= true;
@@ -4072,10 +4237,15 @@ function get_expr3($context,&$expr) {
     }
     get_delimiter('`');
   }
-  else if ( get_if_delimiter('&') ) {
+  elseif ( get_if_delimiter('&') ) {
     # '&' id --> {expr:ref,name:id}
     get_id($id);
     $expr= (object)array('expr'=>'ref','name'=>$id);
+  }
+  elseif ( get_if_this($id,$last_lc) ) {
+    # this | form | panel | area --> {expr:name,name:...}
+    $expr= (object)array('expr'=>'name','name'=>$id);
+    $ok= true;
   }
   else {
     # value --> {expr:value,value:v,type:t}

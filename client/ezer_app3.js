@@ -1943,6 +1943,7 @@ class Eval {
 //   o i     - objekt context[i] na zásobník (i='@' dá Ezer.app)
 //   p i     - parametr nebo lokální proměnnou (i je offset) na zásobník
 //   q i     - sníží zásobník o referenci objektu Ezer-třídy a dá na něj hodnotu o[i1][i2]...
+//   Q i     - jako q ale pokusí se aplikovat get
 //   r       - sníží zásobník o referenci objektu a o selektor i dá na něj hodnotu o[i1][i2]...
 //   r i     - sníží zásobník o referenci objektu a dá na něj hodnotu o[i1][i2]...
 //   w i     - sníží zásobník o hodnotu a uloží do lokální proměnné (i je offset)
@@ -2164,8 +2165,22 @@ class Eval {
                   'S',this.proc,last_lc);
               this.stack[++this.top]= obj;
               break; }
+            //   Q i    - jako 'q i' ale pokusí se aplikovat get
+            case 'Q': {
+              o= this.stack[this.top--]; // odstraň objekt
+              if ( typeof(o)!='object' )
+                this.say_error('EVAL: '+cc.i+' nemá definovaný objekt','S',this.proc,last_lc);
+              obj= Ezer.obj_name(cc.i,o);
+              if ( !obj )
+                this.say_error('nenalezen odkaz '+cc.i+' v "'+o.type+' '+o.id+'"',
+                  'S',this.proc,last_lc);
+              if ( typeof(obj.get)==='function' && !(obj instanceof List) ) // kvůli list.get 
+                obj= obj.get();
+              this.stack[++this.top]= obj;
+              break; }
             //   r i    - sníží zásobník o referenci objektu a dá na něj hodnotu o[i1][i2]...
             //   r      - sníží zásobník o selektor i a o referenci objektu a dá na něj hodnotu o[i1][i2]...
+            //   R [i]  - jako r ale umí i proměnnou
             case 'r': {
               if ( cc.i===undefined ) {
                 i= this.stack[this.top--]; // odstraň index
@@ -2186,6 +2201,37 @@ class Eval {
                 if ( o.part[i]==undefined )
                   this.say_error('EVAL: list '+o.id+' nemá řádek '+i,'S',this.proc,last_lc);
                 obj= o.part[i];
+              }
+              else {
+                obj= Ezer.obj_ref(i,o);
+              }
+              obj= obj===null ? '' : obj;
+              this.stack[++this.top]= obj;
+              break; }
+            case 'R': {
+              if ( cc.i===undefined ) {
+                i= this.stack[this.top--]; // odstraň index
+                o= this.stack[this.top--]; // odstraň objekt
+              }
+              else {
+                i= cc.i;
+                o= this.stack[this.top--]; // odstraň objekt
+              }
+              if ( typeof(o)!='object' )
+                this.say_error('EVAL: '+i+' nemá definovaný objekt','S',this.proc,last_lc);
+              if ( Array.isArray(o) ) {
+                obj= o[i];
+              }
+              else if ( o instanceof ListRow || o instanceof Form ) { 
+                o= o.part[i]; 
+              }
+              else if ( o instanceof List ) {
+                if ( o.part[i]==undefined )
+                  this.say_error('EVAL: list '+o.id+' nemá řádek '+i,'S',this.proc,last_lc);
+                obj= o.part[i];
+              }
+              else if ( o instanceof Var ) {
+                obj= o.get(i);
               }
               else {
                 obj= Ezer.obj_ref(i,o);
@@ -2485,16 +2531,24 @@ class Eval {
                 this.stack[++this.top]= obj;              // Array
                 this.stack[++this.top]= 0;                //   0
               }
-              else if ( obj instanceof Form ) {           // Form
-                this.stack[this.top]= Object.keys(obj.part); // pole klíčů form.part
+              else if ( obj instanceof Block && obj.part) {    // Panel,Form,List,...
+                this.stack[++this.top]= Object.keys(obj.part); // pole klíčů form.part
                 this.stack[++this.top]= 0;                // 0
               }
-//              else if ( obj instanceof List )
+//              else if ( obj instanceof Form ) {           // Form
+//                this.stack[++this.top]= Object.keys(obj.part); // pole klíčů form.part
+//                this.stack[++this.top]= 0;                // 0
+//              }
+//              else if ( obj instanceof List ) {
+//                this.stack[++this.top]= Object.keys(obj.part); // pole klíčů list.part
 //                this.stack[++this.top]= 0;                // index prvního ListRow
-//              else if ( typeof(obj)=='object' )
-//                this.stack[++this.top]= Object.keys(obj); // pole klíčů objektu
+//              }
+              else if ( typeof(obj)=='object' ) {
+                this.stack[++this.top]= Object.keys(obj); // pole klíčů objektu
+                this.stack[++this.top]= 0;                // index prvního elementu
+              }
               else {
-                this.say_error('EVAL: parametr for-of není pole nebo form','S',this.proc,last_lc);
+                this.say_error('EVAL: parametr for-of není pole,objekt,form,list','S',this.proc,last_lc);
               }
               break; }
             // F i - test pro for-of: na zásobníku je objekt a jeho kontext
@@ -2514,8 +2568,17 @@ class Eval {
                 if ( Array.isArray(obj) ) {             // pro pole
                   val= obj[i];                          // 
                 }
-                else if ( obj instanceof Form ) {       // pro form
+                else if ( obj instanceof Block && obj.part ) { // pro panel,form,list,...
                   val= obj.part[arr[i]];
+                }
+//                else if ( obj instanceof Form ) {       // pro form
+//                  val= obj.part[arr[i]];
+//                }
+//                else if ( obj instanceof List ) {       // pro list
+//                  val= obj.part[arr[i]];
+//                }
+                else if ( typeof(obj)=='object'  ) {    // pro objekt
+                  val= obj[arr[i]];                          
                 }
                 if ( Number.isInteger(cc.i) ) {         // lokální proměnné
                   this.stack[this.act-cc.i]= val;

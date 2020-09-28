@@ -727,6 +727,7 @@ function dbg_script (script,block,code='proc',trace=false) {
   let msg= `ezerscript: ${script}`+(dbg_script_trace ? `<br>c-context: ${self}` : '');
   dbg.dbg_write(msg);
   dbg.help.show();
+  doc.Ezer.fce.clear();
   var x= {cmd:'dbg_compile',context:{self:self,app:s.app,file:s.file,code:code},script:script};
   doc_ask('','',dbg_script_,x);
   return 1;

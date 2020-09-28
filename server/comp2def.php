@@ -193,7 +193,7 @@ $specs = array (
   'list'   =>  explode(",",'part,coor+,cmnt,proc'),
 #  proc
   'proc'   =>  explode(",",'par,code,note'),
-  'func'   =>  explode(",",'par,code2,note')
+  'func'   =>  explode(",",'par2,code2,note')
 );
 # definice bloků s implementovanou metodou get
 $block_get= array(
