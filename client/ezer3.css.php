@@ -102,7 +102,7 @@ div.tip { position:absolute; display:none; padding:2px 5px; z-index:999999; curs
 #login_chngs > div { padding:10px 5px; overflow-x:auto; height:141px; }
 #login_chngs span { padding:1px 5px; }
 #login_chngs span.chng_day { color:$b_group; font-weight:bold; }
-#login_chngs div.chng { margin:-5px 0px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#login_chngs div.chng { /*margin:-5px 0px;*/ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 /* pro zobrazení přehledu změn */    
 #doc_chngs span.chng_day { color:$b_group; font-weight:bold; padding:5px; }
 #doc_chngs div.chng { margin:-5px 0px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
