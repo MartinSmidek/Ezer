@@ -18,7 +18,11 @@
 //                  kde v initialize se nastavují počáteční hodnoty vlastností
 //                  (ve volání super by došlo k jejich přepsání)
 //                  a volá super.initialize()
+
 // ==========================================================================================> Block
+//c: Block ([options])
+//      základní třída
+//s: Block
 class Block {
 // common block members - there are visible from ezerscript
   constructor (owner,desc,DOM,id,skill) {
@@ -43,9 +47,9 @@ class Block {
   initialize () {
     if ( this.DOM_initialize )
       this.DOM_initialize();
-//o: Block-DOM.DOM - DOM kořen celého bloku (s tím se například posunuje při Drag)
+//** o: Block-DOM.DOM - DOM kořen celého bloku (s tím se například posunuje při Drag)
 //-
-//o: Block-DOM.DOM_Block - prvek DOM do které jsou vnořeny Parts
+//* o: Block-DOM.DOM_Block - prvek DOM do které jsou vnořeny Parts
     this.DOM_Block= null;
 //os: Block._id - object identifier  (mapped to id)
     this._id= '';
@@ -758,7 +762,7 @@ class Block {
     return 1;
   }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  . subBlocks
-//Block.subBlocks (desc,DOM,wrap_fce,extend)
+//* Block.subBlocks (desc,DOM,wrap_fce,extend)
 //      zapojí části bloku do bloku
 //   extend=='rewrite' pro přepsání bloků
 //   extend=='include' pro přidání vnitřních bloků
@@ -1362,7 +1366,7 @@ class Block {
   }
 // ======================================================================================> Block DOM
 // ------------------------------------------------------------------------------------- DOM destroy
-//f: Block-DOM.DOM_destroy ()
+//* f: Block-DOM.DOM_destroy ()
 //      zruší DOM-elementů vnořených bloků
   DOM_destroy () {
     if ( this.DOM_Block )
@@ -1375,7 +1379,7 @@ class Block {
       }
   }
 // ------------------------------------------------------------------------------------ DOM enabled
-//f: Block-DOM.DOM_enabled (on)
+//* f: Block-DOM.DOM_enabled (on)
 //      změní vzhled na enabled/disabled podle parametru nebo this.options.enabled
   DOM_enabled (on) {
     if ( this.DOM_Block ) {
@@ -1631,19 +1635,19 @@ class MenuMain extends Menu {
     this.DOM_SelectedTabs= null;
   }
 // ------------------------------------------------------------------------------------ DOM add1
-//f: MenuMain-DOM.DOM_add1 ()
+//*f: MenuMain-DOM.DOM_add1 ()
 //      zobrazí hlavní menu
   DOM_add1 () {
     this.activeTabs= null;
     this.DOM_Block= jQuery('#menu');
   }
 // ------------------------------------------------------------------------------------ DOM destroy
-//f: MenuMain-DOM.DOM_destroy ()
+//*f: MenuMain-DOM.DOM_destroy ()
 //      zruší zobrazení hlavního menu
   DOM_destroy () {
   }
 // ------------------------------------------------------------------------------------ DOM setSelectedTabs
-//f: MenuMain-DOM.DOM_setSelectedTabs (id)
+//*f: MenuMain-DOM.DOM_setSelectedTabs (id)
 //      zobrazí dané Tabs jako vybrané
   DOM_setSelectedTabs (tabs_id) {
   }
@@ -1787,20 +1791,20 @@ class MenuLeft extends Menu {
     }
   }
 // ------------------------------------------------------------------------------------ DOM re1
-//f: MenuLeft-DOM.DOM_re1 ()
+//*f: MenuLeft-DOM.DOM_re1 ()
 //      další zobrazení obalu levého menu
   DOM_re1 () {
     Ezer.assert(this.owner.type=='panel.right' || this.owner.type=='panel.popup',
       "menu typu 'left' může být pouze v panelu typu 'right' nebo 'popup'");
   }
 // ------------------------------------------------------------------------------------ DOM start
-//f: MenuLeft-DOM.DOM_start ()
+//*f: MenuLeft-DOM.DOM_start ()
 //      oživení levého menu po naplnění všemi Group a Item
   DOM_start () {
     jQuery(this.DOM_Block).find('ul').slideUp(0);
   }
 // ------------------------------------------------------------------------------------ DOM click
-//f: MenuLeft-DOM.DOM_click ([stav=0,quiet=0])
+//*f: MenuLeft-DOM.DOM_click ([stav=0,quiet=0])
 //   změna stavu minimalizovatelného menu, pro stav=1 na plné, 2 na stažené, 0 na opak
 //   pro quiet=1 nevolá onresize
   DOM_click (stav,quiet) {
@@ -1817,7 +1821,7 @@ class MenuLeft extends Menu {
     }
   }
 // ------------------------------------------------------------------------------------ DOM excite
-//f: MenuLeft-DOM.DOM_excite ()
+//*f: MenuLeft-DOM.DOM_excite ()
 //      prvotní zobrazení levého menu
   DOM_excite (active) {
     // nalezení aktivního
@@ -1864,7 +1868,7 @@ class MenuGroup extends Menu {
     this.DOM_Block.find('ul').slideDown();
   }
 // ------------------------------------------------------------------------------------ DOM enabled
-//f: MenuGroup-DOM.DOM_enabled (on)
+//*f: MenuGroup-DOM.DOM_enabled (on)
 //      změní vzhled na enabled/disabled podle parametru nebo this.options.enabled
   DOM_enabled (on) {
     this._enabled= on ? 1 : 0;
@@ -2014,7 +2018,7 @@ class Item extends Block {
     }
   }
 // ------------------------------------------------------------------------------------ DOM enabled
-//f: Item-DOM.DOM_enabled (on)
+//*f: Item-DOM.DOM_enabled (on)
 //      změní vzhled na enabled/disabled podle parametru nebo this.options.enabled
   DOM_enabled (on) {
     if ( on )
@@ -2128,9 +2132,9 @@ class Tabs extends Block {
     return 1;
   }
 // =======================================================================================> Tabs DOM
-//c: Tabs-DOM ([options])
+//*c: Tabs-DOM ([options])
 //      realizace vzhledu Tabs vnořených do Menu typu main
-//s: Block-DOM
+//*s: Block-DOM
 // Ezer.Tabs.implement({
 //   Implements: [Ezer.Help],
 //   _tabsDom: null,                       // ul-element pro submenu
@@ -2243,7 +2247,7 @@ class Tabs extends Block {
   addTabDom (tabs,part) {
   }
 // ------------------------------------------------------------------------------------ DOM excite
-//f: Tabs-DOM.DOM_excite ()
+//*f: Tabs-DOM.DOM_excite ()
 //      vyznačení aktivní položky hlavního menu
   DOM_excite () {
   }
@@ -5417,11 +5421,11 @@ class Elem extends Block {
     }
   }
 // =======================================================================================> Elem DOM
-//c: Elem-DOM ()
+//*c: Elem-DOM ()
 //      abstraktní třída pro části formuláře mající hodnotu v DOM_Input a podporující události
-//t: Block-DOM
-//s: Block-DOM
-//o: Elem-DOM.DOM_Input - DOM element INPUT
+//*t: Block-DOM
+//*s: Block-DOM
+//*o: Elem-DOM.DOM_Input - DOM element INPUT
 //   DOM_Input: null,                      // prvek <input ...>
 // ------------------------------------------------------------------------------------ DOM enabled
 // ovládá html-atribut disabled ve vloženém input
@@ -5633,13 +5637,13 @@ class Elem extends Block {
 //os: Field.title - jmenovka pole (pokud začíná ^ resp. - bude umístěná nad resp. za, jinak před)
 class Field extends Elem {
 // ==========================================================================================> Field
-// ------------------------------------------------------------------------------------------------- Field-DOM
-//c: Field-DOM ()
+//* ------------------------------------------------------------------------------------------------- Field-DOM
+//**c: Field-DOM ()
 //      prvek nesoucí textovou nebo číselnou hodnotu
-//t: Block-DOM,Elem-DOM
-//s: Block-DOM
+//*t: Block-DOM,Elem-DOM
+//*s: Block-DOM
 // ------------------------------------------------------------------------------------ DOM add
-//f: Field-DOM.DOM_add ()
+//**f: Field-DOM.DOM_add ()
 //      zobrazí prvek field
   DOM_add () {
     var hlp= this.options.help||this.help;
@@ -5678,12 +5682,12 @@ class Field extends Elem {
 //  ; 'y' : dialog nabídne výběr roku, který se vrací jako číslo
 class FieldDate extends Field {
 // ======================================================================================> FieldDate
-//c: FieldDate-DOM ()
+//**c: FieldDate-DOM ()
 //      prvek nesoucí datovou hodnotu
-//t: Block-DOM,Elem-DOM
-//s: Block-DOM
+//*t: Block-DOM,Elem-DOM
+//*s: Block-DOM
 // ------------------------------------------------------------------------------------ DOM add
-//f: FieldDate-DOM.DOM_add ()
+//**f: FieldDate-DOM.DOM_add ()
 //      zobrazí prvek field
   DOM_add () {
     var hlp= this.options.help||this.help;
@@ -5792,10 +5796,10 @@ class FieldList extends Elem {
     this._split= null;                          // z par.delim nebo default [,;]
   }
 // ======================================================================================> FieldList
-//c: FieldList-DOM ()
+//* c: FieldList-DOM ()
 //      prvek nesoucí datovou hodnotu s volitelným rozbalením obsahu podle oddělovače
-//t: Block-DOM,Elem-DOM
-//s: Block-DOM
+//*t: Block-DOM,Elem-DOM
+//*s: Block-DOM
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  DOM initialize
   DOM_initialize () {
     this._values= [];                          // rozložené hodnoty
@@ -6658,7 +6662,7 @@ class Chat extends Elem {
     }
   }
 // ------------------------------------------------------------------------------------ DOM changed
-// provede Elem-DOM.DOM_changed (označení příznaku změny elementu formuláře - přitom
+//* provede Elem-DOM.DOM_changed (označení příznaku změny elementu formuláře - přitom
 // ignoruje formát 't' tedy quiet);
 // potom zajistí zápis operace c nebo d
   DOM_changed (on,quiet) {
@@ -6687,10 +6691,10 @@ class Chat extends Elem {
 //s: Block
 //i: Select.onchange - změna vybraného itemu
 // =====================================================================================> Select DOM
-//c: Select-DOM ()
+//*c: Select-DOM ()
 //      Select má společné zobrazení a implementuje třídu Drag
-//t: Block-DOM,Elem-DOM
-//s: Block-DOM
+//*t: Block-DOM,Elem-DOM
+//*s: Block-DOM
 Ezer.DOM_currMulti= null;                // aktivní multi select
 // -------------------------------------------------------------------------- DOM clearDropLists
 // schová rozvinutý DropList při kliknutí mimo něj
@@ -6863,12 +6867,12 @@ class Select extends Elem {
     this._drop_status= 0;       // 0=skrytý, 1=viditelný, 2=změněný (multi i single)
   }
 // ------------------------------------------------------------------------------------ DOM add
-//f: Select-DOM.DOM_add ()
+//*f: Select-DOM.DOM_add ()
 //      zobrazí prvek select - pokud multi=true dovoluje vybrat více hodnot
 //      pokud atribut par obsahuje noimg:1 pak se nezobrazí obrázek šipky
 //      pokud atribut par.subtype='browse' pak se jedná o select vnořený do Show
-//o: Select-DOM.DOM_Closure - obal pro input a ikonu
-//o: Select-DOM.DOM_DropList - obal pro jednotlivé Items (options)
+//*o: Select-DOM.DOM_Closure - obal pro input a ikonu
+//*o: Select-DOM.DOM_DropList - obal pro jednotlivé Items (options)
   DOM_add () {
     // obecné zobrazení select
     this._h= this._h||16;         // defaultní výška prvku
@@ -7382,14 +7386,14 @@ class SelectAuto extends Select {
       this.DOM_drop_hide();
   }
 // ------------------------------------------------------------------------- SelectAuto DOM addItems
-//f: SelectAuto-DOM.DOM_addItems
+//*f: SelectAuto-DOM.DOM_addItems
 //      zobrazí hodnoty z this.Items a nastaví _empty=true pokud je jen jedna a to s nulovým klíčem
   DOM_addItems () {
     this.__proto__.__proto__.DOM_addItems.call(this); // aka super.DOM_addItems()
     this._empty= this.Items[0]!==undefined;
   }
 // -------------------------------------------------------------------------- SelectAuto DOM changed
-//f: SelectAuto-DOM.DOM_changed (on[,quiet=0))
+//*f: SelectAuto-DOM.DOM_changed (on[,quiet=0))
 //      označení příznaku změny elementu formuláře, pokud je quiet=0
 //      pokud má element klíč (tzn. byl nalezen na serveru) je příznak zelený
   DOM_changed (on,quiet) {
@@ -7412,7 +7416,7 @@ class SelectAuto extends Select {
     }
   }
 // ------------------------------------------------------------------------- SelectAuto DOM newItems
-//f: SelectAuto-DOM.DOM_newItems
+//*f: SelectAuto-DOM.DOM_newItems
 //      zobrazí hodnoty podle informace ze serveru
   DOM_newItems (y) {
     this.Items= y.value;
@@ -7431,8 +7435,13 @@ class SelectMap extends Select {
   constructor (owner,desc,DOM,id,skill,multi) {
     super(owner,desc,DOM,id,skill,multi);
 //     var nm= this.start_code.code[0].i= this.self();
-    this.start_code.code[0].v= this.owner;
-    this.start_code.code[1].v= this.id;
+    if ( desc.options.options ) {
+      this.start_code.code[0].v= this.owner;
+      this.start_code.code[1].v= this.id;
+    }
+    else {
+      this.start_code= null;
+    }
   }
   initialize () {
     super.initialize();
@@ -7476,7 +7485,7 @@ class SelectMap extends Select {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  _check
 // test integrity bloku po jeho dokončení
   _check  () {
-    Ezer.assert(this.options.options,"Blok select typu map musí obsahovat atribut options",this);
+//    Ezer.assert(this.options.options,"Blok select typu map musí obsahovat atribut options",this);
   }
 // -------------------------------------------------------------------------- SelectMap selects
 //fm: SelectMap.selects ([key,[cond]])
@@ -7733,7 +7742,7 @@ class ListRow extends Block {
     this.DOM_add(DOM);
   }
 // ========================================================================================> ListRow
-//c: ListRow-DOM
+//*c: ListRow-DOM
 //   části v řádkovém zobrazení dat
 // ------------------------------------------------------------------------------------ DOM add
 // vytvoří kontejner na nový řádek v List
@@ -9095,10 +9104,10 @@ class Browse extends Block {
     }
   }
 // =====================================================================================> Browse DOM
-//c: Browse-DOM
+//*c: Browse-DOM
 //      tabulkové zobrazení dat s mezipamětí
-//t: Block-DOM
-//s: Block-DOM
+//*t: Block-DOM
+//*s: Block-DOM
 
 // Slider.implement({   ... mootools
 //   reset: function(steps){ //GN
@@ -9117,7 +9126,7 @@ class Browse extends Block {
     this._opened_value= null;                  // původní hodnota této buňky
   }
 // ------------------------------------------------------------------------------------ DOM remove
-//f: Browse-DOM.DOM_remove ()
+//*f: Browse-DOM.DOM_remove ()
 //      odstraní obraz tabulky
   DOM_remove (data_only) {
     if ( data_only ) {
@@ -9147,7 +9156,7 @@ class Browse extends Block {
     }
   }
 // ------------------------------------------------------------------------------------ DOM add1+
-//f: Browse-DOM.DOM_add1 ()
+//*f: Browse-DOM.DOM_add1 ()
 //      zobrazí tabulku
   DOM_add1 (data_only) {
     if ( !data_only ) {
@@ -9223,7 +9232,7 @@ class Browse extends Block {
       this.DOM_tr_posun= this.DOM_row[1];         
   }
 // ------------------------------------------------------------------------------- DOM enable_reload
-//f: Browse-DOM.DOM_enable_reload ()
+//*f: Browse-DOM.DOM_enable_reload ()
 //      připojí (nebo odpojí) události
   DOM_enable_reload (on) {
     if ( on )
@@ -9232,7 +9241,7 @@ class Browse extends Block {
       this.DOM_reload.removeClass('BrowseReload');
   }
 // ----------------------------------------------------------------------------------- DOM riseEvent
-//f: Browse-DOM.DOM_riseEvent ()
+//*f: Browse-DOM.DOM_riseEvent ()
 //      vyvolá (některou) událost - volá se z obsluhy DOM_addEvents nebo odjinud
   DOM_riseEvent (id,par) {
     switch(id) {
@@ -9256,7 +9265,7 @@ class Browse extends Block {
     }
   }
 // ------------------------------------------------------------------------------------ DOM addEvents+
-//f: Browse-DOM.DOM_addEvents ()
+//*f: Browse-DOM.DOM_addEvents ()
 //      připojí (nebo odpojí) události
   DOM_addEvents () {
     // přidání událostí myši
@@ -9366,7 +9375,7 @@ class Browse extends Block {
       });
   }
 // ------------------------------------------------------------------------------------ DOM add2+
-//f: Browse-DOM.DOM_add2 ()
+//*f: Browse-DOM.DOM_add2 ()
 //      zobrazí sloupce tabulky, pokud je tabulka dostatečně definována
   DOM_add2 (data_only) {
     // získání rozměrů
@@ -9507,7 +9516,7 @@ class Browse extends Block {
   }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  DOM_selected+
-//f: Browse-DOM.DOM_selected ()
+//*f: Browse-DOM.DOM_selected ()
 //      označení i-tého řádku browse jako vybraného, pokud on=true nebo jeho odznačení
   DOM_selected (i,on) {
     if ( on )
@@ -9516,7 +9525,7 @@ class Browse extends Block {
       this.DOM_row[i].removeClass('tr-sel');
   }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  DOM_focus+
-//f: Browse-DOM.DOM_focus ([silent=false])
+//*f: Browse-DOM.DOM_focus ([silent=false])
 //      označení browse jako aktivní, pokud je silent nevyvolá se onfocus
   DOM_focus (silent) {
     if ( !this.DOM_table.hasClass('focus') ) {
@@ -9528,14 +9537,14 @@ class Browse extends Block {
     return true;
   }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  DOM_blur
-//f: Browse-DOM.DOM_blur ()
+//*f: Browse-DOM.DOM_blur ()
 //      označení browse jako pasivní
   DOM_blur () {
     this.DOM_table.removeClass('focus');
     return true;
   }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  DOM_hi_row+
-//f: Browse-DOM.DOM_hi_row (r,noevent,nofocus,control=false)
+//*f: Browse-DOM.DOM_hi_row (r,noevent,nofocus,control=false)
 //      nastavení a označení aktivního řádku r=t..t+tlen
 //      vyvolá onrowclick, pokud není noevent=true
 //      nastaví focus, pokud není nofocus=true
@@ -9590,7 +9599,7 @@ class Browse extends Block {
     }
   }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  DOM_show+
-//f: Browse-DOM.DOM_show (noscroll)
+//*f: Browse-DOM.DOM_show (noscroll)
 //      zobrazí buffer od this.t
 //      pokud je noscroll=1 nebude upravována poloha posuvníku
   DOM_show (noscroll) {
@@ -10158,10 +10167,10 @@ class Show extends Elem {
     new Eval(code,browse,[browse,null,null,null,null,-1],'sort');
   }
 // =======================================================================================> Show DOM
-//c: Show-DOM
+//*c: Show-DOM
 //      řádky tabulkového zobrazení dat
-//t: Block-DOM
-//s: Block-DOM
+//*t: Block-DOM
+//*s: Block-DOM
 // Ezer.Show.implement({
 //   DOM_cell: null,                                 // pole prvků td
 //   DOM_qry: [],                                    // pole prvků input pro části dotazu
@@ -10173,7 +10182,7 @@ class Show extends Elem {
     this.DOM_qry_select= [];                             // Select, pokud je dotaz typu #
   }
 // ------------------------------------------------------------------------------------ DOM add+
-// f: Show-DOM.DOM_add ()
+//* f: Show-DOM.DOM_add ()
 //      zobrazení sloupce tabulky, pokud má šířku>0
   DOM_add (DOM,data_only) {
     if ( !data_only ) {
@@ -10377,7 +10386,7 @@ class Show extends Elem {
     }
   };
 // ------------------------------------------------------------------------------------ DOM set+
-//f: Show-DOM.DOM_set (i)
+//*f: Show-DOM.DOM_set (i)
 //      zobrazí hodnotu i-tého řádku (1..tlen) s uvážením případné specifikace za ':'
 //      pro datové hodnoty lze uvádět: d.m, pro zaokrouhlení čísel: i;
 //      pokud format obsahuje 't' bude hodnota zobrazena i v title
@@ -10409,7 +10418,7 @@ class Show extends Elem {
     }
   }
 // ------------------------------------------------------------------------------------ DOM show+
-//f: Show-DOM.DOM_show (r)
+//*f: Show-DOM.DOM_show (r)
 //      zobrazí hodnotu svého sloupce záznamu r (b..b+blen) v řádku tabulky
 //      s uvážením případné specifikace za ':' - pro datové hodnoty lze uvádět: d.m,
 //      pro zaokrouhlení čísel: i ;
