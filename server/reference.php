@@ -755,44 +755,7 @@ function i_doc_lang() { //trace();
   $text.= "<div class='CSection CTopic'>";
   $text.= "<h2 class='CTitle'>Bloky EzerScriptu</h2>";
   // gramatiky funkcí ezerscriptu
-  $gram_func= <<<__EOT
-Gramatika jazyka ezerscript/func popisuje jazyk rozšiřující podmnožinu javascriptu
-o přístup k blokům ezerscriptu (var, panel, field, label, ...) a k jejich atributům, 
-  blok lze předávat referencí s & nebo defaultně hodnotou (získanou metodou get)
-o iteraci složek form a list příkazem for-of a jejich indexování
-o volání funkcí na serveru napsaných v PHP:      php.funkce(arg,...)
-o volání funkcí klienta napsaných v javascriptu: js.funkce(arg,...)
-o možnost specifikovat typ parametru
-o možnost zacházet s atributy bloku předaného parametrem nebo uloženým do lokální proměnné typu 'block'
-není implementováno: precedence operátorů, příkazy s návěštím, ...
-      
-body     :: func '(' params ')' '{' [ 'var' varlist ] stmnts '}'
-params   :: id [':' type] (',' id [':' type] )* 
-varlist  :: id ':' type ( ',' id ':' type)*
-type     :: 'number' | 'text' | 'object' | 'array' | 'ezer'
-      
-stmnts   :: stmnt ( ';' stmnt )*
-stmnt    :: '{' stmnts '}' | id [ '[' expr ']' ] '=' expr | id '++' | id '--'
-          | 'if' '(' expr ')' stmnt [ 'else' stmnt ]
-          | 'if' '(' expr ')' stmnt ('elseif' '(' expr ')' stmnt)* [ 'else' stmnt ]
-          | 'for' '(' id '=' expr ';' expr ';' stmnt ')' '{' stmnts '}'
-          | 'for' '(' id 'of' expr ')' '{' stmnts '}'
-          | 'while' '(' expr ')' '{' stmnts '}'
-          | 'break' | 'continue'
-          | 'switch (' expr ') {' ('case' value ':' stmnts)* ['default' ':' stmnts] '}'
-          | call
-          |
-      
-expr     :: subexpr | subexpr op subexpr | subexpr ? expr : expr
-op       :: '+' | '-' | '*' | '/' | '>' | '>=' | '<' | '<=' | '==' | '!=' | '&&' | '||'
-subexpr  :: call | id | '&' id | id '[' expr ']' | '(' expr ')'
-          | <string> | '`' template* '`' | <number> | object 
-object   :: '°{' id ':' value ( ',' id ':' value )* '}'
-template :: string | '\${' ( id | call ) '}'
-      
-call     :: id  args | 'php' '.' id args | 'js' '.' id args
-args     :: '(' [ expr ( ',' expr )* ] ')'
-__EOT;
+  $gram_func= "Gramatika jazyka ezerscript/func je popsána v menu EzerScript II";
   // generování popisů bloků
   foreach ($specs as $blok => $desc) {
     $text.= "<div class='CGroup CTopic'>";

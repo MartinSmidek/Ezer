@@ -1075,7 +1075,7 @@ function gen2($pars,$vars,$c) {
       $index= gen2($pars,$vars,$c->index);
       $code= gen_getter($name,$index);
     break;
-  // -------------------------------------- [ '&' ] id '=' expr
+  // -------------------------------------- id '=' expr
   case 'asgn':
     $left= name_split($c->left,$pars,$vars);
 //                                                    if ( isset($_GET['trace']) ) debug($left,"LEFT=$c->left");
@@ -1090,9 +1090,6 @@ function gen2($pars,$vars,$c) {
         $code[]= gen2($pars,$vars,$c->par[0]);
       $code[]= (object)array('o'=>'u','a'=>$npar);
     }
-//    elseif ( $c->op=='apply' ) {
-//      comp_error("CODE: volání funkce js.{$c->par[0]->value} N.Y.I.");
-//    }
     elseif ( $c->op=='ask' ) {
       $ask= $c->par[0]->value;
       if ( !in_array($ask,$call_php) )
@@ -1505,8 +1502,10 @@ function name_split($name,$pars,$vars,$call=false) {
     $s->bas->_of= 'e';
     $_of= 'e';
     if ( $obj && $obj->type=='var' ) {
+      // nejprve zjistíme, zda není v rozšíření form
       if ( $obj->_init && in_array($obj->_of,array('form','area') ) ) {
-        $obj= find_obj($obj->_init);
+        if ( $ids && !isset($obj->part->$ids[0]) )
+          $obj= find_obj($obj->_init);
       }
       elseif ( in_array($obj->_of,array('object','ezer','number','text','array') ) ) {
         $_of= $obj->_of;
@@ -1646,6 +1645,8 @@ function gen_getter($s,$index=null,$ref=false) {
   global $names, $block_get, $func_expr;
   $code= array();
   $_of= $s->bas->_of;
+  if ( $ref && $_of=='s' && preg_match("/L$/",$s->tras) )
+    comp_error("CODE: pro jméno '$s->itm' nelze použít '&",$func_expr->lc);
   switch ($s->bas->typ) {
   case 'L':
     $code[]= (object)array('o'=>'p','i'=>$s->bas->nam);
@@ -1689,7 +1690,7 @@ function gen_getter($s,$index=null,$ref=false) {
 }
 # --------------------------------------------------------------------------------------- gen setter
 # přeloží (složené) jméno jako levou stranu přiřazení
-# left :: [ '&' ] id ( '.' id )* 
+# left :: id ( '.' id )* 
 # predpokládané varianty tras: 
 function gen_setter($s,$value) {  
   $code= array();
@@ -3516,7 +3517,7 @@ function get_slist($context,&$st) {
 }
 # -------------------------------------------------------------------------------------------- stmnt
 # stmnt   :: '{' slist '}'                      --> G(slist)
-#          | id '=' expr2                       --> {expr:asgn,op:id,expr:G(expr2),deref:0/1}
+#          | id '=' expr2                       --> {expr:asgn,op:id,expr:G(expr2)}
 #          | id '[' expr2 ']' '=' expr2         --> {expr:asgn,id:id,index:expr2/1,par:[G(expr2/2)]}
 #          | id '++' | id '--'                  --> id=id+1 | id=id-1
 #          | 'if' '(' expr2 ')' stmnt [ 'else' stmnt ]
@@ -3538,23 +3539,18 @@ function get_slist($context,&$st) {
 function get_stmnt($context,&$st) {
   global $last_lc;
   $ok= false;
-  $deref= 0;
   $id= '';
-  if ( get_if_delimiter('&') ) {
-    $deref= 1;
-  }
   # '{' slist '}' --> G(slist)
   if ( get_if_delimiter('{') ) {
     $ok= get_slist($context,$st);
     get_delimiter('}');
   }
   elseif ( get_if_id($id) ) {
-    # id '=' expr2 --> {expr:asgn,op:id,expr:G(expr2),deref:0/1}
+    # id '=' expr2 --> {expr:asgn,op:id,expr:G(expr2)}
     if ( get_if_delimiter('=') ) {
       $expr='';
       $ok= get_expr2($context,$expr);
-      $st= (object)array('expr'=>'asgn','left'=>$id,'right'=>$expr,'deref'=>$deref,'lc'=>$last_lc);
-      $deref= 0;
+      $st= (object)array('expr'=>'asgn','left'=>$id,'right'=>$expr,'lc'=>$last_lc);
     }
     elseif ( get_if_delimiter('[') ) {
       # id '[' expr2 ']' '=' expr2 --> {expr:asgn,id:id,index:expr2/1,par:[G(expr2/2)]}
@@ -3681,8 +3677,6 @@ function get_stmnt($context,&$st) {
     # prázdný příkaz
     $ok= true;
   }
-  if ( $deref )
-      comp_error("SYNTAX: chybné užití symbolu & ?");
 end:
   return $ok;
 }
@@ -3749,11 +3743,9 @@ function get_cases($context,&$cs) {
 #          | form | panel | area                --> {expr:name,name:...}
 #          | value                              --> {expr:value,value:v,type:t}
 #          | '(' expr2 ')'                      --> G(expr2)
-#          | '&' expr4                          --> {expr:ref,ref:expr4}
+#          | '&' expr4                          --> {expr:ref,ref:G(expr4)}
 #          | expr4                              --> G(expr4)
-# expr4   :: id                                 --> {expr:par,par:id} | {expr:name,name:id}
-#          | id '[' expr2 ']'                   --> {expr:index,name:id,index:G(expr2)}
-#          | this
+# expr4   :: id | this                          --> {expr:name,name:id} | {expr:name,name:this}
 # templ   :: string                             --> {expr:value,value:v,type:t}
 #          | '${' ( id | call2 ) '}'            --> G(id) | G(call2)
 function get_expr2($context,&$expr) {
@@ -3856,7 +3848,7 @@ function get_expr3($context,&$expr) {
     get_delimiter('`');
   }
   elseif ( get_if_delimiter('&') ) {
-    # '&' id --> {expr:ref,name:id}
+    # '&' id --> {expr:ref,ref:G(id)}
     get_id($id);
     $expr= (object)array('expr'=>'name','name'=>$id,'lc'=>$last_lc);
     $expr= (object)array('expr'=>'ref','ref'=>$expr,'lc'=>$last_lc);
