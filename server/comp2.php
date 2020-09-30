@@ -1412,8 +1412,16 @@ function name_split($name,$pars,$vars,$call=false) {
   $id= array_shift($ids);
   $obj= null;
   $_of= ''; // e|o|s
+  // ----------------------------------------------------------- L - lokální proměnná či parametr
+  if ( isset($vars->$id) || isset($pars->$id) ) { 
+    $_of= isset($vars->$id) ? $func->vars[$id] : $func->pars->$id ?: 'void';
+    $_of= $_of=='ezer' ? 'e' : ($_of=='object' ? 'o' : 's');
+    $s->bas->typ= 'L';
+    $s->bas->nam= isset($vars->$id) ? $vars->$id : $pars->$id; // poloha v zásobníku
+    $s->bas->_of= $_of;
+  }
   // ----------------------------------------------------------- F - knihovní funkce nebo metoda
-  if ( isset($names[$id]) ) { 
+  elseif ( isset($names[$id]) ) { 
     $_of= '';
     $s->bas->typ= 'F';
     $s->bas->nam= $id;
@@ -1422,14 +1430,6 @@ function name_split($name,$pars,$vars,$call=false) {
     $s->fce= $id;
     if ( $ids || !$call )
       comp_error("CODE: chybné volání funkce '$id'",$func_expr->lc);
-  }
-  // ----------------------------------------------------------- L - lokální proměnná či parametr
-  elseif ( isset($vars->$id) || isset($pars->$id) ) { 
-    $_of= isset($vars->$id) ? $func->vars[$id] : $func->pars->$id ?: 'void';
-    $_of= $_of=='ezer' ? 'e' : ($_of=='object' ? 'o' : 's');
-    $s->bas->typ= 'L';
-    $s->bas->nam= isset($vars->$id) ? $vars->$id : $pars->$id; // poloha v zásobníku
-    $s->bas->_of= $_of;
   }
   // ----------------------------------------------------------- T - panel, area, form, this
   elseif ( in_array($id,array('panel','area','form','this')) ) { 
