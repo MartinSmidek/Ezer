@@ -1075,11 +1075,24 @@ function gen2($pars,$vars,$c) {
       $index= gen2($pars,$vars,$c->index);
       $code= gen_getter($name,$index);
     break;
-  // -------------------------------------- id '=' expr
+  // -------------------------------------- id [ '[' expr ']' ] '=' expr
   case 'asgn':
     $left= name_split($c->left,$pars,$vars);
-//                                                    if ( isset($_GET['trace']) ) debug($left,"LEFT=$c->left");
-    $code= gen_setter($left,$expr($c->right)); 
+    if ( $c->index ) {
+      $index= $expr($c->index);
+      $code= gen_setter($left,$expr($c->right),$index); 
+    }
+    else {
+      $code= gen_setter($left,$expr($c->right)); 
+    }
+    break;
+  // -------------------------------------- id '++' | id '--'
+  case 'inc':
+    $id= name_split($c->name,$pars,$vars);
+    $code[]= gen_getter($id);
+    $code[]= (object)array('o'=>'v','v'=>$c->inc);
+    $code[]= (object)array('o'=>'f','i'=>'sum','a'=>2);
+    $code= gen_setter($id,$code); 
     break;
   // -------------------------------------- id ( expr1, ... ) ? value
   case 'call':
@@ -1592,7 +1605,7 @@ end:
 # přeloží (složené) jméno jako volání funkce na základě informace z name_split
 function gen_caller($s,$pars) {
   global $func_expr;
-  if ( !$s->fce && !$s->type=='proc' ) 
+  if ( !$s->fce && !$s->type=='proc' || !$s->call ) 
     comp_error("CODE: chybné volání funkce '$s->itm'",$func_expr->lc);
   $code= array();
   $npars= count($pars);
@@ -1665,7 +1678,7 @@ function gen_getter($s,$index=null,$ref=false) {
   if ( $s->rel ) {
     if ( $_of!='e' ) 
       comp_error("CODE: asi chybně použitá složka '$s->rel' v '$s->itm'",$func_expr->lc);
-    $code[]= (object)array('o'=>$ref ? 'q' : 'Q','i'=>$s->rel);
+    $code[]= (object)array('o'=>$ref || $s->atr ? 'q' : 'Q','i'=>$s->rel);
   }
   // zpřístupnění atributů pro typ e
   if ( $s->atr ) {
@@ -1690,23 +1703,40 @@ function gen_getter($s,$index=null,$ref=false) {
 }
 # --------------------------------------------------------------------------------------- gen setter
 # přeloží (složené) jméno jako levou stranu přiřazení
-# left :: id ( '.' id )* 
+# left :: id ( '.' id )* [ '[' expr ']' ]
 # predpokládané varianty tras: 
-function gen_setter($s,$value) {  
+function gen_setter($s,$value,$index=null) {  
+  global $func_expr;
+  // zakázané kombinace s indexem
+  if ( $index && preg_match("/La|Lra|Ls|Trs|Ta|Tra|Es|Ers|Ea|Era/",$s->tras) )
+    comp_error("CODE: pro jméno '$s->itm' nelze použít index",$func_expr->lc);
   $code= array();
   switch ($s->tras) {
-  case 'L':
-    $code= array(
-        $value,
-        (object)array('o'=>'w','i'=>$s->bas->nam));
+  case /* [] */ 'L' : 
+    $code= $index 
+      ? array(
+          $value,
+          $index,
+          (object)array('o'=>'w','i'=>$s->bas->nam,'a'=>1))
+      : array(
+          $value,
+          (object)array('o'=>'w','i'=>$s->bas->nam));
     break;
   case 'Lr':
-    $code= array(
-        (object)array('o'=>'p','i'=>$s->bas->nam),
-        (object)array('o'=>'q','i'=>$s->rel),
-        $value,
-        (object)array('o'=>'m','i'=>'set','a'=>1),
-        (object)array('o'=>'z','i'=>1));
+    $code= $index 
+      ? array(
+          (object)array('o'=>'p','i'=>$s->bas->nam),
+          (object)array('o'=>'q','i'=>$s->rel),
+          $value,
+          $index,
+          (object)array('o'=>'m','i'=>'set','a'=>2),
+          (object)array('o'=>'z','i'=>1))
+      : array(
+          (object)array('o'=>'p','i'=>$s->bas->nam),
+          (object)array('o'=>'q','i'=>$s->rel),
+          $value,
+          (object)array('o'=>'m','i'=>'set','a'=>1),
+          (object)array('o'=>'z','i'=>1));
     break;
   case 'La':
   case 'Lra':
@@ -1723,18 +1753,26 @@ function gen_setter($s,$value) {
         $value,
         (object)array('o'=>'w','i'=>$s->bas->nam,'v'=>$s->sel));
     break;
-  case 'Tr':
-  case 'Trs':
-    $code= array(
-        $s->bas->nam=='t' ? (object)array('o'=>'t') : (object)array('o'=>'t','i'=>$s->bas->nam),
-        (object)array('o'=>'q','i'=>$s->rel),
-        $value,
-        $s->sel ? (object)array('o'=>'v','i'=>$s->sel) : null,
-        (object)array('o'=>'m','i'=>'set','a'=>$s->sel ? 2 : 1),
-        (object)array('o'=>'z','i'=>1));
+  case /* [] */ 'Tr' :
+  case 'Trs' :
+    $code= $index // je neslučitelný se $s->sel
+      ? array(
+          $s->bas->nam=='t' ? (object)array('o'=>'t') : (object)array('o'=>'t','i'=>$s->bas->nam),
+          (object)array('o'=>'q','i'=>$s->rel),
+          $value,
+          $index,
+          (object)array('o'=>'m','i'=>'set','a'=>2),
+          (object)array('o'=>'z','i'=>1))
+      : array(
+          $s->bas->nam=='t' ? (object)array('o'=>'t') : (object)array('o'=>'t','i'=>$s->bas->nam),
+          (object)array('o'=>'q','i'=>$s->rel),
+          $value,
+          $s->sel ? (object)array('o'=>'v','i'=>$s->sel) : null,
+          (object)array('o'=>'m','i'=>'set','a'=>$s->sel ? 2 : 1),
+          (object)array('o'=>'z','i'=>1));
     break;
-  case 'Ta':
-  case 'Tra':
+  case 'Ta' :
+  case 'Tra' :
     $code= array(
         $s->bas->nam=='t' ? (object)array('o'=>'t') : (object)array('o'=>'t','i'=>$s->bas->nam),
         $s->rel ? (object)array('o'=>'q','i'=>$s->rel) : null,
@@ -1743,16 +1781,23 @@ function gen_setter($s,$value) {
         (object)array('o'=>'m','i'=>'set_attrib','a'=>2),
         (object)array('o'=>'z','i'=>1));
     break;
-  case 'E':
-  case 'Er':
+  case /* [] */ 'E' :
+  case /* [] */ 'Er' :
   case 'Es':
-  case 'Ers':
-    $code= array(
-        (object)array('o'=>'o','i'=>$s->bas->nam.($s->rel?".{$s->rel}":'')),
-        $value,
-        $s->sel ? (object)array('o'=>'v','i'=>$s->sel) : null,
-        (object)array('o'=>'m','i'=>'set','a'=>$s->sel ? 2 : 1),
-        (object)array('o'=>'z','i'=>1));
+  case 'Ers' :
+    $code= $index // je neslučitelný se $s->sel
+      ? array(
+          (object)array('o'=>'o','i'=>$s->bas->nam.($s->rel?".{$s->rel}":'')),
+          $value,
+          $index,
+          (object)array('o'=>'m','i'=>'set','a'=>2),
+          (object)array('o'=>'z','i'=>1))
+      : array(
+          (object)array('o'=>'o','i'=>$s->bas->nam.($s->rel?".{$s->rel}":'')),
+          $value,
+          $s->sel ? (object)array('o'=>'v','i'=>$s->sel) : null,
+          (object)array('o'=>'m','i'=>'set','a'=>$s->sel ? 2 : 1),
+          (object)array('o'=>'z','i'=>1));
     break;
   case 'Ea':
   case 'Era':
@@ -3519,7 +3564,7 @@ function get_slist($context,&$st) {
 # stmnt   :: '{' slist '}'                      --> G(slist)
 #          | id '=' expr2                       --> {expr:asgn,op:id,expr:G(expr2)}
 #          | id '[' expr2 ']' '=' expr2         --> {expr:asgn,id:id,index:expr2/1,par:[G(expr2/2)]}
-#          | id '++' | id '--'                  --> id=id+1 | id=id-1
+#          | id '++' | id '--'                  --> {expr:inc,name:id,inc:1/-1}
 #          | 'if' '(' expr2 ')' stmnt [ 'else' stmnt ]
 #                                               --> {expr:if,test:G(expr2),then:G(st1),else:G(st2)}
 #          | 'if' '(' expr2 ')' stmnt elseif* [ 'else' stmnt ]
@@ -3560,15 +3605,12 @@ function get_stmnt($context,&$st) {
       get_delimiter(']');
       get_delimiter('=');
       $ok= get_expr2($context,$expr);
-      $st= (object)array('expr'=>'call','op'=>"$id.set",'par'=>array($expr,$index),'lc'=>$last_lc);
+      $st= (object)array('expr'=>'asgn','left'=>"$id",'index'=>$index,'right'=>$expr,'lc'=>$last_lc);
+//      $st= (object)array('expr'=>'call','op'=>"$id",'par'=>array($expr,$index),'lc'=>$last_lc);
     }
     elseif ( ($plus= get_if_delimiter('++')) || get_if_delimiter('--') ) {
-      # id++ | id--
-      $st=  (object)array('expr'=>'call','op'=>"$id.set",'par'=>array(
-              (object)array('expr'=>'call','op'=>$plus?'sum':'minus','par'=>array(
-                (object)array('expr'=>'name','name'=>$id,'lc'=>$last_lc),
-                (object)array('expr'=>'value','value'=>1,'type'=>'n','lc'=>$last_lc)
-            ),'value'=>1)),'lc'=>$last_lc);
+      # id++ | id-- --> {expr:inc,name:id,inc:1/-1}
+      $st=  (object)array('expr'=>'inc','name'=>$id,'inc'=>$plus?'1':'-1','lc'=>$last_lc);
       $ok= true;
     }
     elseif ( get_if_delimiter('(') ) {
@@ -3744,6 +3786,7 @@ function get_cases($context,&$cs) {
 #          | value                              --> {expr:value,value:v,type:t}
 #          | '(' expr2 ')'                      --> G(expr2)
 #          | '&' expr4                          --> {expr:ref,ref:G(expr4)}
+#          | id '[' expr2 ']'                   --> {expr:index,name:id,index:G(expr2)}
 #          | expr4                              --> G(expr4)
 # expr4   :: id | this                          --> {expr:name,name:id} | {expr:name,name:this}
 # templ   :: string                             --> {expr:value,value:v,type:t}
@@ -3802,16 +3845,9 @@ function get_expr3($context,&$expr) {
     else if ( get_if_delimiter('[') ) {
       # id '[' expr2 ']' --> {expr:index,name:id,index:G(expr2)}
       $index= null;
-//      if ( get_if_delimiter('*') ) { // stará verze
-//        get_expr2($context,$index);
-//        get_delimiter(']');
-//        $expr= (object)array('expr'=>'indexx','id'=>$id,'index'=>$index);
-//      }
-//      else {
-        get_expr2($context,$index);
-        get_delimiter(']');
-        $expr= (object)array('expr'=>'index','name'=>$id,'index'=>$index,'lc'=>$last_lc);
-//      }
+      get_expr2($context,$index);
+      get_delimiter(']');
+      $expr= (object)array('expr'=>'index','name'=>$id,'index'=>$index,'lc'=>$last_lc);
     }
     else {
       # id --> {expr:name,name:id}              // id znamená vlastně id.get

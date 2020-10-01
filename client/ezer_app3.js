@@ -2037,7 +2037,7 @@ class Eval {
             case 'w': {
               val= this.stack[this.top--];
               if ( cc.v==undefined ) {
-                if ( cc.a ) { // na vrcholu byl index, až pak hodnota
+                if ( cc.a ) { // na vrcholu byl index, až pak pole
                   obj= this.stack[this.act-cc.i];
                   if ( Array.isArray(obj) ) {
                     i= Number(val);  

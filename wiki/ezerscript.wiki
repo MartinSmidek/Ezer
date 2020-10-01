@@ -44,7 +44,8 @@ není implementováno: precedence operátorů, příkazy s návěštím, ...
             |
 
    expr     :: term | term op term | term ? expr : expr
-  term     :: id | this | form | panel | area | value | '&' (id | this) | call | '(' expr ')' 
+  term     :: id | this | form | panel | area | value | '&' (id | this) 
+            | id '[' expr ']' | call | '(' expr ')' 
 
    call     :: id  args | 'php' '.' id args | 'js' '.' id args 
   args     :: '(' [ expr ( ',' expr )* ] ')'
