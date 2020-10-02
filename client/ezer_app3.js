@@ -3719,7 +3719,7 @@ Ezer.fce.split= function (x,del,i) {
     x= x.toString();
   Ezer.assert(typeof(x)=='string','split: první parametr musí být převeditelný na řetězec');
   if ( i===undefined ) {
-    y= x.split(del);
+    y= x ? x.split(del) : [];
   }
   else {
     y= x.split(del,i+1);
