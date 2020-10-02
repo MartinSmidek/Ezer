@@ -1749,7 +1749,7 @@ class MenuLeft extends Menu {
       }
 //                                                 Ezer.trace('L','3. exciting '+this.type+' '+obj.id);
       this.DOM_excite(obj);
-      if (obj) {
+      if (obj && obj.click) {
         obj.click(null);
       }
     }
@@ -1981,7 +1981,8 @@ class Item extends Block {
         .addClass(this._fc('d') ? 'disabled3' : '')
         .appendTo(this.owner.DOM_Block.find('ul'))
         .click( e => {
-          if ( !this.DOM_Block.hasClass('disabled3') && this.owner.owner.enabled ) {
+            if ( e.shiftKey ) return dbg_onshiftclick(this);
+            if ( !this.DOM_Block.hasClass('disabled3') && this.owner.owner.enabled ) {
             if ( this.owner.owner.owner.type!='panel.popup' )
               Ezer.pushState(href);
             this._click(e);

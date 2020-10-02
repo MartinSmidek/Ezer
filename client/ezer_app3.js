@@ -877,7 +877,7 @@ class Application {
     Ezer.App.waiting= false;
     Ezer.App.bar_clock(true);
   }
-  // ----------------------------------------------------------------------------- bar_clock_continue
+  // ----------------------------------------------------------------------------- bar_clock_break
   // je voláno pokud čas vypršel nebo SESSION je nedefinované
   bar_clock_break () {
     let v= 'odhlaseno '+ae_datum(1)+' po expiraci SESSION';
@@ -3705,19 +3705,27 @@ Ezer.fce.sort= function (list,del,comp) {
   return arr.join(del);
 };
 // -------------------------------------------------------------------------------------- split
-//ff: fce.split (x,del,i)
+//ff: fce.split (x,del[,i])
 //      funkce rozdělí x podle del (stejnojmennou funkcí javascriptu) a vrátí podřetězec
 //      s indexem i (první má index 0)
+//   pokud není 'i' uvedeno, funkce vrátí pole
 //a: x - řetězec
 //   del - dělící vzor
-//   i - index
+//   i - nepovinný index 
 //s: funkce
 Ezer.fce.split= function (x,del,i) {
+  var y;
   if ( typeof(x)!='string' && x.toString )
     x= x.toString();
   Ezer.assert(typeof(x)=='string','split: první parametr musí být převeditelný na řetězec');
-  var y= x.split(del,i+1);
-  return y[i];
+  if ( i===undefined ) {
+    y= x.split(del);
+  }
+  else {
+    y= x.split(del,i+1);
+    y= y[i];
+  }
+  return y;
 };
 // -------------------------------------------------------------------------------------- trim
 //ff: fce.trim (x)
