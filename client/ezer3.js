@@ -8563,7 +8563,7 @@ class Browse extends Block {
     }
     else {
       this.r= this.b;
-      this.tact= this.tlen ? 1 : 0;
+      this.tact= this.tlen ? this.t : 0;
     }
     if ( rec!=-1 )                              // pokud není blokováno
       this.DOM_show();                          // zobrazení
