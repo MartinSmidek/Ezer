@@ -8358,7 +8358,8 @@ class Browse extends Block {
 // počáteční hodnoty souboru, buferu, tabulky
 // známe index prvního záznamu
   _browse_init1 (source) {
-    this._source= 'fill';                       // metoda získání záznamů
+    this._source= source;                       // metoda získání záznamů
+//    this._source= 'fill';                       // metoda získání záznamů
     this.slen= 0;
     this.b= -1;
     this.blen= this.bmax;
@@ -8563,12 +8564,12 @@ class Browse extends Block {
     }
     else {
       this.r= this.b;
-      this.tact= this.tlen ? this.t : 0;
+      this.tact= this.tlen ? 1 : 0;
     }
     if ( rec!=-1 )                              // pokud není blokováno
       this.DOM_show();                          // zobrazení
     if ( y.quiet==0 ) {                          // pokud nebylo zakázáno onrowclick
-      this.DOM_hi_row(this.tact,false,true);       // pak focus jen řádku a s onrowclick
+      this._row_move(this.r,false);
 //      this.DOM_hi_row(this.r,false,true);       // pak focus jen řádku a s onrowclick
     }
     // vrací počet přečtených řádků
@@ -8657,8 +8658,7 @@ class Browse extends Block {
       this._row_move(this.b+indx,true);
     }
     this.DOM_show();
-    this.DOM_hi_row(this.tact,false,true);         // focus řádku s onrowclick
-//    this.DOM_hi_row(this.r,false,true);         // focus řádku s onrowclick
+    this.DOM_hi_row(this.r,false,true);         // focus řádku s onrowclick
     return 1;
   }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  _row_submit+
@@ -9216,6 +9216,10 @@ class Browse extends Block {
       // scroll bar začíná pod hlavičkou
       if ( this.options.qry_rows>0 )
         this.DOM_tr_posun= this.DOM_qry_row[1];     // scrollbar již na úrovni dotazu
+      // přidání obsluhy simulace kláves PgDn, PgUp, Ins
+      this.DOM_foot.find('i.fa-caret-down').click( () => { this.keydown('page_down') });
+      this.DOM_foot.find('i.fa-caret-up')  .click( () => { this.keydown('page_up') });
+      this.DOM_foot.find('i.fa-genderless').click( () => { this.keydown('insert') });
     }
     // doplnění začátku datových řádků a přidání události pro mouse.click
     this.DOM_row= [];
@@ -9227,10 +9231,6 @@ class Browse extends Block {
           .append(this.DOM_tag[i]= jQuery(`<td class="tag0"> </td>`))
       );
     }
-    // přidání obsluhy simulace kláves PgDn, PgUp, Ins
-    this.DOM_foot.find('i.fa-caret-down').click( () => { this.keydown('page_down') });
-    this.DOM_foot.find('i.fa-caret-up')  .click( () => { this.keydown('page_up') });
-    this.DOM_foot.find('i.fa-genderless').click( () => { this.keydown('insert') });
     // scrollbar na úrovni dat
     if ( !this.DOM_tr_posun )
       this.DOM_tr_posun= this.DOM_row[1];         
@@ -9256,15 +9256,16 @@ class Browse extends Block {
       this._row_move(Math.min(this.r+this.tmax,this.slen-1));
       break;
     case 'keydown_insert':
-      var key= this.keys[this.r-this.b];
-      var ikey= this.keys_sel.indexOf(key);
-      if ( ikey>=0 )
-        this.keys_sel.splice(ikey,1);
-      else
-        this.keys_sel.push(key);
-      this.fire('onchoice',[ikey>=0?0:1]);
-      this._css_row(this.tact);
-      this.DOM_hi_row(this.t+this.tact-1,1);
+      this.selected('toggle');
+//      var key= this.keys[this.r-this.b];
+//      var ikey= this.keys_sel.indexOf(key);
+//      if ( ikey>=0 )
+//        this.keys_sel.splice(ikey,1);
+//      else
+//        this.keys_sel.push(key);
+//      this.fire('onchoice',[ikey>=0?0:1]);
+//      this._css_row(this.tact);
+//      this.DOM_hi_row(this.t+this.tact-1,1);
       break;
     }
   }
