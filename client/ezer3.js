@@ -8567,8 +8567,10 @@ class Browse extends Block {
     }
     if ( rec!=-1 )                              // pokud není blokováno
       this.DOM_show();                          // zobrazení
-    if ( y.quiet==0 )                           // pokud nebylo zakázáno onrowclick
-      this.DOM_hi_row(this.r,false,true);       // pak focus jen řádku a s onrowclick
+    if ( y.quiet==0 ) {                          // pokud nebylo zakázáno onrowclick
+      this.DOM_hi_row(this.tact,false,true);       // pak focus jen řádku a s onrowclick
+//      this.DOM_hi_row(this.r,false,true);       // pak focus jen řádku a s onrowclick
+    }
     // vrací počet přečtených řádků
     this.scrolling= false;
     return this.blen;
@@ -8655,7 +8657,8 @@ class Browse extends Block {
       this._row_move(this.b+indx,true);
     }
     this.DOM_show();
-    this.DOM_hi_row(this.r,false,true);         // focus řádku s onrowclick
+    this.DOM_hi_row(this.tact,false,true);         // focus řádku s onrowclick
+//    this.DOM_hi_row(this.r,false,true);         // focus řádku s onrowclick
     return 1;
   }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  _row_submit+
