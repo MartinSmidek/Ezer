@@ -336,7 +336,7 @@ $tok2lex= array(
   T_PAAMAYIM_NEKUDOTAYIM => 'x', T_PLUS_EQUAL => 'x', T_PRINT => 'id', T_REQUIRE => 'id',
   T_REQUIRE_ONCE => 'id', T_RETURN => 'id', T_SL => 'x', T_SL_EQUAL => 'x',
   T_SMALLER_OR_EQUAL => 'del', T_SR => 'x', T_SR_EQUAL => 'x', T_START_HEREDOC => 'x',
-  T_STATIC => 'id', T_STRING => 'id', T_STRING_CAST => 'str', T_STRING_VARNAME => 'str',
+  T_STATIC => 'id', T_STRING => 'id', T_STRING_CAST => 'str', T_STRING_VARNAME => 'id',
   T_SWITCH => 'id', T_UNSET => 'id', T_UNSET_CAST => 'x', T_USE => 'id', T_VAR => 'id',
   T_VARIABLE => 'id', T_WHILE => 'id', T_WHITESPACE => 'blank',  T_XOR_EQUAL => 'x',
   T_ABSTRACT => 'id',

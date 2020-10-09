@@ -4190,7 +4190,7 @@ function lex_analysis2 ($dbg=false) {
         $tp= 'del';
       }
       else {
-        while ( $tok[$i+1][1]=='.' ) {
+        while ( $tok[$i+1]=='.' || $tok[$i+1][1]=='.' ) {
           $ident.= '.'; $i+= 2;
           if ( $tok2lex[$tok[$i][0]]!='id' ) {
             comp_error("LEXICAL ř.{$t[2]},{$t[3]} po tečce nenásleduje identifikátor ($ident)",0);
