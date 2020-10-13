@@ -9726,10 +9726,10 @@ class Show extends Elem {
       Ezer.assert(1==Ezer.run_name(id,this.owner,m,ids),
         this.options.map_pipe+' je neznámé jméno map',this);
       this.map_pipe= {map:m[1],field:ids[ids.length-1]};
-      for (let i= 1; i<=this.owner.options.qry_rows||0; i++) {
-        if ( this.DOM_qry_select[i] )
-          this.DOM_qry_select[i]._options_load();
-      }
+//      for (let i= 1; i<=this.owner.options.qry_rows||0; i++) {
+//        if ( this.DOM_qry_select[i] )
+//          this.DOM_qry_select[i]._options_load();
+//      }
 //                                                 Ezer.trace('L','map_pipe '+this.options.map_pipe);
     }
   }
