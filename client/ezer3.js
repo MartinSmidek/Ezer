@@ -8568,9 +8568,10 @@ class Browse extends Block {
     }
     if ( rec!=-1 )                              // pokud není blokováno
       this.DOM_show();                          // zobrazení
-    if ( y.quiet==0 ) {                          // pokud nebylo zakázáno onrowclick
-      this._row_move(this.r,false);
-//      this.DOM_hi_row(this.r,false,true);       // pak focus jen řádku a s onrowclick
+    if ( y.quiet==0 ) {                         // pokud nebylo zakázáno onrowclick
+      var r= this.r;
+      this.r= -1;                               // vynutíme přechod na první řádek
+      this._row_move(r,false);                  // ... a fokus a onrowclick
     }
     // vrací počet přečtených řádků
     this.scrolling= false;
