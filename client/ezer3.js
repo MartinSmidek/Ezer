@@ -7277,7 +7277,7 @@ class Select extends Elem {
         create.bind(this)(this.Items[key],key);
       }
     }
-    else if (this.data_order) {
+    else if (this.data_order.length) {
       for (var i in this.data_order) {
         let key= this.data_order[i];
         create(this.Items[key],key);
