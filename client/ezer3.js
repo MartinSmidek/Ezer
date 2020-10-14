@@ -6726,6 +6726,7 @@ class Select extends Elem {
   initialize () {
     super.initialize();
     this.Items= {};
+    this.data_order= [];               // mapovací pole i->key pro uspořádání Items
     this.Css= null;                    // css pro daný klíč (lze definovat jen fcí selects)
     this.lastCss= '';                  // aktuální nastavené css (jen je-li definované Css)
     this._key= null;                   // klíč - pro multiselect pole klíčů
@@ -6738,21 +6739,29 @@ class Select extends Elem {
     super._data();
   }
 // ------------------------------------------------------------------------------------ selects
-//fm: Select.selects (list[,delimiters=',:'][,values:0)
+//fm: Select.selects (list[,delimiters=',:'][,values:0[,order:key|data]])
 //a: list - seznam volitelných hodnot pro select ve tvaru: hodnota[:klíč:css],...
 //   delimiters - řetězec definující 2 znaky použité jako oddělovače
 //   values - 1:funkce key,_save,_load bude vracet/číst místo klíče hodnotu
-  selects(list,delimiters,values) {
+//   order - 1: řazení podle list, 0: (default) podle klíče
+  selects(list,delimiters,values,order) {
     this._values= values?1:0;
     this.Items= {};
+    this.data_order= [];
     this.Css= {};               // lastCss necháme kvůli jeho odstranění
     var del1= ',', del2= ':';
     if ( delimiters ) {
       del1= delimiters[0]||',';
       del2= delimiters[1]||':';
     }
+    let n= -1;
     for (let [i,val] of list.split(del1).entries()) {
       var desc= val.split(del2);
+      if ( order ) {
+        // pokud se požaduje řazení podle zadaného seznamu
+        n++;
+        this.data_order[n]= desc[1]||n;
+      }
       if ( desc.length==3 ) {
         this.Items[desc[1]]= desc[0];
         this.Css[desc[1]]= desc[2];
@@ -7264,8 +7273,14 @@ class Select extends Elem {
         create.bind(this)(this.Items[0],0);
       }
       for (var i in this.map_options.data_order) {
-        var key= this.map_options.data_order[i];
+        let key= this.map_options.data_order[i];
         create.bind(this)(this.Items[key],key);
+      }
+    }
+    else if (this.data_order) {
+      for (var i in this.data_order) {
+        let key= this.data_order[i];
+        create(this.Items[key],key);
       }
     }
     else {
