@@ -1422,6 +1422,7 @@ function name_split($name,$pars,$vars,$call=false) {
       'itm'=>$name);
   // rozbor jména
   $ids= explode('.',$name);
+  $n_ids= count($ids);
   $id= array_shift($ids);
   $obj= null;
   $_of= ''; // e|o|s
@@ -1558,7 +1559,7 @@ function name_split($name,$pars,$vars,$call=false) {
   }
   // -------------------------------------------------- pokud pokračuje atribut nebo funkce
   if ( ($type= $names[$id]->op) ) {
-    if ( $type[0]=='o' ) {
+    if ( $type[0]=='o' && $n_ids>1) { // atribut vyžaduje kontext
       $s->atr= $id;
       $_of= $type[1]=='o'?'o':'s';
     }
@@ -1567,7 +1568,7 @@ function name_split($name,$pars,$vars,$call=false) {
       $s->fce= $id;
       $s->call= (object)array('o'=>$type[1],'i'=>$id);
     }
-    else {
+    elseif ($n_ids>1) { // metoda vyžaduje kontext
       $s->type= 'metd';
       $s->fce= $id;
       $_id= $id=='part' ? '_part' : ($id=='owner' ? '_owner' : ($id=='call' ? '_call' : $id));
