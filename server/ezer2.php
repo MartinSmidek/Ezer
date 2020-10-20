@@ -77,11 +77,19 @@
       $ezer_root_inc= "$ezer_root.inc.php";
     }
     elseif ( file_exists("$ezer_root/$ezer_root.inc.php") ) {
-      $path= '$ezer_root';
+      $path= "./$ezer_root";
       $ezer_root_inc= "$ezer_root/$ezer_root.inc.php";
     }
   }
-  if ( !$ezer_root_inc ) fce_error("SYSTEM: inconsistent kernel call");
+  if ( !$ezer_root_inc ) {
+//    fce_error("SYSTEM: inconsistent kernel call");
+    header('Content-type: application/json; charset=UTF-8');
+    $y= (object)array('error'=>'SYSTEM: inconsistent kernel call');
+    $yjson= json_encode($y);
+    echo $yjson;
+    exit;
+
+  }
   require_once("$path/$ezer_root_inc");
   require_once("$ezer_path_serv/ae_slib.php");
   $php_start= getmicrotime();                        // měření času
@@ -2851,4 +2859,4 @@ function item_help($typ,$item) {
   }
   return $ret;
 }
-?>
+
