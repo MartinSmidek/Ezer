@@ -1,7 +1,7 @@
 /* části app.js a ezer_dom1.js portované z mootools do jQuery */
 /* Ezer3.1                             (C) 2017 Martin Šmídek */
 /* Ezer3.1        (C) 2009 Martin Šmídek */
-/* global Object, Ezer, Browser, gapi, Cookie, Function, args, Block, ListRow, Form, List, Browse, self, Menu, Panel, CKEDITOR, PanelPopup */
+/* global Object, Ezer, Browser, gapi, Cookie, Function, args, Block, ListRow, Form, List, Browse, self, Menu, Panel, CKEDITOR, PanelPopup, Var */
 
 "use strict";
 // <editor-fold defaultstate="collapsed" desc="++++++++++++++++++++++++++ EZER inicializace">

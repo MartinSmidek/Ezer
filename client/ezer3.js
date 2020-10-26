@@ -7948,7 +7948,8 @@ class Browse extends Block {
 //   set_page   - zruší výběr a nastaví jako vybrané ty viditelné
 //   add_page   - přidá k výběru ty viditelné
 //   refresh    - obnoví zobrazení výběru
-//   toggle     - změní stav aktivního řádku, pokud je param=1 nebude vyvoláno onrowclick
+//   toggle     - změní stav aktivního řádku, pokud je param=1 nebude vyvoláno onrowclick,
+//                pokud je option=1 bude vyvoláno onchoice
 //   use        - operace browse_load, browse_seek budou vracet jen vybrané řádky
 //   ignore     - operace browse_load, browse_seek se budou chovat jakoby nic
 //   key        - vrátí param tý klíč (pro option='D' od konce)
@@ -7972,6 +7973,8 @@ class Browse extends Block {
           this.keys_sel.splice(ikey,1);
         else
           this.keys_sel.push(key);
+        if (option!=undefined && option==1)
+          this.fire('onchoice',[ikey>=0?0:1]);
         this._css_row(this.tact);
         this.DOM_hi_row(this.t+this.tact-1,param||0);
         break;
@@ -9272,7 +9275,7 @@ class Browse extends Block {
       this._row_move(Math.min(this.r+this.tmax,this.slen-1));
       break;
     case 'keydown_insert':
-      this.selected('toggle');
+      this.selected('toggle',1,1); // vyvolej onrowclick a onchoice
 //      var key= this.keys[this.r-this.b];
 //      var ikey= this.keys_sel.indexOf(key);
 //      if ( ikey>=0 )
