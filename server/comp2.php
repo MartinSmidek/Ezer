@@ -3803,8 +3803,9 @@ function get_cases($context,&$cs) {
 }
 # -------------------------------------------------------------------------------------------- expr2
 # expr2   :: expr3                              --> G(expr3)
-#          | expr3 op expr3                     --> G(expr:call,op:G(op),par:[G(expr3),G(expr3)]
-#          | expr3 ? expr2 : expr2              --> G(expr:tern,par:[G(e/1),G(e/2),G(e/3)]
+#          | '!' expr3                          --> {expr:call,op:'not',par:G(expr3)}
+#          | expr3 op expr3                     --> {expr:call,op:G(op),par:[G(expr3),G(expr3)}
+#          | expr3 ? expr2 : expr2              --> {expr:tern,par:[G(e/1),G(e/2),G(e/3)}
 # op      :: '+' | '-' | '*' | '/'              --> sum | minus | multiply | divide | gt | eq
 #          | '>' | '>=' | '<' | '<=' | '==' | '!=' --> gt | lt | eq ...
 #          | '&&' | '||'                        --> and | or
@@ -3821,44 +3822,51 @@ function get_cases($context,&$cs) {
 #          | '${' ( id | call2 ) '}'            --> G(id) | G(call2)
 function get_expr2($context,&$expr) {
   global $last_lc;
-  $ok= get_expr3($context,$expr);
-  $op= $xop= $nop= $expr2= $expr3= null;
-  if (     get_if_delimiter('+') )  $op= 'sum';
-  elseif ( get_if_delimiter('-') )  $op= 'minus';
-  elseif ( get_if_delimiter('*') )  $op= 'multiply';
-  elseif ( get_if_delimiter('/') )  $op= 'divide';
-  elseif ( get_if_delimiter('>') )  $op= 'gt';
-  elseif ( get_if_delimiter('<') )  $op= 'lt';
-  elseif ( get_if_delimiter('>=') ) $xop= 'lt';
-  elseif ( get_if_delimiter('<=') ) $xop= 'gt';
-  elseif ( get_if_delimiter('==') ) $op= 'eq';
-  elseif ( get_if_delimiter('&&') ) $op= 'and';
-  elseif ( get_if_delimiter('||') ) $op= 'or';
-  elseif ( get_if_delimiter('!=') ) $nop= 'eq';
-  elseif ( get_if_delimiter('?') )  {
-    # G(expr:tern,par:[G(expr3),G(expr3),G(expr3)]
-    get_expr2($context,$expr2);
-    get_delimiter(':');
-    $ok= get_expr2($context,$expr3);
-    $expr= (object)array('expr'=>'tern','lc'=>$last_lc,'par'=>array($expr,$expr2,$expr3),'value'=>1,'lc'=>$last_lc);
+  if ( get_if_delimiter('!') ) {
+    # op expr --> G(expr:call,op:G(op),par:G(expr3)}
+    $ok= get_expr3($context,$expr);
+    $expr= (object)array('expr'=>'call','op'=>'not','lc'=>$last_lc,'par'=>array($expr),'value'=>1);
   }
-  if ( $op ) {
-    # exprA op exprB --> G(expr:call,op:G(op),par:[G(expr3),G(expr3)]
-    $ok= get_expr3($context,$expr2);
-    $expr= (object)array('expr'=>'call','op'=>$op,'lc'=>$last_lc,
-        'par'=>array($expr,$expr2),'value'=>1);
-  }
-  elseif ( $xop ) { // prohozené operandy
-    # exprB op exprA --> G(expr:call,op:G(op),par:[G(expr3),G(expr3)]
-    $ok= get_expr3($context,$expr2);
-    $expr= (object)array('expr'=>'call','op'=>$xop,'lc'=>$last_lc,
-        'par'=>array($expr2,$expr),'value'=>1);
-  }
-  elseif ( $nop ) { // negace relace
+  else {
+    $ok= get_expr3($context,$expr);
+    $op= $xop= $nop= $expr2= $expr3= null;
+    if (     get_if_delimiter('+') )  $op= 'sum';
+    elseif ( get_if_delimiter('-') )  $op= 'minus';
+    elseif ( get_if_delimiter('*') )  $op= 'multiply';
+    elseif ( get_if_delimiter('/') )  $op= 'divide';
+    elseif ( get_if_delimiter('>') )  $op= 'gt';
+    elseif ( get_if_delimiter('<') )  $op= 'lt';
+    elseif ( get_if_delimiter('>=') ) $xop= 'lt';
+    elseif ( get_if_delimiter('<=') ) $xop= 'gt';
+    elseif ( get_if_delimiter('==') ) $op= 'eq';
+    elseif ( get_if_delimiter('&&') ) $op= 'and';
+    elseif ( get_if_delimiter('||') ) $op= 'or';
+    elseif ( get_if_delimiter('!=') ) $nop= 'eq';
+    elseif ( get_if_delimiter('?') )  {
+      # G(expr:tern,par:[G(expr3),G(expr3),G(expr3)]
+      get_expr2($context,$expr2);
+      get_delimiter(':');
+      $ok= get_expr2($context,$expr3);
+      $expr= (object)array('expr'=>'tern','lc'=>$last_lc,'par'=>array($expr,$expr2,$expr3),'value'=>1,'lc'=>$last_lc);
+    }
+    if ( $op ) {
+      # exprA op exprB --> G(expr:call,op:G(op),par:[G(expr3),G(expr3)]
+      $ok= get_expr3($context,$expr2);
+      $expr= (object)array('expr'=>'call','op'=>$op,'lc'=>$last_lc,
+          'par'=>array($expr,$expr2),'value'=>1);
+    }
+    elseif ( $xop ) { // prohozené operandy
+      # exprB op exprA --> G(expr:call,op:G(op),par:[G(expr3),G(expr3)]
+      $ok= get_expr3($context,$expr2);
+      $expr= (object)array('expr'=>'call','op'=>$xop,'lc'=>$last_lc,
+          'par'=>array($expr2,$expr),'value'=>1);
+    }
+    elseif ( $nop ) { // negace relace
     # not(exprA op exprB) --> G(expr:call,op:G(op),par:[G(expr3),G(expr3)]
     $ok= get_expr3($context,$expr2);
     $expr= (object)array('expr'=>'call','op'=>'not','lc'=>$last_lc,'par'=>array(
         (object)array('expr'=>'call','op'=>$nop,'par'=>array($expr2,$expr),'value'=>1,'lc'=>$last_lc)),'value'=>1);
+  }
   }
   return $ok;
 }
@@ -3968,6 +3976,8 @@ function get_call2_id($context,&$expr,$id,$valued) {
   }
   return true;
 }
+
+
 # ================================================================================================== PROC code
 # body  :: [ 'var' varlist ] code
 # vlist :: vdef | vdef (','|'var') vlist
