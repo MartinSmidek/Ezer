@@ -1114,6 +1114,14 @@ function gen2($pars,$vars,$c) {
       if ( $c->lc ) $call->s= $c->lc;
       $code[]= $call;
     }
+    elseif ( $c->op=='fork' ) {
+      $op= name_split("{$c->par[0]}.call",$pars,$vars,true);
+      $args= array((object)array('o'=>'v','v'=>$c->par[1]));
+      for ($i= 2; $i<$npar; $i++) {
+        $args[]= gen2($pars,$vars,$c->par[$i]);
+      }
+      $code= gen_caller($op,$args); 
+    }
     else {
       $op= name_split($c->op,$pars,$vars,true);
       $args= array();
@@ -3579,6 +3587,7 @@ function get_slist($context,&$st) {
 #                                               --> {expr:while,while:G(expr),stmnt:(slist)}
 #          | 'break' | 'continue'               --> {expr:break,type:break|continue}
 #          | 'switch (' expr2 ') {' cases '}'   --> {expr:switch,of:G(expr2),cases:G(cases)}
+#          | 'fork' '.' id args                 --> {expr:call,op:fork,par:G("id")+G(args)}
 #          | call2                              --> G(call2)
 #          |
 # elseif  :: 'elseif' '(' expr2 ')' stmnt       --> {expr:elif,test:G(expr2),then:G(st1)}
@@ -3615,9 +3624,27 @@ function get_stmnt($context,&$st) {
       $ok= true;
     }
     elseif ( get_if_delimiter('(') ) {
+      $ids= explode('.',$id);
+      #  'fork' '.' id args --> {expr:call,op:fork,par:[context,proc,G(args)...]}
+      if ($ids[0]=='fork') {
+        array_shift($ids);
+        $proc= array_pop($ids);
+        $par= array(implode('.',$ids),$proc);
+        if ( !get_if_delimiter(')') ) {
+          while ( $ok ) {
+            $arg= null;
+            get_expr2($context,$arg);
+            $par[]= $arg;
+            $ok= get_if_delimiter(',');
+          }
+          get_delimiter(')');
+        }
+        $st= (object)array('expr'=>'call','op'=>'fork','par'=>$par,'lc'=>$last_lc);
+        $ok= true;
+      }
       # 'if' '(' expr2 ')' stmnt [ 'else' stmnt ]
       #      --> {expr:if,test:G(expr2),then:G(stmnt/1),else:G(stmnt/2)}
-      if ( $id=='if' ) {
+      elseif ( $id=='if' ) {
         $test= $then= $else= null;
         $ok= get_expr2($context,$test);
         get_delimiter(')');
@@ -3933,8 +3960,8 @@ function get_call2_id($context,&$expr,$id,$valued) {
   if ( !get_if_delimiter(')') ) {
     while ( $ok ) {
       $arg= null;
-        get_expr2($context,$arg);
-        $expr->par[]= $arg;
+      get_expr2($context,$arg);
+      $expr->par[]= $arg;
       $ok= get_if_delimiter(',');
     }
     get_delimiter(')');
@@ -4288,4 +4315,3 @@ function comp_error ($msg,$code_lc=null) {
   $err.= $msg2;
   throw new Exception($msg2);
 }
-?>

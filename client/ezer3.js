@@ -7780,7 +7780,7 @@ class ListRow extends Block {
 class Browse extends Block {
   constructor (owner,desc,DOM,id,skill) {
     super(owner,desc,DOM,id,skill);
-//on: Browse.rows   - počet datových řádků načtených do paměti
+//on: Browse.rows   - počet zobrazených datových řádků
 //-
 //os: Browse.format  - úprava zobrazení browse ('n': nezobrazovat, 'd': potlačení akcí myší)
 //-
