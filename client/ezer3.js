@@ -1395,7 +1395,7 @@ class Block {
   }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  DOM_optStyle
 // doplní případný styl, css-třídu a title
-// předpony title: ^ umístit nad, - umístit napravo, jinak nalevo
+// předpony title: ^ umístit nad, - umístit napravo, jinak nalevo, Γ umístit nad a zarovnat doprava
 // pokud ignore_right=true ignoruje se format=r, pokud je ignore_right číslo posune se label doleva
   DOM_optStyle (dom,title_as_label,ignore_right) {
     // atribut style definuje styly pro parametr
@@ -1413,11 +1413,9 @@ class Block {
     }
     if ( title_as_label ) {
       // případný atribut title jako label
-      const label= title_as_label[0]=='^' ? title_as_label.substr(1) : (
-                   title_as_label[0]=='-' ? title_as_label.substr(1) : title_as_label );
-      const up= title_as_label[0]=='^';
-      const up_left= ignore_right===true || !this._fc('r');
-      const right= title_as_label[0]=='-';
+      const sgn_lab= title_as_label.match(/^(\^|-|Γ|)(.*)/), label= sgn_lab[2], sgn= sgn_lab[1],
+            up= sgn=='^'||sgn=='Γ', up_left= ignore_right===true || !this._fc('r') || sgn=='Γ',
+            right= title_as_label[0]=='-';
       this.DOM_Label= jQuery(`<div class="Label3">${label}</div>`)
         .css(up ? (up_left ? {top:-14,left:2}       : {top:-14,right:isNaN(ignore_right)?0:ignore_right})
                 : (right   ? {top:3,left:this._w+3} : {top:3,right:this._w+2}));
