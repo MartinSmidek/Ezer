@@ -3630,6 +3630,7 @@ function get_stmnt($context,&$st) {
         array_shift($ids);
         $proc= array_pop($ids);
         $par= array(implode('.',$ids),$proc);
+        $ok= true;
         if ( !get_if_delimiter(')') ) {
           while ( $ok ) {
             $arg= null;
@@ -4317,7 +4318,9 @@ function comp_error ($msg,$code_lc=null) {
   $errors++;
   // zobraz řádek $line s okolím
   $in_code= preg_match("/CODE/",$msg);
-  list($line,$clmn)= explode(',',$in_code ? ($code_lc ?: $error_code_lc) : $pos[$head]);
+  list($line,$clmn)= explode(',',$in_code 
+      ? ($code_lc ?: $error_code_lc) 
+      : ($head<count($pos) ? $pos[$head] : 'na konci'));
   $msg2= "<b>".($in_code ? "SYNTAX " : '')."$msg</b> in $ezer_name;$line,$clmn<br>";
   if ( $ezer_name ) {
     $msg2.= source_line($ezer_name,$ezer_app,$line,$clmn);
