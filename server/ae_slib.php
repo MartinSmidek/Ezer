@@ -440,6 +440,42 @@ function PHP($expr) {
   return $fce;
 }
 /*** ========================================================================================= MySQL */
+# --------------------------------------------------------------------------------------- table_lock
+# mode=on   - pokusí se zamknout daný řádek dané tabulky tzn. zapsat id_user a čas do _lock
+#             pokud je již někým jiným zamknutý, ok=0 a info=text
+# mode=off  - odstraní zámek daného řádku, nekontroluje uživatele
+# mode=none - odstraní všechny zámky přihlášeného uživatele, případně jen všechny zámky dané tabulky
+# variantu s mode=none lze použít i když databáze neobsahuje tabulku _lock (vhodné po přihlášení)
+function table_lock($mode,$table='',$idt=0) {
+  global $USER;
+  $ret= (object)array('ok'=>0,'info'=>'');
+  $idu= $USER->id_user;
+  $now= time();
+  switch ($mode) {
+    case 'on':    // ------------------ pokus o zamknutí table+id
+      $res= pdo_qry("INSERT IGNORE INTO _lock (`table`,id_table,id_user,time) 
+          VALUES ('$table','$idt','$idu',$now) ");
+      $ret->ok= pdo_affected_rows($res);
+      if ($ret->ok===0) {
+        list($idu2,$time2)= select('id_user,time','_lock',"`table`='$table' AND id_table='$idt'");
+        list($forename,$surname)= select('forename,surname','_user',"id_user='$idu2'");
+        $time= date('Y-m-d')==date('Y-m-d',$time2) ? date('H:i') : date('j.n.Y');
+        $ret->info= "$table/$idt upravuje od $time $forename $surname";
+      }
+      break;
+    case 'off':   // ------------------ odstraní zámek table+id
+      $ret->ok= pdo_qry("DELETE FROM _lock WHERE `table`='$table' AND id_table='$idt'");
+      break;
+    case 'none':  // ------------------ odstraní všechna uzamčení vlastněná id_user
+      $existuje_lock= pdo_num_rows(pdo_qry("SHOW TABLES LIKE '_lock'"));
+      if ($existuje_lock) {
+        $AND= $table ? "AND `table`='$table'" : '';
+        $ret->ok= pdo_qry("DELETE FROM _lock WHERE id_user='$idu' $AND");
+      }
+      break;
+  }
+  return $ret;
+}
 # ------------------------------------------------------------------------------------------- select
 # navrácení hodnoty jednoduchého dotazu
 # pokud $expr obsahuje čárku, vrací pole hodnot, pokud $expr je hvězdička vrací objekt
@@ -2043,4 +2079,3 @@ function ezer_qry ($op,$table,$cond_key,$zmeny,$key_id='') {
 end:
   return $result;
 }
-?>
