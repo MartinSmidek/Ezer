@@ -461,16 +461,22 @@ function table_lock($mode,$table='',$idt=0) {
         list($forename,$surname)= select('forename,surname','_user',"id_user='$idu2'");
         $time= date('Y-m-d')==date('Y-m-d',$time2) ? date('H:i') : date('j.n.Y');
         $ret->info= "$table/$idt upravuje od $time $forename $surname";
+        $ret->note= "$table/$idt locked by $idu2 ";
+      }
+      else {
+        $ret->note= "$table/$idt locked by $idu ";
       }
       break;
     case 'off':   // ------------------ odstraní zámek table+id
       $ret->ok= pdo_qry("DELETE FROM _lock WHERE `table`='$table' AND id_table='$idt'");
+      $ret->note= "$table/$idt unlocked by $idu ";
       break;
     case 'none':  // ------------------ odstraní všechna uzamčení vlastněná id_user
       $existuje_lock= pdo_num_rows(pdo_qry("SHOW TABLES LIKE '_lock'"));
       if ($existuje_lock) {
         $AND= $table ? "AND `table`='$table'" : '';
         $ret->ok= pdo_qry("DELETE FROM _lock WHERE id_user='$idu' $AND");
+        $ret->note= ($table ? "$table " : "all ")."unlocked by $idu ";
       }
       break;
   }

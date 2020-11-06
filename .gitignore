@@ -15,3 +15,5 @@
 /server/composer.json
 /server/composer.lock
 /client/@
+/server/licensed/evernote
+/server/licensed/google_api
