@@ -443,7 +443,7 @@ function PHP($expr) {
 # --------------------------------------------------------------------------------------- table_lock
 # mode=on   - pokusí se zamknout daný řádek dané tabulky tzn. zapsat id_user a čas do _lock
 #             pokud je již někým jiným zamknutý, ok=0 a info=text
-# mode=off  - odstraní zámek daného řádku, nekontroluje uživatele
+# mode=off  - odstraní (případný) zámek daného řádku přihlášeného uživatele
 # mode=none - odstraní všechny zámky přihlášeného uživatele, případně jen všechny zámky dané tabulky
 # variantu s mode=none lze použít i když databáze neobsahuje tabulku _lock (vhodné po přihlášení)
 function table_lock($mode,$table='',$idt=0) {
@@ -452,7 +452,7 @@ function table_lock($mode,$table='',$idt=0) {
   $idu= $USER->id_user;
   $now= time();
   switch ($mode) {
-    case 'on':    // ------------------ pokus o zamknutí table+id
+    case 'on':    // ------------------ pokus o zamknutí table+id+user
       $res= pdo_qry("INSERT IGNORE INTO _lock (`table`,id_table,id_user,time) 
           VALUES ('$table','$idt','$idu',$now) ");
       $ret->ok= pdo_affected_rows($res);
@@ -473,8 +473,9 @@ function table_lock($mode,$table='',$idt=0) {
         $ret->note= "$table/$idt locked by $idu ";
       }
       break;
-    case 'off':   // ------------------ odstraní zámek table+id
-      $ret->ok= pdo_qry("DELETE FROM _lock WHERE `table`='$table' AND id_table='$idt'");
+    case 'off':   // ------------------ odstraní zámek table+id+user
+      $ret->ok= pdo_qry("DELETE FROM _lock 
+          WHERE `table`='$table' AND id_table='$idt' AND id_user='$idu' ");
       $ret->note= "$table/$idt unlocked by $idu ";
       break;
     case 'none':  // ------------------ odstraní všechna uzamčení vlastněná id_user
