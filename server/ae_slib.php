@@ -458,10 +458,16 @@ function table_lock($mode,$table='',$idt=0) {
       $ret->ok= pdo_affected_rows($res);
       if ($ret->ok===0) {
         list($idu2,$time2)= select('id_user,time','_lock',"`table`='$table' AND id_table='$idt'");
-        list($forename,$surname)= select('forename,surname','_user',"id_user='$idu2'");
-        $time= date('Y-m-d')==date('Y-m-d',$time2) ? date('H:i') : date('j.n.Y');
-        $ret->info= "$table/$idt upravuje od $time $forename $surname";
-        $ret->note= "$table/$idt locked by $idu2 ";
+        if ($idu2==$idu) { // aha, to jsem já
+          $ret->ok= 1;
+          $ret->note= "$table/$idt still locked by $idu ";
+        }
+        else {
+          list($forename,$surname)= select('forename,surname','_user',"id_user='$idu2'");
+          $time= date('Y-m-d')==date('Y-m-d',$time2) ? date('H:i') : date('j.n.Y');
+          $ret->info= "$table/$idt upravuje od $time $forename $surname";
+          $ret->note= "$table/$idt locked by $idu2 ";
+        }
       }
       else {
         $ret->note= "$table/$idt locked by $idu ";
@@ -475,7 +481,8 @@ function table_lock($mode,$table='',$idt=0) {
       $existuje_lock= pdo_num_rows(pdo_qry("SHOW TABLES LIKE '_lock'"));
       if ($existuje_lock) {
         $AND= $table ? "AND `table`='$table'" : '';
-        $ret->ok= pdo_qry("DELETE FROM _lock WHERE id_user='$idu' $AND");
+        pdo_qry("DELETE FROM _lock WHERE id_user='$idu' $AND");
+        $ret->ok= 1;
         $ret->note= ($table ? "$table " : "all ")."unlocked by $idu ";
       }
       break;
