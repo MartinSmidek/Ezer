@@ -4166,7 +4166,7 @@ function get_expr($context,&$expr) {
 # ------------------------------------------------------------------------------------ lex_analysis2
 # $dbg = false nebo pro debugger proc|func
 function lex_analysis2 ($dbg=false) {
-  global $tok2lex, $ezer, $keywords, $specs, $lex, $typ, $pos, $not, $gen_source, $debugger;
+  global $tok2lex, $ezer, $keywords, $specs, $lex, $typ, $pos, $not, $gen_source, $debugger, $head;
 
   // rozbor na tokeny podle PHP
   $tok= token_get_all( $dbg
@@ -4232,7 +4232,8 @@ function lex_analysis2 ($dbg=false) {
         while ( $tok[$i+1]=='.' || $tok[$i+1][1]=='.' ) {
           $ident.= '.'; $i+= 2;
           if ( $tok2lex[$tok[$i][0]]!='id' ) {
-            comp_error("LEXICAL ř.{$t[2]},{$t[3]} po tečce nenásleduje identifikátor ($ident)",0);
+            $head= $t[2]; $pos[$t[2]]= "{$t[2]},{$t[3]}";
+            comp_error("LEXICAL po tečce nenásleduje identifikátor ($ident)",0);
             break 3;
           }
           $ident.= $tok[$i][1];
@@ -4260,7 +4261,8 @@ function lex_analysis2 ($dbg=false) {
       $pos[$k]= "{$t[2]},{$t[3]}"; $k++;
       break;
     default:
-      comp_error("LEXICAL ř.{$t[2]},{$t[3]}: '{$t[1]}' je nedovolený znak");
+      $head= $t[2]; $pos[$t[2]]= "{$t[2]},{$t[3]}";
+      comp_error("LEXICAL '{$t[1]}' je nedovolený znak");
       break;
     }
   }
@@ -4271,7 +4273,7 @@ function lex_analysis2 ($dbg=false) {
 //                                                             debug($not,'not');
   return true;
 }
-# --------------------------------------------------------------------------------------------- ezer
+# ------------------------------------------------------------------------------------ tok_positions
 function tok_positions(&$tok) {
   $line= 0; $col= 1; $count= count($tok);
   for ($i= 0; $i<$count; $i++) {
@@ -4318,9 +4320,10 @@ function comp_error ($msg,$code_lc=null) {
   $errors++;
   // zobraz řádek $line s okolím
   $in_code= preg_match("/CODE/",$msg);
+  $in_lexi= preg_match("/LEXICAL/",$msg);
   list($line,$clmn)= explode(',',$in_code 
       ? ($code_lc ?: $error_code_lc) 
-      : ($head<count($pos) ? $pos[$head] : 'na konci'));
+      : (($in_lexi || $head<count($pos)) ? $pos[$head] : 'na konci'));
   $msg2= "<b>".($in_code ? "SYNTAX " : '')."$msg</b> in $ezer_name;$line,$clmn<br>";
   if ( $ezer_name ) {
     $msg2.= source_line($ezer_name,$ezer_app,$line,$clmn);
