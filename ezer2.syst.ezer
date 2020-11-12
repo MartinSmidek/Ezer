@@ -189,7 +189,7 @@ panel act [,,*,] {type:'right', title:'Aktivita', _sys:'akt', skill:'a|a;aa|aa'
       item { title:'měsíc'              par:°{s:'uzivatele',c:'dny',days:'30',short:'2'}}
       item { title:'nastavený den'      par:°{s:'uzivatele',c:'den',short:'2'}}
     }
-    menu { title:'Aktivní moduly',type:'group',skill:'a'
+    menu { title:'Aktivní moduly',type:'group',skill:'m'
       item { title:'dnes'               par:°{s:'moduly',c:'dnes',short:'1'}}
       item { title:'... podrobně'       par:°{s:'moduly',c:'dnes',short:'0'}}
       item { title:'včera'              par:°{s:'moduly',c:'vcera',short:'1'}}
