@@ -131,21 +131,24 @@ function doc_chngs_show($type='ak',$days=30,$app_name='') { trace();
     }
     $get_help('.main.','a',$ezer_root);
   }
-  // přidání změn z _todo
-  $cond= strstr($type,'a')===false ? "cast=1" : "1";
-  $cond.= strstr($type,'k')===false ? " OR cast!=1" : "";
-  ezer_connect('.main.');
-  $qh= "SELECT kdy_skoncil, zprava, zkratka, abbr AS kdo, kdy_zadal FROM _todo
-        JOIN _cis ON druh='s_todo_cast' AND data=cast
-        LEFT JOIN _user ON id_user=kdo_zadal
-        WHERE kdy_skoncil!='0000-00-00' AND SUBDATE(NOW(),$days)<=kdy_skoncil AND ($cond)";
-  $rh= mysql_qry($qh);
-  while ( $rh && ($h= pdo_fetch_object($rh)) ) {
-    $who= "požadavek {$h->kdo} ".$s2u($h->kdy_zadal);
-    $hdr= $header($h->kdy_skoncil,$h->zkratka,$who);
-    $tit= addslashes($h->zprava);
-    $lines[]= "$h->kdy_skoncil 00:00:00 9876543210"
-            . "<div class='chng'>$hdr<span class='chng_hlp' title='$tit'>$h->zprava</span></div>";
+  // přidání změn z _todo pokud existuje tabulka _TODO
+  $existuje_todo= pdo_num_rows(pdo_qry("SHOW TABLES LIKE '_todo'"));
+  if ($existuje_todo) {
+    $cond= strstr($type,'a')===false ? "cast=1" : "1";
+    $cond.= strstr($type,'k')===false ? " OR cast!=1" : "";
+    ezer_connect('.main.');
+    $qh= "SELECT kdy_skoncil, zprava, zkratka, abbr AS kdo, kdy_zadal FROM _todo
+          JOIN _cis ON druh='s_todo_cast' AND data=cast
+          LEFT JOIN _user ON id_user=kdo_zadal
+          WHERE kdy_skoncil!='0000-00-00' AND SUBDATE(NOW(),$days)<=kdy_skoncil AND ($cond)";
+    $rh= mysql_qry($qh);
+    while ( $rh && ($h= pdo_fetch_object($rh)) ) {
+      $who= "požadavek {$h->kdo} ".$s2u($h->kdy_zadal);
+      $hdr= $header($h->kdy_skoncil,$h->zkratka,$who);
+      $tit= addslashes($h->zprava);
+      $lines[]= "$h->kdy_skoncil 00:00:00 9876543210"
+              . "<div class='chng'>$hdr<span class='chng_hlp' title='$tit'>$h->zprava</span></div>";
+    }
   }
   // redakce
   rsort($lines);
