@@ -328,7 +328,7 @@ function sys_user_skills($file='') {
 # ---------------------------------------------------------------------------------- sys_backup_make
 # BACKUP: uloží obrazy databází do příslušných složek, pro lokální systém připojí postfix _local
 # parametry
-#   listing  - přehled existujících záloh
+#   listing  - přehled existujících záloh, pokud je definováno par.match tak omezuje vypsané
 #   download - přehled existujících záloh s možností downloadu
 #   restore  - přehled existujících záloh s možností obnovit data
 #   kaskada  - uložení dnešní zálohy, (je-li pondělí přesun poslední pondělní do jeho týdne)
@@ -348,11 +348,12 @@ function sys_backup_make($par) {  trace();
   case 'listing':
   case 'restore':
 //    $html.= "<h2>Zálohy v $path_backup/</h2>";
+    $glob= isset($par->glob) ? $par->glob : '*';
     // denní zálohy
     if ( file_exists("$path_backup/days") ) {
       $html.= "<h3>denní zálohy</h3><dl>";
       foreach (glob("$path_backup/days/*",GLOB_ONLYDIR) as $dir_d) {
-        $files= glob("$dir_d/*");
+        $files= glob("$dir_d/$glob");
         $html.= "<dt>".substr($dir_d,1+strlen($path_backup))."/</dt>";
         foreach($files as $file) {
           $size= number_format(filesize($file),0,'.',' ').'B';
@@ -371,7 +372,7 @@ function sys_backup_make($par) {  trace();
       $dirs= glob("$path_backup/weeks/*",GLOB_ONLYDIR);
       rsort($dirs);
       foreach ($dirs as $dir_d) {
-        $files= glob("$dir_d/*");
+        $files= glob("$dir_d/$glob");
         $html.= "<dt>".substr($dir_d,1+strlen($path_backup))."/</dt>";
         foreach($files as $file) {
           $size= number_format(filesize($file),0,'.',' ').'B';
@@ -388,7 +389,7 @@ function sys_backup_make($par) {  trace();
     $dir_d= "$path_backup/special";
     if ( file_exists($dir_d) ) {
       $html.= "<h3>speciální zálohy</h3><dl>";
-      $files= glob("$dir_d/*");
+      $files= glob("$dir_d/$glob");
       rsort($files);
       $html.= "<dt>".substr($dir_d,1+strlen($path_backup))."/</dt>";
       foreach($files as $file) {
@@ -1491,4 +1492,3 @@ function sys_todo_conds() {
 //                                                         debug($obj,"sys_todo_conds");
   return $obj;
 }
-?>

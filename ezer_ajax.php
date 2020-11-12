@@ -17,7 +17,7 @@
   $ezer_server= $_SESSION[$ezer_root]['ezer_server'];
   $is_local= is_null($ezer_local) ? !$ezer_server : $ezer_local;
       
-  session_start();
+//  session_start();
 
   // přepínač pro fáze migrace pod PDO !!! tentýž musí být v $app.php
   if ( $_SESSION[$ezer_root]['pdo']==2 ) {
