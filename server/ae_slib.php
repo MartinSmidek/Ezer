@@ -479,15 +479,15 @@ function table_lock($mode,$table='',$idt=0) {
     case 'off':   // ------------------ odstraní zámek table+id+user
       $ret->ok= pdo_qry("DELETE FROM _lock 
           WHERE `table`='$table' AND id_table='$idt' AND id_user='$idu' ");
-      $ret->note= "$table/$idt unlocked by $idu ";
+      $ret->note= "$table/$idt unlocked by $idu ".($ret->ok?'':'(not needed)');
       break;
     case 'none':  // ------------------ odstraní všechna uzamčení (dané tabulky) vlastněná id_user
       $existuje_lock= pdo_num_rows(pdo_qry("SHOW TABLES LIKE '_lock'"));
       if ($existuje_lock) {
         $AND= $table ? "AND `table`='$table'" : '';
-        pdo_qry("DELETE FROM _lock WHERE id_user='$idu' $AND");
+        $n= pdo_qry("DELETE FROM _lock WHERE id_user='$idu' $AND");
         $ret->ok= 1;
-        $ret->note= ($table ? "$table " : "all ")."unlocked by $idu ";
+        $ret->note= ($table ? "$table " : "all ")."unlocked by $idu ".($n?'':'(not needed)');
       }
       break;
   }

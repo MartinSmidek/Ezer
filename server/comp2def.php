@@ -222,7 +222,7 @@ $attribs = array (
   'ezer'   =>  explode(",",'active:i,units:s'),
   'module' =>  explode(",",'active:i,units:s,title:s,help:s,skill:s'),
   'panel'  =>  explode(",",'title:s,type:s,under:i,style:s,css:s,skill:s,include:s,value:s,par:o,format:s'),
-  'use'    =>  explode(",",'tabindex:n,skill:s,format:s'),
+  'use'    =>  explode(",",'tabindex:n,skill:s,format:s,par:o'),
 #  map
   'map'    =>  explode(",",'db:s,where:s,order:s,key_id:s'),
 #  table
@@ -237,7 +237,7 @@ $attribs = array (
 #  area
   'area'   =>  explode(",",'title:s,style:s,css:s'),
 #  form
-  'form'   =>  explode(",",'style:s,css:s,tabindex:n,title:s,key:s,key_id:s'),
+  'form'   =>  explode(",",'style:s,css:s,tabindex:n,title:s,key:s,key_id:s,par:o'),
   'view'   =>  explode(",",'order:s,join:s,join_type:s,expr:s'),
   'label'  =>  explode(",",'type:s,data:i,expr:s,title:s,style:s,css:s,help:s,format:s,attribute:s,skill:s,par:o'),
   'field'  =>  explode(",",'title:s,data:i,par:o,expr:s,map_pipe:m,sql_pipe:s,style:s,format:s,help:s,css:s,'

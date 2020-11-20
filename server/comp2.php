@@ -3777,7 +3777,7 @@ function get_cases($context,&$cs) {
         if ( $ok ) {
           $case->body[]= $stmnt;
         }
-        $ok= get_if_delimiter(';');
+        $ok= get_if_delimiter(';') || in_array($stmnt->expr,array('if','for','for-of','while','switch'));
       }
       $cs[]= $case;
     }

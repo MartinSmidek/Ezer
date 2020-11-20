@@ -1240,6 +1240,7 @@ class Block {
 //   true    - pokud obsluha neexistuje
 //   num|str - hodnota volané funkce
 // onchanged se dědí z položky do jejího formuláře, pokud její formát neobsahuje 'T'
+//   pokud má form v par onchanged:first_only uplatní se pouze první onchange jejícho elementu
 // fire('onchanged'): pokud procedura onchanged má právě jeden parametr je v něm předán 
 //                    element, který fire způsobil
   fire (event_name,args,el) {
@@ -1291,7 +1292,8 @@ class Block {
       var form= this.owner instanceof ListRow ? this.owner.owner.owner : this.owner;
       if ( event_name=='onchanged' || !form._changed && event_name=='onchange' ) {
         // některá přerušení se z elementu přenášejí do formuláře: elem.onchange => form.onchanged
-        if ( !this._fc('T') ) {
+        if ( !this._fc('T') 
+            && (!form._changed || !form.options.par || !form.options.par.onchanged=='first_only') ) {
           form._changed= true;
           if ( form.part && (fce= form.part.onchanged) ) {
             var narg= fce.desc.npar==1 ? 1 : 0;
