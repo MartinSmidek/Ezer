@@ -1180,7 +1180,7 @@ function gen2($pars,$vars,$c) {
     break;
   // -------------------------------------- e ? e : e
   case 'tern':
-    # G(expr:tern,par:[G(expr3),G(expr3),G(expr3)]
+    # G(expr:tern,par:[G(expr6),G(expr4),G(expr4)]
     $code= array();
     $ctest= gen2($pars,$vars,$c->par[0]);
     $cthen= gen2($pars,$vars,$c->par[1]);
@@ -1414,7 +1414,7 @@ end:
 # nepovinný selektor je posloupnost identifikátorů 
 # rel - cesta z this
 function name_split($name,$pars,$vars,$call=false) { 
-  global $context, $names, $func, $func_name, $func_expr, $list_only;
+  global $context, $names, $func, /*$func_name, $list_only*/ $func_expr;
   // struktura výsledku
   $s= (object)array(
       'bas'=>(object)array(
@@ -1607,7 +1607,7 @@ function name_split($name,$pars,$vars,$call=false) {
     }
   }
 end:  
-            if ( isset($_GET['trace']) && preg_match("/$list_only/",$func_name) ) debug($s,"$func_name:$name");
+//            if ( isset($_GET['trace']) && preg_match("/$list_only/",$func_name) ) debug($s,"$func_name:$name");
   return $s;
 }
 # --------------------------------------------------------------------------------------- gen caller
@@ -3292,6 +3292,17 @@ function get_if_delimiter ($del) {
   }
   return $ok;
 }
+# --------------------------------------------------------------------------------------- delimiters
+# pokud následuje v textu některý z oddělovačů zadaných jako pole, přečte jej a vrátí jako hodnotu
+function get_if_delimiters ($dels) {
+  global $head, $lex, $typ;
+  $del= $lex[$head];
+  $ok= $typ[$head]=='del' && in_array($del,$dels);
+  if ( $ok ) {
+    $head++;
+  }
+  return $ok ? $del : false;
+}
 # --------------------------------------------------------------------------------------------------
 # přečte oddělovač, není-li, ohlásí chybu
 function get_delimiter ($del) {
@@ -3571,13 +3582,13 @@ function get_slist($context,&$st) {
 }
 # -------------------------------------------------------------------------------------------- stmnt
 # stmnt   :: '{' slist '}'                      --> G(slist)
-#          | id '=' expr2                       --> {expr:asgn,op:id,expr:G(expr2)}
-#          | id '[' expr2 ']' '=' expr2         --> {expr:asgn,id:id,index:expr2/1,par:[G(expr2/2)]}
+#          | id '=' expr4                       --> {expr:asgn,op:id,expr:G(expr4)}
+#          | id '[' expr4 ']' '=' expr4         --> {expr:asgn,id:id,index:expr4/1,par:[G(expr4/2)]}
 #          | id '++' | id '--'                  --> {expr:inc,name:id,inc:1/-1}
-#          | 'if' '(' expr2 ')' stmnt [ 'else' stmnt ]
-#                                               --> {expr:if,test:G(expr2),then:G(st1),else:G(st2)}
-#          | 'if' '(' expr2 ')' stmnt elseif* [ 'else' stmnt ]
-#                                               --> {expr:if,test:G(expr2),elif:[..],then:G(st1),else:G(st2)}
+#          | 'if' '(' expr4 ')' stmnt [ 'else' stmnt ]
+#                                               --> {expr:if,test:G(expr4),then:G(st1),else:G(st2)}
+#          | 'if' '(' expr4 ')' stmnt elseif* [ 'else' stmnt ]
+#                                               --> {expr:if,test:G(expr4),elif:[..],then:G(st1),else:G(st2)}
 #          | 'for' '(' id '=' expr ';' expr ';' stmnt ')' '{' slist '}'
 #                                               --> {expr:for,init:G(id=expr),test:G(e/2),incr:G(s),
 #                                                    stmnt:(slist)}
@@ -3586,11 +3597,11 @@ function get_slist($context,&$st) {
 #          | 'while' '(' expr ')' '{' slist '}'
 #                                               --> {expr:while,while:G(expr),stmnt:(slist)}
 #          | 'break' | 'continue'               --> {expr:break,type:break|continue}
-#          | 'switch (' expr2 ') {' cases '}'   --> {expr:switch,of:G(expr2),cases:G(cases)}
+#          | 'switch (' expr4 ') {' cases '}'   --> {expr:switch,of:G(expr4),cases:G(cases)}
 #          | 'fork' '.' id args                 --> {expr:call,op:fork,par:G("id")+G(args)}
 #          | call2                              --> G(call2)
 #          |
-# elseif  :: 'elseif' '(' expr2 ')' stmnt       --> {expr:elif,test:G(expr2),then:G(st1)}
+# elseif  :: 'elseif' '(' expr4 ')' stmnt       --> {expr:elif,test:G(expr4),then:G(st1)}
 function get_stmnt($context,&$st) {
   global $last_lc;
   $ok= false;
@@ -3601,20 +3612,20 @@ function get_stmnt($context,&$st) {
     get_delimiter('}');
   }
   elseif ( get_if_id($id) ) {
-    # id '=' expr2 --> {expr:asgn,op:id,expr:G(expr2)}
+    # id '=' expr4 --> {expr:asgn,op:id,expr:G(expr4)}
     if ( get_if_delimiter('=') ) {
       $expr='';
-      $ok= get_expr2($context,$expr);
+      $ok= get_expr4($context,$expr);
       $st= (object)array('expr'=>'asgn','left'=>$id,'right'=>$expr,'lc'=>$last_lc);
     }
     elseif ( get_if_delimiter('[') ) {
-      # id '[' expr2 ']' '=' expr2 --> {expr:asgn,id:id,index:expr2/1,par:[G(expr2/2)]}
+      # id '[' expr4 ']' '=' expr4 --> {expr:asgn,id:id,index:expr4/1,par:[G(expr4/2)]}
       $index= $expr= null;
-      $ok= get_expr2($context,$index);
+      $ok= get_expr4($context,$index);
       if ( !$ok ) goto end;
       get_delimiter(']');
       get_delimiter('=');
-      $ok= get_expr2($context,$expr);
+      $ok= get_expr4($context,$expr);
       $st= (object)array('expr'=>'asgn','left'=>"$id",'index'=>$index,'right'=>$expr,'lc'=>$last_lc);
 //      $st= (object)array('expr'=>'call','op'=>"$id",'par'=>array($expr,$index),'lc'=>$last_lc);
     }
@@ -3634,7 +3645,7 @@ function get_stmnt($context,&$st) {
         if ( !get_if_delimiter(')') ) {
           while ( $ok ) {
             $arg= null;
-            get_expr2($context,$arg);
+            get_expr4($context,$arg);
             $par[]= $arg;
             $ok= get_if_delimiter(',');
           }
@@ -3643,11 +3654,11 @@ function get_stmnt($context,&$st) {
         $st= (object)array('expr'=>'call','op'=>'fork','par'=>$par,'lc'=>$last_lc);
         $ok= true;
       }
-      # 'if' '(' expr2 ')' stmnt [ 'else' stmnt ]
-      #      --> {expr:if,test:G(expr2),then:G(stmnt/1),else:G(stmnt/2)}
+      # 'if' '(' expr4 ')' stmnt [ 'else' stmnt ]
+      #      --> {expr:if,test:G(expr4),then:G(stmnt/1),else:G(stmnt/2)}
       elseif ( $id=='if' ) {
         $test= $then= $else= null;
-        $ok= get_expr2($context,$test);
+        $ok= get_expr4($context,$test);
         get_delimiter(')');
         get_stmnt($context,$then);
         # vnořená elseif
@@ -3657,11 +3668,11 @@ function get_stmnt($context,&$st) {
           // toleruj if () stmnt; else ...
           if ( look_ahead_for(';') && (look_ahead_for('else',1 ) || look_ahead_for('elseif',1 )) )
             get_delimiter(';');
-          # 'elseif' '(' expr2 ')' stmnt --> {expr:elif,test:G(expr2),then:G(st1)}
+          # 'elseif' '(' expr4 ')' stmnt --> {expr:elif,test:G(expr4),then:G(st1)}
           if ( get_if_id_or_key('elseif') ) {
             $elif_test= $elif_stmnt= null;
             get_delimiter('(');
-            $ok= get_expr2($context,$elif_test);
+            $ok= get_expr4($context,$elif_test);
             get_delimiter(')');
             get_stmnt($context,$elif_stmnt);
             $elif[]= (object)array('expr'=>'elif','test'=>$elif_test,'then'=>$elif_stmnt,'lc'=>$last_lc);
@@ -3678,9 +3689,9 @@ function get_stmnt($context,&$st) {
         }
       }
       elseif ( $id=='switch' ) {
-        # 'switch' '(' expr2 ')' '{' cases '}' --> {expr:switch,of:G(expr2),cases:G(cases)}
+        # 'switch' '(' expr4 ')' '{' cases '}' --> {expr:switch,of:G(expr4),cases:G(cases)}
         $expr= $cases= null;
-        $ok= get_expr2($context,$expr);
+        $ok= get_expr4($context,$expr);
         get_delimiter(')');
         get_delimiter('{');
         get_cases($context,$cases);
@@ -3693,10 +3704,10 @@ function get_stmnt($context,&$st) {
         if ( get_if_delimiter('=') ) {
           # 'for' '(' id '=' expr ';' expr ';' stmnt ')' '{' slist '}'
           # --> {expr:for,init:G(id=expr),test:G(e/2),incr:G(s),stmnt:(slist)}
-          get_expr2($context,$expr);
+          get_expr4($context,$expr);
           $init= (object)array('expr'=>'call','op'=>"$var.set",'par'=>array($expr),'lc'=>$last_lc);
           get_delimiter(';');
-          get_expr2($context,$expr);
+          get_expr4($context,$expr);
           get_delimiter(';');
           get_stmnt($context,$inc);
           get_delimiter(')');
@@ -3710,7 +3721,7 @@ function get_stmnt($context,&$st) {
           # 'for' '(' 'let' id 'of' expr ')' '{' slist '}'
           # --> {expr:for,var:id,of:G(expr),stmnt:(slist)}
           get_key('of');
-          get_expr2($context,$expr);
+          get_expr4($context,$expr);
           get_delimiter(')');
           get_delimiter('{');
           get_slist($context,$stmnts);
@@ -3722,7 +3733,7 @@ function get_stmnt($context,&$st) {
       elseif ( $id=='while' ) {
         # 'while' '(' expr ')' '{' slist '}' --> {expr:while,while:G(expr),stmnt:(slist)}
         $stmnts= $var= $expr= null;
-        $ok= get_expr2($context,$expr);
+        $ok= get_expr4($context,$expr);
         get_delimiter(')');
         get_delimiter('{');
         get_slist($context,$stmnts);
@@ -3802,76 +3813,160 @@ function get_cases($context,&$cs) {
   }
   return true;
 }
-# -------------------------------------------------------------------------------------------- expr2
-# expr2   :: expr3                              --> G(expr3)
-#          | '!' expr3                          --> {expr:call,op:'not',par:G(expr3)}
-#          | expr3 op expr3                     --> {expr:call,op:G(op),par:[G(expr3),G(expr3)}
-#          | expr3 ? expr2 : expr2              --> {expr:tern,par:[G(e/1),G(e/2),G(e/3)}
-# op      :: '+' | '-' | '*' | '/'              --> sum | minus | multiply | divide | gt | eq
-#          | '>' | '>=' | '<' | '<=' | '==' | '!=' --> gt | lt | eq ...
-#          | '&&' | '||'                        --> and | or
-# expr3   :: call2                              --> G(call2)
-#          | '`' template* '`'                  --> {expr:templ,par:[G(templ),...]}
-#          | form | panel | area                --> {expr:name,name:...}
-#          | value                              --> {expr:value,value:v,type:t}
-#          | '(' expr2 ')'                      --> G(expr2)
-#          | '&' expr4                          --> {expr:ref,ref:G(expr4)}
-#          | id '[' expr2 ']'                   --> {expr:index,name:id,index:G(expr2)}
-#          | expr4                              --> G(expr4)
-# expr4   :: id | this                          --> {expr:name,name:id} | {expr:name,name:this}
-# templ   :: string                             --> {expr:value,value:v,type:t}
-#          | '${' ( id | call2 ) '}'            --> G(id) | G(call2)
-function get_expr2($context,&$expr) {
+# -------------------------------------------------------------------------------------------- expr4
+# expr{n} kde {n} je precedenční třída podle (v ezerscriptu nejsou všechny operátory))
+#   https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Operator_Precedence
+# expr4   :: expr6 [ '?' expr4 ':' expr4 ]      --> {expr:tern,par:[G(e/1),G(e/2),G(e/3)}
+# expr6   :: expr7 ( '||' expr7 )*              --> G(expr7) | {expr:cor,par:G(expr)*}
+# expr7   :: expr11 ( '&&' expr11 )*            --> G(expr11) | {expr:cand,par:G(expr)*}
+# expr11  :: expr12 [ op_eql expr12 ]           --> G(expr12) | {expr:call,op:G(op_eql),par:G(expr)*}
+#  op_eql :: '==' | '!='
+# expr12  :: expr14 ( op_rel expr14 ]           --> G(expr14) | {expr:call,op:G(op_rel),par:G(expr)*}
+#  op_rel :: '>' | '>=' | '<' | '<='
+# expr14  :: expr15 ( op_add expr15 )*          --> G(expr15) | {expr:call,op:sum,par:G(+-expr)*}
+#  op_add :: '+' | '-'
+# expr15  :: expr17 [ op_mul expr17 ]           --> G(expr17) | {expr:call,op:G(op_mul),par:G(expr)*}
+#  op_mul :: '*' | '/' | '%'
+# expr17  :: [ op_una ] primary                 --> {expr:call,op:op_una,par:G(expr)} | G(primary)
+#  op_una :: '!' | '-'
+function get_expr4($context,&$expr) { 
   global $last_lc;
-  if ( get_if_delimiter('!') ) {
-    # op expr --> G(expr:call,op:G(op),par:G(expr3)}
-    $ok= get_expr3($context,$expr);
-    $expr= (object)array('expr'=>'call','op'=>'not','lc'=>$last_lc,'par'=>array($expr),'value'=>1);
-  }
-  else {
-    $ok= get_expr3($context,$expr);
-    $op= $xop= $nop= $expr2= $expr3= null;
-    if (     get_if_delimiter('+') )  $op= 'sum';
-    elseif ( get_if_delimiter('-') )  $op= 'minus';
-    elseif ( get_if_delimiter('*') )  $op= 'multiply';
-    elseif ( get_if_delimiter('/') )  $op= 'divide';
-    elseif ( get_if_delimiter('>') )  $op= 'gt';
-    elseif ( get_if_delimiter('<') )  $op= 'lt';
-    elseif ( get_if_delimiter('>=') ) $xop= 'lt';
-    elseif ( get_if_delimiter('<=') ) $xop= 'gt';
-    elseif ( get_if_delimiter('==') ) $op= 'eq';
-    elseif ( get_if_delimiter('&&') ) $op= 'and';
-    elseif ( get_if_delimiter('||') ) $op= 'or';
-    elseif ( get_if_delimiter('!=') ) $nop= 'eq';
-    elseif ( get_if_delimiter('?') )  {
-      # G(expr:tern,par:[G(expr3),G(expr3),G(expr3)]
-      get_expr2($context,$expr2);
-      get_delimiter(':');
-      $ok= get_expr2($context,$expr3);
-      $expr= (object)array('expr'=>'tern','lc'=>$last_lc,'par'=>array($expr,$expr2,$expr3),'value'=>1,'lc'=>$last_lc);
-    }
-    if ( $op ) {
-      # exprA op exprB --> G(expr:call,op:G(op),par:[G(expr3),G(expr3)]
-      $ok= get_expr3($context,$expr2);
-      $expr= (object)array('expr'=>'call','op'=>$op,'lc'=>$last_lc,
-          'par'=>array($expr,$expr2),'value'=>1);
-    }
-    elseif ( $xop ) { // prohozené operandy
-      # exprB op exprA --> G(expr:call,op:G(op),par:[G(expr3),G(expr3)]
-      $ok= get_expr3($context,$expr2);
-      $expr= (object)array('expr'=>'call','op'=>$xop,'lc'=>$last_lc,
-          'par'=>array($expr2,$expr),'value'=>1);
-    }
-    elseif ( $nop ) { // negace relace
-    # not(exprA op exprB) --> G(expr:call,op:G(op),par:[G(expr3),G(expr3)]
-    $ok= get_expr3($context,$expr2);
-    $expr= (object)array('expr'=>'call','op'=>'not','lc'=>$last_lc,'par'=>array(
-        (object)array('expr'=>'call','op'=>$nop,'par'=>array($expr2,$expr),'value'=>1,'lc'=>$last_lc)),'value'=>1);
-  }
+  $ok= get_expr6($context,$expr);
+  # expr6 --> G(expr6)
+  if ( get_if_delimiter('?') )  {
+    # expr6 [ '?' expr4 ':' expr4 ] --> {expr:tern,par:[G(e/1),G(e/2),G(e/3)}
+    $expr4_1= $expr4_2= null;
+    get_expr4($context,$expr4_1);
+    get_delimiter(':');
+    $ok= get_expr4($context,$expr4_2);
+    $expr= (object)array('expr'=>'tern','lc'=>$last_lc,'par'=>array($expr,$expr4_1,$expr4_2),'value'=>1,'lc'=>$last_lc);
   }
   return $ok;
 }
-function get_expr3($context,&$expr) {
+function get_expr6($context,&$expr) { 
+  global $last_lc;
+  $ok= get_expr7($context,$expr);
+  # expr7 --> G(expr7)
+  if ( $ok && get_if_delimiter('||') ) {
+    # expr7 ( '||' expr7 )* --> G(expr7) | {expr:cor,par:G(expr)*}
+//    $expr= (object)array('expr'=>'cor','par'=>array($expr),'value'=>1,'lc'=>$last_lc);
+    $expr= (object)array('expr'=>'call','op'=>'or','par'=>array($expr),'value'=>1,'lc'=>$last_lc);
+    while ( $ok ) {
+      $arg= null;
+      get_expr7($context,$arg);
+      $expr->par[]= $arg;
+      $ok= get_if_delimiter('||');
+    }
+    $ok= true;
+  }
+  return $ok;
+}
+function get_expr7($context,&$expr) { 
+  global $last_lc;
+  $ok= get_expr11($context,$expr);
+  # expr11 --> G(expr11)
+  if ( $ok && get_if_delimiter('&&') ) {
+    # expr11 ( '&&' expr11 )* --> G(expr11) | {expr:cand,par:G(expr)*}
+//    $expr= (object)array('expr'=>'cand','lc'=>$last_lc,'par'=>array($expr),'value'=>1,'lc'=>$last_lc);
+    $expr= (object)array('expr'=>'call','op'=>'and','lc'=>$last_lc,'par'=>array($expr),'value'=>1,'lc'=>$last_lc);
+    while ( $ok ) {
+      $arg= null;
+      get_expr11($context,$arg);
+      $expr->par[]= $arg;
+      $ok= get_if_delimiter('&&');
+    }
+    $ok= true;
+  }
+  return $ok;
+}
+function get_expr11($context,&$expr) {
+  global $last_lc;
+  $ok= get_expr12($context,$expr);
+  # expr12 --> G(expr12)
+  if ( $ok && ($op= get_if_delimiters(array('==','!=')))) {
+    # expr12 [ op_eql expr12 ]  --> {expr:call,op:G(op_eql),par:G(expr)*}
+    $arg= null;
+    $ok= get_expr12($context,$arg);
+    if ( $op=='==')
+      $expr= (object)array('expr'=>'call','op'=>'eq','par'=>array($expr,$arg),'value'=>1,'lc'=>$last_lc);
+    else {
+      $expr= (object)array('expr'=>'call','op'=>'not','lc'=>$last_lc,'par'=>array(
+          (object)array('expr'=>'call','op'=>'eq','par'=>array($expr,$arg),'value'=>1,'lc'=>$last_lc)),'value'=>1);
+    }
+  }
+  return $ok;
+}
+function get_expr12($context,&$expr) {
+  global $last_lc;
+  $ok= get_expr14($context,$expr);
+  # expr14 --> G(expr14)
+  if ( $ok && ($op= get_if_delimiters(array('<','<=','>','>=')))) {
+    # expr14 ( op_rel expr14 ] --> G(expr14) | {expr:call,op:G(op_rel),par:G(expr)*}
+    $ops= array('<'=>'lt','<='=>'le','>'=>'gt','>='=>'ge');
+    $xps= array('<='=>'gt','>='=>'lt');
+    $arg= null;
+    $ok= get_expr14($context,$arg);
+    if (isset($xps[$op]))
+      $expr= (object)array('expr'=>'call','op'=>$xps[$op],'par'=>array($arg,$expr),'value'=>1,'lc'=>$last_lc);
+    else
+      $expr= (object)array('expr'=>'call','op'=>$ops[$op],'par'=>array($expr,$arg),'value'=>1,'lc'=>$last_lc);
+  }
+  return $ok;
+}
+function get_expr14($context,&$expr) {
+  global $last_lc;
+  $ok= get_expr15($context,$expr);
+  # expr14 --> G(expr15)
+  if ( $ok && ($op= get_if_delimiters(array('+','-')))) {
+    # expr15 ( op_add expr15 )* --> G(expr15) | {expr:call,op:sum,par:G(+-expr)*}
+    $expr= (object)array('expr'=>'call','op'=>'sum','par'=>array($expr),'value'=>1,'lc'=>$last_lc);
+    while ( $ok && $op ) {
+      $arg= null;
+      $ok= get_expr15($context,$arg);
+      if ( $op=='-') $arg= (object)array('expr'=>'call','op'=>'minus','par'=>array($arg),'value'=>1);
+      $expr->par[]= $arg;
+      $op= get_if_delimiters(array('+','-'));
+      
+    }
+    $ok= true;
+  }
+  return $ok;
+}
+function get_expr15($context,&$expr) {
+  global $last_lc;
+  $ok= get_expr17($context,$expr);
+  # expr15 --> G(expr17)
+  if ( $ok && ($op= get_if_delimiters(array('*','/','%')))) {
+    # expr17 [ op_mul expr17 ] --> {expr:call,op:G(op_mul),par:G(expr)*}
+    $ops= array('*'=>'multiply','/'=>'divide','%'=>'?');
+    $arg= null;
+    $ok= get_expr17($context,$arg);
+    $expr= (object)array('expr'=>'call','op'=>$ops[$op],'par'=>array($expr,$arg),'value'=>1,'lc'=>$last_lc);
+  }
+  return $ok;
+}
+function get_expr17($context,&$expr) {
+  global $last_lc;
+  $op= get_if_delimiters(array('!','-'));
+  $ok= get_primary($context,$expr); // :: primary
+  if ($op) {
+    $ops= array('!'=>'not','-'=>'minus');
+    $expr= (object)array('expr'=>'call','op'=>$ops[$op],'par'=>array($expr),'value'=>1,'lc'=>$last_lc);
+  }
+  return $ok;
+}
+# primary :: call2                              --> G(call2)
+#          | '`' template* '`'                  --> {expr:templ,par:[G(templ),...]}
+#          | 'form' | 'panel' | 'area'          --> {expr:name,name:...}
+#          | value                              --> {expr:value,value:v,type:t}
+#          | '(' expr4 ')'                      --> G(expr4)
+#          | '&' id_this                        --> {expr:ref,ref:G(id_this)}
+#          | id '[' expr4 ']'                   --> {expr:index,name:id,index:G(expr4)}
+#          | id_this                            --> G(id_this)
+# id_this :: id | 'this'                        --> {expr:name,name:id} | {expr:name,name:this}
+# template:: string                             --> {expr:value,value:v,type:t}
+#          | '${' ( id | call2 ) '}'            --> G(id) | G(call2)
+function get_primary($context,&$expr) {
   global $last_lc, $typ, $lex, $head;
   $id= '';
   if ( get_if_id($id) ) {
@@ -3880,9 +3975,9 @@ function get_expr3($context,&$expr) {
       get_call2_id($context,$expr,$id,1);
     }
     else if ( get_if_delimiter('[') ) {
-      # id '[' expr2 ']' --> {expr:index,name:id,index:G(expr2)}
+      # id '[' expr4 ']' --> {expr:index,name:id,index:G(expr4)}
       $index= null;
-      get_expr2($context,$index);
+      get_expr4($context,$index);
       get_delimiter(']');
       $expr= (object)array('expr'=>'index','name'=>$id,'index'=>$index,'lc'=>$last_lc);
     }
@@ -3895,8 +3990,8 @@ function get_expr3($context,&$expr) {
     }
   }
   elseif ( get_if_delimiter('(') ) {
-    # '(' expr2 ')' --> G(expr2)
-    get_expr2($context,$expr);
+    # '(' expr4 ')' --> G(expr4)
+    get_expr4($context,$expr);
     get_delimiter(')');
   }
   elseif ( get_if_delimiter('`') ) {
@@ -3911,7 +4006,7 @@ function get_expr3($context,&$expr) {
       }
       elseif ( get_if_delimiter('${') ) {
         $par= null;
-        $ok= get_expr2($context,$par);
+        $ok= get_expr4($context,$par);
         if ( $ok ) {
           $expr->par[]= $par;
           get_delimiter('}');
@@ -3941,15 +4036,15 @@ function get_expr3($context,&$expr) {
 }
 # -------------------------------------------------------------------------------------------- call2
 # call2   :: id  args                           --> {expr:call,op:id,par:G(args),value:$valued}
-#          | 'return' '(' [ expr2 ] ')'         --> {expr:call,op:return,par:G(expr)/[]}
+#          | 'return' '(' [ expr4 ] ')'         --> {expr:call,op:return,par:G(expr)/[]}
 #          | 'php' '.' id args                  --> {expr:call,op:ask,par:G("id")+G(args),value:$valued}
 #          | 'js' '.' id args                   --> {expr:call,op:apply,par:G("id")+G(args),value:$valued}
 #                                                   valued=0 => clear stack
-# args    :: '(' [ expr2 ( ',' expr2 )* ] ')'   --> [G(expr),...]
+# args    :: '(' [ expr4 ( ',' expr4 )* ] ')'   --> [G(expr),...]
 function get_call2_id($context,&$expr,$id,$valued) {
   global $last_lc;
   // volání funkce $id s parametry
-  # id '(' ')' | id '(' expr2 ( ',' expr2 )* ')' --> {expr:call,op:id,par:[G(expr2),...]}
+  # id '(' ')' | id '(' expr4 ( ',' expr4 )* ')' --> {expr:call,op:id,par:[G(expr4),...]}
   $ok= true;
   $expr= (object)array('expr'=>'call','op'=>$id,'lc'=>$last_lc,'par'=>array(),'value'=>$valued);
   $fce= explode('.',$id);
@@ -3969,7 +4064,7 @@ function get_call2_id($context,&$expr,$id,$valued) {
   if ( !get_if_delimiter(')') ) {
     while ( $ok ) {
       $arg= null;
-      get_expr2($context,$arg);
+      get_expr4($context,$arg);
       $expr->par[]= $arg;
       $ok= get_if_delimiter(',');
     }
