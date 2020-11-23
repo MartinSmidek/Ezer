@@ -1104,7 +1104,7 @@ function gen2($pars,$vars,$c) {
       $ei= gen2($pars,$vars,$c->par[$i]);
       $count_es+= count($ei)+($i==$n-1?1:2);
       $iff= (object)array('o'=>0,'iff'=>2);
-      $go_end= (object)array('o'=>0,'go'=>$count_es);
+      $go_end= (object)array('o'=>'v','v'=>1,'go'=>$count_es);
       $code[]= array($iff,$go_end,$ei);
     }
     $code[]= gen2($pars,$vars,$c->par[0]);
@@ -1121,7 +1121,7 @@ function gen2($pars,$vars,$c) {
       $ei= gen2($pars,$vars,$c->par[$i]);
       $count_es+= count($ei)+($i==$n-1?1:2);
       $ift= (object)array('o'=>0,'ift'=>2);
-      $go_end= (object)array('o'=>0,'go'=>$count_es);
+      $go_end= (object)array('o'=>'v','v'=>0,'go'=>$count_es);
       $code[]= array($ift,$go_end,$ei);
     }
     $code[]= gen2($pars,$vars,$c->par[0]);
