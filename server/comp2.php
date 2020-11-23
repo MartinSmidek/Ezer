@@ -1094,6 +1094,40 @@ function gen2($pars,$vars,$c) {
     $code[]= (object)array('o'=>'f','i'=>'sum','a'=>2);
     $code= gen_setter($id,$code); 
     break;
+  // -------------------------------------- expr || expr ... 
+  case 'cor':
+    # G(expr:cor,par:G(expr)*}
+    $code= array();
+    $n= count($c->par);
+    $count_es= 0;
+    for ($i= $n-1; $i>0; $i--) {
+      $ei= gen2($pars,$vars,$c->par[$i]);
+      $count_es+= count($ei)+($i==$n-1?1:2);
+      $iff= (object)array('o'=>0,'iff'=>2);
+      $go_end= (object)array('o'=>0,'go'=>$count_es);
+      $code[]= array($iff,$go_end,$ei);
+    }
+    $code[]= gen2($pars,$vars,$c->par[0]);
+    $code= array_reverse($code);
+    $code[]= (object)array('o'=>0);
+    break;
+  // -------------------------------------- expr && expr ... 
+  case 'cand':
+    # G(expr:cand,par:G(expr)*}
+    $code= array();
+    $n= count($c->par);
+    $count_es= 0;
+    for ($i= $n-1; $i>0; $i--) {
+      $ei= gen2($pars,$vars,$c->par[$i]);
+      $count_es+= count($ei)+($i==$n-1?1:2);
+      $ift= (object)array('o'=>0,'ift'=>2);
+      $go_end= (object)array('o'=>0,'go'=>$count_es);
+      $code[]= array($ift,$go_end,$ei);
+    }
+    $code[]= gen2($pars,$vars,$c->par[0]);
+    $code= array_reverse($code);
+    $code[]= (object)array('o'=>0);
+    break;
   // -------------------------------------- id ( expr1, ... ) ? value
   case 'call':
     $code= array();
@@ -3849,8 +3883,7 @@ function get_expr6($context,&$expr) {
   # expr7 --> G(expr7)
   if ( $ok && get_if_delimiter('||') ) {
     # expr7 ( '||' expr7 )* --> G(expr7) | {expr:cor,par:G(expr)*}
-//    $expr= (object)array('expr'=>'cor','par'=>array($expr),'value'=>1,'lc'=>$last_lc);
-    $expr= (object)array('expr'=>'call','op'=>'or','par'=>array($expr),'value'=>1,'lc'=>$last_lc);
+    $expr= (object)array('expr'=>'cor','par'=>array($expr),'value'=>1,'lc'=>$last_lc);
     while ( $ok ) {
       $arg= null;
       get_expr7($context,$arg);
@@ -3867,8 +3900,7 @@ function get_expr7($context,&$expr) {
   # expr11 --> G(expr11)
   if ( $ok && get_if_delimiter('&&') ) {
     # expr11 ( '&&' expr11 )* --> G(expr11) | {expr:cand,par:G(expr)*}
-//    $expr= (object)array('expr'=>'cand','lc'=>$last_lc,'par'=>array($expr),'value'=>1,'lc'=>$last_lc);
-    $expr= (object)array('expr'=>'call','op'=>'and','lc'=>$last_lc,'par'=>array($expr),'value'=>1,'lc'=>$last_lc);
+    $expr= (object)array('expr'=>'cand','par'=>array($expr),'value'=>1,'lc'=>$last_lc);
     while ( $ok ) {
       $arg= null;
       get_expr11($context,$arg);
