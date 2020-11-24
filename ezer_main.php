@@ -134,7 +134,7 @@
   );
   $app_css= array_values(array_filter($app_css)); // vynechání všech false
   $css= array_merge(
-    array("$client/ezer3.css.php=skin",      
+    array("$client/ezer3.css","$client/ezer3.css.php=skin",      
     "$client/licensed/font-awesome/css/font-awesome.min.css",
     "$client/licensed/pikaday/pikaday.css","$client/licensed/jquery-ui.min.css"),
     // uživatelské styly

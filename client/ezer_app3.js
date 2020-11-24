@@ -5046,8 +5046,10 @@ function DOM_change_skin_(y) {
   jQuery("link[rel='stylesheet']").each( (i,link) => {
     var style= jQuery(link),
         href= style.attr('href').split('?');
-    href= href[0]+'?root='+Ezer.root+'&timestamp='+Date.now();
-    style.attr('href',href);
+    if (href.length>1 && href[1].match(/&skin/)) {
+      href= href[0]+'?root='+Ezer.root+'&timestamp='+Date.now()+'&skin=';
+      style.attr('href',href);
+    }
   });
 }
 

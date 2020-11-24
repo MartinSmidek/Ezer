@@ -449,7 +449,7 @@ __EOD;
       list($href,$id)= explode('=',"$x=");
       if ( $id ) {
         $id= "id='$id'";
-        $get= "?root=$ezer_root";
+        $get= "?root=$ezer_root&skin=";
       }
       $head.= "\n  <link $id rel='stylesheet' href='$href$get' type='text/css' media='screen' charset='utf-8' />";
     }
