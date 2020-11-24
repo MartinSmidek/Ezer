@@ -1670,7 +1670,7 @@ class Application {
       this.pb.css('width',this.ajax*100);
     }
     if ( this.domIcon_server ) {
-      if ( this.ajax>0 ) {
+      if ( this.ajax==0 ) {
         this.domIcon_server.hide();
       }
       else {
