@@ -215,6 +215,7 @@ function send_mail($subject,$html,$from='',$to='',$fromname='') { trace();
   $to= $to ? $to : $EZER->options->mail;
   // poslání mailu
   $phpmailer_path= "$ezer_path_serv/licensed/phpmailer";
+  require_once("$phpmailer_path/class.smtp.php");
   require_once("$phpmailer_path/class.phpmailer.php");
   // napojení na mailer
   $mail= new PHPMailer;
@@ -234,12 +235,12 @@ function send_mail($subject,$html,$from='',$to='',$fromname='') { trace();
 //   $mail->Mailer= "smtp";
   // pošli
   $ok= $mail->Send();
-                                                display("send_mail=$ok,".$mail->ErrorInfo);
+//                                                display("send_mail=$ok,".$mail->ErrorInfo);
   if ( !$ok )
     fce_warning("Selhalo odeslání mailu: $mail->ErrorInfo");
   else {
-                                                $mail->Subject= $mail->Body= $mail->language= "---";
-                                                debug($mail,"send_mail(..,..,$from,$to)=$ok");
+//                                                $mail->Subject= $mail->Body= $mail->language= "---";
+//                                                debug($mail,"send_mail(..,..,$from,$to)=$ok");
   }
   return $ok;
 }
