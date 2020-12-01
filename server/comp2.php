@@ -3432,6 +3432,19 @@ function get_if_id (&$id) {
   }
   return $ok;
 }
+# ------------------------------------------------------------------------------------------ id|key?
+# identifikátorem může být i hvězdička - se speciálním významem, podle sémantického kontextu
+# v režimu debuggeru lze použít na začátku i dolar
+function get_if_id_or_keyword (&$id) {
+  global $head, $lex, $typ, $pos, $last_lc;
+  $ok= $typ[$head]=='id' || $typ[$head]=='key';
+  if ( $ok ) {
+    $id= $lex[$head];
+    $last_lc= $pos[$head];
+    $head++;
+  }
+  return $ok;
+}
 # --------------------------------------------------------------------------------------------------
 # jen identifikátor, který není klíčovým slovem
 function get_if_id_not_keyword (&$id) {
@@ -3645,7 +3658,7 @@ function get_stmnt($context,&$st) {
     $ok= get_slist($context,$st);
     get_delimiter('}');
   }
-  elseif ( get_if_id($id) ) {
+  elseif ( get_if_id_or_keyword($id) ) {
     # id '=' expr4 --> {expr:asgn,op:id,expr:G(expr4)}
     if ( get_if_delimiter('=') ) {
       $expr='';
