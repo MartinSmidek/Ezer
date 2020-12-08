@@ -992,7 +992,7 @@ function find_part_rel($name,&$full,$type='') { #trace();
 # ----------------------------------------------------------------------------------------- gen func
 # generuje kód funkcí
 function gen_func($c,&$desc,$name) {
-  global $error_code_context, $error_code_lc, $code_top, $func, $func_name;
+  global $error_code_context, $error_code_lc, $code_top, $func, $func_name, $returns;
   global $pragma_names, $proc_path, $depth;
 //                                                 debug($c,"gen_proc: $name");
   $func= $c;
@@ -1019,8 +1019,10 @@ function gen_func($c,&$desc,$name) {
     $c->par->{$id}+= $n;
   }
   // prázdná procedura obsahuje jen return
-  $depth= 0;
+  $depth= $returns= 0;
   $c= $c->code ? gen2($c->par,$c->var,$c->code) : array((object)array('o'=>'f','i'=>'stop'));
+  if ($func->options->type && !$returns)
+    comp_error("CODE: ve funkci '$func_name' s typem chybí return");
   gen_breaks($c);
 //  $c= optimize($c);
   $desc->code= $c;
@@ -1030,7 +1032,7 @@ function gen_func($c,&$desc,$name) {
 #   $i je použit pro překladu call
 #   $depth je hloubka zanoření cyklů a switch - používá se pro doplnění překladu break a continue
 function gen2($pars,$vars,$c) {
-  global $code_top, $call_php, $begs, $ends, $func_expr;
+  global $code_top, $call_php, $begs, $ends, $func, $func_name, $func_expr, $returns;
   $expr= function ($c,$ref=false) use ($vars,$pars) {
     if ( $c->expr=='name' ) {
       $right= name_split($c->name,$pars,$vars);
@@ -1128,16 +1130,34 @@ function gen2($pars,$vars,$c) {
     $code= array_reverse($code);
     $code[]= (object)array('o'=>0);
     break;
+  // -------------------------------------- return [ '(' expr ')' ]
+  case 'return':
+    $returns++;
+    $code= array();
+    $npar= count($c->par); // 0|1
+//    if ( $npar != ($func->options->type ? 1 : 0) ) -- přísný test
+//      comp_error("CODE: arita return neopovídá typu funkce '$func_name'");
+    if ( $func->options->type && $npar==0 ) 
+      comp_error("CODE: ve funkci '$func_name' musí return vracet hodnotu");
+    if ( $npar ) {
+      $code[]= gen2($pars,$vars,$c->par[0]);
+      $code[]= (object)array('o'=>'U','a'=>$npar,'i'=>$func->options->type);
+    }
+    else 
+      $code[]= (object)array('o'=>'U','a'=>$npar);
+    break;
+
   // -------------------------------------- id ( expr1, ... ) ? value
   case 'call':
     $code= array();
     $npar= count($c->par);
-    if ( $c->op=='return' ) {
-      if ( $npar )
-        $code[]= gen2($pars,$vars,$c->par[0]);
-      $code[]= (object)array('o'=>'u','a'=>$npar);
-    }
-    elseif ( $c->op=='ask' ) {
+//    if ( $c->op=='return' ) {
+//      if ( $npar )
+//        $code[]= gen2($pars,$vars,$c->par[0]);
+//      $code[]= (object)array('o'=>'u','a'=>$npar);
+//    }
+//    else
+    if ( $c->op=='ask' ) {
       $ask= $c->par[0]->value;
       if ( !in_array($ask,$call_php) )
         $call_php[]= $ask;
@@ -2717,7 +2737,9 @@ function get_ezer_keys (&$keywords,&$attribs1,&$attribs2) {
 }
 # -------------------------------------------------------------------------------------------- block
 # $root je nadřazený blok
-# block  :: vars | 'func' pars2 body2 | key [ id ] [':' key id] [pars|args] [coord] [code] [struct]
+# block  :: vars 
+#         | 'func' pars2 [ ':' type ] body2 
+#         | key [ id ] [':' key id] [pars|args] [coord] [code] [struct]
 # struct :: '{' part (',' part)* '}' ]
 # part   :: block | attr
 function get_if_block ($root,&$block,&$id) {
@@ -2742,7 +2764,7 @@ function get_if_block ($root,&$block,&$id) {
         $block->type= 'proc';
       }
       if ( isset($specs[$key]) ) {
-        $copy= $fg= $typ= $pars= $code= $vars= $prior= $args= $value= $is_expr= null;
+        $copy= $fg= $typ= $pars= $type= $code= $vars= $prior= $args= $value= $is_expr= null;
         if ( in_array('map_table' ,$specs[$key]) ) {
           if ( get_if_delimiter('=') ) {
             get_value($value,$typ);
@@ -2796,8 +2818,9 @@ function get_if_block ($root,&$block,&$id) {
                                                        if ( $prior ) $block->options->prior= $prior;
         }
         if ( in_array('code2',$specs[$key])
-             && get_code2($pars,$code,$vars,$prior,$lc_)         ) { $block->code= $code;
+             && get_code2($pars,$type,$code,$vars,$prior,$lc_)         ) { $block->code= $code;
                                                                      $block->options->code= 'func';
+                                                                     $block->options->type= $type;
                                                                      $block->vars= $vars;
                                                      if ( $doxygen ) $block->lc_= $lc_;
                                                        if ( $prior ) $block->options->prior= $prior;
@@ -3585,10 +3608,15 @@ function get_object (&$obj,&$type) {
 # vdef  :: id ':' type
 # -------------------------------------------------------------------------------------------- code2
 # $context je objekt se jmény formálních parametrů - překládaných jako {id:offset,...}
-function get_code2($context,&$code,&$vars,&$prior,&$lc_) {
+function get_code2($context,&$type,&$code,&$vars,&$prior,&$lc_) {
   global $pos, $head;
   $code= null;
   $prior= 0;
+  // je to func s typem?
+  $typ= '';
+  if (get_if_delimiter(':')) {
+    get_type($type);
+  }
   $vars= array();
   get_delimiter('{');
   // případné lokální proměnné
@@ -3646,6 +3674,7 @@ function get_slist($context,&$st) {
 #          | 'break' | 'continue'               --> {expr:break,type:break|continue}
 #          | 'switch (' expr4 ') {' cases '}'   --> {expr:switch,of:G(expr4),cases:G(cases)}
 #          | 'fork' '.' id args                 --> {expr:call,op:fork,par:G("id")+G(args)}
+#          | 'return' [ '(' [ expr4 ] ')' ]     --> {expr:return,par:G(expr)/[]}
 #          | call2                              --> G(call2)
 #          |
 # elseif  :: 'elseif' '(' expr4 ')' stmnt       --> {expr:elif,test:G(expr4),then:G(st1)}
@@ -3659,8 +3688,18 @@ function get_stmnt($context,&$st) {
     get_delimiter('}');
   }
   elseif ( get_if_id_or_keyword($id) ) {
+    # 'return' [ '(' [ expr4 ] ')' ] --> {expr:return,par:G(expr)/[]}
+    if ( $id=='return' ) { // může mít vynechané parametry
+      $arg= array();
+      if ( get_if_delimiter('(') && !get_if_delimiter(')') ) {
+        get_expr4($context,$arg[0]);
+        get_delimiter(')');
+      }
+      $st= (object)array('expr'=>'return','lc'=>$last_lc,'par'=>$arg);
+      $ok= true;
+    }
     # id '=' expr4 --> {expr:asgn,op:id,expr:G(expr4)}
-    if ( get_if_delimiter('=') ) {
+    elseif ( get_if_delimiter('=') ) {
       $expr='';
       $ok= get_expr4($context,$expr);
       $st= (object)array('expr'=>'asgn','left'=>$id,'right'=>$expr,'lc'=>$last_lc);
@@ -4081,7 +4120,6 @@ function get_primary($context,&$expr) {
 }
 # -------------------------------------------------------------------------------------------- call2
 # call2   :: id  args                           --> {expr:call,op:id,par:G(args),value:$valued}
-#          | 'return' '(' [ expr4 ] ')'         --> {expr:call,op:return,par:G(expr)/[]}
 #          | 'php' '.' id args                  --> {expr:call,op:ask,par:G("id")+G(args),value:$valued}
 #          | 'js' '.' id args                   --> {expr:call,op:apply,par:G("id")+G(args),value:$valued}
 #                                                   valued=0 => clear stack
@@ -4093,18 +4131,18 @@ function get_call2_id($context,&$expr,$id,$valued) {
   $ok= true;
   $expr= (object)array('expr'=>'call','op'=>$id,'lc'=>$last_lc,'par'=>array(),'value'=>$valued);
   $fce= explode('.',$id);
-  if ( $fce[0]=='return' ) {
-    $expr->op= 'return';
-  }
-  elseif ( $fce[0]=='php' ) {
+  if ( $fce[0]=='php' ) { // funkce na serveru
     if ( $fce[2] ) comp_error("SYNTAX: jméno funkce v PHP nesmí být složené ");
     $expr->op= 'ask';
     $expr->par[]= (object)array('expr'=>'value','value'=>$fce[1],'type'=>'s','lc'=>$last_lc);
   }
-  elseif ( $fce[0]=='js' ) {
+  elseif ( $fce[0]=='js' ) { // funkce javascriptu
     if ( $fce[2] ) comp_error("SYNTAX: jméno funkce v javascriptu nesmí být složené ");
     $expr->op= 'apply';
     $expr->par[]= (object)array('expr'=>'value','value'=>$fce[1],'type'=>'s','lc'=>$last_lc);
+  }
+  else {
+    $expr->op= $id; // normální volání funkce
   }
   if ( !get_if_delimiter(')') ) {
     while ( $ok ) {

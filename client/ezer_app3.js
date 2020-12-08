@@ -1939,6 +1939,7 @@ class Eval {
 //   v v     - hodnota v na zásobník
 //   y c     - kód c na zásobník
 //   u       - return
+//   U a i   - return, pokud a=1 předá hodnotu zásobníku, pokud je i=typ zkontroluje typ hodnoty
 //   z i     - sníží zásobník o i, pokud je i==0 pak jej vyprázdní
 //   o i     - objekt context[i] na zásobník (i='@' dá Ezer.app)
 //   p i     - parametr nebo lokální proměnnou (i je offset) na zásobník
@@ -2293,8 +2294,31 @@ class Eval {
                 return;
               }
               continue last_level; };
+            // u a        return pro 'proc' bez kontroly
             case 'u': {
               this.value= {value:this.stack[this.top]};
+              break last_level; }
+            // U a [i]    return pro 'func': pokud a=1 předá hodnotu zásobníku, jinak 0 
+            //            pokud je i=ezer|object|array zkontroluje typ hodnoty 
+            case 'U': {
+              this.value= {value:cc.a ? this.stack[this.top] : 0};
+              if (cc.i && this.value) {
+                let pid= this.proc.id;
+                switch (cc.i) {
+                case 'ezer': 
+                  if (!(this.value.value instanceof Block))
+                    this.say_error(`EVAL: return v ${pid} nevrátil ezer-objekt`,'S',this.proc,last_lc);
+                  break;
+                case 'object': 
+                  if (typeof(this.value.value)!='object')
+                    this.say_error(`EVAL: return v ${pid} nevrátil objekt`,'S',this.proc,last_lc);
+                  break;
+                case 'array': 
+                  if (!Array.isArray(this.value.value))
+                    this.say_error(`EVAL: return v ${pid} nevrátil pole`,'S',this.proc,last_lc);
+                  break;
+                }
+              }
               break last_level; }
             // funkce: na zásobníku jsou argumenty - po volání hodnota funkce 'i'
             case 'f': {
@@ -4264,7 +4288,10 @@ Ezer.fce.href= function (path) {
     var part= Ezer.run.$.part[Ezer.root].part[xs[0]];
     walk:
     if ( part && part._focus ) {
-      part._focus(1);
+      if (part instanceof Tabs && part!=part.owner.activeTabs) {
+        // pouze když odkaz vede na jiné Tabs
+        part._focus(1);
+      }
       for (var i=1; i<xs.length; i++) {
         if ( /*(part.options.include===undefined || part.options.include=='onload'
            || part.options.include=='loaded')
@@ -4275,8 +4302,9 @@ Ezer.fce.href= function (path) {
           case 'panel.right':
             if ( part.findProc('onpopstate') )
               part.fire('onpopstate',[location.href]);
-            else
+            else // if (part!=part.owner.activePanel) {
               part._focus(1);
+//            }
             break;
           case 'menu.left':
             break;

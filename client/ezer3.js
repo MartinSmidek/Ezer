@@ -2399,7 +2399,7 @@ class Panel extends Block {
       this.include2('_focus');
     }
     else {
-      if ( this.owner.activePanel )
+      if ( this.owner.activePanel && this!==this.owner.activePanel )
         this.owner.activePanel._hide();
       this.owner.activePanel= this;
       Ezer.panel= this;
