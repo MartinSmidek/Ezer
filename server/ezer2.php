@@ -41,7 +41,7 @@
 //  }
 //  else {
     session_start(); // defaultní práce se session
-    $USER= $_SESSION[$ezer_root]['USER'];
+    $USER= isset($_SESSION[$ezer_root]['USER']) ? $_SESSION[$ezer_root]['USER'] : null;
 //  }
   # ------------------------------------------------------------------------- test existence SESSION
   # po uplynutí gc_maxlifetime je session zrušena (runtimem PHP) => vrátit informaci do klienta
