@@ -1139,12 +1139,15 @@ function gen2($pars,$vars,$c) {
 //      comp_error("CODE: arita return neopovídá typu funkce '$func_name'");
     if ( $func->options->type && $npar==0 ) 
       comp_error("CODE: ve funkci '$func_name' musí return vracet hodnotu");
-    if ( $npar ) {
+    if ( $func->options->type && $npar ) {
       $code[]= gen2($pars,$vars,$c->par[0]);
-      $code[]= (object)array('o'=>'U','a'=>$npar,'i'=>$func->options->type);
+      $code[]= (object)array('o'=>'U','a'=>1,'i'=>$func->options->type);
+    }
+    elseif ( $npar ) {
+      $code[]= (object)array('o'=>'u','a'=>1);
     }
     else 
-      $code[]= (object)array('o'=>'U','a'=>$npar);
+      $code[]= (object)array('o'=>'u','a'=>0);
     break;
 
   // -------------------------------------- id ( expr1, ... ) ? value
@@ -3507,7 +3510,7 @@ function get_id_or_key (&$id) {
 # -------------------------------------------------------------------------------------------- value
 # value :: [-]num | str | object | array | constant_name   --> $value
 # vrací 1.písmeno typu
-function get_value (&$val,&$type) {
+function get_value (&$val,&$type,$may_fail=false) {
   global $head, $lex, $typ, $const_list;
   $ok= false;
   $val= $lex[$head];
@@ -3550,8 +3553,9 @@ function get_value (&$val,&$type) {
     $val= $const_list[$id]['value'];
     $type= $const_list[$id]['type'];
   }
-  if ( !$ok ) comp_error("SYNTAX: byla očekávána hodnota místo {$typ[$head]} $val");
-  return true;
+  if ( !$ok && !$may_fail )     
+    comp_error("SYNTAX: byla očekávána hodnota místo {$typ[$head]} $val");
+  return $ok;
 }
 # --------------------------------------------------------------------------------------------------
 # zjistí, zda následuje hodnota
@@ -3674,7 +3678,7 @@ function get_slist($context,&$st) {
 #          | 'break' | 'continue'               --> {expr:break,type:break|continue}
 #          | 'switch (' expr4 ') {' cases '}'   --> {expr:switch,of:G(expr4),cases:G(cases)}
 #          | 'fork' '.' id args                 --> {expr:call,op:fork,par:G("id")+G(args)}
-#          | 'return' [ '(' [ expr4 ] ')' ]     --> {expr:return,par:G(expr)/[]}
+#          | 'return' [ expr4 ]                 --> {expr:return,par:G(expr)/[]}
 #          | call2                              --> G(call2)
 #          |
 # elseif  :: 'elseif' '(' expr4 ')' stmnt       --> {expr:elif,test:G(expr4),then:G(st1)}
@@ -3691,10 +3695,10 @@ function get_stmnt($context,&$st) {
     # 'return' [ '(' [ expr4 ] ')' ] --> {expr:return,par:G(expr)/[]}
     if ( $id=='return' ) { // může mít vynechané parametry
       $arg= array();
-      if ( get_if_delimiter('(') && !get_if_delimiter(')') ) {
-        get_expr4($context,$arg[0]);
-        get_delimiter(')');
-      }
+//      if ( get_if_delimiter('(') && !get_if_delimiter(')') ) {
+        $ok= get_expr4($context,$arg[0]);
+//        get_delimiter(')');
+//      }
       $st= (object)array('expr'=>'return','lc'=>$last_lc,'par'=>$arg);
       $ok= true;
     }
@@ -4053,6 +4057,7 @@ function get_expr17($context,&$expr) {
 function get_primary($context,&$expr) {
   global $last_lc, $typ, $lex, $head;
   $id= '';
+  $ok= true;
   if ( get_if_id($id) ) {
     if ( get_if_delimiter('(') ) {
       # call2 --> G(call2)
@@ -4070,7 +4075,6 @@ function get_primary($context,&$expr) {
       $expr= (object)array('expr'=>'name','name'=>$id,'lc'=>$last_lc);
 //      $expr= (object)array('expr'=>'call','op'=>"$id.get");
       $expr->lc= $last_lc;
-      $ok= true;
     }
   }
   elseif ( get_if_delimiter('(') ) {
@@ -4081,7 +4085,6 @@ function get_primary($context,&$expr) {
   elseif ( get_if_delimiter('`') ) {
     # '`' template* '`' --> {expr:templ,par:[G(templ),...]}
     $expr= (object)array('expr'=>'templ','par'=>array(),'lc'=>$last_lc);
-    $ok= true;
     while ( $ok && !look_delimiter('`') ) {
       $ok= $typ[$head]=='str';
       if ( $ok ) {
@@ -4108,15 +4111,14 @@ function get_primary($context,&$expr) {
   elseif ( get_if_this($id,$last_lc) ) {
     # this | form | panel | area --> {expr:name,name:...}
     $expr= (object)array('expr'=>'name','name'=>$id,'lc'=>$last_lc);
-    $ok= true;
   }
   else {
     # value --> {expr:value,value:v,type:t}
     $expr= (object)array('expr'=>'value','lc'=>$last_lc);
-    get_value($expr->value,$expr->type);
-    $ok= true;
+    $ok= get_value($expr->value,$expr->type,true);
+//    $ok= true;
   }
-  return true;
+  return $ok;
 }
 # -------------------------------------------------------------------------------------------- call2
 # call2   :: id  args                           --> {expr:call,op:id,par:G(args),value:$valued}
