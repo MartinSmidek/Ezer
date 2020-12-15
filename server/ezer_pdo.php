@@ -48,7 +48,7 @@ function ezer_connect ($db0='.main.',$even=false,$initial=0) {
   }
   $res= @mysql_select_db($db_name,$ezer_db[$db][0]);
   if ( !$res ) {
-    $err= "databaze '$db_name' je nepristupna";
+    $err= "databaze '$db_name' je nepristupna pro ";
     if ( !$initial ) fce_error("connect: $err".pdo_error());
     else die("connect: $err".pdo_error());
   }

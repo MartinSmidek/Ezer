@@ -1983,7 +1983,11 @@
       $ezer= $x->script;
       $_SESSION[$ezer_root]['dbg_script']= $ezer;
       $obj= dbg_find_obj2($x->context->self);
-      if ( !$obj ) { $err= "Warning: nelze určit kontext překladu"; $obj= (object)array(); }
+      if ( !$obj ) { 
+        if ( $x->context->self!='$') 
+          $err= "Warning: nelze určit kontext překladu"; 
+        $obj= (object)array(); 
+      }
       $ok= get_ezer($top,$obj,$x->context->code);
       if ( $ok ) {
         $block= $obj->part->_dbg_;

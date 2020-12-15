@@ -429,9 +429,11 @@ class Application {
       var menu= [
         ['run (ctrl-Enter)',              function(el) { __run(); }],
         ['clear & run (shift-ctrl-Enter)',function(el) { Ezer.fce.clear(); __run(); }],
-        ["-trace: session",    function(el) { __run("ask('test_session')"); }],
-        ["trace: sys",         function(el) { __run("echo(debug(sys))"); }],
-        ["trace: database",    function(el) { __run("echo(debug(ask('sql_query','SELECT DATABASE() AS selected FROM DUAL')))"); }]];
+        ["-trace: session",    function(el) { __run("php.test_session()"); }],
+        ["trace: sys",         function(el) { __run("echo(debug(sys())"); }],
+        ["trace: database",    function(el) { __run(
+            `echo('version=',php.select('VERSION()'),
+              debug(php.sql_query('SELECT DATABASE() AS selected FROM DUAL')))`); }]];
       if ( Ezer.options.curr_version!==undefined ) {
         menu.push(
         // v případě hlídání verzí
@@ -463,11 +465,11 @@ class Application {
     function __run(script) {
       if ( script ) {
         // skript je dán parametrem
-        Ezer.run.$.runScript(script);
+        Ezer.run.$.runScript(script,'func');
       }
       else {
         // skript je v okně debug
-          Ezer.run.$.runScript(jQuery('#dbg').val());
+          Ezer.run.$.runScript(jQuery('#dbg').val(),'func');
       }
     }
     this._barRightDom= jQuery('#status_right');

@@ -1133,7 +1133,7 @@ class Block {
 // kompilace Ezerscriptu zadaného řetězcem a jeho zahájení v kontextu this.
 // Metoda je určena především pro ladění programu z trasovacího okna,
 // pokud je voláno z programu, vrací hodnotu 1 - nečeká na ukončení ezescriptu.
-  runScript (script) {
+  runScript (script,code) {
     var s= this.app_file();     // zjistí {app:app,file:file,root:root}
     var self= '';
     for (var o= this; o.owner; o= o.owner) {
@@ -1144,7 +1144,7 @@ class Block {
     }
     self= self ? (o._library ? '#.' : '$.')+self : '$';
 //                                                 Ezer.trace('*','self='+self);
-    var x= {cmd:'dbg_compile',context:{self:self,app:s.app,file:s.file},script:script};
+    var x= {cmd:'dbg_compile',context:{self:self,app:s.app,file:s.file,code:code||'proc'},script:script};
     this.ask(x,'runScript_');
     return 1;
   }
