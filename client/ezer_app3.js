@@ -430,7 +430,7 @@ class Application {
         ['run (ctrl-Enter)',              function(el) { __run(); }],
         ['clear & run (shift-ctrl-Enter)',function(el) { Ezer.fce.clear(); __run(); }],
         ["-trace: session",    function(el) { __run("php.test_session()"); }],
-        ["trace: sys",         function(el) { __run("echo(debug(sys())"); }],
+        ["trace: sys",         function(el) { __run("echo(debug(sys()))"); }],
         ["trace: database",    function(el) { __run(
             `echo('version=',php.select('VERSION()'),
               debug(php.sql_query('SELECT DATABASE() AS selected FROM DUAL')))`); }]];

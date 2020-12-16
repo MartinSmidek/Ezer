@@ -43,7 +43,7 @@ function ezer_connect ($db0='.main.',$even=false,$initial=0) {
     $ezer_db[$db][0]= @mysql_pconnect($ezer_db[$db][1],$ezer_db[$db][2],$ezer_db[$db][3]);
     if ( !$ezer_db[$db][0] ) {
       fce_error("db=$db|connect: server '{$ezer_db[$db][1]}' s databazi '"
-        . ($ezer_db[$db][5] ? "$db/$db_name" : $db)."' neni pristupny:").pdo_error();
+        . (isset($ezer_db[$db][5]) && $ezer_db[$db][5] ? "$db/$db_name" : $db)."' neni pristupny:").pdo_error();
     }
   }
   $res= @mysql_select_db($db_name,$ezer_db[$db][0]);
