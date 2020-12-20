@@ -4,7 +4,7 @@ const EZER_version= 3.1;
 
 # screen=1 zobrazí rozměr klientské části
 
-  error_reporting(E_ALL & ~E_NOTICE);
+  error_reporting(E_ALL ^ E_NOTICE);
   $pwd= getcwd();
 
   # identifikace ostrého serveru

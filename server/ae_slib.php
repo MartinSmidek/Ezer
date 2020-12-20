@@ -642,8 +642,11 @@ function simple_glob($mask) {
 # zjištění hodnot číselníku a vrácení jako překladového pole
 #   array (data => $val, ...)
 function map_cis($druh,$val='zkratka',$order='poradi',$db='') {
-  global $mysql_db;
+  global $mysql_db, $ezer_db;
   $db= $db?:$mysql_db;
+  if ( isset($ezer_db[$db][5])) {
+    $db= $ezer_db[$db][5];
+  }
   $cis= array();
   $qry= "SELECT * FROM $db._cis WHERE druh='$druh' ORDER BY $order";
   $res= mysql_qry($qry);

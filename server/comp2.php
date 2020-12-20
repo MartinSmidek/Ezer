@@ -174,14 +174,14 @@ function comp_file ($name,$root='',$_list_only='',$_comp_php=false) {  #trace();
       $context= array((object)array('id'=>'$','ctx'=>$code));
     }
     // označkuj zděděné
-    if ( $start->part ) foreach ($start->part as $id=>$spart) {
+    if ( isset($start->part) && $start->part ) foreach ($start->part as $id=>$spart) {
       $start->part->$id->_old= true;
     }
     // vlastní překlad
-                                                        if ($_GET['trace']==3) debug($start,'před get_ezer');
+//                                                        if ($_GET['trace']==3) debug($start,'před get_ezer');
     $dbgobj= null;
     $ok= get_ezer($start,$dbgobj) ? 'ok' : 'ko';
-                                                        if ($_GET['trace']==2) debug($start,"po get_ezer = $ok");
+//                                                        if ($_GET['trace']==2) debug($start,"po get_ezer = $ok");
     // pokud je pragma.names, připrav doplnění jednoznačných jmen
     if ( $pragma_syntax ) $start= pragma_syntax($start);        // provedení pragma.syntax
     if ( $pragma_attrs ) pragma_attrs($start);                  // provedení pragma.attrs
@@ -2692,7 +2692,7 @@ function get_ezer (&$top,&$top2,$dbg=false) {
           break;
         }
         else {
-          if ( !$top->part ) $top->part= (object)array();
+          if ( !isset($top->part) ) $top->part= (object)array();
           if ( is_array($block) ) {
             foreach($block as $idx=>$blockx) {
               $top->part->$idx= $blockx;
@@ -2875,7 +2875,7 @@ function get_if_block ($root,&$block,&$id) {
             }
             $ok= true;
             // kontrola přípustnosti vnoření $key.$type do $root a úprava $block->type
-            if ( $block->options->type ) {
+            if ( isset($block->options->type) ) {
               if ( $pragma_box && $block->type=='box' ) {
                 $block->options->css= $block->options->type;
                                                   display("pragma: box - css místo type ");
@@ -2895,9 +2895,9 @@ function get_if_block ($root,&$block,&$id) {
                 break;
               }
             }
-            $root_tt= $root ? $root->type : '';
+            $root_tt= $root && isset($root->type) ? $root->type : '';
             $block_tt= $block->type;
-            if ( (!$blocs2[$root_tt] || !in_array($block_tt,$blocs2[$root_tt]) )
+            if ( (!isset($blocs2[$root_tt]) || !in_array($block_tt,$blocs2[$root_tt]) )
               && !in_array($block_tt,$blocs3) ) {
   //                                                                 debug($blocs2);
               comp_error("SYNTAX: blok '$block_tt' není povolený uvnitř bloku '$root_tt' (1)");
@@ -2907,7 +2907,7 @@ function get_if_block ($root,&$block,&$id) {
               $xblock= $xid= null;
               $ok= get_if_block($block,$xblock,$xid);
               if ( $ok ) {
-                if ( !$block->part ) $block->part= (object)array();
+                if ( !isset($block->part) ) $block->part= (object)array();
                 if ( is_array($xblock) ) {
                   foreach($xblock as $xidx=>$xblockx) {
                     $block->part->$xidx= $xblockx;
@@ -3210,6 +3210,7 @@ function get_if_coorp ($block) {
 function get_cexpr (&$cexpr,$rel1,$rel2='',$rel3='') {
   $cexpr= array();
   $op= true;
+  $x= null;
   $op= get_if_delimiter('+') ? '+' : (get_if_delimiter('-') ? '-' : true);
   while ( $op ) {
     $num= $id= null;
@@ -3294,7 +3295,7 @@ function get_if_this (&$id,&$lc) {
 function get_if_keyed_name (&$key,&$id,&$lc,&$note) {
   global $head, $lex, $typ, $pos, $not, $id_anonymous;
 //                                           display(":: {$typ[$head]} {$lex[$head]}");
-  $ok= $typ[$head]=='key_id';
+  $ok= isset($typ[$head]) && $typ[$head]=='key_id';
   if ( $ok ) {
     $key= $lex[$head]->key;
     $id= $lex[$head]->id;
@@ -3303,7 +3304,7 @@ function get_if_keyed_name (&$key,&$id,&$lc,&$note) {
     $head++;
   }
   if ( !$ok ) {
-    $ok= $typ[$head]=='key';
+    $ok= isset($typ[$head]) && $typ[$head]=='key';
     if ( $ok ) {
       $lc= $pos[$head];
       $note= isset($not[$head]) ? $not[$head] : null;

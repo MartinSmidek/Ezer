@@ -302,7 +302,7 @@
   $totrace= isset($x->totrace) ? $x->totrace : 0;
   $y->qry_ms= 0;
   // ochrana proti ztrátě přihlášení
-  if ( !$USER->id_user
+  if ( (!isset($USER->id_user) || !$USER->id_user)
     && !in_array($x->cmd,array('user_login','user_prelogin','user_relogin','user_group_login')) ) {
     $y->error= "<big>Vaše přihlášení již vypršelo - odhlaste se prosím a znovu přihlaste</big>";
 //     $y->error.= debugx($x);
@@ -1382,7 +1382,7 @@
     $ip= isset($_SERVER['HTTP_X_FORWARDED_FOR'])
       ? $_SERVER['HTTP_X_FORWARDED_FOR'] : $_SERVER['REMOTE_ADDR'];
     $browser= $_SERVER['HTTP_USER_AGENT'];
-    if ( $x->uname || $ezer_user_id ) {
+    if ( (isset($x->uname) || $x->uname) || $ezer_user_id ) {
       $size= isset($x->size)
         ? "{$x->size->body->x}/{$x->size->body->y}|{$x->size->screen->x}/{$x->size->screen->y}"
         : '';
