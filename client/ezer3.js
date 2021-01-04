@@ -10486,7 +10486,8 @@ class Show extends Elem {
       else 
         this.DOM_qry_select[i].init();
     }
-    this.DOM_qry[i].val(val||'');
+    this.DOM_qry[i].val(val);
+//    this.DOM_qry[i].val(val||'');
   }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  DOM_qry_get+
 // funkce pro vrácení hodnoty dotazu na i-tém qry-řádku
