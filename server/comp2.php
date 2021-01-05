@@ -1611,6 +1611,11 @@ function name_split($name,$pars,$vars,$call=false) {
               $_of= $obj->_of;
               $_of= $_of=='ezer' ? 'e' : ($_of=='object' ? 'o' : 's');
             }
+            elseif ( $obj->type=='var' && in_array($obj->_of,array('form','area') ) 
+                && $obj->_init && $ids && !isset($obj->part->$ids[0]) ) {
+              $obj= find_obj($obj->_init);
+              $full.= ".$id";
+            }
             elseif ( $obj ) {
               // stále upřesňujeme první jméno
               $full.= ".$id";
