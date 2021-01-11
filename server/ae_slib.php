@@ -445,22 +445,31 @@ function PHP($expr) {
 }
 /*** ========================================================================================= MySQL */
 # --------------------------------------------------------------------------------------- table_lock
-# mode=on   - pokusí se zamknout daný řádek dané tabulky tzn. zapsat id_user a čas do _lock
-#             pokud je již někým jiným zamknutý, ok=0 a info=text
-# mode=off  - odstraní (případný) zámek daného řádku přihlášeného uživatele
-# mode=none - odstraní všechny zámky přihlášeného uživatele, případně jen všechny zámky dané tabulky
+# mode=on     - pokusí se zamknout daný řádek dané tabulky tzn. zapsat id_user a čas do _lock
+#               pokud je již někým jiným zamknutý, ok=0 a info=text; idt musí být nenulové
+#               pokus je neúspěšný v případě, že existuje zámek celé tabulky
+# mode=entire - pokusí se zamknout celou tabulku tzn. zapsat id_user a čas do _lock
+#               pokud je již někým jiným zamknutý, ok=0 a info=text; nelze opakovat bez uvolnění
+# mode=off    - odstraní (případný) zámek daného řádku přihlášeného uživatele resp. zámek tabulky
+# mode=none   - odstraní všechny zámky přihlášeného uživatele, případně jen zámky dané tabulky
 # variantu s mode=none lze použít i když databáze neobsahuje tabulku _lock (vhodné po přihlášení)
+# tabulka _lock musí mít index typu UNIQUE(table,id_table)
 function table_lock($mode,$table='',$idt=0) {
+//  return (object)array('ok'=>1,'info'=>'','note'=>'');
   global $USER;
-  $ret= (object)array('ok'=>0,'info'=>'');
+  $ret= (object)array('ok'=>0,'info'=>'','note'=>'');
   $idu= $USER->id_user;
   $now= time();
   switch ($mode) {
-    case 'on':    // ------------------ pokus o zamknutí table+id+user
+    case 'on':    // ------------------ pokus o zamknutí table+id+user (lze opakovat)
+      if (!$idt) {
+        $ret->note= "$table/$idt ignored by $idu (null key)";
+        break;
+      }
       $res= pdo_qry("INSERT IGNORE INTO _lock (`table`,id_table,id_user,time) 
           VALUES ('$table','$idt','$idu',$now) ");
       $ret->ok= pdo_affected_rows($res);
-      if ($ret->ok===0) {
+      if ($ret->ok===0) { // záznam table/idt již existuje
         list($idu2,$time2)= select('id_user,time','_lock',"`table`='$table' AND id_table='$idt'");
         if ($idu2==$idu) { // aha, to jsem já
           $ret->ok= 1;
@@ -469,12 +478,55 @@ function table_lock($mode,$table='',$idt=0) {
         else {
           list($forename,$surname)= select('forename,surname','_user',"id_user='$idu2'");
           $time= date('Y-m-d')==date('Y-m-d',$time2) ? date('H:i') : date('j.n.Y');
-          $ret->info= "$table".($idt?"/$idt":'')." upravuje od $time $forename $surname";
-          $ret->note= "$table/$idt locked by $idu2 ";
+          $ret->info= "$table/$idt upravuje od $time $forename $surname";
+          $ret->note= "$table/$idt already locked by $idu2 ";
         }
       }
-      else {
-        $ret->note= "$table/$idt locked by $idu ";
+      else { // zámek úspěšně umístěn - zjistíme, zda není zamknuta tabulka
+        list($idu2,$time2)= select('id_user,time','_lock',"`table`='$table' AND id_table=0 ");
+        if (!$idu2) {
+          $ret->note= "$table/$idt now locked by $idu ";
+        }
+        else {
+          $ret->ok= 0;
+          pdo_qry("DELETE FROM _lock WHERE `table`='$table' AND id_table='$idt' ");
+          list($forename,$surname)= select('forename,surname','_user',"id_user='$idu2'");
+          $time= date('Y-m-d')==date('Y-m-d',$time2) ? date('H:i') : date('j.n.Y');
+          $ret->info= "celou tabulku $table zamknul od $time $forename $surname";
+          $ret->note= "$table has table lock by $idu2 ";
+        }
+      }
+      break;
+    case 'entire':  // ------------------ pokus o zamknutí table+user (nelze opakovat)
+      $res= pdo_qry("INSERT IGNORE INTO _lock (`table`,id_table,id_user,time) 
+          VALUES ('$table','0','$idu',$now) ");
+      $ret->ok= pdo_affected_rows($res);
+      if ($ret->ok===0) { // záznam table/0 již existuje
+        list($idu2,$time2)= select('id_user,time','_lock',"`table`='$table' AND id_table='0'");
+        if ($idu2==$idu) { // aha, to jsem znovu já - chyba kódu
+          $ret->note= "entire $table still locked by $idu ";
+        }
+        else {
+          list($forename,$surname)= select('forename,surname','_user',"id_user='$idu2'");
+          $time= date('Y-m-d')==date('Y-m-d',$time2) ? date('H:i') : date('j.n.Y');
+          $ret->info= "tabulka $table již má od $time zámek od $forename $surname";
+          $ret->note= "entire $table already locked by $idu2 ";
+        }
+      }
+      else { // zámek úspěšně umístěn - zjistíme, zda nejsou zamknuty její řádky
+        $count= select('COUNT(*)','_lock',"`table`='$table'");
+        if ($count==1) {
+          $ret->note= "entire $table now locked by $idu2 ";
+        }
+        else {
+          $ret->ok= 0;
+          pdo_qry("DELETE FROM _lock WHERE `table`='$table' AND id_table=0 ");
+          list($idu2,$time2)= select('id_user,time','_lock',"`table`='$table'");
+          list($forename,$surname)= select('forename,surname','_user',"id_user='$idu2'");
+          $time= date('Y-m-d')==date('Y-m-d',$time2) ? date('H:i') : date('j.n.Y');
+          $ret->info= "nelze zamknout tabulku - $table/$idt upravuje od $time $forename $surname";
+          $ret->note= "$table has records locks by $idu2 ";
+        }
       }
       break;
     case 'off':   // ------------------ odstraní zámek table+id+user
@@ -707,51 +759,61 @@ function ezer_json_encode($ao) {
 # args:  string - proposed email address
 # ret:   bool
 function emailIsValid($email,&$reason) {
+   // ad-hoc seznam spolehlových domén pro zrychlení kontroly
+   $spolehlive= array(
+       'proglas.cz','setkani.org', // kvůli lokální DNA v Proglasu
+       'volny.cz','seznam.cz','gmail.com','centrum.cz',
+       'email.cz','post.cz','quick.cz','tiscali.cz');
    $isValid= true;
    $reasons= array();
    $atIndex= strrpos($email, "@");
-   if (is_bool($atIndex) && !$atIndex)    {
+   if (is_bool($atIndex) && !$atIndex) {
       $isValid= false;
       $reasons[]= "chybí @";
    }
-   else    {
+   else {
       $domain= substr($email, $atIndex+1);
       $local= substr($email, 0, $atIndex);
       $localLen= strlen($local);
       $domainLen= strlen($domain);
-      if ($localLen < 1 || $localLen > 64)       {
+      if ($localLen < 1 || $localLen > 64) {
          $isValid= false;
          $reasons[]= "dlouhé jméno";
       }
-      else if ($domainLen < 1 || $domainLen > 255)       {
+      else if ($domainLen < 1) {
+         $isValid= false;
+         $reasons[]= "chybí doména";
+      }
+      else if ($domainLen > 255) {
          $isValid= false;
          $reasons[]= "dlouhá doména";
       }
-      else if ($local[0] == '.' || $local[$localLen-1] == '.')       {
+      else if ($local[0] == '.' || $local[$localLen-1] == '.') {
          $reasons[]= "tečka na kraji";
          $isValid= false;
       }
-      else if (preg_match('/\\.\\./', $local))  {
+      else if (preg_match('/\\.\\./', $local)) {
          $reasons[]= "dvě tečky ve jménu";
          $isValid= false;
       }
-      else if (!preg_match('/^[A-Za-z0-9\\-\\.]+$/', $domain))   {
+      else if (!preg_match('/^[A-Za-z0-9\\-\\.]+$/', $domain)) {
          $reasons[]= "chybný znak v doméně";
          $isValid= false;
       }
-      else if (preg_match('/\\.\\./', $domain))  {
+      else if (preg_match('/\\.\\./', $domain)) {
          $reasons[]= "dvě tečky v doméně";
          $isValid= false;
       }
-      else if (!preg_match('/^(\\\\.|[A-Za-z0-9!#%&`_=\\/$\'*+?^{}|~.-])+$/', str_replace("\\\\","",$local)))   {
+      else if (!preg_match('/^(\\\\.|[A-Za-z0-9!#%&`_=\\/$\'*+?^{}|~.-])+$/', 
+           str_replace("\\\\","",$local))) {
          $reasons[]= "chybný znak ve jménu";
          if (!preg_match('/^"(\\\\"|[^"])+"$/',
-             str_replace("\\\\","",$local)))            {
+             str_replace("\\\\","",$local))) {
             $isValid= false;
          }
       }
-      if ( $domain!='proglas.cz' && $domain!='setkani.org' ) {
-        if ($isValid && !(checkdnsrr($domain,"MX") || checkdnsrr($domain,"A")))      {
+      if ( !in_array($domain,$spolehlive) ) {
+        if ($isValid && !(checkdnsrr($domain,"MX") || checkdnsrr($domain,"A"))) {
            $reasons[]= "$domain je neznámá doména";
            $isValid= false;
         }

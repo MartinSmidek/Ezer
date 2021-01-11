@@ -2305,6 +2305,7 @@ function json_encode_short($data) {
 # doplněk metody browse.browse_status
 # - z jejího výsledku zkonstruuje části dotazu a celý dotaz bez části LIMIT
 function browse_status($x) {
+  global $mysql_db, $ezer_db;
   $clmns= ''; $del= '';
   $y= (object)array();
   $y->par= $x->par;
