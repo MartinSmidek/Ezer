@@ -1838,7 +1838,7 @@ function gen_setter($s,$value,$index=null) {
           $s->bas->nam=='t' ? (object)array('o'=>'t') : (object)array('o'=>'t','i'=>$s->bas->nam),
           (object)array('o'=>'q','i'=>$s->rel),
           $value,
-          $s->sel ? (object)array('o'=>'v','i'=>$s->sel) : null,
+          $s->sel ? (object)array('o'=>'v','v'=>$s->sel) : null,
           (object)array('o'=>'m','i'=>'set','a'=>$s->sel ? 2 : 1),
           (object)array('o'=>'z','i'=>1));
     break;
@@ -1866,7 +1866,7 @@ function gen_setter($s,$value,$index=null) {
       : array(
           (object)array('o'=>'o','i'=>$s->bas->nam.($s->rel?".{$s->rel}":'')),
           $value,
-          $s->sel ? (object)array('o'=>'v','i'=>$s->sel) : null,
+          $s->sel ? (object)array('o'=>'v','v'=>$s->sel) : null,
           (object)array('o'=>'m','i'=>'set','a'=>$s->sel ? 2 : 1),
           (object)array('o'=>'z','i'=>1));
     break;
