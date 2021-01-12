@@ -538,9 +538,14 @@ class Block {
         var block= this instanceof Var && this.value ? this.value : this;
         for(var i in block.part) {
           var part= block.part[i];
-          if ( part.DOM_Block && part.options.tag && re.test(part.options.tag) ) {
-            part.options.enabled= enabled;
-            part.DOM_enabled(enabled);
+          if ( part.options.tag && re.test(part.options.tag) ) {
+            if ( part.enable ) {
+              part.enable(enabled);
+            }
+            else if ( part.DOM_Block ) {
+              part.options.enabled= enabled;
+              part.DOM_enabled(enabled);
+            }
           }
         }
       }
@@ -577,10 +582,8 @@ class Block {
           });
           if ( some )
             DOM_display(block,on);
-//             block.setStyles({display:on ? 'block' : 'none'});
           else if ( on==2 )
             DOM_display(block,0);
-//             block.setStyles({display:'none'});
         }
       }
     }
