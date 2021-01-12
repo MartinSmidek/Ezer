@@ -1291,7 +1291,7 @@ function gen2($pars,$vars,$c) {
     $expr= gen2($pars,$vars,$c->while);
     $stmnt= gen2($pars,$vars,$c->stmnt);
     $test= (object)array('o'=>0,'iff'=>count($stmnt)+2);
-    $continue= -count($stmnt)-count($test)-1;
+    $continue= -count($stmnt)-count($test)-count($expr);
     $go= (object)array('o'=>0,'go'=>$continue,'end'=>$begs,'beg'=>$continue);
     $code[]= array($expr,$test,$stmnt,$go);
     $begs--; $ends--;
