@@ -98,7 +98,7 @@ function doc_chngs_show($type='ak',$days=30,$app_name='') { trace();
   $header= function($d,$w,$a='') use ($s2u) {
     $d= $s2u($d);
     $w= trim($w);
-    return "<span class='chng_day' title='$a'>$d $w</span>";
+    return "<span class='chng_day' title='$a'>$d $w:</span>";
   };
   $get_help= function($db='.main.',$level='a',$abbr) use (&$lines,$ezer_db,$days,$header) {
     if ( $db=='.main.' || isset($ezer_db[$db]) ) {

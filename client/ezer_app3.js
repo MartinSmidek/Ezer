@@ -4002,6 +4002,19 @@ Ezer.fce.lt= function (x,y) {
   y= Number(y);
   return x<y ? 1 : 0;
 };
+// -------------------------------------------------------------------------------------- le
+//ff: fce.le (x,y)
+//   porovnání čísel: x<=y
+//s: funkce
+//a: x, y - testované hodnota
+//   yi - vzory
+//r: 1 - x<y
+//   0 - jinak
+Ezer.fce.le= function (x,y) {
+  x= Number(x);
+  y= Number(y);
+  return x<=y ? 1 : 0;
+};
 // -------------------------------------------------------------------------------------- gt
 //ff: fce.gt (x,y)
 //   porovnání čísel: x>y
@@ -4014,6 +4027,19 @@ Ezer.fce.gt= function (x,y) {
   x= Number(x);
   y= Number(y);
   return x>y ? 1 : 0;
+};
+// -------------------------------------------------------------------------------------- ge
+//ff: fce.ge (x,y)
+//   porovnání čísel: x>=y
+//s: funkce
+//a: x, y - testované hodnota
+//   yi - vzory
+//r: 1 - x>y
+//   0 - jinak
+Ezer.fce.ge= function (x,y) {
+  x= Number(x);
+  y= Number(y);
+  return x>=y ? 1 : 0;
 };
 // -------------------------------------------------------------------------------------- sum
 //ff: fce.sum (x1,x2,...)

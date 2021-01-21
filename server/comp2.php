@@ -1291,7 +1291,7 @@ function gen2($pars,$vars,$c) {
     $expr= gen2($pars,$vars,$c->while);
     $stmnt= gen2($pars,$vars,$c->stmnt);
     $test= (object)array('o'=>0,'iff'=>count($stmnt)+2);
-    $continue= -count($stmnt)-count($test)-count($expr);
+    $continue= -count($stmnt)-count($expr)-1;
     $go= (object)array('o'=>0,'go'=>$continue,'end'=>$begs,'beg'=>$continue);
     $code[]= array($expr,$test,$stmnt,$go);
     $begs--; $ends--;
@@ -1318,7 +1318,7 @@ function gen2($pars,$vars,$c) {
     for ($i= 0; $i<$ncase; $i++) {
       $last= $i+1==$ncase;
       $case= $cases[$i];
-      $test= $case->case
+      $test= isset($case->case)
           ? (object)array('o'=>'S','v'=>$case->case,'go'=>count($case->slist)+($last ? 1 : 2))
           : array();
       $block= array($test,$case->slist);
@@ -1372,7 +1372,7 @@ function gen_breaks($code) {
       }
       // řešíme continue - jen v případě cyklů
       if ( isset($c->beg) ) {
-        if ( count($continues[$c->end]) ) {
+        if ( $continues[$c->end] && count($continues[$c->end]) ) {
           foreach($continues[$c->end] as $icont) {
             // definujeme návrat
             $code[$icont]->go= $c->beg + $i - $icont;
@@ -3997,13 +3997,9 @@ function get_expr12($context,&$expr) {
   if ( $ok && ($op= get_if_delimiters(array('<','<=','>','>=')))) {
     # expr14 ( op_rel expr14 ] --> G(expr14) | {expr:call,op:G(op_rel),par:G(expr)*}
     $ops= array('<'=>'lt','<='=>'le','>'=>'gt','>='=>'ge');
-    $xps= array('<='=>'gt','>='=>'lt');
     $arg= null;
     $ok= get_expr14($context,$arg);
-    if (isset($xps[$op]))
-      $expr= (object)array('expr'=>'call','op'=>$xps[$op],'par'=>array($arg,$expr),'value'=>1,'lc'=>$last_lc);
-    else
-      $expr= (object)array('expr'=>'call','op'=>$ops[$op],'par'=>array($expr,$arg),'value'=>1,'lc'=>$last_lc);
+    $expr= (object)array('expr'=>'call','op'=>$ops[$op],'par'=>array($expr,$arg),'value'=>1,'lc'=>$last_lc);
   }
   return $ok;
 }

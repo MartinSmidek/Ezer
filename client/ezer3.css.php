@@ -45,8 +45,7 @@ div#popup3 { background-color: $b_item; color: $c_item;
 #login_2 div.login_notify { background-color:$b_kuk; color:$c2_kuk; }
 #login h1 { background-color:$b_group; }
 #login_chngs { margin-top:193px; border:1px solid $b_group; background-color:$b_item; }
-#login_chngs span.chng_day { color:$b_group; }
-#doc_chngs span.chng_day { color:$b_group; }
+span.chng_day { color:$b_group; font-weight: bold; }
 
 /* styly pro drag */
 
