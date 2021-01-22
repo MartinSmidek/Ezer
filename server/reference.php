@@ -1118,10 +1118,10 @@ function i_doc_table_struct($tab,$all=1,$css='stat') {  #trace();
     while ( $res && ($c= pdo_fetch_object($res)) ) {
       if ( !$row ) {
         // záhlaví tabulky
-        $html.= "<tr><th></th><th>Sloupec</th><th>Typ</th><th>Komentář</th></tr>";
+        $html.= "<tr><th>Key</th><th>Null</th><th>Default</th><th>Sloupec</th><th>Typ</th><th>Komentář</th></tr>";
       }
       // řádek tabulky
-      $key= $c->Key ? '*' : '';
+      $key= $c->Key; // ? '*' : '';
       $note= $c->Comment;
       if ( $all || $note[0]!='-' ) {
         if ( $note[0]=='#' ) {
@@ -1157,12 +1157,14 @@ function i_doc_table_struct($tab,$all=1,$css='stat') {  #trace();
             $note= substr($note,0,$max_note).' ...';
           $note.= ")";
         }
-        $html.= "<tr><td>$key</td><td>{$c->Field}</td><td>{$c->Type}</td><td>$note</td></tr>";
+        $nul= $c->Null=='NO' ? '' : 'x';
+        $def= $c->Default;
+        $html.= "<tr><td>$key</td><td>$nul</td><td>$def</td><td>{$c->Field}</td><td>{$c->Type}</td><td>$note</td></tr>";
       }
       $row++;
     }
     $html.= "</table>";
-    $html.= "<br>Hvězdička označuje sloupec s indexem<br>";
+//    $html.= "<br>Hvězdička označuje sloupec s indexem<br>";
     if ( $joins ) {
       $html.= "<br>K hodnotám položky 'p' označené v komentáři jako číselník 'x' se lze dostat připojením
       <pre>      SELECT ... x.hodnota ...
