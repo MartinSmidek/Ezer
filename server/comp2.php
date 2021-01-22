@@ -1135,7 +1135,7 @@ function gen2($pars,$vars,$c) {
     $returns++;
     $code= array();
     $npar= count($c->par); // 0|1
-//    if ( $npar != ($func->options->type ? 1 : 0) ) -- přísný test
+//    if ( $npar != ($func->options->type ? 1 : 0) ) // -- přísný test
 //      comp_error("CODE: arita return neopovídá typu funkce '$func_name'");
     if ( $func->options->type && $npar==0 ) 
       comp_error("CODE: ve funkci '$func_name' musí return vracet hodnotu");
@@ -1144,6 +1144,7 @@ function gen2($pars,$vars,$c) {
       $code[]= (object)array('o'=>'U','a'=>1,'i'=>$func->options->type);
     }
     elseif ( $npar ) {
+      $code[]= gen2($pars,$vars,$c->par[0]);
       $code[]= (object)array('o'=>'u','a'=>1);
     }
     else 
@@ -1154,12 +1155,6 @@ function gen2($pars,$vars,$c) {
   case 'call':
     $code= array();
     $npar= count($c->par);
-//    if ( $c->op=='return' ) {
-//      if ( $npar )
-//        $code[]= gen2($pars,$vars,$c->par[0]);
-//      $code[]= (object)array('o'=>'u','a'=>$npar);
-//    }
-//    else
     if ( $c->op=='ask' ) {
       $ask= $c->par[0]->value;
       if ( !in_array($ask,$call_php) )
@@ -1189,6 +1184,27 @@ function gen2($pars,$vars,$c) {
     }
     if ( !$c->value )
       $code[]= (object)array('o'=>'z','i'=>1);
+    break;
+
+  // -------------------------------------- [ expr1, ... ]
+  case 'array':
+    $code= array();
+    $npar= count($c->par);
+    foreach ($c->par as $id=>$val) {
+      $code[]= gen2($pars,$vars,$val);
+    }
+    $code[]= (object)array('o'=>'f','i'=>'array','a'=>$npar);
+    break;
+
+  // -------------------------------------- { id:expr1, ... }
+  case 'object':
+    $code= array();
+    $npar= count($c->par);
+    foreach ($c->par as $id=>$val) {
+      $code[]= (object)array('o'=>'v','v'=>$id);
+      $code[]= gen2($pars,$vars,$val);
+    }
+    $code[]= (object)array('o'=>'f','i'=>'object','a'=>2*$npar);
     break;
 
   // -------------------------------------- st1 ; st2 ; ...
@@ -1324,7 +1340,7 @@ function gen2($pars,$vars,$c) {
       $block= array($test,$case->slist);
       $code[]= $block;
       if ( !$last ) {
-        $code[]= (object)array('o'=>0,'go'=>2); // přeskočení testu - pokud není konec switch
+//        $code[]= (object)array('o'=>0,'go'=>2); // přeskočení testu - pokud není konec switch
       }
     }
     $code[]= (object)array('o'=>'z','i'=>1,'end'=>$ends);  // pop expr
@@ -3548,6 +3564,14 @@ function get_value (&$val,&$type,$may_fail=false) {
     else
       comp_error("SYNTAX: byl očekáván objekt nebo pole");
   }
+  elseif ( $val=='{' ) {         // objektová konstanta bez °
+    $ok= true;
+    get_object($val,$type);
+  }
+  elseif ( $val=='[' ) {         // konstanta pole bez °
+    $ok= true;
+    get_array($val,$type);
+  }
   else if ( $typ[$head]=='key' && ($val=='this' || $val=='panel' || $val=='area') ) {
     $ok= true;
     $head++;
@@ -3570,6 +3594,7 @@ function look_value () {
   $ok= $typ[$head]=='num' || $typ[$head]=='str'
       || ($typ[$head]=='del' && $lex[$head]=='°')
       || ($typ[$head]=='del' && $lex[$head]=='-')
+      || ($typ[$head]=='del' && $lex[$head]=='{')
       ;
   return $ok;
 }
@@ -4053,9 +4078,14 @@ function get_expr17($context,&$expr) {
 #          | '&' id_this                        --> {expr:ref,ref:G(id_this)}
 #          | id '[' expr4 ']'                   --> {expr:index,name:id,index:G(expr4)}
 #          | id_this                            --> G(id_this)
+#          | json                               --> G(json)
+#          | array                              --> G(array)
 # id_this :: id | 'this'                        --> {expr:name,name:id} | {expr:name,name:this}
 # template:: string                             --> {expr:value,value:v,type:t}
 #          | '${' ( id | call2 ) '}'            --> G(id) | G(call2)
+# json    :: '{' '}' 
+#          | '{' id ':' expr4 ( ',' id ':' expr4 )* ')' --> {expr:object,par:{id:G(expr4),...}}
+# array   :: '[' ']' | '[' expr4 ( ',' expr4 )* ']'     --> {expr:array,par:[G(expr4),...]}
 function get_primary($context,&$expr) {
   global $last_lc, $typ, $lex, $head;
   $id= '';
@@ -4075,7 +4105,6 @@ function get_primary($context,&$expr) {
     else {
       # id --> {expr:name,name:id}              // id znamená vlastně id.get
       $expr= (object)array('expr'=>'name','name'=>$id,'lc'=>$last_lc);
-//      $expr= (object)array('expr'=>'call','op'=>"$id.get");
       $expr->lc= $last_lc;
     }
   }
@@ -4083,6 +4112,38 @@ function get_primary($context,&$expr) {
     # '(' expr4 ')' --> G(expr4)
     get_expr4($context,$expr);
     get_delimiter(')');
+  }
+  elseif ( get_if_delimiter('{') ) {
+    # '{' '}' | '{' id ':' expr4 ( ',' id ':' expr4 )* ')' --> {expr:object,par:{id:G(expr4),...]}
+    $ok= true;
+    $expr= (object)array('expr'=>'object','lc'=>$last_lc,'par'=>array());
+    if ( !get_if_delimiter('}') ) {
+      $arg= null;
+      while ( $ok ) {
+        get_id($id);
+        get_delimiter(':');
+        get_expr4($context,$arg);
+        $expr->par[$id]= $arg;
+        $ok= get_if_delimiter(',');
+      }
+      get_delimiter('}');
+      $ok= true;
+    }
+  }
+  elseif ( get_if_delimiter('[') ) {
+    # '[' ']' | '[' expr4 ( ',' expr4 )* ']'     --> {expr:array,par:[G(expr4),...]}
+    $ok= true;
+    $expr= (object)array('expr'=>'array','lc'=>$last_lc,'par'=>array());
+    if ( !get_if_delimiter(']') ) {
+      $arg= null;
+      while ( $ok ) {
+        get_expr4($context,$arg);
+        $expr->par[]= $arg;
+        $ok= get_if_delimiter(',');
+      }
+      get_delimiter(']');
+      $ok= true;
+    }
   }
   elseif ( get_if_delimiter('`') ) {
     # '`' template* '`' --> {expr:templ,par:[G(templ),...]}
