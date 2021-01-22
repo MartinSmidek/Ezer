@@ -1340,7 +1340,7 @@ function gen2($pars,$vars,$c) {
       $block= array($test,$case->slist);
       $code[]= $block;
       if ( !$last ) {
-//        $code[]= (object)array('o'=>0,'go'=>2); // přeskočení testu - pokud není konec switch
+        $code[]= (object)array('o'=>0,'go'=>2); // přeskočení testu - pokud není konec switch
       }
     }
     $code[]= (object)array('o'=>'z','i'=>1,'end'=>$ends);  // pop expr
