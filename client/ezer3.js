@@ -5234,12 +5234,14 @@ class Elem extends Block {
     // zobrazení pokud je definován rozměr (šířka)
     if ( this.options._w!==undefined || this instanceof FieldDate )
       this.DOM_add(DOM);
-    // zpracování ostatních atributů - po zobrazení
-    if ( this.init ) this.init(1);
+//    // zpracování ostatních atributů - po zobrazení
+//    if ( this.init ) this.init(1);
     // element bude disabled podle atributu 'd' a stavu skill
     this.enable(this.skill==1 || this._fc('d') ? false : (this.options.enabled||true));
     // vložení podčástí
     this.subBlocks(desc,this.DOM_Block);
+    // zpracování ostatních atributů - po zobrazení a vložení podčástí
+    if ( this.init ) this.init(1);
   }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  initialize
   initialize () {
