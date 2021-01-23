@@ -1965,7 +1965,41 @@ class Item extends Block {
       this._click();            // jinak taky a provede onclick
     return 1;
   }
-// =======================================================================================> Item DOM
+// ------------------------------------------------------------------------------------ click
+//fi: Item.click_wait ([only=0])
+//      simulace kliknutí na item, narozdíl od Item.click čeká na dokončení onclick;
+//      pokud je only tak zavře jiné skupiny
+  click_wait (only) {
+    if ( only ) {
+//       $each(this.owner.owner.part,function(group,id) {        // projdi skupiny
+      for (let ig in this.owner.owner.part) {  // projdi skupiny
+        let group= this.owner.owner.part[ig];
+        if ( group.type=='menu.group' ) {
+          group._fold();
+        }
+      }
+    }
+    this._show();               // zajisti zobrazení itemu
+    // najdeme nejbližsší onclick
+    let o= null;
+    if (this.part) o= this.part.onclick;
+    if (!o && this.owner.part) o= this.owner.part.onclick;
+    if (!o && this.owner.owner.part) o= this.owner.owner.part.onclick;
+    if (o) {
+      new Eval([{o:'c',i:o.id,a:1,s:0}],o.context,[this],o.id,
+        {fce:this.click_wait_,args:[],stack:true,obj:this});
+    }
+    return this;
+  }
+  click_wait_() {
+    if ( this.continuation ) {
+      // konec modálního dialogu
+      this.continuation.stack[++this.continuation.top]= 1;
+      this.continuation.eval.apply(this.continuation,[0,1]);
+      this.continuation= null;
+    }
+    return 1;
+  }
 // ------------------------------------------------------------------------------------  DOM_add1
   DOM_add1 () {
   }
