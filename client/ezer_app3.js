@@ -429,6 +429,8 @@ class Application {
       var menu= [
         ['run (ctrl-Enter)',              function(el) { __run(); }],
         ['clear & run (shift-ctrl-Enter)',function(el) { Ezer.fce.clear(); __run(); }],
+        ['-disable clear',     function(el) { Ezer.fce.set_trace('-',1); }],
+        ['enable clear',       function(el) { Ezer.fce.set_trace('-',0); }],
         ["-trace: session",    function(el) { __run("php.test_session()"); }],
         ["trace: sys",         function(el) { __run("echo(debug(sys()))"); }],
         ["trace: database",    function(el) { __run(
@@ -4626,7 +4628,9 @@ Ezer.fce.prompt= function (msg,odpoved) {
 // vymaže obsah trasovacího okna
 //s: funkce
 Ezer.fce.clear= function () {
-  Ezer.App._clearTrace();
+  if (!Ezer.is_trace['-']) {
+    Ezer.App._clearTrace();
+  }
   Ezer.App._clearError();
   Ezer.fce.warning();
   return 1;
@@ -4658,7 +4662,8 @@ Ezer.fce.popup_help= function (html,title,ykey,xkey,seen,refs,db) {
 //      umožňuje zobrazit nebo skrýt testovací okno
 //    * pokud jsou použity 3 parametry, zapíná/vypíná trasování typu id (pro id=E) jen pro jména
 //      uvedená v seznamu ids
-//a: id - písmeno označující druh trasování
+//    * pokud id='-' a on=1 bude potlačena funkce mazání trasovacího okna fce.clear
+//a: id - písmeno označující druh trasování nebo 'clear' 
 //   on - 1 pro zapnutí, 0 pro vypnutí
 //   ids - seznam jmen, oddělených čárkou
 //s: funkce
