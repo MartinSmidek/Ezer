@@ -503,15 +503,15 @@ function table_lock($mode,$table='',$idt=0) {
       $ret->ok= pdo_affected_rows($res);
       if ($ret->ok===0) { // záznam table/0 již existuje
         list($idu2,$time2)= select('id_user,time','_lock',"`table`='$table' AND id_table='0'");
-        if ($idu2==$idu) { // aha, to jsem znovu já - chyba kódu
-          $ret->note= "entire $table still locked by $idu ";
-        }
-        else {
+//        if ($idu2==$idu) { // aha, to jsem znovu já - chyba kódu
+//          $ret->note= "entire $table still locked by $idu ";
+//        }
+//        else {
           list($forename,$surname)= select('forename,surname','_user',"id_user='$idu2'");
           $time= date('Y-m-d')==date('Y-m-d',$time2) ? date('H:i') : date('j.n.Y');
           $ret->info= "tabulka $table již má od $time zámek od $forename $surname";
           $ret->note= "entire $table already locked by $idu2 ";
-        }
+//        }
       }
       else { // zámek úspěšně umístěn - zjistíme, zda nejsou zamknuty její řádky
         $count= select('COUNT(*)','_lock',"`table`='$table'");
@@ -1667,7 +1667,7 @@ __XLS;
       # sheet name[;printarea[:o[:clear]][;page]]       kde o=L|P
       elseif ( preg_match(
         "/^sheet\s+$name\s*$area\s*(?:;(?<lpc>[\w:]+)|)\s*(?:;$fit\s*$/",$line,$m) ) {
-                                                         debug($m);
+//                                                         debug($m);
         $lpcs= explode(':',isset($m['lpc']) ? $m['lpc'] : '');
         $lp=    isset($lpcs[0]) ? $lpcs[0] : '';
         $clear= isset($lpcs[1]) ? $lpcs[1] : '';
