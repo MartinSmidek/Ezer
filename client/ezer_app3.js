@@ -505,6 +505,7 @@ class Application {
       this._barSwitch('q','kód interpreta');
       this._barSwitch('Q','kód interpreta (jen s ift,iff,is)');
       this._barSwitch('C','trasování kompilátoru');
+      this._barSwitch('-','blokování clear');
       // debugger
       var dbg= jQuery('form');
       if ( Ezer.options.dbg && dbg ) {
@@ -4118,7 +4119,7 @@ Ezer.fce.multiply= function (x,y) {
 //   x / y - celočíselné dělení (5/2=2)
 //s: funkce
 //a: x, y - dělenec, dělitel
-//r: celočíselný podíl
+//r: celočíselný podíl 
 Ezer.fce.divide= function (x,y) {
   var z= Number(x);
   z/= Number(y);
@@ -4373,7 +4374,7 @@ Ezer.fce.href= function (path) {
   // případný posun na udanou pozici
   if ( hs[1] ) {
     window.location.hash= hs[1];
-    window.location.hash= '';
+//    window.location.hash= '';
   }
   // fce musí vracet false kvůli použití v <a href='#' ...>
   return false;
