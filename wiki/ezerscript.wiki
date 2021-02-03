@@ -20,10 +20,12 @@ Gramatika jazyka ezerscript/func popisuje jazyk rozšiřující podmnožinu java
 * o iteraci složek form a list příkazem for-of a jejich indexování
 * o volání funkcí na serveru napsaných v PHP:      php.funkce(arg,...)
 * o volání funkcí klienta napsaných v javascriptu: js.funkce(arg,...)
-* o možnost specifikovat typ parametru
+* o asynchronní spuštění funkce ezescriptu: fork.funkce(arg,...)
+* o možnost specifikovat typ parametru a funkce
 * o možnost zacházet s atributy bloku předaného parametrem nebo uloženým do lokální proměnné typu 'ezer'
-není implementováno: precedence operátorů, příkazy s návěštím, ...
-      
+precedence operátorů je stejná jako v javascriptu;
+nejsou implementovány příkazy s návěštím, ...
+
    body     :: func '(' params ')' '{' [ 'var' varlist ] stmnts '}'
   params   :: id [':' type] (',' id [':' type] )* 
   varlist  :: id ':' type ( ',' id ':' type)*
@@ -36,7 +38,7 @@ není implementováno: precedence operátorů, příkazy s návěštím, ...
             | 'for' '(' id '=' expr ';' expr ';' stmnt ')' '{' stmnts '}'
             | 'for' '(' id 'of' expr ')' '{' stmnts '}'
             | 'while' '(' expr ')' '{' stmnts '}'
-            | 'break' | 'continue' | 'return' '(' [ expr ] ')'
+            | 'break' | 'continue' | 'return' [ expr ]
             | 'switch (' expr ') {' ('case' value ':' stmnts)* ['default' ':' stmnts] '}'
             | id '++' | id '--'
             | call
@@ -47,12 +49,12 @@ není implementováno: precedence operátorů, příkazy s návěštím, ...
   term     :: id | this | form | panel | area | value | '&' (id | this) 
             | id '[' expr ']' | call | '(' expr ')' 
 
-   call     :: id  args | 'php' '.' id args | 'js' '.' id args 
+   call     :: id  args | 'php' '.' id args | 'js' '.' id args | 'fork' '.' id args
   args     :: '(' [ expr ( ',' expr )* ] ')'
   op       :: '+' | '-' | '*' | '/' | '>' | '>=' | '<' | '<=' | '= =' | '!=' | '&&' | '||'           
  
    value    :: '`' (string | '${' expr '}' )* '`'
-            | '°{' id ':' value ( ',' id ':' value )* '}'
-            | '°[ value ( ',' id ':' value )* ']'
+            | '{' id ':' value ( ',' id ':' value )* '}'
+            | '[ value ( ',' id ':' value )* ']'
             | <string> | <number>
  

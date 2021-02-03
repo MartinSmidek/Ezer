@@ -570,7 +570,8 @@ function i_doc_final($class,$id,$info,$t) { #if ($t=='i') trace();
   case 'Events':        // tabulka:  ((id) (popis))
   case 'Returns':       // tabulka:  ((id) (popis))
 //     $n= preg_match_all("/[\s]*([\w\.\s:]+)([-]*)([^\n]+)\n/",$x,$xx);
-    $n= preg_match_all("/[\s]*(([\w\.\s:\]\[]|\-\S)+)([-]*)([^\n]+)\n/",$x,$xx);
+    $xx= null;
+    $n= preg_match_all("/[\s]*(([\w\.\s:\]\[]|\-\S)+)([-]*)([^\n]+)\n/u",$x,$xx);
 //     debug($xx,$x);
     $html= '';
     $tab= array();
