@@ -2018,8 +2018,8 @@ class Item extends Block {
         .addClass(this._fc('d') ? 'disabled3' : '')
         .appendTo(this.owner.DOM_Block.find('ul'))
         .click( e => {
-            if ( e.shiftKey ) return dbg_onshiftclick(this);
-            if ( !this.DOM_Block.hasClass('disabled3') && this.owner.owner.enabled ) {
+          if ( e.shiftKey ) return dbg_onshiftclick(this);
+          if ( !this.DOM_Block.hasClass('disabled3') && this.owner.owner.enabled ) {
             if ( this.owner.owner.owner.type!='panel.popup' )
               Ezer.pushState(href);
             this._click(e);
@@ -2027,9 +2027,9 @@ class Item extends Block {
           }
           return false;
         })
-        .dblclick( e => {
-            if ( e.shiftKey ) return dbg_onshiftclick(this);
-            if ( !this.DOM_Block.hasClass('disabled3') && this.owner.owner.enabled ) {
+        .contextmenu( e => {
+          e.stopPropagation();
+          if ( !this.DOM_Block.hasClass('disabled3') && this.owner.owner.enabled ) {
             if ( this.owner.owner.owner.type!='panel.popup' )
               Ezer.pushState(href);
             this.click(1);
