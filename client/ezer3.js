@@ -2026,6 +2026,16 @@ class Item extends Block {
             Ezer.fce.touch('block',this,'click');     // informace do _touch na server
           }
           return false;
+        })
+        .dblclick( e => {
+            if ( e.shiftKey ) return dbg_onshiftclick(this);
+            if ( !this.DOM_Block.hasClass('disabled3') && this.owner.owner.enabled ) {
+            if ( this.owner.owner.owner.type!='panel.popup' )
+              Ezer.pushState(href);
+            this.click(1);
+            Ezer.fce.touch('block',this,'click');     // informace do _touch na server
+          }
+          return false;
         });
       break;
     }
