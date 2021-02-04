@@ -992,7 +992,7 @@ function find_part_rel($name,&$full,$type='') { #trace();
 # ----------------------------------------------------------------------------------------- gen func
 # generuje kód funkcí
 function gen_func($c,&$desc,$name) {
-  global $error_code_context, $error_code_lc, $code_top, $func, $func_name, $returns;
+  global $error_code_context, $error_code_lc, $code_top, $begs, $ends, $func, $func_name, $returns;
   global $pragma_names, $proc_path, $depth;
 //                                                 debug($c,"gen_proc: $name");
   $func= $c;
@@ -1019,7 +1019,7 @@ function gen_func($c,&$desc,$name) {
     $c->par->{$id}+= $n;
   }
   // prázdná procedura obsahuje jen return
-  $depth= $returns= 0;
+  $depth= $returns= $begs= $ends= 0;
   $c= $c->code ? gen2($c->par,$c->var,$c->code) : array((object)array('o'=>'f','i'=>'stop'));
   if ($func->options->type && !$returns)
     comp_error("CODE: ve funkci '$func_name' s typem chybí return");
@@ -1319,7 +1319,7 @@ function gen2($pars,$vars,$c) {
     // case    = {case:value,body:G(slist)}
     // default = {body:G(slist)}
     // překlad složek
-    $ends++;
+    $begs++; $ends++;
     $code= array();
     $expr= gen2($pars,$vars,$c->of);
     $code[]= $expr;
@@ -1344,7 +1344,7 @@ function gen2($pars,$vars,$c) {
       }
     }
     $code[]= (object)array('o'=>'z','i'=>1,'end'=>$ends);  // pop expr
-    $ends--;
+    $begs--; $ends--;
     break;
   // -------------------------------------- break
   case 'break':
@@ -1377,7 +1377,7 @@ function gen_breaks($code) {
       $continues[$c->continue][]= $i;
       unset($c->continue);
     }
-    // konce bloků for* (mají beg i end) a switch (má jen end)
+    // konce bloků for* a switch 
     if ( isset($c->end) ) {
       if ( count($breaks[$c->end]) ) {
         foreach($breaks[$c->end] as $ibreak) {
