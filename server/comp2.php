@@ -731,9 +731,7 @@ function proc(&$c,$name) { #trace();
       else comp_error("CODE: atribut $id má neznámou konstantu {$c->options->rows}");
     }
     if ( $names[$id]->op=='oi' ) {
-      if ( $name=='*' ) {
-      }
-      else {
+      if ( $name!='*' && $name!='no') {
         $ids= explode('.',$name);
         $error_code_lc= $c->_lc;
         if ( $id=='data' ) {
@@ -1378,7 +1376,7 @@ function gen_breaks($code) {
       unset($c->continue);
     }
     // konce bloků for* a switch 
-    if ( isset($c->end) ) {
+    if ( isset($c->end) && $breaks[$c->end] ) {
       if ( count($breaks[$c->end]) ) {
         foreach($breaks[$c->end] as $ibreak) {
           // definujeme dopad - pro cykly přidáme 1, switch tam má vyčištění zosobníku
@@ -1599,8 +1597,11 @@ function name_split($name,$pars,$vars,$call=false) {
     if ( $obj && $obj->type=='var' ) {
       // nejprve zjistíme, zda není v rozšíření form
       if ( $obj->_init && in_array($obj->_of,array('form','area') ) ) {
-        if ( $ids && !isset($obj->part->$ids[0]) )
-          $obj= find_obj($obj->_init);
+        if ( $ids ) {
+          $id0= $ids[0];
+          if ( !isset($obj->part->$id0) )
+            $obj= find_obj($obj->_init);
+        }
       }
       elseif ( in_array($obj->_of,array('object','ezer','number','text','array') ) ) {
         $_of= $obj->_of;
@@ -1623,12 +1624,13 @@ function name_split($name,$pars,$vars,$call=false) {
         if ( $obj ) {
           if ( isset($obj->part->$id) ) {
             $obj= $obj->part->$id;
+            $id0= $ids[0];
             if ( $obj->type=='var' && in_array($obj->_of,array('object','ezer','number','text','array') ) ) {
               $_of= $obj->_of;
               $_of= $_of=='ezer' ? 'e' : ($_of=='object' ? 'o' : 's');
             }
             elseif ( $obj->type=='var' && in_array($obj->_of,array('form','area') ) 
-                && $obj->_init && $ids && !isset($obj->part->$ids[0]) ) {
+                && $obj->_init && $ids && !isset($obj->part->$id0) ) {
               $obj= find_obj($obj->_init);
               $full.= ".$id";
             }
