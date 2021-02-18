@@ -79,13 +79,13 @@
     "ezer2_fce.php",
     "$server/sys_doc.php",
     "$server/ezer2.php",
-    "$server/vendor/autoload.php"
+//    "$server/vendor/autoload.php"
   );
   
   // uživatelské i knihovní moduly v PHP obsažené v $ezer_path_root
   $ezer_php= array_merge(
-    array("ezer3.1/ezer2_fce.php"),
     $app_php
+//    array("ezer3.1/ezer2_fce.php")
   );
 
   // vložení modulů

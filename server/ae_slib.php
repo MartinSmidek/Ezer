@@ -1566,7 +1566,7 @@ function uw($x) {
 # -------------------------------------------------------------------------------------- Excel5 date
 # Excel5_date převede timestamp na excelovské datum
 function Excel5_date($tm) {  #trace();
-  require_once 'ezer3.1/server/vendor/autoload.php';
+//  require_once 'ezer3.1/server/vendor/autoload.php';
   return PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel($tm);
 }
 # ------------------------------------------------------------------------------------------- Excel5
