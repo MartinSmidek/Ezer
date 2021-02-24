@@ -44,14 +44,35 @@ panel ref [,,770,] {type:'right', title:'Reference', _sys:'*', skill:'m'
 }
 # =======================================================================================> Struktura
 panel str [,,770,] {type:'right', title:'Struktura', _sys:'*', skill:'m'
+  var php_app:text, php_sys:text
   menu m {type:'left', active:*
     menu stav {title:'stav',type:'group'
       item {title:'Ezer moduly'         proc onclick () { clear; u.fill(ask('doc_ezer')) } }
-      item {title:'PHP moduly'          proc onclick () { clear; u.fill(ask('doc_php')) } }
+      item {title:'PHP moduly'          par:{app:'*',sys:''}}
+      item {title:'... jen sys_doc'     par:{app:'',sys:'server/sys_doc.php'}}
+      item {title:'... jen kompilátor'  par:{app:'',sys:'server/comp2.php'}}
       item {title:'Seznam PHP funkcí'   proc onclick () { clear; u.fill(ask('doc_called')) } }
+      func onclick (i:ezer) { 
+        clear(); php_app= i.par.app; php_sys= i.par.sys;
+        u.fill(php.doc_php(php_app,php_sys));  
+      }
     }
   }
   use u: form f [0,0,,]
+  func str_click(id) { echo(id); cg.show(id) }
+  panel cg [0,0,300,300] { type:'popup' 
+    var name=''
+    func show(fce) { panel.title= fce; a.show(fce); panel.popup() }
+    use a: area a_
+    area a_ { 
+        title:"<div id='cg' style='overflow:auto;position:absolute;width:308px;height:306px'></div>"
+      func show(fce) { var obj: object
+        obj= php.doc_php_tree(fce,php_app,php_sys);
+        this.tree_show(obj,'cg',0,{theme:'mootree.gif',mode:'folders'});
+        this.tree_expand(2);
+      }
+    }
+  }
 }
 # ======================================================================================> Generování
 panel gen [,,770,] {type:'right', title:'Generování', _sys:'*', skill:'m'
@@ -530,7 +551,7 @@ panel meta [0,0,300,300] {type:'popup', _sys:'', title:'Struktura aplikace - men
   form t_ [,,300,300] {
     button [-1,11,,] { type:'html', title:"[fa-refresh]", proc onclick() { a.app }}
     use a: area a_
-    area a_ { title:"<div id='x' class='ae_work' style='overflow:auto;position:absolute;left:3px;top:10px;width:300px;height:300px'></div>"
+    area a_ { title:"<div id='x' class='ae_work' style='overflow:auto;width:300px;height:300px'></div>"
       proc app() { this.tree_show(meta_tree('_sys'),'x'); this.tree_expand(1) }
       proc tree_onclick(fid,id,dat,com,x,txt,txts) { var fd:text
         echo('tree click:',fid,'~',txt);
@@ -538,14 +559,8 @@ panel meta [0,0,300,300] {type:'popup', _sys:'', title:'Struktura aplikace - men
         name.set(txt);
         panel.hide(fd)
       }
-      proc tree_oncontextmenu(fid,id,dat,com,x,txt,txts) { var fd:text //, fname:text, win:object
-        //echo("tree_onclick: fid=",fid,", id=",id,", data=",dat,", x=",x,", txt=",txt,", txts=",txts);
-#         fname.set(conc(dat.pos.app,'/',dat.pos.file));
-#         win.set(function('name',
-#           "Ezer.sys.dbg.window=window.open('./ezer2.2/dbg.php?err=1&src='+name,'dbg','width=650,height=700,resizable=1,titlebar=0,menubar=0');",fname));
-#         fd.set(replace(fid,'\.\.','.'));
+      proc tree_oncontextmenu(fid,id,dat,com,x,txt,txts) { 
         name.set(txt);
-#         panel.close(fd)
       }
     }
   }

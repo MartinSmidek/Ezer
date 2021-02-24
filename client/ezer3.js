@@ -1661,7 +1661,9 @@ class MenuMain extends Menu {
 //t: Menu,Block
 //s: Block
 class MenuLeft extends Menu {
-//oi: MenuLeft.active - vnořený Item, který má být aktivní hned po startu, hvězdička aktivuje první item
+//oi: MenuLeft.active - vnořený Item, který má být aktivní hned po startu, 
+//                      hvězdička aktivuje první item, 'no' zamezí aktivaci z adresního řádku
+//                      (v tomn případě se aktivuje nadřazený panel či tabs či menu.main)
 //-
 //i: MenuLeft.onresize - volá se při změně šíře minimalizovatelného menu, parametr udává šíři v px
 //-

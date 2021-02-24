@@ -666,7 +666,7 @@ function link_code(&$c,$name,$isroot,$block) {
         }
       }
       else if ( $id=='sql_pipe' ) {
-        $fce= $desc;
+        list($fce)= explode(':',$desc);
         if ( !in_array($fce,$call_php) )
           $call_php[]= $fce;
       }
