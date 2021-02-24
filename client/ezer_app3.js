@@ -2280,9 +2280,15 @@ class Eval {
               if ( Ezer.to_trace ) {
                 if ( Ezer.is_trace.q )
                   this.trace((this.code?padNum(this.code.length,2):'  ')+'::'+(this.context?this.context.id:'?')+'.'+cc.i);
-                if ( Ezer.is_trace.E )
-                  this.trace_proc(cc.s||this.id,this.context.id+(cc.o=='C'?'.desc.':'.')+cc.i,
+                if ( Ezer.is_trace.E ) {
+                  let cc_s= cc.s;
+                  if (!cc_s && this.proc.desc._lc ) {
+                    let lcs= this.proc.desc._lc.split(',');
+                    cc_s= padNum(lcs[0],3)+' '+this.id;
+                  }
+                  this.trace_proc(cc_s||this.id,this.context.id+(cc.o=='C'?'.desc.':'.')+cc.i,
                     this.proc,this.nargs,this.nvars,'E',cc.i);
+                }
                 else if ( Ezer.is_trace.T && this.proc.trace )
                   this.trace_proc(cc.s||this.id,'>'+this.context.id+(cc.o=='C'?'.desc.':'.')+cc.i,
                     this.proc,this.nargs,this.nvars,'T',cc.i);
