@@ -57,6 +57,7 @@
       Ezer= {fce:{},obj:{}};
     </script>
     <script src="client/ezer_lib3.js" type="text/javascript" charset="utf-8"></script>
+    <script src="client/ezer_tree3.js" type="text/javascript" charset="utf-8"></script>
     <script src="dbg3.js" type="text/javascript" charset="utf-8"></script>
     <script type="text/javascript">
 // =====================================================================================> JAVASCRIPT
@@ -64,11 +65,12 @@
   var typ= '$typ';          // GET type=ezer 
   var start= '$start';      // GET start
   var pick= '$pick';        // GET pick
-  var src= not= [];         // array of DOM ezer, array of DOM poznámek
+  var src= not= [];         // array of DOM ezer, array of DOM poznámek, array of php function lines
   var help, log, prompt,    // DOM elements
-      lines, notes, files;
+      php, lines, notes, files;
   var doc, dbg;             // document aplikace a debuggeru
   var app= '$app';          // ajax
+  var cg= null;             // poslední call graph 
   //-var url= "$src";
   //-var open= false;       // editor
 
@@ -81,6 +83,7 @@
     prompt= jQuery('#prompt');
     help=   jQuery('#help');
     lines=  jQuery('#lines');
+    php=  jQuery('#php');
     notes=  jQuery('#notes');
     files=  jQuery('#files');
     // reakce na zavření dbg okna 
@@ -112,9 +115,25 @@
       select#files {
         background-color: silver; position:absolute; height:20px; width:120px; }
       ul#notes  {
-        overflow-y: scroll; padding: 0; margin-top:20px; height:calc(100% - 20px); }
+        overflow-y: scroll; padding: 0; margin-top:20px; margin-bottom: 0; height:calc(100% - 20px); }
       ul#notes li {
         cursor: alias; }
+      /* ----------------------- php source */
+      div#php {
+        padding: 0; overflow-y: scroll; top:50%; height: 50%;
+        left: 120px; right: 0px; position: absolute; 
+        background-color:#e5f2ff; margin-top: 5px; border-top: 3px double black; }
+      div#php-border {
+        position: fixed; left: 747px; width: 0; top: 0; height: 100%; 
+        border-right: 1px solid #ff00004a; }
+      #php ul {
+        padding: 0; margin-top: 0; scroll-behavior: smooth;}
+      #php li span.line {
+        background-color:#cce; }
+      #php li:first-child {
+        background-color:#cce; }
+      #php span.call {
+        background-color:#cce; cursor:pointer; font-weight: bold; }
       /* ----------------------- source */
       div#lines {
         padding: 0; overflow-y: scroll; height: 100%;
@@ -182,6 +201,15 @@
         background-color:#ddeeff; }
       .dbg table.dbg_object {
         background-color:#ffffaa; }
+      /* ----------------------==> mooTree */
+.mooTree_node {
+  font-family: Verdana, Arial, Helvetica; font-size: 10px; white-space: nowrap; }
+.mooTree_text {
+  padding-top: 3px; height: 15px; cursor: pointer; }
+.mooTree_img {
+  float: left; width: 18px; height: 18px; overflow: hidden; }
+.mooTree_selected {
+  background-color: #e0f0ff; font-weight: bold; margin-right: 10px; }
       /* ----------------------- context menu */
 .ContextMenu3 { border:1px solid #ccc; padding:2px; background:#fff; width:200px; list-style-type:none;
   display:none; position:absolute; box-shadow:5px 5px 10px #567; cursor:default; }
@@ -196,7 +224,7 @@
     </style>
   </head>
   <body id='body' style="background-color:$background;">
-    <div id="help">...</div>
+    <div id="help" style='display:none'>...</div>
     <div id='work'>
       <div id='filnot'>
         <select id='files' onchange="dbg_reload(this.value);">
@@ -211,6 +239,10 @@
       <span id='log'></span>
       <span id='prompt'><span></span><input></span>
     </div>
+    <div id='php' style='display:none'>
+      <div id='php-border'></div>
+      <ul><li>lines</li></ul>
+    </div>
   </body>
 </html>
 __EOD;
@@ -222,6 +254,42 @@ __EOD;
 function dbg_server($x) {
   $y= $x;
   switch ($x->cmd) {
+  case 'source_php':
+    $ezer_root= $x->app;
+    $fce= $x->fce;
+//    $abs_root= $_SESSION[$ezer_root]['abs_root'];
+    $cg= $_SESSION[$ezer_root]['CG'];
+    if (isset($cg->cg_calls) && isset($cg->cg_calls[$fce])) {
+      // zjištění seznamu bezprostředně volaných funkcí
+      $y->calls= $cg->cg_calls[$fce][0];
+      // získání řádků s textem funkce
+      $fname= $cg->cg_phps[$cg->cg_calls[$fce][1]];
+      $line1= $cg->cg_calls[$fce][2];
+      $line2= $cg->cg_calls[$fce][3];
+      $y->lines= array("$fce: $fname ($line1-$line2)");
+      $file= new SplFileObject($fname);
+      $file->setFlags(SplFileObject::DROP_NEW_LINE);
+      $lines= array();
+      for ($ln= $line1; $ln<=$line2; $ln++) {
+        $file->seek($ln-1); 
+        $txt= $file->current();
+        if ($txt===false) break;
+        $lines[$ln]= $txt;
+      }
+      // zrušení řádků s komentáři na konci funkce
+      $senil= array_reverse($lines,true);
+      foreach ($senil as $ln=>$line) {
+        if (!preg_match("~^(#|//|/\*)~",$line)) break;
+        unset($lines[$ln]);
+      }
+      foreach ($lines as $ln=>$line) {
+        $y->lines[$ln]= $line;
+      }
+    }
+    else {
+      $y->lines= array("zdrojový modul PHP funkce '$fce' nelze najít");
+    }
+    break;
   case 'source':
     $file= "{$x->file}.ezer";
     $name= "{$x->app}/$file";

@@ -2836,7 +2836,8 @@ function save_file($path,$text) {
 # ---------------------------------------------------------------------------------------- item_help
 # typ=ezer|php
 function item_help($typ,$item) {
-  global $ezer_path_serv, $ezer_root;
+  global $ezer_path_serv, $ezer_path_root, $ezer_root;
+  $item= strtolower($item);
   $ret= (object)array(
     'html'=>$item,
     'item'=>$item
@@ -2844,11 +2845,22 @@ function item_help($typ,$item) {
   switch ($typ) {
   case 'php':
     // prohledání php-modulů
-    $ret->trace= $names= doc_ezer(true);
-    if ( isset($names[$item]) && $names[$item]->typ=='php' ) {
-      $ret->html= "$item je PHP funkce z {$names[$item]->php}";
-      $ret->typ= 'php';
-      $ret->php= $names[$item]->php;
+//    $ret->trace= $names= doc_ezer(true);
+//    if ( isset($names[$item]) && $names[$item]->typ=='php' ) {
+//      $ret->html= "$item je PHP funkce z {$names[$item]->php}";
+//      $ret->typ= 'php';
+//      $ret->php= $names[$item]->php;
+//    }
+    $cg= doc_php_cg();
+    if (isset($cg->called[$item])) {
+      $fpath= $cg->cg_phps[$cg->cg_calls[$item][1]];
+      $ret->cg= doc_php_tree($item);
+      $ret->php= str_replace("$ezer_path_root/",'',$fpath);
+      $ret->line= $cg->lines[$item];
+      $ret->html= "<b>$item</b> je PHP funkce aplikace z {$ret->php};{$ret->line}";
+    }
+    else {
+      $ret->html= "$item není PHP funkce aplikace";
     }
     break;
   case 'ezer':

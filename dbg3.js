@@ -36,6 +36,12 @@ function dbg_onclick_start(file) {
 //          dbg.dbg_write(`ask of PHP function ${fce}`);
           dbg_find_help ('php',fce);
         }
+        else if ( text=='php' ) {
+          let line= dbg.src[l].text(),
+              fce= line.match(/php\.(\w*)/)[1];
+//          dbg.dbg_write(`ask of PHP function ${fce}`);
+          dbg_find_help ('php',fce);
+        }
         else {
           dbg.dbg_find_help(dbg.typ,text);
         }
@@ -138,24 +144,24 @@ function dbg_onclick_start(file) {
                 touch('break',0);
                 return false;
             }],
-            ["-vyhodnoť tělo proc", function(el) {
-                dbg_prompt(`výraz je v kontextu procedury ${elem.id}`,dbg_last_script,
-                    function(script){
-                      dbg_last_script= script;
-                      dbg_script(script,block,'proc',0);
-                      return false;
-                    },menu_el);
-                return false;
-            }],
-            [" ... s trasováním", function(el) {
-                dbg_prompt(`výraz je v kontextu procedury ${elem.id}`,dbg_last_script,
-                    function(script){
-                      dbg_last_script= script;
-                      dbg_script(script,block,'proc',1);
-                      return false;
-                    },menu_el);
-                return false;
-            }],
+//            ["-vyhodnoť tělo proc", function(el) {
+//                dbg_prompt(`výraz je v kontextu procedury ${elem.id}`,dbg_last_script,
+//                    function(script){
+//                      dbg_last_script= script;
+//                      dbg_script(script,block,'proc',0);
+//                      return false;
+//                    },menu_el);
+//                return false;
+//            }],
+//            [" ... s trasováním", function(el) {
+//                dbg_prompt(`výraz je v kontextu procedury ${elem.id}`,dbg_last_script,
+//                    function(script){
+//                      dbg_last_script= script;
+//                      dbg_script(script,block,'proc',1);
+//                      return false;
+//                    },menu_el);
+//                return false;
+//            }],
             ["-vyhodnoť tělo func", function(el) {
                 dbg_prompt(`výraz je v kontextu procedury ${elem.id}`,dbg_last_script,
                     function(script){
@@ -450,6 +456,15 @@ function dbg_clear() {
   dbg.log.css({display:'none'});
   dbg.prompt.css({display:'none'});
   dbg.help.css({display:'none'});
+  dbg.php.css({display:'none'});
+}
+// -------------------------------------------------------------------------------------- dbg reload
+function dbg_reload_php(fce) {
+  let app= opener ? opener.Ezer.root : window.Ezer.root;
+  dbg_ask({cmd:'source_php',app:app,fce:fce},dbg_reload_php_);
+}
+function dbg_reload_php_(y) {
+  dbg_show_php(y.lines,y.calls); 
 }
 // -------------------------------------------------------------------------------------- dbg reload
 function dbg_reload(file,ln=0) {
@@ -548,6 +563,27 @@ function dbg_show_help(ret) {
   else {
     dbg.dbg_write(ret.html);
   }
+}
+// -------------------------------------------------------------------------------==> . dbg show_php
+// zobrazení textu PHP funkce
+function dbg_show_php(lns,cls) {
+  doc.Ezer.fce.echo(doc.Ezer.fce.debug(lns));
+  // odstraň staré src
+//  cls.push('cg');
+  let ul= dbg.php.find('ul'),
+      rex= '(^|\\W)('+cls.join('|')+')(\\s*\\()';
+  rex= new RegExp(rex,"gi");
+  ul.empty();
+  // zobraz text
+  for (let lni in lns) {
+    let iln= lni==0?'':lni, 
+        ln= htmlentities(lns[lni]);
+    ln= ln.replace(rex,"$1<span class='call' onclick='dbg_reload_php(\"$2\");'>$2</span>$3")  
+    dbg.jQuery(
+      `<li><span class="line">${iln}</span><span class="text">${ln}</span></li>`)
+      .appendTo(ul);
+  }
+  jQuery('#php').scrollTop(0);
 }
 // ------------------------------------------------------------------------------==> . dbg show_text
 // zobrazení textu ve struktuře
@@ -674,16 +710,90 @@ function dbg_write (msg,append=false) {
 // ----------------------------------------------------------------------------------- dbg find_help
 // dotaz na server o help pro daný item
 function dbg_find_help (typ,item) {
-  dbg.doc_ask('item_help',[typ,item],_dbg_find_help);
+  dbg.doc_ask('item_help',[typ,item],_dbg_find_help); // fce z ezer2.php
 }
 function _dbg_find_help(y) { 
   if ( y.args[0]=='php' ) {
     dbg.dbg_write(y.value.html);
+    dbg.cg= y.value.cg;
+    dbg_make_tree(y.value.cg);
   }
   else {
     doc.Ezer.sys.dbg.win_ezer.dbg_show_help(y.value);
   }
   return y.value;
+}
+// ----------------------------------------------------------------------------------- dbg make_tree
+function dbg_make_tree(cg) {
+  // načte další generaci pod root podle popisu v desc
+  function load(root,desc) {
+    if ( desc.down ) {
+      for (var i= 0; i<desc.down.length; i++) {
+        var down= desc.down[i];
+        if ( !down.prop.text )
+          down.prop.text= down.prop.data && down.prop.data.name||down.prop.id;
+        // úprava down.prop.id na složené jméno
+        down.prop.id= root.id+'.'+down.prop.id;
+        var node= root.insert(down.prop);
+        load(node,down);
+      }
+    }
+  }
+  function tree_expand (n) {
+    tree.collapse();
+    if ( n )
+      tree.root.toggle(true, true, n-1);
+  }
+  var active= null;
+  let tree= new MooTreeControl({
+        div:jQuery(`#help`),
+        grid:true,
+        mode:'files',             
+        path:'.'+doc.Ezer.paths.images_lib,     // cesta k mootree.gif
+        theme:'mootree.gif',
+        // ----------------------------------------------------------------- onclick
+        onClick: function(node,context) { // při kliknutí na libovolný uzel context=true/undefined
+          // spočítáme sumu data - shora dolů
+          if ( node ) {
+            var data= {}, datas= [], texts= '', del= '';
+            for (var x= node; x; x= x.parent) {
+              datas.unshift(x.data);
+              texts= (x.text||'')+del+texts; del= '|';
+            }
+            for (let d of datas) {
+              Object.assign(data,d);
+            }
+            var ndata= JSON.stringify(node.data, undefined, 2);
+            var adata= JSON.stringify(data, undefined, 2);
+            var fid= node.id.split('.');
+            var fce= fid[fid.length-1].replace('* ','');
+            if ( context ) {
+              window.event.preventDefault();
+              doc.Ezer.fce.echo('context:',fce,';',ndata);
+            }
+            else {
+              doc.Ezer.fce.echo('click:',fce,';',ndata);
+              dbg.php.show();
+              dbg_reload_php(fce);
+            }
+          }
+          return false;
+        }
+      },{
+        text:cg.prop.id,open:true
+      });
+  tree.disable(); // potlačí zobrazení
+  if ( cg && cg.prop ) {
+    Object.assign(tree.root,cg.prop);
+    tree.root.text= tree.root.data && tree.root.data.name||tree.root.id;
+    tree.index[tree.root.id]= tree.root;
+    load(tree.root,cg);
+    tree.expand();
+    tree_expand(3);
+  }
+  if ( active && tree.get(active) )
+    tree.select(tree.get(active));
+  tree.enable(); // zviditelní
 }
 // --------------------------------------------------------------------------------------- get caret
 function get_caret() {
