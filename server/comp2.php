@@ -1507,7 +1507,7 @@ function name_split($name,$pars,$vars,$call=false) {
   $_of= ''; // e|o|s
   // ----------------------------------------------------------- L - lokální proměnná či parametr
   if ( isset($vars->$id) || isset($pars->$id) ) { 
-    $_of= isset($vars->$id) ? $func->vars[$id] : $func->pars->$id ?: 'void';
+    $_of= isset($vars->$id) ? $func->vars[$id] : ($func->pars->$id ?: 'void');
     $_of= $_of=='ezer' ? 'e' : ($_of=='object' ? 'o' : 's');
     $s->bas->typ= 'L';
     $s->bas->nam= isset($vars->$id) ? $vars->$id : $pars->$id; // poloha v zásobníku
