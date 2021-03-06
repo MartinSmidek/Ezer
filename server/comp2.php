@@ -28,14 +28,14 @@ function comp_file ($name,$root='',$_list_only='',$_comp_php=false) {  #trace();
     $code, $module, $procs, $context, $ezer_name, $ezer_app, $errors, $includes, $onloads;
   global $pragma_library, $pragma_syntax, $pragma_attrs, $pragma_names, $pragma_get, $pragma_prefix,
     $pragma_group, $pragma_box, $pragma_if, $pragma_switch;
-  global $call_php;
+  global $call_php, $call_ezer;
   global $doxygen;    // $doxygen=1 pokud se má do složky data generovat *.cpp pro doxygen
   $list_only= $_list_only;
   $comp_php= $_comp_php;
   $doxygen= 1;
   $errors= 0;
   try {
-    $call_php= $includes= $including= $onloads= array();
+    $call_php= $call_ezer= $includes= $including= $onloads= array();
     $is_library= false;
     $ezer_name= $name;
     $ezer_app= $root;
@@ -238,7 +238,7 @@ function comp_file ($name,$root='',$_list_only='',$_comp_php=false) {  #trace();
     $loads->code= $code;
                                                         if ($_GET['trace']==4) debug($loads,"kód");
     // informace o kódu pro informaci o struktuře aplikace
-    $loads->info= (object)array('php'=>$call_php);
+    $loads->info= (object)array('php'=>$call_php,'ezer'=>$call_ezer);
     $json_loads= json_encode($loads,JSON_HEX_AMP);
     // zabezpečení přenosy vnořených uvozovek a zpětných lomítek
     file_put_contents($cname,$json_loads);
@@ -357,8 +357,8 @@ function dbg_context_load ($ctx) {  #trace();
   // části funkce comp2:comp_file
   require_once("ezer3.1/server/comp2.php");
   global $ezer_path_root, $including, $code, $context, $errors, $includes;
-  global $call_php;
-  $call_php= array();
+  global $call_php, $call_ezer;
+  $call_php= $call_ezer= array();
   $errors= 0;
   try {
     // definice kompilačního prostředí
@@ -987,11 +987,39 @@ function find_part_rel($name,&$full,$type='') { #trace();
   return $obj;
 }
 # ================================================================================================== GEN func
+# ----------------------------------------------------------------------------------------- add call
+# přidá ezer-fce volání do CG
+# lc označuje začátek složeného jména name
+function add_call($proc,$lc='',$name='') {
+  global $call_ezer, $func_name_lc;
+  // vložíme do seznamu ezer-funkcí
+  $id= $proc->options->name;
+  $id_lc= $id.'.'.str_replace(',','.',$proc->_lc);
+  if ($lc) {
+    list($l,$c)= explode(',',$lc);
+    $c+= strlen($name)-strlen($id);
+    $lc= "-$l.$c";
+  }
+  $call_ezer[$func_name_lc][]= $id_lc.$lc;
+}
+# ------------------------------------------------------------------------------------- add call_php
+# přidá ezer-fce volání do CG
+# lc označuje začátek php.name pro ask=0 nebo ask('name pro ask=1
+function add_call_php($name,$lc='',$ask=0) {
+  global $call_ezer, $func_name_lc;
+  // vložíme do seznamu ezer-funkcí
+  if ($lc) {
+    list($l,$c)= explode(',',$lc);
+    $c+= $ask ? 5 : 4;
+    $lc= "-$l.$c";
+  }
+  $call_ezer[$func_name_lc][]= '$'.$name.$lc;
+}
 # ----------------------------------------------------------------------------------------- gen func
 # generuje kód funkcí
 function gen_func($c,&$desc,$name) {
   global $error_code_context, $error_code_lc, $code_top, $begs, $ends, $func, $func_name, $returns;
-  global $pragma_names, $proc_path, $depth;
+  global $pragma_names, $proc_path, $depth, $call_ezer, $func_name_lc;
 //                                                 debug($c,"gen_proc: $name");
   $func= $c;
   $func_name= explode('.',$name);
@@ -1016,6 +1044,9 @@ function gen_func($c,&$desc,$name) {
   foreach($c->par as $id=>$typ) {
     $c->par->{$id}+= $n;
   }
+  // vložíme do seznamu ezer-funkcí
+  $func_name_lc= $func_name.'.'.str_replace(',','.',$c->_lc);
+  $call_ezer[$func_name_lc]= array();
   // prázdná procedura obsahuje jen return
   $depth= $returns= $begs= $ends= 0;
   $c= $c->code ? gen2($c->par,$c->var,$c->code) : array((object)array('o'=>'f','i'=>'stop'));
@@ -1030,7 +1061,7 @@ function gen_func($c,&$desc,$name) {
 #   $i je použit pro překladu call
 #   $depth je hloubka zanoření cyklů a switch - používá se pro doplnění překladu break a continue
 function gen2($pars,$vars,$c) {
-  global $code_top, $call_php, $begs, $ends, $func, $func_name, $func_expr, $returns;
+  global $code_top, $call_php, $call_ezer, $begs, $ends, $func, $func_name, $func_expr, $returns;
   $expr= function ($c,$ref=false) use ($vars,$pars) {
     if ( $c->expr=='name' ) {
       $right= name_split($c->name,$pars,$vars);
@@ -1155,6 +1186,7 @@ function gen2($pars,$vars,$c) {
     $npar= count($c->par);
     if ( $c->op=='ask' ) {
       $ask= $c->par[0]->value;
+      add_call_php($ask,$c->lc);
       if ( !in_array($ask,$call_php) )
         $call_php[]= $ask;
       for ($i= 1; $i<$npar; $i++) {
@@ -1165,7 +1197,7 @@ function gen2($pars,$vars,$c) {
       $code[]= $call;
     }
     elseif ( $c->op=='fork' ) {
-      $op= name_split("{$c->par[0]}.call",$pars,$vars,true);
+      $op= name_split("{$c->par[0]}.call",$pars,$vars,true,$c->lc);
       $args= array((object)array('o'=>'v','v'=>$c->par[1]));
       for ($i= 2; $i<$npar; $i++) {
         $args[]= gen2($pars,$vars,$c->par[$i]);
@@ -1173,7 +1205,7 @@ function gen2($pars,$vars,$c) {
       $code= gen_caller($op,$args); 
     }
     else {
-      $op= name_split($c->op,$pars,$vars,true);
+      $op= name_split($c->op,$pars,$vars,true,$c->lc);
       $args= array();
       for ($i= 0; $i<$npar; $i++) {
         $args[]= gen2($pars,$vars,$c->par[$i]);
@@ -1484,7 +1516,7 @@ end:
 # nepovinný atribut je jméno z tabulky $names typu oo,os,oi 
 # nepovinný selektor je posloupnost identifikátorů 
 # rel - cesta z this
-function name_split($name,$pars,$vars,$call=false) { 
+function name_split($name,$pars,$vars,$call=false,$lc='') { 
   global $context, $names, $func, /*$func_name, $list_only*/ $func_expr;
   // struktura výsledku
   $s= (object)array(
@@ -1682,6 +1714,7 @@ function name_split($name,$pars,$vars,$call=false) {
     $s->type= $obj->type;
     if ( $obj->type=='proc' ) {
       $s->call= (object)array('o'=>'c','i'=>$full,'p'=>count((array)$obj->par));
+      add_call($obj,$lc,$name); // přidáme do CG
       $nvars= count((array)$obj->vars);
       if ( $nvars ) $s->call->v= $nvars;
     }
@@ -1908,6 +1941,7 @@ function gen_setter($s,$value,$index=null) {
 function gen_proc($c,&$desc,$name) {
   global $error_code_context, $error_code_lc, $code_top;
   global $pragma_names, $proc_path;
+  global $call_ezer, $func_name_lc;
 //                                                 debug($c,"gen_proc: $name");
   $error_code_context= " v procedure $name";  $error_code_lc= $c->_lc;
   $desc->par= $c->par;
@@ -1929,6 +1963,9 @@ function gen_proc($c,&$desc,$name) {
   foreach($c->par as $id=>$typ) {
     $c->par->{$id}+= $n;
   }
+  // vložíme do seznamu ezer-funkcí
+  $func_name_lc= $c->options->name.'.'.str_replace(',','.',$c->_lc);
+  $call_ezer[$func_name_lc]= array();
 // prázdná procedura obsahuje jen return
   $struct= null;
   $c= $c->code ? gen($c->par,$c->var,$c->code,0,$struct) : array((object)array('o'=>'f','i'=>'stop'));
@@ -2132,7 +2169,7 @@ function plain($c,&$pc) {
 # ----------------------------------------------------------------------------------------- gen name
 # přeloží výraz utvořený (složeným) jménem (bez argumentů)
 # name :: id ( '.' id )*
-function gen_name($name,$pars,$vars,&$obj,$first,$c=null,$nargs=null) {  #trace();
+function gen_name($name,$pars,$vars,&$obj,$first,$c=null,$nargs=null,$lc='') {  #trace();
   global $context, $names, $code_top, $error_code_lc, $pragma_names;
   if ( $c && $c->lc ) $error_code_lc= $c->lc;
   $code= array();
@@ -2276,6 +2313,7 @@ function gen_name($name,$pars,$vars,&$obj,$first,$c=null,$nargs=null) {  #trace(
     }
     if ( $obj->type=='proc' ) {
       $code[0]= (object)array('o'=>($is_desc?'C':'c'),'i'=>$full);
+      add_call($obj,$lc,$name); // přidáme do CG
       // test počtu argumentů
       $npars= count((array)$obj->par);
       if ( $nargs!==null && $nargs!=$npars ) {
@@ -2340,6 +2378,8 @@ function gen_name($name,$pars,$vars,&$obj,$first,$c=null,$nargs=null) {  #trace(
           // jde buďto o referenci 'o': op!='' || nargs==null
           // nebo o volání metody  'c': op=='' && nargs>=0
           $code[0]= (object)array('o'=>!$op && $nargs!==null ?'c':'o','i'=>$full);
+          if ($code[0]->o=='c') 
+            add_call($obj,$lc,$name); // přidáme do CG
           if ( $op ) {
             $type= $names[$op]->op;
             $o= $type[0]=='o' ? 'a' : ($type=='fm' ? 'm' : ( $type=='fx' ? 'x' : ( $type=='fi' ? 'i' : null)));
@@ -2357,6 +2397,7 @@ function gen_name($name,$pars,$vars,&$obj,$first,$c=null,$nargs=null) {  #trace(
         $full.= ($is_this && $k==$k1) ? $id : ".$id";
         if ( $obj->type=='proc' ) {
           $code[0]= (object)array('o'=>($is_desc?'C':'c'),'i'=>$full);
+          add_call($obj,$lc,$name); // přidáme do CG
           $nvars= count((array)$obj->vars);
           if ( $nvars ) $code[0]->v= $nvars;
           if ( $c && $c->lc ) $code[0]->s= $c->lc;
@@ -2412,7 +2453,7 @@ function gen($pars,$vars,$c,$icall,&$struct) { #trace();
         $struct->arr[]= $struct1;
       }
       else {
-        $cc= gen_name($ci->name,$pars,$vars,$obj,false,$ci);
+        $cc= gen_name($ci->name,$pars,$vars,$obj,false,$ci,null,$ci->lc);
       }
       $code[$i]= $cc;
     }
@@ -2422,7 +2463,7 @@ function gen($pars,$vars,$c,$icall,&$struct) { #trace();
       $c->name= 'this.get';
                                                     display("pragma: osamocené get");
     }
-    $code= gen_name($c->name,$pars,$vars,$obj,true,$c);
+    $code= gen_name($c->name,$pars,$vars,$obj,true,$c,null,$c->lc);
     break;
   case 'call':
     $code= array();
@@ -2430,6 +2471,7 @@ function gen($pars,$vars,$c,$icall,&$struct) { #trace();
     if ( $c->op=='ask' ) {
       if ( $c->par[0] && $c->par[0]->value && $c->par[0]->type=='s' ) {
         $ask= $c->par[0]->value;
+        add_call_php($ask,$c->lc,1);
         if ( !in_array($ask,$call_php) )
           $call_php[]= $ask;
       }
@@ -2517,11 +2559,11 @@ function gen($pars,$vars,$c,$icall,&$struct) { #trace();
           if ( $fce && $fce->type=='proc' ) {
             $nfpar= count((array)$fce->par);
             if ( $nfpar==1 || $nfpar==2 ) {
-              $x= gen($pars,$vars,$c->par[0],0,$struct1);
+//              $x= gen($pars,$vars,$c->par[0],0,$struct1);
               $f= array();
               $inic= (object)array('o'=>'K');
               $test= (object)array('o'=>'L','i'=>$nfpar,'go'=>count((array)$f)+3);
-              $f= gen_name($c->par[1]->name,$pars,$vars,$obj,true,$c->par[1]);
+              $f= gen_name($c->par[1]->name,$pars,$vars,$obj,true,$c->par[1],null,$c->par[1]->lc);
               $f[count($f)-1]->a= $nfpar;
               $f[count($f)-1]->ift= -count($f);
               $popx= (object)array('o'=>'z','i'=>1,'nojmp'=>1);
@@ -2546,7 +2588,8 @@ function gen($pars,$vars,$c,$icall,&$struct) { #trace();
           $code[]= (object)array('o'=>'y','c'=>gen($pars,$vars,$c->par[0],0,$struct1),
             'str_c'=>$c->par[0],'str_s'=>$struct1);
           $struct->arr[]= $struct1;
-          $code[]= (object)array('o'=>'y','c'=>gen_name($c->par[1]->name,$pars,$vars,$obj,true,$c->par[1]));
+          $code[]= (object)array('o'=>'y',
+              'c'=>gen_name($c->par[1]->name,$pars,$vars,$obj,true,$c->par[1],null,$c->par[1]->lc));
           for ($i= 2; $i<count($c->par); $i++) {
             $code[]= gen($pars,$vars,$c->par[$i],0,$struct1);
             $struct->arr[]= $struct1;
@@ -2630,7 +2673,7 @@ function gen($pars,$vars,$c,$icall,&$struct) { #trace();
         }
         else comp_error("CODE: metoda '$cname' má chybné jméno funkce na serveru");
       }
-      $code= gen_name($c->op,$pars,$vars,$obj,$icall==0,$c,$npar);
+      $code= gen_name($c->op,$pars,$vars,$obj,$icall==0,$c,$npar,$c->lc);
 //                                                     debug($code,"** call");
       $cend= count($code)-1;
       $call= $code[$cend];
@@ -2764,6 +2807,8 @@ function get_ezer_keys (&$keywords,&$attribs1,&$attribs2) {
 # -------------------------------------------------------------------------------------------- block
 # $root je nadřazený blok
 # block  :: vars 
+#         | 'use' id ':' 'form' _id [ form_enrichment ]
+#         | 'use' id ':' 'form' form
 #         | 'func' pars2 [ ':' type ] body2 
 #         | key [ id ] [':' key id] [pars|args] [coord] [code] [struct]
 # struct :: '{' part (',' part)* '}' ]
@@ -2811,7 +2856,53 @@ function get_if_block ($root,&$block,&$id) {
         }
         if ( in_array('use_form' ,$specs[$key])
              && get_delimiter(':') && get_if_keyed_name($fg,$copy,$lc,$nt) ) {
-          if ( $fg=='form' || ($pragma_group && $fg=='group') ) {
+          if ( ($fg=='form' || $fg=='area') && $copy[0]=='$' ) {
+            // inline form je definována přímo v use - nejedná se o rozšíření pojmenované form
+            $block->type= 'var';
+            $block->_of= $fg;
+            $block->_init= $copy;
+            get_if_coord($block);
+            $ok= get_if_delimiter('{');
+            if ( $ok ) {
+              // vytvoříme form
+              $form= new stdClass;
+              $form->type= $fg;
+              $form->options= (object)array();
+              $form->id= $copy;
+              if ( !isset($root->part) ) $root->part= (object)array();
+              $root->part->$copy= $form;
+              // atributy
+              while ( $ok ) {
+                $aid= $aval= null;
+                if ( ($ok= get_if_attrib($fg,$aid,$aval)) ) {
+                  $form->options->$aid= $aval;
+                }
+                get_if_delimiter(',');
+              }
+              $ok= true;
+              // vnořené bloky
+              while ( $ok ) {
+                $xblock= $xid= null;
+                $ok= get_if_block($form,$xblock,$xid);
+                if ( $ok ) {
+                  if ( !isset($form->part) ) $form->part= (object)array();
+                  if ( is_array($xblock) ) {
+                    foreach($xblock as $xidx=>$xblockx) {
+                      $form->part->$xidx= $xblockx;
+                    }
+                  }
+                  else
+                    $form->part->$xid= $xblock;
+                }
+                get_if_delimiter(',');
+              }
+              if ( $doxygen ) $lc_= $pos[$head];
+              get_delimiter('}');
+            
+            }
+            else comp_error("chybí jméno form", $lc);
+          }
+          elseif ( $fg=='form' || ($pragma_group && $fg=='group') ) {
             $block->type= 'var';
             $block->_of= 'form';
             $block->_init= $copy;
@@ -2839,6 +2930,7 @@ function get_if_block ($root,&$block,&$id) {
         if ( in_array('code' ,$specs[$key])
              && get_code($pars,$code,$vars,$prior,$lc_)          ) { $block->code= $code;
                                                                      $block->options->code= 'proc';
+                                                                     $block->options->name= $id;
                                                                      $block->vars= $vars;
                                                      if ( $doxygen ) $block->lc_= $lc_;
                                                        if ( $prior ) $block->options->prior= $prior;
@@ -2847,6 +2939,7 @@ function get_if_block ($root,&$block,&$id) {
              && get_code2($pars,$type,$code,$vars,$prior,$lc_)         ) { $block->code= $code;
                                                                      $block->options->code= 'func';
                                                                      $block->options->type= $type;
+                                                                     $block->options->name= $id;
                                                                      $block->vars= $vars;
                                                      if ( $doxygen ) $block->lc_= $lc_;
                                                        if ( $prior ) $block->options->prior= $prior;

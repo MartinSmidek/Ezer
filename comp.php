@@ -206,7 +206,7 @@ __EOD
   // ------------------------------------------------------------------------------------ layout
   // výsledek
   if ( $_GET['all']!='yes' ) {
-    global $call_php;
+    global $call_php, $call_ezer;
     $calls= "<b>Kompilace:</b> $state";
     $calls.= "<br><br><b>PHP funkce volané ask a make:</b> "; $del= '';
     if ( $call_php ) {
@@ -214,6 +214,13 @@ __EOD
       foreach($call_php as $ask) {
         $calls.= "$del $ask";
         $del= ',';
+      }
+    }
+    if ($option_source && isset($call_ezer) && $call_ezer) {
+      $calls.= "<br><br><b>seznam funkcí ezerscriptu</b> "; $del= '';
+      foreach($call_ezer as $fce=>$called) {
+        $calls.= "$del $fce (".implode(',',$called).')';
+        $del= ';';
       }
     }
     // ? debug a trace
