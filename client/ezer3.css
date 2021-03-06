@@ -644,3 +644,10 @@ td.BrowseNoClmn img.sort {
   float: left; width: 18px; height: 18px; overflow: hidden; }
 .mooTree_selected {
   background-color: #e0f0ff; font-weight: bold; margin-right: 10px; }
+ /* ----------------------- inverzní CG */
+.inverzniCG .mooTree_node {
+  transform: scaleX(-1); }
+.inverzniCG .mooTree_text {
+  transform: scaleX(-1); direction: rtl; display: flex; }
+.inverzniCG div.mooTree_selected {
+  margin-right:0; }

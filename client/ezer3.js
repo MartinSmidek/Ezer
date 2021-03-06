@@ -2587,7 +2587,7 @@ class PanelPopup extends Panel {
 //fm: PanelPopup.popup (l,t,noevent=0,nomove=0)
 //      Ukáže panel, pro nomove=1 na původním místě
   popup (l,t,noevent=0,nomove=0) {
-    this._show(l,t,noevent,'',nomove);
+    this._show(l,t,noevent,undefined,nomove);
     return 1;
   }
 // -------------------------------------------------------------------------------------- hide

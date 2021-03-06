@@ -60,16 +60,31 @@ panel str [,,770,] {type:'right', title:'Struktura', _sys:'*', skill:'m'
   }
   use u: form f [0,0,,]
   func str_click(id) { echo(id); cg.show(id) }
-  panel cg [0,0,300,300] { type:'popup' 
-    var name=''
-    func show(fce) { panel.title= fce; a.show(fce); panel.popup() }
-    use a: area a_
-    area a_ { 
-        title:"<div id='cg' style='overflow:auto;position:absolute;width:308px;height:306px'></div>"
-      func show(fce) { var obj: object
-        obj= php.doc_php_tree(fce,php_app,php_sys);
-        this.tree_show(obj,'cg',0,{theme:'mootree.gif',mode:'folders'});
-        this.tree_expand(2);
+# ---------------------------------------------------- Call graf
+  panel cg [0,0,300,300] { type:'popup' title:'call graf'
+    var inverzni=0, // 0=graf volaných 1=graf volajících
+        expand=0,
+        fce:text    // zobrazovaná funkce
+    func show(_fce) { fce= _fce; 
+      f.a.show(fce); 
+      panel.popup() 
+    }
+    use f: form {
+      button [-13,0,,] { type:'html', title:"[fa-asterisk]", style:'margin-top:-30px', help:'rozbalit vše'
+        func onclick() { expand= 1-expand; a.show(fce) }}
+      button [-37,0,,] { type:'html', title:"[fa-long-arrow-left]", style:'margin-top:-30px', help:'inverzní call graf'
+        func onclick() { inverzni= 1; a.show(fce) }}
+      button [-61,0,,] { type:'html', title:"[fa-long-arrow-right]", style:'margin-top:-30px', help:'call graf'
+        func onclick() { inverzni= 0; a.show(fce) }}
+      use a: area { 
+          title:"<div id='cg' style='overflow:auto;position:absolute;width:308px;height:306px'></div>"
+        func show(fce) { var obj: object
+          panel.title= `${fce} - ${inverzni?'inverzní':''} call graf`; 
+          panel.set_css(inverzni?'inverzniCG':'',inverzni?'':'inverzniCG');
+          obj= php.doc_php_tree(fce,php_app,php_sys,inverzni);
+          this.tree_show(obj,'cg',0,{theme:'mootree.gif',mode:'folders'});
+          this.tree_expand(expand?99:1);
+        }
       }
     }
   }
@@ -546,12 +561,10 @@ group kernel {
 panel meta [0,0,300,300] {type:'popup', _sys:'', title:'Struktura aplikace - menu a panely'
   var name=''
   proc app() { panel.popup }
-  use t: form t_ [0,0,,]
   proc onfirstfocus() { t.a.app }
-  form t_ [,,300,300] {
+  use t: form [0,0,300,300] {
     button [-1,11,,] { type:'html', title:"[fa-refresh]", proc onclick() { a.app }}
-    use a: area a_
-    area a_ { title:"<div id='x' class='ae_work' style='overflow:auto;width:300px;height:300px'></div>"
+    use a: area { title:"<div id='x' class='ae_work' style='overflow:auto;width:300px;height:300px'></div>"
       proc app() { this.tree_show(meta_tree('_sys'),'x'); this.tree_expand(1) }
       proc tree_onclick(fid,id,dat,com,x,txt,txts) { var fd:text
         echo('tree click:',fid,'~',txt);

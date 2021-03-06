@@ -13,13 +13,13 @@ function dbg_onclick_start(file) {
     .click( el => {
       dbg.jQuery('li.pick').removeClass('pick');
       var ln= el.target.id.substr(2);
-      dbg_show_line(ln,'pick');
+      dbg_show_line(ln,'pick',el);
   })
   dbg.lines
     // -----------------------------------==> .. click na zdrojový text
     .click( el => {
       var l= dbg_context(el.target);
-      dbg_show_line(l,'pick');
+      dbg_show_line(l,'pick',el);
       dbg_clear();
     })
     // -----------------------------------==> .. dvojclick na zdrojový text
@@ -52,7 +52,7 @@ function dbg_onclick_start(file) {
       var l= dbg_context(menu_el.target),
           c= get_caret(),
           text= "lc="+l+','+c; 
-      dbg_show_line(l,'pick');
+      dbg_show_line(l,'pick',menu_el);
       let y= dbg_find_block(dbg.name,l,c), elem= y.elem, block= y.block;
       if ( block ) 
         text+= '<br><br> ... block '+block.id+' / '+block.type+' _lc-lc_='+block.desc._lc+'-'+block.desc.lc_;
@@ -455,7 +455,7 @@ jQuery.fn.extend({
 function dbg_clear() {
   dbg.log.css({display:'none'});
   dbg.prompt.css({display:'none'});
-  dbg.help.css({display:'none'});
+  dbg.help_div.css({display:'none'});
   dbg.php.css({display:'none'});
 }
 // -------------------------------------------------------------------------------------- dbg reload
@@ -464,24 +464,27 @@ function dbg_reload_php(fce) {
   dbg_ask({cmd:'source_php',app:app,fce:fce},dbg_reload_php_);
 }
 function dbg_reload_php_(y) {
-  dbg_show_php(y.lines,y.calls); 
+  dbg_show_php(y.lines,y.calls,y.start,y.header); 
 }
 // -------------------------------------------------------------------------------------- dbg reload
-function dbg_reload(file,ln=0) {
+function dbg_reload(file,ln=0,cg_on=0) {
   let app= opener ? opener.Ezer.root : window.Ezer.root;
-  dbg_ask({cmd:'source',app:app,file:file,line:ln},dbg_reload_);
+  dbg_ask({cmd:'source',app:app,file:file,line:ln},dbg_reload_,cg_on);
 }
-function dbg_reload_(y) {
+function dbg_reload_(y,cg_on) {
   dbg.name= y.name;
   doc.Ezer.sys.dbg.file= y.file;
   let files= doc.Ezer.sys.dbg.files;
+  if (files[y.file]==undefined) {
+    files[y.file]= {pick:Number(y.line),stop:0,traces:[],stops:[]};
+  }
   // -----------------------------------==> .. doplnění seznamu modulů
   dbg.files.empty();
   for (let file in files) {
     let selected= file==y.file ? ' selected' : '';
     dbg.jQuery(`<option${selected}>${file}</option>`).appendTo(dbg.files);
   }
-  dbg_show_text(y.lines); // obnoví src a not
+  dbg_show_text(y.lines,y.cg); // obnoví src a not
   dbg.focus();
   // -----------------------------------==> .. obnovení stavu
   for (let ln of files[y.file].stops) {
@@ -496,6 +499,7 @@ function dbg_reload_(y) {
   // pokud není definovaná line použij zapamatovanou
   let line= Number(y.line) ? Number(y.line) : files[y.file].pick;
   dbg.dbg_show_line(line,'pick');
+  if (cg_on) dbg.help_div.show();
 }
 // ==========================================================================> Komunikace s aplikací
 // ----------------------------------------------------------------------------------- dbg proc_stop
@@ -566,10 +570,10 @@ function dbg_show_help(ret) {
 }
 // -------------------------------------------------------------------------------==> . dbg show_php
 // zobrazení textu PHP funkce
-function dbg_show_php(lns,cls) {
+function dbg_show_php(lns,cls,start,header) {
   doc.Ezer.fce.echo(doc.Ezer.fce.debug(lns));
   // odstraň staré src
-//  cls.push('cg');
+  jQuery('#php-border').html(header);
   let ul= dbg.php.find('ul'),
       rex= '(^|\\W)('+cls.join('|')+')(\\s*\\()';
   rex= new RegExp(rex,"gi");
@@ -578,36 +582,94 @@ function dbg_show_php(lns,cls) {
   for (let lni in lns) {
     let iln= lni==0?'':lni, 
         ln= htmlentities(lns[lni]);
-    ln= ln.replace(rex,"$1<span class='call' onclick='dbg_reload_php(\"$2\");'>$2</span>$3")  
+    ln= ln.replace(rex,"$1<span class='call' onclick='dbg_reload_php(\"$2\");'>$2</span>$3");
     dbg.jQuery(
       `<li><span class="line">${iln}</span><span class="text">${ln}</span></li>`)
       .appendTo(ul);
   }
-  jQuery('#php').scrollTop(0);
+  jQuery(ul).scrollTop(13*start);
 }
 // ------------------------------------------------------------------------------==> . dbg show_text
 // zobrazení textu ve struktuře
-function dbg_show_text(ln) {
+function dbg_show_text(ln,cg) {
 //  // najdi dokument debuggeru
 //  var dbg= Ezer.sys ? Ezer.sys.dbg.win_ezer.document : document;
   // odstraň staré src
-  var ul= dbg.lines.find('ul');
+  let ul= dbg.lines.find('ul'),
+      keywords= new RegExp("(?<=^|\\W)("
+        + "area|array|box|break|browse|button|case|const|date|desc|edit|else|elseif|ezer|"
+        + "field|form|foreach|fork|for|func|group|chat|check|if|item|js|label|list|map|menu|"
+        + "module|number|object|of|panel|php|pragma|proc|radio|report|return|select|show|switch|"
+        + "system|table|tabs|text|this|time|use|var|view|while"
+        + ")(?=[^_'\"\\w]|$)",'g');
   ul.empty();
   dbg.notes.empty();
+  // vytvoř substituční schema z CG
+  // vytvoř from={php_fce:[ezer_fce,...],...}
+  let subst= [], from= {};
+  for (let ifce in cg) {
+    for (let icall in cg[ifce]) {
+      let call= cg[ifce][icall].split('-');
+      if (call[1]) {
+        let lc= call[1].split('.'),
+            l= lc[0]-1,
+            c= lc[1]-1;
+        if (subst[l]==undefined)
+          subst[l]= [];
+        subst[l].unshift([c,ifce,call[0]]);
+      }
+      // konstrukce from
+      if (call[0][0]=='$') {
+        let php= call[0].substr(1);
+        if (from[php]==undefined) from[php]= [];
+        from[php].push(ifce);
+      }
+    }
+  }
   // vytvoř text
   dbg.src= [];
   dbg.not= [];
   for (i= 0; i<ln.length; i++) {
     var i1= i+1, lni= ln[i];
     lni= htmlentities(ln[i]);
-    dbg.src[i1]= dbg.jQuery(
-      `<li id="${i1}"><span class="line">${i1}</span><span class="text">${lni}</span></li>`)
-      .appendTo(ul);
-    // detekce dokumentace
-    var note= ln[i].indexOf('=='+'>');
-    if ( note!=-1 ) {
-      dbg.not[i1]= dbg.jQuery(`<li id="${'N_'+i1}">${i}${ln[i].substr(note+3)}</li>`)
-        .appendTo(dbg.notes)
+    if (lni.match(/^\s*(\/\/|#)/)) {
+      // celořádkový komentář zobraz šedě
+      dbg.src[i1]= dbg.jQuery(
+        `<li id="${i1}"><span class="line">${i1}</span><span class="notext">${lni}</span></li>`)
+        .appendTo(ul);
+    }
+    else {
+      // případně proveď substituci
+      if (subst[i]) {
+        for (let c_fce of subst[i]) {
+          let c= c_fce[0], 
+              fce=c_fce[2].split('.');
+          if (fce[0][0]=='$') {
+            // volání PHP fce
+            let php= fce[0].substr(1);
+            lni= lni.substr(0,c)
+                +"<span class='cg' onclick=\"dbg_find_help('php','"+php+"');\">"+php+'</span>'
+                +lni.substr(Number(c)+php.length);
+          }
+          else {
+            // volání Exer fce
+            lni= lni.substr(0,c)
+                +"<span class='go' onclick='dbg_show_line("+fce[1]+");'>"+fce[0]+'</span>'
+                +lni.substr(Number(c)+fce[0].length);
+          }
+        }
+      }
+      // zobraz text
+      lni= lni.replace(keywords,'<b>$1</b>');
+      dbg.src[i1]= dbg.jQuery(
+        `<li id="${i1}"><span class="line">${i1}</span><span class="text">${lni}</span></li>`)
+        .appendTo(ul);
+      // detekce dokumentace
+      var note= ln[i].indexOf('=='+'>');
+      if ( note!=-1 ) {
+        dbg.not[i1]= dbg.jQuery(`<li id="${'N_'+i1}">${i}${ln[i].substr(note+3)}</li>`)
+          .appendTo(dbg.notes)
+      }
     }
   }
 }
@@ -617,7 +679,9 @@ function htmlentities(h) {
 }
 // ------------------------------------------------------------------------------==> . dbg show_line
 // zobrazení textu ve struktuře
-function dbg_show_line(ln,css='pick') {
+function dbg_show_line(ln,css='pick',el=undefined) {
+  if (el==undefined) 
+    window.event.stopImmediatePropagation();
   dbg.dbg_clear();
   dbg.lines.find('li.pick').removeClass('pick');
   if ( dbg.src[ln] ) {
@@ -704,19 +768,43 @@ function dbg_write (msg,append=false) {
   }
   else {
     dbg.help.html(msg);
-    dbg.help.show();
+    dbg.help_div.show();
   }
+}
+// --------------------------------------------------------------------------------------- dbg cg_gc
+// přepíná mezi normálním a inverzním CG
+var CG = {
+      item:0,   // poslední zobrazený
+      cg_gc:0,  // 0=graf volaných 1=graf volajících
+      expand:1
+    }
+function dbg_cg_gc(inverzni) {
+  window.event.stopImmediatePropagation();
+  if (inverzni==99) {
+    // expanse
+    CG.expand= 1-CG.expand;
+  }
+  else {
+    CG.cg_gc= inverzni;
+    if (inverzni) 
+      jQuery('#help').addClass('inverzniCG');
+    else
+      jQuery('#help').removeClass('inverzniCG')
+  }
+  dbg_find_help ('php',CG.item);
 }
 // ----------------------------------------------------------------------------------- dbg find_help
 // dotaz na server o help pro daný item
 function dbg_find_help (typ,item) {
+  CG.item= item;
   dbg.doc_ask('item_help',[typ,item],_dbg_find_help); // fce z ezer2.php
 }
 function _dbg_find_help(y) { 
   if ( y.args[0]=='php' ) {
     dbg.dbg_write(y.value.html);
-    dbg.cg= y.value.cg;
-    dbg_make_tree(y.value.cg);
+    dbg.cg= CG.cg_gc ? y.value.gc : y.value.cg;
+    if ( dbg.cg )
+      dbg_make_tree(dbg.cg);
   }
   else {
     doc.Ezer.sys.dbg.win_ezer.dbg_show_help(y.value);
@@ -748,7 +836,7 @@ function dbg_make_tree(cg) {
   let tree= new MooTreeControl({
         div:jQuery(`#help`),
         grid:true,
-        mode:'files',             
+        mode:'folders',             
         path:'.'+doc.Ezer.paths.images_lib,     // cesta k mootree.gif
         theme:'mootree.gif',
         // ----------------------------------------------------------------- onclick
@@ -767,14 +855,22 @@ function dbg_make_tree(cg) {
             var adata= JSON.stringify(data, undefined, 2);
             var fid= node.id.split('.');
             var fce= fid[fid.length-1].replace('* ','');
+            CG.item= fce;
             if ( context ) {
               window.event.preventDefault();
               doc.Ezer.fce.echo('context:',fce,';',ndata);
             }
             else {
-              doc.Ezer.fce.echo('click:',fce,';',ndata);
-              dbg.php.show();
-              dbg_reload_php(fce);
+              if (typeof node.data==='object') {
+                // ezer
+                dbg_reload(node.data.ezer,node.data.line,1); // let CG on screen
+              }
+              else {
+                // PHP
+                doc.Ezer.fce.echo('click on PHP:',fce,';',ndata);
+                dbg.php.show();
+                dbg_reload_php(fce);
+              }
             }
           }
           return false;
@@ -789,11 +885,13 @@ function dbg_make_tree(cg) {
     tree.index[tree.root.id]= tree.root;
     load(tree.root,cg);
     tree.expand();
-    tree_expand(3);
+    if (!CG.expand)
+      tree_expand(1);
   }
   if ( active && tree.get(active) )
     tree.select(tree.get(active));
   tree.enable(); // zviditelní
+  tree.select(tree.root,null);
 }
 // --------------------------------------------------------------------------------------- get caret
 function get_caret() {
@@ -836,7 +934,7 @@ function dbg_script (script,block,code='proc',trace=false) {
   self= self ? (o._library ? '#.' : '$.')+self : '$';
   let msg= `ezerscript: ${script}`+(dbg_script_trace ? `<br>c-context: ${self}` : '');
   dbg.dbg_write(msg);
-  dbg.help.show();
+  dbg.help_div.show();
   doc.Ezer.fce.clear();
   var x= {cmd:'dbg_compile',context:{self:self,app:s.app,file:s.file,code:code},script:script};
   doc_ask('','',dbg_script_,x);
@@ -889,7 +987,7 @@ function dbg_error(msg) {
    doc.Ezer.error(msg,'C');
 }
 // ----------------------------------------------------------------------------------------- dbg ask
-function dbg_ask(x,then) {
+function dbg_ask(x,then,arg) {
   x.root= doc.Ezer.root;                  // název/složka aplikace
   x.app_root= doc.Ezer.app_root;          // {root].inc.php je ve složce aplikace
   jQuery.ajax({
@@ -906,7 +1004,7 @@ function dbg_ask(x,then) {
         else {
           if ( y.trace ) doc.Ezer.trace('u',y.trace);
           if ( then )
-            then(y);
+            then(y,arg);
         }
     })
     .fail( (xhr) => {

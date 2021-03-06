@@ -59,6 +59,7 @@
     <script src="client/ezer_lib3.js" type="text/javascript" charset="utf-8"></script>
     <script src="client/ezer_tree3.js" type="text/javascript" charset="utf-8"></script>
     <script src="dbg3.js" type="text/javascript" charset="utf-8"></script>
+    <link rel="stylesheet" href="client/licensed/font-awesome/css/font-awesome.min.css" type="text/css" media="screen" charset="utf-8">
     <script type="text/javascript">
 // =====================================================================================> JAVASCRIPT
   var name= "$src";         // GET src
@@ -66,7 +67,7 @@
   var start= '$start';      // GET start
   var pick= '$pick';        // GET pick
   var src= not= [];         // array of DOM ezer, array of DOM poznámek, array of php function lines
-  var help, log, prompt,    // DOM elements
+  var help, help_div, log, prompt,    // DOM elements
       php, lines, notes, files;
   var doc, dbg;             // document aplikace a debuggeru
   var app= '$app';          // ajax
@@ -82,6 +83,7 @@
     log=    jQuery('#log');
     prompt= jQuery('#prompt');
     help=   jQuery('#help');
+    help_div= jQuery('#help_div');
     lines=  jQuery('#lines');
     php=  jQuery('#php');
     notes=  jQuery('#notes');
@@ -101,12 +103,14 @@
       li {
         white-space: pre; list-style-type: none; text-overflow: ellipsis; overflow: hidden; }
       /* ----------------------- help */
-      div#help {
+      div#help_div {
         position: fixed; right: 30px; top: 25px; width: 300px; min-height: 100px;
         background-color: #eee; border: 1px solid #aaa; z-index: 2;
         overflow-y: auto; max-height: 50%; display: none; box-shadow: 5px 5px 10px #567; }
-      div#help span {
+      div#help_div span {
         text-decoration: underline; color: blue; cursor: alias;}
+      div#help_div span.go {
+        text-decoration: none; color: black; cursor: pointer; }
       #sources {
         position: fixed; right: 10px; top: 2px; font-size: 16px; color: lightgray; }
       /* ----------------------- notes */
@@ -120,17 +124,15 @@
         cursor: alias; }
       /* ----------------------- php source */
       div#php {
-        padding: 0; overflow-y: scroll; top:50%; height: 50%;
+        padding: 0; top:50%; height: 50%;
         left: 120px; right: 0px; position: absolute; 
         background-color:#e5f2ff; margin-top: 5px; border-top: 3px double black; }
       div#php-border {
-        position: fixed; left: 747px; width: 0; top: 0; height: 100%; 
-        border-right: 1px solid #ff00004a; }
+        width: 100%; top: 0; height: 13px; background-color:#cce; 
+        padding-left: 30px; border-right: 1px solid #ff00004a; }
       #php ul {
-        padding: 0; margin-top: 0; scroll-behavior: smooth;}
+        overflow-y: scroll; padding: 0; scroll-behavior: smooth; margin:0; height: calc(100% - 13px);}
       #php li span.line {
-        background-color:#cce; }
-      #php li:first-child {
         background-color:#cce; }
       #php span.call {
         background-color:#cce; cursor:pointer; font-weight: bold; }
@@ -143,6 +145,10 @@
         border-right: 1px solid #ff00004a; }
       #lines ul {
         padding: 0; margin-top: 0; scroll-behavior: smooth;}
+      li b {
+        text-shadow:0 0 black; }
+      li span.notext {
+        margin-left:40px; display: block; color:#999; }
       li span.text {
         margin-left:40px; display: block; }
       li span.text[contenteditable=true] {
@@ -154,6 +160,11 @@
         position: absolute;
         background-color: silver; vertical-align: top; padding-right: 5px; margin-right: 5px;
         width: 24px; text-align: right;  }
+      /* ----------------------- cg */
+      li span.go {
+        background-color: #ffdf6b; cursor:pointer;   }
+      li span.cg {
+        background-color: #e5f2ff; cursor:pointer;   }
       /* ----------------------- break */
       li span.line {
         position: absolute;
@@ -210,6 +221,13 @@
   float: left; width: 18px; height: 18px; overflow: hidden; }
 .mooTree_selected {
   background-color: #e0f0ff; font-weight: bold; margin-right: 10px; }
+      /* ----------------------- inverzní CG */
+div.inverzniCG .mooTree_node {
+  transform: scaleX(-1); }
+div.inverzniCG .mooTree_text {
+  transform: scaleX(-1); direction: rtl; display: flex; }
+div.inverzniCG div.mooTree_selected {
+  margin-right:0; }
       /* ----------------------- context menu */
 .ContextMenu3 { border:1px solid #ccc; padding:2px; background:#fff; width:200px; list-style-type:none;
   display:none; position:absolute; box-shadow:5px 5px 10px #567; cursor:default; }
@@ -224,7 +242,18 @@
     </style>
   </head>
   <body id='body' style="background-color:$background;">
-    <div id="help" style='display:none'>...</div>
+    <div id="help_div" style='display:none'>
+      <button class="help_but" title="expand" style="float:right" onclick="dbg_cg_gc(99);">
+        <i class="fa fa-asterisk"></i>
+      </button>
+      <button class="help_but" title="inverzní call graf" style="float:right" onclick="dbg_cg_gc(1);">
+        <i class="fa fa-long-arrow-left"></i>
+      </button>
+      <button class="help_but" title="call graf" style="float:right" onclick="dbg_cg_gc(0);">
+        <i class="fa fa-long-arrow-right"></i>
+      </button>
+      <div id="help"></div>
+    </div>
     <div id='work'>
       <div id='filnot'>
         <select id='files' onchange="dbg_reload(this.value);">
@@ -255,6 +284,8 @@ function dbg_server($x) {
   $y= $x;
   switch ($x->cmd) {
   case 'source_php':
+    $before= 12;
+    $start= 0;
     $ezer_root= $x->app;
     $fce= $x->fce;
 //    $abs_root= $_SESSION[$ezer_root]['abs_root'];
@@ -266,15 +297,27 @@ function dbg_server($x) {
       $fname= $cg->cg_phps[$cg->cg_calls[$fce][1]];
       $line1= $cg->cg_calls[$fce][2];
       $line2= $cg->cg_calls[$fce][3];
-      $y->lines= array("$fce: $fname ($line1-$line2)");
+      $y->header= array("$fce: $fname ($line1-$line2)");
       $file= new SplFileObject($fname);
       $file->setFlags(SplFileObject::DROP_NEW_LINE);
       $lines= array();
-      for ($ln= $line1; $ln<=$line2; $ln++) {
+      for ($ln= $line1-$before; $ln<=$line2; $ln++) {
         $file->seek($ln-1); 
         $txt= $file->current();
         if ($txt===false) break;
         $lines[$ln]= $txt;
+      }
+      // zrušení řádků před blokem komentářů před začátkem funkce
+      $mazat= false;
+      for ($ln= $line1-1; $ln>=$line1-$before; $ln--) {
+        if (preg_match("~^(#|//|/\*)~",$lines[$ln]) && !$mazat) {
+          $start++;
+        }
+        elseif (!$mazat) {
+          $mazat= true;
+        }
+        if ($mazat)
+          unset($lines[$ln]);
       }
       // zrušení řádků s komentáři na konci funkce
       $senil= array_reverse($lines,true);
@@ -285,6 +328,7 @@ function dbg_server($x) {
       foreach ($lines as $ln=>$line) {
         $y->lines[$ln]= $line;
       }
+      $y->start= $start;
     }
     else {
       $y->lines= array("zdrojový modul PHP funkce '$fce' nelze najít");
@@ -294,12 +338,14 @@ function dbg_server($x) {
     $file= "{$x->file}.ezer";
     $name= "{$x->app}/$file";
     $path= "{$_SESSION[$x->app]['abs_root']}/$name";
+    $subpath= $x->app;
     if ( file_exists($path) ) {
       $y->lines= file($path,FILE_IGNORE_NEW_LINES);
       $y->name= $name;
     }
     else {
       $name= "ezer3.1/$file";
+      $subpath= 'ezer3.1';
       $path= "{$_SESSION[$x->app]['abs_root']}/$name";
       if ( file_exists($path) ) {
         $y->lines= file($path,FILE_IGNORE_NEW_LINES);
@@ -309,6 +355,19 @@ function dbg_server($x) {
         $y->lines= array("modul {$x->file} se nepodařilo najít");
       }
     }
+    // získáme překlad a z něj CG
+    $cg= null;
+    $cpath= "{$_SESSION[$x->app]['abs_root']}/$subpath/code/{$x->file}.json";
+    if ( file_exists($cpath)) {
+      $loads= json_decode(file_get_contents($cpath));
+      $cg= $loads->info->ezer;
+//      $y->lines[]= "CG ok - $path - $cpath";
+    }
+    else {
+      $y->lines[]= "CG ko - $path - $cpath";
+    }
+    // předáme CG
+    $y->cg= $cg;
     break;
   }
   return $y;

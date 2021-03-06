@@ -2855,6 +2855,7 @@ function item_help($typ,$item) {
     if (isset($cg->called[$item])) {
       $fpath= $cg->cg_phps[$cg->cg_calls[$item][1]];
       $ret->cg= doc_php_tree($item);
+      $ret->gc= doc_php_tree($item,'*',null,1);
       $ret->php= str_replace("$ezer_path_root/",'',$fpath);
       $ret->line= $cg->lines[$item];
       $ret->html= "<b>$item</b> je PHP funkce aplikace z {$ret->php};{$ret->line}";

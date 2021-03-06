@@ -102,9 +102,10 @@ function doc_php($app_phps='*',$sys_phps='') {
   $used= array();
   $top= array(); // přímo volané z ezerscriptu
   $flow= array(); // volané z ezerscriptu (transitivní obal)
-  foreach($cg->called as $php=>$desc) {
-    $used[$php]= 0;
-  }
+  if (count($cg->called))
+    foreach($cg->called as $php=>$desc) {
+      $used[$php]= 0;
+    }
   foreach($ezers as $ezer=>$desc) {
     $info= $desc->info;
     if ( ($phps= $info->php) ) {
@@ -349,7 +350,7 @@ function doc_php_cg ($app_php='*',$sys_php='') { trace();
     // trasování testovacího PHP 
     display($fname);
     if ($fname=='C:/Ezer/beans/tutorial/tut/tut.cg.php') {
-      token_debug($ts,$fname);
+//      token_debug($ts,$fname);
     }
     for ($i= 0; $i<count($ts); $i++) {
       // vynechání mezer
@@ -384,22 +385,52 @@ function doc_php_cg ($app_php='*',$sys_php='') { trace();
       }
     }
   }
-    $ret= (object)array(
-        'app_php'=>$app_php,'sys_php'=>$sys_php,
-        'cg_calls'=>$cg_calls,'cg_phps'=>$fnames,
-        'calls'=>$phps,'lines'=>$lines,'called'=>$fce,'html'=>$html);
-    $_SESSION[$ezer_root]['CG']= $ret;
+  // vytvoření volání PHP z ezerscriptu
+  $php_called= (object)array(); // {php-fce:[ezer-fce/isource, ...], ...}
+  $ezers= array();
+  $files= doc_ezer_list();
+  $isource= 0;
+  foreach ($files as $source=>$info) {
+    $ezer= $info->info->ezer;
+    $ezers[$isource]= $source;
+//    debug($ezer,"PHP_CALLED $source");
+    if (count($ezer))
+    foreach ($ezer as $efce=>$list) {
+      if (!count($list)) continue;
+      foreach ($list as $pfce) {
+        list($pfce)= explode('-',$pfce);
+        if ($pfce[0]=='$') {
+          $pfce= substr($pfce,1);
+          if (!isset($php_called->$pfce)) 
+            $php_called->$pfce= array();
+          array_push($php_called->$pfce,"$efce:$isource");
+        }
+      }
+    }
+    $isource++;
+//    break;
+  }
+  // struktura CG
+  $ret= (object)array(
+      'app_php'=>$app_php,'sys_php'=>$sys_php,'app_ezer'=>$ezers, 'php_called'=>$php_called,
+      'cg_calls'=>$cg_calls,'cg_phps'=>$fnames,
+      'calls'=>$phps,'lines'=>$lines,'called'=>$fce,'html'=>$html);
+  $_SESSION[$ezer_root]['CG']= $ret;
 end:
   return $ret;
 }
 # ------------------------------------------------------------------------------------- doc php_tree
 # vrátí strukturu pro zobrazení CG v ezer_tree3.js
 # pokud je $save_in_session=true uchovají se rozbory PHP modulů v SESSION a neprovádí se již parsing
-function doc_php_tree($root,$app_php='*',$sys_php='') { trace();
+# inverzni=0 normální CG, inverzni=1 graf volajících
+function doc_php_tree($root,$app_php='*',$sys_php='',$inverzni=0) { trace();
   global $ezer_root;
   $cg_list= doc_php_cg($app_php,$sys_php);
   $calls= $cg_list->cg_calls;
+  $called= $cg_list->called;
+  $php_called= $cg_list->php_called;
   $phps=  $cg_list->cg_phps;
+  $ezers=  $cg_list->app_ezer;
   $lines= $cg_list->lines;
   $down= function($fce) use (&$calls,$phps,$lines,&$down) {
     global $ezer_path_root;
@@ -431,7 +462,52 @@ function doc_php_tree($root,$app_php='*',$sys_php='') { trace();
   end:  
     return $cg;
   };
-  return $down($root);
+  $up= function($fce) use (&$calls,$called,$php_called,$phps,$ezers,$lines,&$up) {
+    global $ezer_path_root;
+    $calls[$fce][4]= 1; // zabráníme opakování kresby
+    $modul= str_replace("$ezer_path_root/",'',$phps[$calls[$fce][1]]);
+    $modul.= " ({$calls[$fce][2]}-{$calls[$fce][3]})";
+    $cg= 
+      (object)array(
+        'prop' => (object)array('id'=>$fce,'title'=>$modul,'data'=>$lines[$fce]),
+        'down' => array()
+      );    
+    // volání z PHP funkcí
+    if (is_array($called[$fce])) {
+      foreach ($called[$fce] as $call) {
+        if (isset($calls[$call][4])) {
+          $modul= str_replace("$ezer_path_root/",'',$phps[$calls[$call][1]]);
+          $modul.= " {$calls[$call][2]}-{$calls[$call][3]}";
+          $node= (object)array(
+              'prop'=>(object)array('id'=>"* $call",'title'=>$modul,'data'=>$lines[$call]));
+        }
+        else {
+          $node= $up($call);
+        }
+        $cg->down[]= $node;
+      }
+    }
+    else {
+      display("'$fce' nenalezena");
+    }
+    // volání z Ezer-funkcí
+    if (isset($php_called) && count($php_called)) {
+      if (isset($php_called->$fce))
+      foreach ($php_called->$fce as $call_source) {
+        list($call,$isource)= explode(':',$call_source);
+        list($efce,$line,$clmn)= explode('.',$call);
+        $modul= $ezers[$isource];
+        $node= (object)array(
+            'prop'=>(object)array('id'=>"<span class='go' style='background:#ffdf6b'>$efce</span>",
+                'title'=>"$modul;$line",
+                'data'=>(object)array('ezer'=>$modul,'line'=>$line)));
+        $cg->down[]= $node;
+      }
+    }
+  end:  
+    return $cg;
+  };
+  return $inverzni ? $up($root) : $down($root);
 }
 /** =========================================================================================> PSPAD */
 # ---------------------------------------------------------------------------------------- pspad_gen
