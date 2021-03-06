@@ -65,8 +65,7 @@ class Area extends Block {
     }
     if ( panel && panel.DOM_Block ) {
       // nalezení DOM elementu a připojení událostí
-//      this.DOM_Block= this.DOM_Block= panel.getElement(id);
-      this.DOM_Block= this.DOM_Block= panel.DOM_Block.find(id);
+      this.DOM_Block= this.DOM_Block= panel.getElement(id);
       // obsluha podporovaných událostí
       var fce= this.desc.part ? this.desc.part.onclick : null;
       if ( fce ) {
@@ -438,8 +437,7 @@ Ezer.str.new_area= function() {
     }
     else {
       if ( typeof(parent.value)=='string' ) {
-//        DOM= panel.DOM_Block.getElementById(parent.value);
-        DOM= panel.DOM_Block.find(parent.value);
+        DOM= panel.DOM_Block.getElementById(parent.value);
         if ( !DOM ) Ezer.error(name.value+" nelze najít id='"+parent.value+"' ");
       }
       else if ( typeof(parent.value)=='object' ) {
