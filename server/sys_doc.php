@@ -394,7 +394,7 @@ function doc_php_cg ($app_php='*',$sys_php='') { trace();
     $ezer= $info->info->ezer;
     $ezers[$isource]= $source;
 //    debug($ezer,"PHP_CALLED $source");
-    if (count($ezer))
+    if (is_array($ezer) && count($ezer))
     foreach ($ezer as $efce=>$list) {
       if (!count($list)) continue;
       foreach ($list as $pfce) {
@@ -491,7 +491,7 @@ function doc_php_tree($root,$app_php='*',$sys_php='',$inverzni=0) { trace();
       display("'$fce' nenalezena");
     }
     // volání z Ezer-funkcí
-    if (isset($php_called) && count($php_called)) {
+    if (isset($php_called) && is_array($php_called) && count($php_called)) {
       if (isset($php_called->$fce))
       foreach ($php_called->$fce as $call_source) {
         list($call,$isource)= explode(':',$call_source);

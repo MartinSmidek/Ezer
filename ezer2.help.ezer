@@ -55,6 +55,7 @@ panel str [,,770,] {type:'right', title:'Struktura', _sys:'*', skill:'m'
       func onclick (i:ezer) { 
         clear(); php_app= i.par.app; php_sys= i.par.sys;
         u.fill(php.doc_php(php_app,php_sys));  
+        cg.Init();
       }
     }
   }
@@ -68,6 +69,10 @@ panel str [,,770,] {type:'right', title:'Struktura', _sys:'*', skill:'m'
     func show(_fce) { fce= _fce; 
       f.a.show(fce); 
       panel.popup() 
+    }
+    func Init() { 
+      fce= ''; expand= 0; inverzni= 0;
+      panel.hide();
     }
     use f: form {
       button [-13,0,,] { type:'html', title:"[fa-asterisk]", style:'margin-top:-30px', help:'rozbalit vše'
@@ -84,6 +89,10 @@ panel str [,,770,] {type:'right', title:'Struktura', _sys:'*', skill:'m'
           obj= php.doc_php_tree(fce,php_app,php_sys,inverzni);
           this.tree_show(obj,'cg',0,{theme:'mootree.gif',mode:'folders'});
           this.tree_expand(expand?99:1);
+        }
+        func tree_onclick(fid,id,dat,com,x,txt,txts) { var fd:text
+          fce= replace(id,'\* ','');
+          echo('tree click:',fce);
         }
       }
     }
