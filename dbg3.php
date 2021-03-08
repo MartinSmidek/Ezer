@@ -99,9 +99,9 @@
     </script>
     <style>
       body, select {
-        font-size: 8pt; font-family: monospace,consolas; overflow: hidden; /*margin: 0;*/ }
+        font-size: 8pt; font-family: monospace,consolas; overflow: hidden; margin: 0; }
       li {
-        white-space: pre; list-style-type: none; text-overflow: ellipsis; overflow: hidden; }
+        white-space: pre; list-style-type: none; /*text-overflow: ellipsis; overflow: hidden;*/ }
       /* ----------------------- help */
       div#help_div {
         position: fixed; right: 30px; top: 25px; width: 300px; min-height: 100px;
@@ -131,7 +131,7 @@
         width: 100%; top: 0; height: 13px; background-color:#cce; 
         padding-left: 30px; border-right: 1px solid #ff00004a; }
       #php ul {
-        overflow-y: scroll; padding: 0; scroll-behavior: smooth; margin:0; height: calc(100% - 13px);}
+        overflow: scroll; padding: 0; scroll-behavior: smooth; margin:0; height: calc(100% - 19px);}
       #php li span.line {
         background-color:#cce; }
       #php span.call {

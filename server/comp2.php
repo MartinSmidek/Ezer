@@ -206,6 +206,7 @@ function comp_file ($name,$root='',$_list_only='',$_comp_php=false) {  #trace();
         foreach ($start->part as $id=>$spart) {
           link_code($spart,"$top.$id",false,$id);
         }
+//                                                              debug($start,"PO link_code");
         foreach ($start->part as $id=>$spart) {
           proc($spart,"$top.$id");
         }
@@ -1575,6 +1576,11 @@ function name_split($name,$pars,$vars,$call=false,$lc='') {
         }
         break;
       }
+      elseif ($type=='var' && $context[$i]->ctx->_of==$id) {
+        $obj= $context[$i]->ctx;
+        $obj= find_obj($obj->_init);
+        break;
+      }
     }
   }
   // ----------------------------------------------------------- E - ezer blok daný relativně
@@ -1665,6 +1671,10 @@ function name_split($name,$pars,$vars,$call=false,$lc='') {
                 && $obj->_init && $ids && !isset($obj->part->$id0) ) {
               $obj= find_obj($obj->_init);
               $full.= ".$id";
+            }
+            elseif ( $obj->type=='proc' && $s->bas->typ=='T') {
+              // func volaná přes form
+              $full.= "$id";
             }
             elseif ( $obj ) {
               // stále upřesňujeme první jméno
