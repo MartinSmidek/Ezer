@@ -337,7 +337,7 @@ class Block {
     else if ( n ) {
       for (let i in b.part) {
         var p= b.part[i];
-        if ( p.type ) {
+        if ( p && p.type ) {
           let re= new RegExp('^'+name);
           if ( re.test(p.type) ) {
             if ( n==k++ ) {
@@ -1856,8 +1856,11 @@ class MenuGroup extends Menu {
 // ------------------------------------------------------------------------------------ DOM add
   DOM_add1 () {
     Ezer.assert(this.owner.type=='menu.left','chybné menu - group mimo accordion');
-    var title= this.options.title||this.id;
-    this.DOM_Block= jQuery(`<div class="MenuGroup3"><a>${title}</a><ul></ul></div>`)
+    var title= this.options.title||this.id,
+        // přídavný styl pro označení menu administrátora a programátora
+        a= this.desc.options.skill && this.desc.options.skill.match(/a/g) ? ' a' : '',
+        m= this.desc.options.skill && this.desc.options.skill.match(/m/g) ? ' m' : '';
+    this.DOM_Block= jQuery(`<div class="MenuGroup3${a}${m}"><a>${title}</a><ul></ul></div>`)
       .appendTo(this.owner.DOM_Block)
       .data('ezer',this);
     this.DOM_Block.find('a')
@@ -2014,9 +2017,13 @@ class Item extends Block {
             this.owner.owner.id,this.owner.id,this.id]),
           title= ''+(this.options.title||this.id),
           text= title.replace(/\[fa-([^\]]+)\]/g,''),
-          help= this.options.help ? ` title="${this.options.help}"` : '';
+          help= this.options.help ? ` title="${this.options.help}"` : '',
+          // přídavný styl pro označení menu administrátora a programátora
+          a= this.desc.options.skill && this.desc.options.skill.match(/a/g) ? ' a' : '',
+          m= this.desc.options.skill && this.desc.options.skill.match(/m/g) ? ' m' : '',
+          am= a || m ? ` class="${a}${m}"` : '';
       title= title.replace(/\[fa-([^\]]+)\]/g,`<i class='fa fa-fw fa-$1' title='${text}'></i>`);
-      this.DOM_Block= jQuery(`<li${help}>${title}</li>`)
+      this.DOM_Block= jQuery(`<li${am}${help}>${title}</li>`)
         .addClass(this._fc('d') ? 'disabled3' : '')
         .appendTo(this.owner.DOM_Block.find('ul'))
         .click( e => {
@@ -2197,13 +2204,16 @@ class Tabs extends Block {
     // položka v hlavním menu
     var title= this.options.title||this.id,
         href= make_url_menu([this.id]), // 'ezer://'+id;
-        key= this.self_sys().sys, sub;
+        key= this.self_sys().sys, sub,
+        // přídavný styl pro označení menu administrátora a programátora
+        a= this.desc.options.skill && this.desc.options.skill.match(/a/g) ? ' a' : '',
+        m= this.desc.options.skill && this.desc.options.skill.match(/m/g) ? ' m' : '';
     // zvýraznění nadpisu, pokud právě k němu existuje _help - help pro tabs nelze vynutit
     sub= key && this.options._sys && Ezer.sys.ezer.help_keys
       && Ezer.sys.ezer.help_keys.split(',').includes(key)
       ? "<sub> ?</sub>" : '';
     title= title.replace(/\[fa-([^\]]+)\]/g,"<i class='fa fa-$1'></i>");
-    this.DOM_li= jQuery(`<li class='Pasive'><a>${title}${sub}</a></li>`)
+    this.DOM_li= jQuery(`<li class='Pasive${a}${m}'><a>${title}${sub}</a></li>`)
       .appendTo(this.owner.DOM_Block)
       .click( event => {
         if ( this.type=='tabs' ) {
@@ -2231,10 +2241,13 @@ class Tabs extends Block {
     var href= make_url_menu([panel.owner.id,panel.id]); 
     var title= panel.options.title||panel.id;
     var key= panel.owner.id+'.'+panel.id, sub;
+    // přídavný styl pro označení menu administrátora a programátora
+    let a= panel.desc.options.skill && panel.desc.options.skill.match(/a/g) ? ' a' : '',
+        m= panel.desc.options.skill && panel.desc.options.skill.match(/m/g) ? ' m' : '';
     title= title.replace(/\[fa-([^\]]+)\]/g,"<i class='fa fa-$1'></i>");
     sub= key && Ezer.sys.ezer.help_keys.split(',').includes(key)
       ? "<sub> ?</sub>" : '';
-    panel.DOM_li= jQuery(`<li class='Pasive'><a>${title}${sub}</a></li>`)
+    panel.DOM_li= jQuery(`<li class='Pasive${a}${m}'><a>${title}${sub}</a></li>`)
       .appendTo(this.DOM_Block)
       .click( el => {
         if ( el.shiftKey ) return dbg_onshiftclick(panel); /* panel */
