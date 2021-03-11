@@ -131,7 +131,8 @@
         width: 100%; top: 0; height: 13px; background-color:#cce; 
         padding-left: 30px; border-right: 1px solid #ff00004a; }
       #php ul {
-        overflow: scroll; padding: 0; scroll-behavior: smooth; margin:0; height: calc(100% - 19px);}
+        overflow-x: auto; overflow-y: scroll; position:relative;
+        padding: 0; scroll-behavior: smooth; margin:0; height: calc(100% - 19px);}
       #php li span.line {
         background-color:#cce; }
       #php span.call {
@@ -147,6 +148,10 @@
         padding: 0; margin-top: 0; scroll-behavior: smooth;}
       li b {
         text-shadow:0 0 black; }
+      li i {
+        text-shadow:0 0 black; background: lightgreen; }
+      li u {
+        text-shadow:0 0 black; background: lightsalmon; text-decoration: none}
       li span.notext {
         margin-left:40px; display: block; color:#999; }
       li span.text {
@@ -166,10 +171,6 @@
       li span.cg {
         background-color: #e5f2ff; cursor:pointer;   }
       /* ----------------------- break */
-      li span.line {
-        position: absolute;
-        background-color: silver; vertical-align: top; padding-right: 5px; margin-right: 5px;
-        width: 24px; text-align: right;  }
       li.break span {
         background-color: #ff244861;
         color: black; }
@@ -177,10 +178,6 @@
         background-color: #ff2448eb;
         color: yellow; }
       /* ----------------------- trace */
-      li span.line {
-        position: absolute;
-        background-color: silver; vertical-align: top; padding-right: 5px; margin-right: 5px;
-        width: 24px; text-align: right;  }
       li.trace span {
         background-color: #c0c0c0a6; }
       li.curr {
@@ -283,7 +280,46 @@ __EOD;
 function dbg_server($x) {
   $y= $x;
   switch ($x->cmd) {
-  case 'source_php':
+  case 'editor': // ------------------------------------ edit {file,line}
+    $file= "{$x->file}.ezer";
+    $name= "{$x->app}/$file";
+    $path= "{$_SESSION[$x->app]['abs_root']}/$name";
+    $notepad= 'C:\Program Files (x86)\Notepad++\notepad++';
+    $dbg3_bat= 'C:\Ezer\beans\ezer3.1\dbg3.bat';
+    $subpath= $x->app;
+    if ( file_exists($path) ) {
+      $y->name= $name;
+    }
+    else {
+      $name= "ezer3.1/$file";
+      $subpath= 'ezer3.1';
+      $path= "{$_SESSION[$x->app]['abs_root']}/$name";
+      if ( file_exists($path) ) {
+        $y->name= $name;
+      }
+      else {
+        $y->msg= "modul {$x->file} se nepodařilo najít";
+      }
+    }
+    if (!isset($y->msg)) {
+      $cmd= 'start "'.$notepad.'" '.$name." -n{$x->line}";
+      $cmd= "start cmd.exe";
+      $cmd= $dbg3_bat;
+      $y->msg= $cmd;
+//      exec("start /B notepad");
+      exec($cmd);
+//      $pid= popen("start /B ". $cmd, "r");
+//      if ( $pid ) {
+//        $msg= fread($pid, 2096);
+//        $y->msg= "start editoru ($pid,$msg)";
+//        pclose($pid);
+//      }
+//      else {
+//        $y->msg= "$file -- start editoru zhavaroval";
+//      }
+    }
+    break;
+  case 'source_php': // -------------------------------- get PHP
     $before= 12;
     $start= 0;
     $ezer_root= $x->app;
@@ -292,7 +328,10 @@ function dbg_server($x) {
     $cg= $_SESSION[$ezer_root]['CG'];
     if (isset($cg->cg_calls) && isset($cg->cg_calls[$fce])) {
       // zjištění seznamu bezprostředně volaných funkcí
-      $y->calls= $cg->cg_calls[$fce][0];
+      $y->calls= array();
+      foreach ($cg->cg_calls[$fce][0] as $call) {
+        list($y->calls[])= explode(';',$call);
+      }
       // získání řádků s textem funkce
       $fname= $cg->cg_phps[$cg->cg_calls[$fce][1]];
       $line1= $cg->cg_calls[$fce][2];
@@ -301,6 +340,7 @@ function dbg_server($x) {
       $file= new SplFileObject($fname);
       $file->setFlags(SplFileObject::DROP_NEW_LINE);
       $lines= array();
+      $before= min($before,$line1)-1;
       for ($ln= $line1-$before; $ln<=$line2; $ln++) {
         $file->seek($ln-1); 
         $txt= $file->current();
@@ -334,7 +374,7 @@ function dbg_server($x) {
       $y->lines= array("zdrojový modul PHP funkce '$fce' nelze najít");
     }
     break;
-  case 'source':
+  case 'source': // ------------------------------------ get Ezer + CG
     $file= "{$x->file}.ezer";
     $name= "{$x->app}/$file";
     $path= "{$_SESSION[$x->app]['abs_root']}/$name";

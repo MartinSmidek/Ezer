@@ -65,6 +65,14 @@ function dbg_onclick_start(file) {
         .html(y.msg+'<br><br>'+text);
       
       // zobraz kontextové menu podle kontextu elem
+      let editovat= [
+        'editovat '+file, function(el) { 
+          doc.Ezer.fce.echo('editace'); 
+          let app= opener ? opener.Ezer.root : window.Ezer.root;
+          dbg_ask({cmd:'editor',app:app,file:file,line:l},dbg_editor_end_);
+          return false; 
+        }
+      ];
       switch (elem ? elem.type : null) {
         case 'var':
         case 'const':
@@ -74,6 +82,7 @@ function dbg_onclick_start(file) {
         case 'check':
         case 'select': case 'select.map': case 'select.map0': case 'select.auto':{
           dbg_contextmenu([
+            editovat,
             ['zjisti hodnotu', function(el) {
                 let value= elem.get();
                 if ( typeof value == "object" )
@@ -98,6 +107,7 @@ function dbg_onclick_start(file) {
           break;}
         case 'case':{
           dbg_contextmenu([
+            editovat,
             ['zjisti hodnotu', function(el) {
                 let value= elem.owner.get();
                 value= 'radio of '+elem.id+'='+value;
@@ -124,6 +134,7 @@ function dbg_onclick_start(file) {
             }
           }
           dbg_contextmenu([
+            editovat,
             ['nastav trasování', function(el) {
                 elem.proc_trace(1);
                 touch('trace',1);
@@ -170,22 +181,30 @@ function dbg_onclick_start(file) {
                       return false;
                     },menu_el);
                 return false;
-            }],
-            [" ... s trasováním", function(el) {
-                dbg_prompt(`výraz je v kontextu procedury ${elem.id}`,dbg_last_script,
-                    function(script){
-                      dbg_last_script= script;
-                      dbg_script(script,block,'func',1);
-                      return false;
-                    },menu_el);
-                return false;
+//            }],
+//            [" ... s trasováním", function(el) {
+//                dbg_prompt(`výraz je v kontextu procedury ${elem.id}`,dbg_last_script,
+//                    function(script){
+//                      dbg_last_script= script;
+//                      dbg_script(script,block,'func',1);
+//                      return false;
+//                    },menu_el);
+//                return false;
             }]
           ],menu_el);
           break;}
+        default:{
+          dbg_contextmenu([
+            editovat
+          ],menu_el);
+          break;} 
       }
       return false;
     })
-};
+}
+function dbg_editor_end_(y) {
+  return y;
+}
 // ------------------------------------------------------------------------------------ dbg_onunload
 // DBG - voláno z dbg3.php
 // zavření okna
@@ -571,20 +590,34 @@ function dbg_show_help(ret) {
 // -------------------------------------------------------------------------------==> . dbg show_php
 // zobrazení textu PHP funkce
 function dbg_show_php(lns,cls,start,header) {
-  doc.Ezer.fce.echo(doc.Ezer.fce.debug(lns));
+//  doc.Ezer.fce.echo(doc.Ezer.fce.debug(lns));
   // odstraň staré src
   jQuery('#php-border').html(header);
   let ul= dbg.php.find('ul'),
-      rex= '(^|\\W)('+cls.join('|')+')(\\s*\\()';
+      rex= '(^|\\W)('+cls.join('|')+')(\\s*\\()',
+      keywords= new RegExp("\\b(?<!\\$)(abstract|and|array|as|break|callable|case|catch|-class|clone|"
+        + "const|continue|declare|default|die|do|echo|else|elseif|empty|enddeclare|endfor|endforeach|"
+        + "endif|endswitch|endwhile|eval|exit|extends|final|for|foreach|function|global|goto|if|"
+        + "implements|include|include_once|instanceof|insteadof|interface|isset|list|namespace|"
+        + "new|or|print|private|protected|public|require|require_once|return|static|switch|throw|"
+        + "trait|try|unset|use|var|while|xor)\\b",'g');
   rex= new RegExp(rex,"gi");
   ul.empty();
   // zobraz text
   for (let lni in lns) {
     let iln= lni==0?'':lni, 
-        ln= htmlentities(lns[lni]);
-    ln= ln.replace(rex,"$1<span class='call' onclick='dbg_reload_php(\"$2\");'>$2</span>$3");
+        ln= htmlentities(lns[lni]),
+        styl= 'text';
+    if (ln.match(/^\s*(\/\/|#)/)) {
+      // celořádkový komentář zobraz šedě
+      styl= 'notext'
+    }
+    else {
+      ln= ln.replace(rex,"$1<span class='call' onclick='dbg_reload_php(\"$2\");'>$2</span>$3");
+      ln= ln.replace(keywords,'<b>$1</b>');
+    }
     dbg.jQuery(
-      `<li><span class="line">${iln}</span><span class="text">${ln}</span></li>`)
+      `<li><span class="line">${iln}</span><span class="${styl}">${ln}</span></li>`)
       .appendTo(ul);
   }
   jQuery(ul).scrollTop(13*start);
@@ -596,6 +629,13 @@ function dbg_show_text(ln,cg) {
 //  var dbg= Ezer.sys ? Ezer.sys.dbg.win_ezer.document : document;
   // odstraň staré src
   let ul= dbg.lines.find('ul'),
+      skills= new RegExp("(?<=\\b)("
+        + "skill|has_skill"
+        + ")(?=\\s*[:(])",'g'),
+      events= new RegExp("(?<=^|\\W)("
+        + "onblur|onclick|ondrop|onfirstfocus|onfocus|onstart|onready|onbusy|onmenu|onmarkclick|"
+        + "onchange|onchanged|onchoice|onload|onresize|onrowclick|onsave|onsubmit"
+        + ")(?=[^=_'\"\\w]|$)",'g'),
       keywords= new RegExp("(?<=^|\\W)("
         + "area|array|box|break|browse|button|case|const|date|desc|edit|else|elseif|ezer|"
         + "field|form|foreach|fork|for|func|group|chat|check|if|item|js|label|list|map|menu|"
@@ -661,6 +701,8 @@ function dbg_show_text(ln,cg) {
       }
       // zobraz text
       lni= lni.replace(keywords,'<b>$1</b>');
+      lni= lni.replace(events,'<i>$1</i>');
+      lni= lni.replace(skills,'<u>$1</u>');
       dbg.src[i1]= dbg.jQuery(
         `<li id="${i1}"><span class="line">${i1}</span><span class="text">${lni}</span></li>`)
         .appendTo(ul);
@@ -680,7 +722,9 @@ function htmlentities(h) {
 // ------------------------------------------------------------------------------==> . dbg show_line
 // zobrazení textu ve struktuře
 function dbg_show_line(ln,css='pick',el=undefined) {
-  if (el==undefined) 
+  if (el!=undefined) 
+    el.stopImmediatePropagation();
+  else if (window.event!=undefined) 
     window.event.stopImmediatePropagation();
   dbg.dbg_clear();
   dbg.lines.find('li.pick').removeClass('pick');

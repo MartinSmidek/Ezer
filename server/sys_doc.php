@@ -305,18 +305,12 @@ function doc_php_cg ($app_php='*',$sys_php='') { trace();
             continue 2;
       }
     }
-//        && in_array($fname,) ) continue; 
     if ( !file_exists("$ezer_path/$fname") ) {
       $html.= "<div style='color:red'><br>POZOR soubor $fname není dostupný</div>";
       continue;
     }
     $ts= token_get_all(file_get_contents("$ezer_path/$fname"));
     for ($i= 0; $i<count($ts); $i++) {
-//      // vynechání mezer
-//      if ( is_array($ts[$i]) && in_array($ts[$i][0],array(T_WHITESPACE,T_COMMENT,T_VARIABLE)) )
-//        continue;
-//      // seznam funkcí
-//      else 
       if ( is_array($ts[$i]) && $ts[$i][0]==T_FUNCTION ) {
         $i+= 2;
         $omi[]= strtolower($ts[$i][1]);
@@ -342,16 +336,23 @@ function doc_php_cg ($app_php='*',$sys_php='') { trace();
     $prev= ''; // předchozí fce
     $ts= array();
     $ts0= token_get_all(file_get_contents($fname));
+    $endline= 9990;
+    for ($i= count($ts0); $i>0; $i--) {
+      if (is_array($ts0[$i])) {
+        $endline= $ts0[$i][2];
+        break;
+      }
+    }
     foreach ($ts0 as $t) {
       if ($t=='(' || (is_array($t) && in_array($t[0],array(T_FUNCTION,T_STRING,T_OBJECT_OPERATOR)))) {
         $ts[]= $t;
       }
     }
     // trasování testovacího PHP 
-    display($fname);
-    if ($fname=='C:/Ezer/beans/tutorial/tut/tut.cg.php') {
+//    display($fname);
+//    if ($fname=='C:/Ezer/beans/tutorial/tut/tut.cg.php') {
 //      token_debug($ts,$fname);
-    }
+//    }
     for ($i= 0; $i<count($ts); $i++) {
       // vynechání mezer
 //      if ( is_array($ts[$i]) && $ts[$i][0]==T_WHITESPACE ) continue;
@@ -366,19 +367,19 @@ function doc_php_cg ($app_php='*',$sys_php='') { trace();
         $last= strtolower($ts[$i][1]);
         $lines[$last]= $ln;
         $phps[$fname][$last]= array();
-        $cg_calls[$last]= array(array(),$iphp,$ln,9999);
+        $cg_calls[$last]= array(array(),$iphp,$ln,$endline);
         if ($prev) 
           $cg_calls[$prev][3]= $ln-1;
         $prev= $last;
       }
       // volání funkce
-      elseif ( $ts[$i][0]==T_STRING
+      elseif ( $ts[$i][0]==T_STRING && $ts[$i+1]=='('
         && in_array($u= strtolower($ts[$i][1]),$usr) ) {
         if ( isset($fce[$u]) ) {
           // pokud není mezi vynechávanými
           if ( !in_array($u,$phps[$fname][$last]) ) {
             $phps[$fname][$last][]= $u;
-            $cg_calls[$last][0][]= $u;
+            $cg_calls[$last][0][]= $u.(';'.$ts[$i][2]);
             $fce[$u][]= $last;
           }
         }
@@ -424,7 +425,6 @@ end:
 # pokud je $save_in_session=true uchovají se rozbory PHP modulů v SESSION a neprovádí se již parsing
 # inverzni=0 normální CG, inverzni=1 graf volajících
 function doc_php_tree($root,$app_php='*',$sys_php='',$inverzni=0) { trace();
-  global $ezer_root;
   $cg_list= doc_php_cg($app_php,$sys_php);
   $calls= $cg_list->cg_calls;
   $called= $cg_list->called;
@@ -434,24 +434,26 @@ function doc_php_tree($root,$app_php='*',$sys_php='',$inverzni=0) { trace();
   $lines= $cg_list->lines;
   $down= function($fce) use (&$calls,$phps,$lines,&$down) {
     global $ezer_path_root;
+    list($fce,$ln)= explode(';',$fce);
     $calls[$fce][4]= 1; // zabráníme opakování kresby
     $modul= str_replace("$ezer_path_root/",'',$phps[$calls[$fce][1]]);
     $modul.= " ({$calls[$fce][2]}-{$calls[$fce][3]})";
     $cg= 
       (object)array(
-        'prop' => (object)array('id'=>$fce,'title'=>$modul,'data'=>$lines[$fce]),
+        'prop' => (object)array('id'=>$fce,'title'=>"$ln:$modul",'data'=>$lines[$fce]),
         'down' => array()
       );    
     if (is_array($calls[$fce][0])) {
-      foreach ($calls[$fce][0] as $called) {
+      foreach ($calls[$fce][0] as $called_line) {
+        list($called,$ln)= explode(';',$called_line);
         if (isset($calls[$called][4])) {
           $modul= str_replace("$ezer_path_root/",'',$phps[$calls[$called][1]]);
           $modul.= " {$calls[$called][2]}-{$calls[$called][3]}";
           $node= (object)array(
-              'prop'=>(object)array('id'=>"* $called",'title'=>$modul,'data'=>$lines[$called]));
+              'prop'=>(object)array('id'=>"* $called",'title'=>"$ln:$modul",'data'=>$lines[$called]));
         }
         else {
-          $node= $down($called);
+          $node= $down($called_line);
         }
         $cg->down[]= $node;
       }
