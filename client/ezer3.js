@@ -1940,6 +1940,9 @@ class MenuContext extends Menu {
 //i: Item.onclick - item byl vybrán
 class Item extends Block {
 //oo: Item.par - parametr itemu
+//-
+//os: Item.format - vzhled itemu
+//  ; 't' : hodnota bude zobrazena i jako title
   constructor (owner,desc,DOM,id,skill) {
     super(owner,desc,DOM,id,skill);
     if ( this.type=='item.clipboard' ) {
@@ -2017,7 +2020,8 @@ class Item extends Block {
             this.owner.owner.id,this.owner.id,this.id]),
           title= ''+(this.options.title||this.id),
           text= title.replace(/\[fa-([^\]]+)\]/g,''),
-          help= this.options.help ? ` title="${this.options.help}"` : '',
+          help= this.options.help ? ` title="${this.options.help}"` 
+              : (this._fc('t') ? ` title="${text}"` : ''),
           // přídavný styl pro označení menu administrátora a programátora
           a= this.desc.options.skill && this.desc.options.skill.match(/\ba\b/g) ? ' a' : '',
           m= this.desc.options.skill && this.desc.options.skill.match(/\bm\b/g) ? ' m' : '',
