@@ -572,8 +572,10 @@ panel meta [0,0,300,300] {type:'popup', _sys:'', title:'Struktura aplikace - men
   proc app() { panel.popup }
   proc onfirstfocus() { t.a.app }
   use t: form [0,0,300,300] {
-    button [-1,11,,] { type:'html', title:"[fa-refresh]", proc onclick() { a.app }}
-    use a: area { title:"<div id='x' class='ae_work' style='overflow:auto;width:300px;height:300px'></div>"
+    button [-10,0,,] { type:'html', title:"[fa-refresh]", style:"margin-top:-29px"
+      proc onclick() { a.app }}
+    use a: area { title:"<div id='x' class='ae_work' \n\
+        style='overflow:auto;width:300px;height:300px;position:absolute'></div>"
       proc app() { this.tree_show(meta_tree('_sys'),'x'); this.tree_expand(1) }
       proc tree_onclick(fid,id,dat,com,x,txt,txts) { var fd:text
         echo('tree click:',fid,'~',txt);
