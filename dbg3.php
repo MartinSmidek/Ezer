@@ -83,7 +83,9 @@
     log=    jQuery('#log');
     prompt= jQuery('#prompt');
     help=   jQuery('#help');
-    help_div= jQuery('#help_div');
+    wcg=     jQuery('#cg');
+    wcg_hdr= jQuery('#cg_hdr');
+    wcg_grf= jQuery('#cg_grf');
     lines=  jQuery('#lines');
     php=  jQuery('#php');
     notes=  jQuery('#notes');
@@ -103,13 +105,29 @@
       li {
         white-space: pre; list-style-type: none; /*text-overflow: ellipsis; overflow: hidden;*/ }
       /* ----------------------- help */
-      div#help_div {
-        position: fixed; right: 30px; top: 25px; width: 300px; min-height: 100px;
+      div#help {
+        position: fixed; display: none; right: 30px; top: 25px; width: 300px; 
         background-color: #eee; border: 1px solid #aaa; z-index: 2;
-        overflow-y: auto; max-height: 50%; display: none; box-shadow: 5px 5px 10px #567; }
-      div#help_div span {
+        overflow-y: auto; min-height: 100px; max-height: calc(50% - 30px); 
+        box-shadow: 5px 5px 10px #567; }
+      /* ----------------------- cg */
+      div#cg {
+        position:fixed; right: 30px; top: 25px; width: 300px; 
+        min-height: 100px; height: calc(50% - 30px); max-height: 500px; 
+        background-color: #eee; border: 1px solid #aaa; z-index: 2;
+        box-shadow: 5px 5px 10px #567; }
+      div#cg_hdr {
+        height:27px; border-bottom: 3px double #aaa; }
+      button.cg_but {
+        position: absolute; margin: 3px 3px 0 0; width: 20px; padding: 0; }
+      div#cg_div {
+        overflow-y: auto; height: calc(100% - 30px); }
+      div#cg_grf {
+        overflow-y: auto; width:100%; }
+      
+      div#xxxhelp_div span {
         text-decoration: underline; color: blue; cursor: alias;}
-      div#help_div span.go {
+      div#xxxhelp_div span.go {
         text-decoration: none; color: black; cursor: pointer; }
       #sources {
         position: fixed; right: 10px; top: 2px; font-size: 16px; color: lightgray; }
@@ -239,17 +257,22 @@ div.inverzniCG div.mooTree_selected {
     </style>
   </head>
   <body id='body' style="background-color:$background;">
-    <div id="help_div" style='display:none'>
-      <button class="help_but" title="expand" style="float:right" onclick="dbg_cg_gc(99);">
+    <div id="help" style='display:none'></div>
+    <div id="cg">
+      <button class="cg_but" title="expand" style="right:0px" onclick="dbg_cg_gc(99);">
         <i class="fa fa-asterisk"></i>
       </button>
-      <button class="help_but" title="inverzní call graf" style="float:right" onclick="dbg_cg_gc(1);">
+      <button class="cg_but" title="inverzní" style="right:25px" onclick="dbg_cg_gc(1);">
         <i class="fa fa-long-arrow-left"></i>
       </button>
-      <button class="help_but" title="call graf" style="float:right" onclick="dbg_cg_gc(0);">
+      <button class="cg_but" title="call graf" style="right:50px" onclick="dbg_cg_gc(0);">
         <i class="fa fa-long-arrow-right"></i>
       </button>
-      <div id="help"></div>
+      <div id="cg_hdr"></div>
+      <div id="cg_div">   
+        <div id="cg_grf">
+      </div>
+    </div>
     </div>
     <div id='work'>
       <div id='filnot'>
@@ -425,5 +448,4 @@ function array2object(array $array) {
   }
   return $object;
 }
-?>
 

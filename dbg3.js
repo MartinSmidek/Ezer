@@ -26,8 +26,9 @@ function dbg_onclick_start(file) {
     .dblclick( el => {
       var l= dbg_context(el.target),
           sel= window.getSelection(),
-          range= sel.getRangeAt(0);
-      var text= range ? range.startContainer.data.substring(range.startOffset,range.endOffset) : '';
+          range= sel.getRangeAt(0),
+          text= sel.baseNode.data ? sel.baseNode.data
+            : (range ? range.startContainer.data.substring(range.startOffset,range.endOffset) : '');
       if ( text ) {
         dbg.dbg_write(text);
         if ( text=='ask' ) {
@@ -60,9 +61,7 @@ function dbg_onclick_start(file) {
         text+= '<br><br> ... elem '+elem.id+' / '+elem.type+' _lc-lc_='+elem.desc._lc+'-'+elem.desc.lc_;
       else if ( elem ) 
         text+= '<br><br> ... elem '+elem.id+' / '+elem.type+' _lc='+elem.desc._lc;
-      dbg.help
-        .css({display:'block'})
-        .html(y.msg+'<br><br>'+text);
+      dbg.help.show().html(y.msg+'<br><br>'+text);
       
       // zobraz kontextové menu podle kontextu elem
       let editovat= [
@@ -472,10 +471,11 @@ jQuery.fn.extend({
 })
 // --------------------------------------------------------------------------------------- dbg clear
 function dbg_clear() {
-  dbg.log.css({display:'none'});
-  dbg.prompt.css({display:'none'});
-  dbg.help_div.css({display:'none'});
-  dbg.php.css({display:'none'});
+  dbg.log.hide();
+  dbg.prompt.hide();
+  dbg.help.hide();
+  dbg.wcg.hide();
+  dbg.php.hide();
 }
 // -------------------------------------------------------------------------------------- dbg reload
 function dbg_reload_php(fce) {
@@ -518,7 +518,7 @@ function dbg_reload_(y,cg_on) {
   // pokud není definovaná line použij zapamatovanou
   let line= Number(y.line) ? Number(y.line) : files[y.file].pick;
   dbg.dbg_show_line(line,'pick');
-  if (cg_on) dbg.help_div.show();
+  if (cg_on) dbg.wcg.show();
 }
 // ==========================================================================> Komunikace s aplikací
 // ----------------------------------------------------------------------------------- dbg proc_stop
@@ -807,13 +807,14 @@ function dbg_prompt(txt,deflt,ret_fce,e) {
 // --------------------------------------------------------------------------------------- dbg write
 // napíše (pro append=1 přidá) text do okna help
 function dbg_write (msg,append=false) {
+  dbg.wcg.hide();
   if ( append ) {
     dbg.help.html(dbg.help.html()+msg);
   }
   else {
     dbg.help.html(msg);
-    dbg.help_div.show();
   }
+  dbg.help.show();
 }
 // --------------------------------------------------------------------------------------- dbg cg_gc
 // přepíná mezi normálním a inverzním CG
@@ -831,11 +832,11 @@ function dbg_cg_gc(inverzni) {
   else {
     CG.cg_gc= inverzni;
     if (inverzni) 
-      jQuery('#help').addClass('inverzniCG');
+      dbg.wcg_grf.addClass('inverzniCG');
     else
-      jQuery('#help').removeClass('inverzniCG')
+      dbg.wcg_grf.removeClass('inverzniCG')
   }
-  dbg_find_help ('php',CG.item);
+  dbg_find_help('php',CG.item);
 }
 // ----------------------------------------------------------------------------------- dbg find_help
 // dotaz na server o help pro daný item
@@ -845,7 +846,10 @@ function dbg_find_help (typ,item) {
 }
 function _dbg_find_help(y) { 
   if ( y.args[0]=='php' ) {
-    dbg.dbg_write(y.value.html);
+    // zobraz CG
+    dbg.help.hide();
+    dbg.wcg.show();
+    dbg.wcg_hdr.html(y.value.html);
     dbg.cg= CG.cg_gc ? y.value.gc : y.value.cg;
     if ( dbg.cg )
       dbg_make_tree(dbg.cg);
@@ -878,7 +882,7 @@ function dbg_make_tree(cg) {
   }
   var active= null;
   let tree= new MooTreeControl({
-        div:jQuery(`#help`),
+        div:dbg.wcg_grf,
         grid:true,
         mode:'folders',             
         path:'.'+doc.Ezer.paths.images_lib,     // cesta k mootree.gif
@@ -936,6 +940,9 @@ function dbg_make_tree(cg) {
     tree.select(tree.get(active));
   tree.enable(); // zviditelní
   tree.select(tree.root,null);
+  // zobraz CG
+  dbg.help.hide();
+  dbg.wcg.show();
 }
 // --------------------------------------------------------------------------------------- get caret
 function get_caret() {
@@ -978,7 +985,7 @@ function dbg_script (script,block,code='proc',trace=false) {
   self= self ? (o._library ? '#.' : '$.')+self : '$';
   let msg= `ezerscript: ${script}`+(dbg_script_trace ? `<br>c-context: ${self}` : '');
   dbg.dbg_write(msg);
-  dbg.help_div.show();
+  dbg.help.show();
   doc.Ezer.fce.clear();
   var x= {cmd:'dbg_compile',context:{self:self,app:s.app,file:s.file,code:code},script:script};
   doc_ask('','',dbg_script_,x);
