@@ -1858,8 +1858,8 @@ class MenuGroup extends Menu {
     Ezer.assert(this.owner.type=='menu.left','chybné menu - group mimo accordion');
     var title= this.options.title||this.id,
         // přídavný styl pro označení menu administrátora a programátora
-        a= this.desc.options.skill && this.desc.options.skill.match(/a/g) ? ' a' : '',
-        m= this.desc.options.skill && this.desc.options.skill.match(/m/g) ? ' m' : '';
+        a= this.desc.options.skill && this.desc.options.skill.match(/\ba\b/g) ? ' a' : '',
+        m= this.desc.options.skill && this.desc.options.skill.match(/\bm\b/g) ? ' m' : '';
     this.DOM_Block= jQuery(`<div class="MenuGroup3${a}${m}"><a>${title}</a><ul></ul></div>`)
       .appendTo(this.owner.DOM_Block)
       .data('ezer',this);
@@ -2019,8 +2019,8 @@ class Item extends Block {
           text= title.replace(/\[fa-([^\]]+)\]/g,''),
           help= this.options.help ? ` title="${this.options.help}"` : '',
           // přídavný styl pro označení menu administrátora a programátora
-          a= this.desc.options.skill && this.desc.options.skill.match(/a/g) ? ' a' : '',
-          m= this.desc.options.skill && this.desc.options.skill.match(/m/g) ? ' m' : '',
+          a= this.desc.options.skill && this.desc.options.skill.match(/\ba\b/g) ? ' a' : '',
+          m= this.desc.options.skill && this.desc.options.skill.match(/\bm\b/g) ? ' m' : '',
           am= a || m ? ` class="${a}${m}"` : '';
       title= title.replace(/\[fa-([^\]]+)\]/g,`<i class='fa fa-fw fa-$1' title='${text}'></i>`);
       this.DOM_Block= jQuery(`<li${am}${help}>${title}</li>`)
@@ -2206,8 +2206,8 @@ class Tabs extends Block {
         href= make_url_menu([this.id]), // 'ezer://'+id;
         key= this.self_sys().sys, sub,
         // přídavný styl pro označení menu administrátora a programátora
-        a= this.desc.options.skill && this.desc.options.skill.match(/a/g) ? ' a' : '',
-        m= this.desc.options.skill && this.desc.options.skill.match(/m/g) ? ' m' : '';
+        a= this.desc.options.skill && this.desc.options.skill.match(/\ba\b/g) ? ' a' : '',
+        m= this.desc.options.skill && this.desc.options.skill.match(/\bm\b/g) ? ' m' : '';
     // zvýraznění nadpisu, pokud právě k němu existuje _help - help pro tabs nelze vynutit
     sub= key && this.options._sys && Ezer.sys.ezer.help_keys
       && Ezer.sys.ezer.help_keys.split(',').includes(key)
@@ -2242,8 +2242,8 @@ class Tabs extends Block {
     var title= panel.options.title||panel.id;
     var key= panel.owner.id+'.'+panel.id, sub;
     // přídavný styl pro označení menu administrátora a programátora
-    let a= panel.desc.options.skill && panel.desc.options.skill.match(/a/g) ? ' a' : '',
-        m= panel.desc.options.skill && panel.desc.options.skill.match(/m/g) ? ' m' : '';
+    let a= panel.desc.options.skill && panel.desc.options.skill.match(/\ba\b/g) ? ' a' : '',
+        m= panel.desc.options.skill && panel.desc.options.skill.match(/\bm\b/g) ? ' m' : '';
     title= title.replace(/\[fa-([^\]]+)\]/g,"<i class='fa fa-$1'></i>");
     sub= key && Ezer.sys.ezer.help_keys.split(',').includes(key)
       ? "<sub> ?</sub>" : '';
