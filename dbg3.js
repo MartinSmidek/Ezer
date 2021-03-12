@@ -850,6 +850,7 @@ function _dbg_find_help(y) {
     dbg.help.hide();
     dbg.wcg.show();
     dbg.wcg_hdr.html(y.value.html);
+    dbg.wcg_grf.empty();
     dbg.cg= CG.cg_gc ? y.value.gc : y.value.cg;
     if ( dbg.cg )
       dbg_make_tree(dbg.cg);

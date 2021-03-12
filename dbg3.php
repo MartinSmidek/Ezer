@@ -113,7 +113,7 @@
       /* ----------------------- cg */
       div#cg {
         position:fixed; right: 30px; top: 25px; width: 300px; 
-        min-height: 100px; height: calc(50% - 30px); max-height: 500px; 
+        min-height: 100px; height: calc(50% - 30px); max-height: 300px; 
         background-color: #eee; border: 1px solid #aaa; z-index: 2;
         box-shadow: 5px 5px 10px #567; }
       div#cg_hdr {
