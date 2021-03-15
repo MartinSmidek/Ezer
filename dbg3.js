@@ -53,6 +53,7 @@ function dbg_onclick_start(file) {
       var l= dbg_context(menu_el.target),
           c= get_caret(),
           text= "lc="+l+','+c; 
+      menu_el.stopImmediatePropagation();
       dbg_show_line(l,'pick',menu_el);
       let y= dbg_find_block(dbg.name,l,c), elem= y.elem, block= y.block;
       if ( block ) 
@@ -61,14 +62,45 @@ function dbg_onclick_start(file) {
         text+= '<br><br> ... elem '+elem.id+' / '+elem.type+' _lc-lc_='+elem.desc._lc+'-'+elem.desc.lc_;
       else if ( elem ) 
         text+= '<br><br> ... elem '+elem.id+' / '+elem.type+' _lc='+elem.desc._lc;
-      dbg.help.show().html(y.msg+'<br><br>'+text);
+//      dbg.help.show().html(y.msg+'<br><br>'+text);
       
       // zobraz kontextové menu podle kontextu elem
       let editovat= [
         'editovat '+file, function(el) { 
           doc.Ezer.fce.echo('editace'); 
-          let app= opener ? opener.Ezer.root : window.Ezer.root;
-          dbg_ask({cmd:'editor',app:app,file:file,line:l},dbg_editor_end_);
+          // -------------------------------------- ukončení editace a uložení souboru
+          CodeMirror.commands.save= function(cm) {
+            cm.toTextArea();
+            editor.hide(); lines.show(); 
+            //saveTextAsFile(editor.val(),'try.txt');
+            dbg_save(file,'ezer',editor.val());
+          }
+          // -------------------------------------- zahájení editace
+          editor.val(doc.Ezer.sys.dbg.files[doc.Ezer.sys.dbg.file].lines.join("\n"));
+          lines.hide(); help.hide(); wcg.hide(); 
+          editor.show(); 
+          CodeMirror.fromTextArea(editor[0],{
+            lineNumbers: true,
+            mode: "ezer",
+            theme: "ezer",
+            matchBrackets: true,
+            autoCloseBrackets: true,
+            indentUnit: 2,
+            smartIndent: true,
+            startOpen: false,
+            extraKeys: {
+              'Esc': // ---------------------------- ukončení editace bez uložení souboru
+                function(cm){ 
+                  cm.toTextArea();
+                  editor.val(''); 
+                  editor.hide(); lines.show();
+                }
+            }
+          });          
+          
+          
+//          let app= opener ? opener.Ezer.root : window.Ezer.root;
+//          dbg_ask({cmd:'editor',app:app,file:file,line:l},dbg_editor_end_);
           return false; 
         }
       ];
@@ -203,6 +235,33 @@ function dbg_onclick_start(file) {
 }
 function dbg_editor_end_(y) {
   return y;
+}
+// ---------------------------------------------------------------------------------- saveTextAsFile
+// https://stackoverflow.com/questions/51315044/how-do-i-save-the-content-of-the-editor-not-the-whole-html-page
+function saveTextAsFile(textToWrite,fileNameToSaveAs) {
+//  var textToWrite = editor.getValue();
+  var textFileAsBlob = new Blob([textToWrite], {
+    type: "text/plain;charset=utf-8"
+  });
+//  var fileNameToSaveAs = "myfile.txt";
+
+  var downloadLink = document.createElement("a");
+  downloadLink.download = fileNameToSaveAs;
+  downloadLink.innerHTML = "Download File";
+  if (window.webkitURL != null) {
+    // Chrome allows the link to be clicked
+    // without actually adding it to the DOM.
+    downloadLink.href = window.webkitURL.createObjectURL(textFileAsBlob);
+  } else {
+    // Firefox requires the link to be added to the DOM
+    // before it can be clicked.
+    downloadLink.href = window.URL.createObjectURL(textFileAsBlob);
+    downloadLink.onclick = destroyClickedElement;
+    downloadLink.style.display = "none";
+    document.body.appendChild(downloadLink);
+  }
+
+  downloadLink.click();
 }
 // ------------------------------------------------------------------------------------ dbg_onunload
 // DBG - voláno z dbg3.php
@@ -485,6 +544,14 @@ function dbg_reload_php(fce) {
 function dbg_reload_php_(y) {
   dbg_show_php(y.lines,y.calls,y.start,y.header); 
 }
+// ---------------------------------------------------------------------------------------- dbg save
+function dbg_save(file,type,value) {
+  let app= opener ? opener.Ezer.root : window.Ezer.root;
+  dbg_ask({cmd:'save_source',app:app,file:file,type:type,value:value},dbg_save_);
+}
+function dbg_save_(y) {
+  dbg_write('saved:'+y.msg);
+}
 // -------------------------------------------------------------------------------------- dbg reload
 function dbg_reload(file,ln=0,cg_on=0) {
   let app= opener ? opener.Ezer.root : window.Ezer.root;
@@ -495,8 +562,9 @@ function dbg_reload_(y,cg_on) {
   doc.Ezer.sys.dbg.file= y.file;
   let files= doc.Ezer.sys.dbg.files;
   if (files[y.file]==undefined) {
-    files[y.file]= {pick:Number(y.line),stop:0,traces:[],stops:[]};
+    files[y.file]= {pick:Number(y.line),stop:0,traces:[],stops:[],lines:[]};
   }
+  files[y.file].lines= y.lines;
   // -----------------------------------==> .. doplnění seznamu modulů
   dbg.files.empty();
   for (let file in files) {
@@ -1089,147 +1157,265 @@ function doc_ask (fce,args,then,x) {
 //   ajax.send();
   doc.Ezer.App._ajax(1);
 }
-//// ========================================================================================> DBG PHP
-//// -------------------------------------------------------------------------------==> . dbg php_open
-//// zobrazení textu ve struktuře
-//function dbg_php_open(fname,item) {
-//  var ltwh= doc.Ezer.fce.get_cookie('ezer_dbg_win2');
-//  ltwh= ltwh ? ltwh : '0,0,770,500';
-//  var x= ltwh.split(',');
-//  var position= 'left='+x[0]+',top='+x[1]+',width='+x[2]+',height='+x[3];
-//  var path= './ezer3.1/dbg3.php?err=1&typ=php&start='+item+'&src='+fname;
-//  var arg= position+',resizable=1,titlebar=0,menubar=0';
-//  doc.Ezer.sys.dbg.win_php= doc.open(path,'php',arg);
-//  doc.Ezer.sys.dbg.typ= 'php';
-//}
-//// -------------------------------------------------------------------------------==> . dbg php_item
-//// nalezení itemu v PHP
-//function dbg_php_item(item) {
-//  for (var ln= 0; ln<source.length; ln++) {
-//    if ( source[ln].indexOf(item)>=0 ) {
-//      dbg_show_line(ln+1,'pick');
-//      break;
-//    }
-//  }
-//}
-/*
-// ------------------------------------------------------------------------------------==> . ON load
-//   window.addEvent('load', function() {
-//jQuery.when(jQuery.ready).then( function() {
-//  log= jQuery('#log');
-//  prompt= jQuery('#prompt');
-//  help= jQuery('#help');
-////  dbg_show_text(source);
-//  if ( pick )
-//    dbg_show_line(pick,'pick');
-//  jQuery('#work').click( () => { dbg_clear() })
-//});
-// ----------------------------------------------------------------------------------==> . ON unload
-//if ( window.MooTools!==undefined )
-//window.addEvent('unload', function() {
-//  var w= jQuery(window);
-//  var p= window.screenX+','+window.screenY+','+w.width()+','+w.height();
-//  opener.dbg_onunload(typ,p);
-//     if ( typ=='php' ) {
-//       Cookie.write('ezer_dbg_win2',p,{duration:100});
-//       opener.Ezer.sys.dbg.win_php= null;
-//     }
-//})
-//// -------------------------------------------------------------------------------------- dbg_onsave
-//// DBG - voláno z dbg3.php
-//function dbg_onsave(url,source) { 
-////  Ezer.fce.echo("save "+url);//+"<hr>"+source);
-//  dbg_ask('save_file',[url,source],_dbg_onsave);
-//}
-//function _dbg_onsave(y) { //Ezer.fce.echo(Ezer.fce.debug(y,"saved"));
-////  Ezer.fce.echo(y.value);
-//  return y.value;
-//}
-// ----------------------------------------------------------------------------------- dbg_save_text
-//function dbg_save_text(source) {
-//  opener.dbg_onsave(url,source);
-//}
-*/
-/*
-      var x= dbg_context(menu_el.target);
-      if ( x ) {
-        dbg_show_line(x,'pick');
-        Ezer.fce.contextmenu([
-          ['-oprav text', function(el) {
-              if ( !open ) {
-                for (var i=0; i<x.chs.length; i++) {
-                  var text= x.chs[i].getElement('span.text');
-                  text.contentEditable= true;
-                }
-                open= true;
-                $('src').focus();
-              }
-              return false;
-          }],
-          ['ulož text', function(el) {
-              if ( open ) {
-                var ln= [], iln= 0, source= '';
-                for (var i=0; i<x.chs.length; i++) {
-                  var text= x.chs[i].getElement('span.text');
-                  text.contentEditable= false;
-                  var childs= text.childNodes;
-                  for (var j= 0; j<childs.length; j++ ) {
-                    if ( Browser.name=='chrome' || childs[j].nodeType==3 ) {
-                      ln[iln++]= childs[j].textContent;
-                    }
-                  }
-                }
-                source= ln.join("\\n");
-                open= false;
-                dbg_save_text(source);
-                dbg_show_text(ln);
-              }
-              return false;
-          }]
-        ],arguments[0]);
+// =====================================================================================> CodeMirror
+// CodeMirror, copyright (c) by Marijn Haverbeke and others
+// Distributed under an MIT license: https://codemirror.net/LICENSE
+
+(function(mod) {
+  if (typeof exports == "object" && typeof module == "object") // CommonJS
+    mod(require("../../lib/codemirror"));
+  else if (typeof define == "function" && define.amd) // AMD
+    define(["../../lib/codemirror"], mod);
+  else // Plain browser env
+    mod(CodeMirror);
+})(function(CodeMirror) {
+  "use strict";
+
+  CodeMirror.defineSimpleMode = function(name, states) {
+    CodeMirror.defineMode(name, function(config) {
+      return CodeMirror.simpleMode(config, states);
+    });
+  };
+
+  CodeMirror.simpleMode = function(config, states) {
+    ensureState(states, "start");
+    var states_ = {}, meta = states.meta || {}, hasIndentation = false;
+    for (var state in states) if (state != meta && states.hasOwnProperty(state)) {
+      var list = states_[state] = [], orig = states[state];
+      for (var i = 0; i < orig.length; i++) {
+        var data = orig[i];
+        list.push(new Rule(data, states));
+        if (data.indent || data.dedent) hasIndentation = true;
       }
-      return false;
-    })
-    // ----------------------------==> .. klávesnice při opravě zdrojového textu
-    .keydown( event => {
-      var line= event.target.getParent(), clmn= get_caret(), text;
-      switch (event.key) {
-      case 'up':              // arrow-up:    předchozí řádek, stejný sloupec
-        line= line.previousElementSibling;
-        if ( line ) {
-          text= line.getElement('span.text')
-          line.focus();
-          set_caret(text,clmn);
-          event.stop();
+    }
+    var mode = {
+      startState: function() {
+        return {state: "start", pending: null,
+                local: null, localState: null,
+                indent: hasIndentation ? [] : null};
+      },
+      copyState: function(state) {
+        var s = {state: state.state, pending: state.pending,
+                 local: state.local, localState: null,
+                 indent: state.indent && state.indent.slice(0)};
+        if (state.localState)
+          s.localState = CodeMirror.copyState(state.local.mode, state.localState);
+        if (state.stack)
+          s.stack = state.stack.slice(0);
+        for (var pers = state.persistentStates; pers; pers = pers.next)
+          s.persistentStates = {mode: pers.mode,
+                                spec: pers.spec,
+                                state: pers.state == state.localState ? s.localState : CodeMirror.copyState(pers.mode, pers.state),
+                                next: s.persistentStates};
+        return s;
+      },
+      token: tokenFunction(states_, config),
+      innerMode: function(state) { return state.local && {mode: state.local.mode, state: state.localState}; },
+      indent: indentFunction(states_, meta)
+    };
+    if (meta) for (var prop in meta) if (meta.hasOwnProperty(prop))
+      mode[prop] = meta[prop];
+    return mode;
+  };
+
+  function ensureState(states, name) {
+    if (!states.hasOwnProperty(name))
+      throw new Error("Undefined state " + name + " in simple mode");
+  }
+
+  function toRegex(val, caret) {
+    if (!val) return /(?:)/;
+    var flags = "";
+    if (val instanceof RegExp) {
+      if (val.ignoreCase) flags = "i";
+      val = val.source;
+    } else {
+      val = String(val);
+    }
+    return new RegExp((caret === false ? "" : "^") + "(?:" + val + ")", flags);
+  }
+
+  function asToken(val) {
+    if (!val) return null;
+    if (val.apply) return val
+    if (typeof val == "string") return val.replace(/\./g, " ");
+    var result = [];
+    for (var i = 0; i < val.length; i++)
+      result.push(val[i] && val[i].replace(/\./g, " "));
+    return result;
+  }
+
+  function Rule(data, states) {
+    if (data.next || data.push) ensureState(states, data.next || data.push);
+    this.regex = toRegex(data.regex);
+    this.token = asToken(data.token);
+    this.data = data;
+  }
+
+  function tokenFunction(states, config) {
+    return function(stream, state) {
+      if (state.pending) {
+        var pend = state.pending.shift();
+        if (state.pending.length == 0) state.pending = null;
+        stream.pos += pend.text.length;
+        return pend.token;
+      }
+
+      if (state.local) {
+        if (state.local.end && stream.match(state.local.end)) {
+          var tok = state.local.endToken || null;
+          state.local = state.localState = null;
+          return tok;
+        } else {
+          var tok = state.local.mode.token(stream, state.localState), m;
+          if (state.local.endScan && (m = state.local.endScan.exec(stream.current())))
+            stream.pos = stream.start + m.index;
+          return tok;
         }
-        break;
-      case 'down':            // arrow-down:  další řádek, stejný sloupec
-        line= line.nextElementSibling;
-        if ( line ) {
-          text= line.getElement('span.text')
-          line.focus();
-          set_caret(text,clmn);
-          event.stop();
+      }
+
+      var curState = states[state.state];
+      for (var i = 0; i < curState.length; i++) {
+        var rule = curState[i];
+        var matches = (!rule.data.sol || stream.sol()) && stream.match(rule.regex);
+        if (matches) {
+          if (rule.data.next) {
+            state.state = rule.data.next;
+          } else if (rule.data.push) {
+            (state.stack || (state.stack = [])).push(state.state);
+            state.state = rule.data.push;
+          } else if (rule.data.pop && state.stack && state.stack.length) {
+            state.state = state.stack.pop();
+          }
+
+          if (rule.data.mode)
+            enterLocalMode(config, state, rule.data.mode, rule.token);
+          if (rule.data.indent)
+            state.indent.push(stream.indentation() + config.indentUnit);
+          if (rule.data.dedent)
+            state.indent.pop();
+          var token = rule.token
+          if (token && token.apply) token = token(matches)
+          if (matches.length > 2 && rule.token && typeof rule.token != "string") {
+            for (var j = 2; j < matches.length; j++)
+              if (matches[j])
+                (state.pending || (state.pending = [])).push({text: matches[j], token: rule.token[j - 1]});
+            stream.backUp(matches[0].length - (matches[1] ? matches[1].length : 0));
+            return token[0];
+          } else if (token && token.join) {
+            return token[0];
+          } else {
+            return token;
+          }
         }
-        break;
-      case 'backspace':       // backspace:   na začátku řádku spojit s předchozím
-        if ( clmn==0 && line.id!='1' ) {
-          var line2= line.previousElementSibling;
-          var text2= line2.getElement('span.text');
-          var clmn2= text2.innerText.length;
-          text= line.getElement('span.text')
-          text2.innerText+= text.innerText;
-          line.destroy();
-          set_caret(text2,clmn2);
-          event.stop();
+      }
+      stream.next();
+      return null;
+    };
+  }
+
+  function cmp(a, b) {
+    if (a === b) return true;
+    if (!a || typeof a != "object" || !b || typeof b != "object") return false;
+    var props = 0;
+    for (var prop in a) if (a.hasOwnProperty(prop)) {
+      if (!b.hasOwnProperty(prop) || !cmp(a[prop], b[prop])) return false;
+      props++;
+    }
+    for (var prop in b) if (b.hasOwnProperty(prop)) props--;
+    return props == 0;
+  }
+
+  function enterLocalMode(config, state, spec, token) {
+    var pers;
+    if (spec.persistent) for (var p = state.persistentStates; p && !pers; p = p.next)
+      if (spec.spec ? cmp(spec.spec, p.spec) : spec.mode == p.mode) pers = p;
+    var mode = pers ? pers.mode : spec.mode || CodeMirror.getMode(config, spec.spec);
+    var lState = pers ? pers.state : CodeMirror.startState(mode);
+    if (spec.persistent && !pers)
+      state.persistentStates = {mode: mode, spec: spec.spec, state: lState, next: state.persistentStates};
+
+    state.localState = lState;
+    state.local = {mode: mode,
+                   end: spec.end && toRegex(spec.end),
+                   endScan: spec.end && spec.forceEnd !== false && toRegex(spec.end, false),
+                   endToken: token && token.join ? token[token.length - 1] : token};
+  }
+
+  function indexOf(val, arr) {
+    for (var i = 0; i < arr.length; i++) if (arr[i] === val) return true;
+  }
+
+  function indentFunction(states, meta) {
+    return function(state, textAfter, line) {
+      if (state.local && state.local.mode.indent)
+        return state.local.mode.indent(state.localState, textAfter, line);
+      if (state.indent == null || state.local || meta.dontIndentStates && indexOf(state.state, meta.dontIndentStates) > -1)
+        return CodeMirror.Pass;
+
+      var pos = state.indent.length - 1, rules = states[state.state];
+      scan: for (;;) {
+        for (var i = 0; i < rules.length; i++) {
+          var rule = rules[i];
+          if (rule.data.dedent && rule.data.dedentIfLineStart !== false) {
+            var m = rule.regex.exec(textAfter);
+            if (m && m[0]) {
+              pos--;
+              if (rule.next || rule.push) rules = states[rule.next || rule.push];
+              textAfter = textAfter.slice(m[0].length);
+              continue scan;
+            }
+          }
         }
         break;
       }
-      return true;
-    })
-// 
-};
-function myTrimRight(x) {
-  return x.replace(/ +$/gm,'');
-}
-*/
+      return pos < 0 ? 0 : state.indent[pos];
+    };
+  }
+});
+
+CodeMirror.defineSimpleMode("ezer", {
+  // The start state contains the rules that are initially used
+  start: [
+    // The regex matches the token, the token property contains the type
+    {regex: /"(?:[^\\]|\\.)*?(?:"|$)/, token: "string"},
+    // You can match multiple tokens at once. Note that the captured
+    // groups must span the whole string in this case
+    {regex: /(function)(\s+)([a-z$][\w$]*)/,
+     token: ["keyword", null, "variable-2"]},
+    // Rules are matched in the order in which they appear, so there is
+    // no ambiguity between this one and the one above
+    {regex: /(?:func|proc|var|php|js|fork|return|if|for|while|else|this|panel|form|use|view|field|list|browse|show|select|radio|case|check|chat)\b/,
+     token: "keyword"},
+    {regex: /true|false|null|undefined/, token: "atom"},
+    {regex: /0x[a-f\d]+|[-+]?(?:\.\d+|\d+\.?\d*)(?:e[-+]?\d+)?/i,
+     token: "number"},
+    {regex: /\/\/.*/, token: "comment"},
+    {regex: /#.*/, token: "comment"},
+    {regex: /\/(?:[^\\]|\\.)*?\//, token: "comment"},
+    // A next property will cause the mode to move to a different state
+    {regex: /\/\*/, token: "comment", next: "comment"},
+    {regex: /[-+\/*=<>!]+/, token: "operator"},
+    // indent and dedent properties guide autoindentation
+    {regex: /[\{\[\(]/, indent: true},
+    {regex: /[\}\]\)]/, dedent: true},
+    {regex: /[a-z$][\w$]*/, token: "variable"},
+    // You can embed other modes with the mode property. This rule
+    // causes all code between << and >> to be highlighted with the XML
+    // mode.
+    {regex: /<</, token: "meta", mode: {spec: "xml", end: />>/}}
+  ],
+  // The multi-line comment state.
+  comment: [
+    {regex: /.*?\*\//, token: "comment", next: "start"},
+    {regex: /.*/, token: "comment"}
+  ],
+  // The meta property contains global information about the mode. It
+  // can contain properties like lineComment, which are supported by
+  // all modes, and also directives like dontIndentStates, which are
+  // specific to simple modes.
+  meta: {
+    dontIndentStates: ["comment"],
+    lineComment: "//"
+  }
+});

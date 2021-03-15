@@ -3,6 +3,8 @@
 // ============================================================================================> PHP
 
   session_start();
+  
+  $CodeMirror= 1;
 
   // nastavení zobrazení PHP-chyb klientem při &err=1
   if ( isset($_GET['err']) && $_GET['err'] ) {
@@ -26,7 +28,6 @@
   $skin=     'default';
 
   $src= $_GET['src'];
-  $typ= isset($_GET['typ']) ? $_GET['typ'] : 'ezer';
   $start= isset($_GET['start']) ? $_GET['start'] : '';
   $pick= isset($_GET['pick']) ? $_GET['pick'] : '';
   $file= isset($_GET['file']) ? $_GET['file'] : '';
@@ -34,14 +35,18 @@
   $app= $_GET['app'];
   
   $html= "";
-  switch($typ) {
-  case 'ezer':
-    $background= 'oldlace';
-    break;
-  case 'php':
-    $background= '#fafaff';
-    break;
+  $background= 'oldlace';
+  $scripts= '';
+  if ($CodeMirror) {
+    $scripts= <<<__EOD
+    <script src="/ezer3.1/client/licensed/codemirror/lib/codemirror.js"></script>
+    <link rel="stylesheet" href="/ezer3.1/client/licensed/codemirror/lib/codemirror.css">
+    <script src="/ezer3.1/client/licensed/codemirror/mode/php/php.js"></script>
+    <script src="/ezer3.1/client/licensed/codemirror/addon/edit/matchbrackets.js"></script>
+    <script src="/ezer3.1/client/licensed/codemirror/addon/edit/closebrackets.js"></script>
+__EOD;
   }
+  
   $html= <<<__EOD
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="cs" dir="ltr">
@@ -50,6 +55,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=9" />
     <link rel="shortcut icon" href="client/img/dbg.ico" />
     <title>$src</title>
+    $scripts
     <script src="client/licensed/jquery-3.2.1.min.js" type="text/javascript" charset="utf-8"></script>
     <script src="client/licensed/jquery-noconflict.js" type="text/javascript" charset="utf-8"></script>
     <script src="client/licensed/jquery-ui.min.js" type="text/javascript" charset="utf-8"></script>
@@ -63,12 +69,13 @@
     <script type="text/javascript">
 // =====================================================================================> JAVASCRIPT
   var name= "$src";         // GET src
-  var typ= '$typ';          // GET type=ezer 
   var start= '$start';      // GET start
   var pick= '$pick';        // GET pick
   var src= not= [];         // array of DOM ezer, array of DOM poznámek, array of php function lines
   var help, help_div, log, prompt,    // DOM elements
-      php, lines, notes, files;
+      php, lines, notes, files, 
+      wcg, wcg_hdr, wcg_grf,
+      editor;
   var doc, dbg;             // document aplikace a debuggeru
   var app= '$app';          // ajax
   var cg= null;             // poslední call graph 
@@ -87,6 +94,7 @@
     wcg_hdr= jQuery('#cg_hdr');
     wcg_grf= jQuery('#cg_grf');
     lines=  jQuery('#lines');
+    editor= jQuery('#editor');
     php=  jQuery('#php');
     notes=  jQuery('#notes');
     files=  jQuery('#files');
@@ -117,7 +125,7 @@
         background-color: #eee; border: 1px solid #aaa; z-index: 2;
         box-shadow: 5px 5px 10px #567; }
       div#cg_hdr {
-        height:27px; border-bottom: 3px double #aaa; }
+        height:27px; border-bottom: 3px double #aaa; padding:0 80px 0 3px; }
       button.cg_but {
         position: absolute; margin: 3px 3px 0 0; width: 20px; padding: 0; }
       div#cg_div {
@@ -156,9 +164,13 @@
       #php span.call {
         background-color:#cce; cursor:pointer; font-weight: bold; }
       /* ----------------------- source */
+      textarea#editor, div.CodeMirror {
+        height: 100%; left: 120px; width: calc(100% - 120px); position: absolute; }
       div#lines {
-        padding: 0; overflow-y: scroll; height: 100%;
+        padding: 0; overflow-y: scroll; height: 100%; margin-top: 4px;
         left: 120px; right: 0px; position: absolute; }
+      div#gutter {
+        position: fixed; left: 120px; width: 29px; top: 0; height: 100%; background: silver; }
       div#border {
         position: fixed; left: 747px; width: 0; top: 0; height: 100%; 
         border-right: 1px solid #ff00004a; }
@@ -171,9 +183,9 @@
       li u {
         text-shadow:0 0 black; background: lightsalmon; text-decoration: none}
       li span.notext {
-        margin-left:40px; display: block; color:#999; }
+        margin-left:34px; display: block; color:#999; }
       li span.text {
-        margin-left:40px; display: block; }
+        margin-left:34px; display: block; }
       li span.text[contenteditable=true] {
         word-wrap: inherit; outline: none; }
       li span.text[contenteditable=true]:focus {
@@ -181,8 +193,8 @@
       /* ----------------------- lines */
       li span.line {
         position: absolute;
-        background-color: silver; vertical-align: top; padding-right: 5px; margin-right: 5px;
-        width: 24px; text-align: right;  }
+        background-color: silver; vertical-align: top; padding-right: 3px; margin-right: 5px;
+        width: 26px; text-align: right;  }
       /* ----------------------- cg */
       li span.go {
         background-color: #ffdf6b; cursor:pointer;   }
@@ -254,6 +266,42 @@ div.inverzniCG div.mooTree_selected {
 .ContextMenu3 li.disabled3:hover { background-color:#eee; }
 .ContextFocus3 { background-color:#ffa !important;
 }
+      /* ----------------------- CodeMirror */
+.cm-s-ezer span.cm-meta { color: #808000; }
+.cm-s-ezer span.cm-number { color: #0000FF; }
+.cm-s-ezer span.cm-keyword { line-height: 1em; font-weight: bold; color: #000000; text-shadow: 0 0 black; }
+.cm-s-ezer span.cm-atom { font-weight: bold; color: #000080; }
+.cm-s-ezer span.cm-def { color: #000000; }
+.cm-s-ezer span.cm-variable { color: black; }
+.cm-s-ezer span.cm-variable-2 { color: black; }
+.cm-s-ezer span.cm-variable-3, .cm-s-ezer span.cm-type { color: black; }
+.cm-s-ezer span.cm-property { color: black; }
+.cm-s-ezer span.cm-operator { color: black; }
+.cm-s-ezer span.cm-comment { color: #999999; }
+.cm-s-ezer span.cm-string { color: #008000; }
+.cm-s-ezer span.cm-string-2 { color: #008000; }
+.cm-s-ezer span.cm-qualifier { color: #555; }
+.cm-s-ezer span.cm-error { color: #FF0000; }
+.cm-s-ezer span.cm-attribute { color: #0000FF; }
+.cm-s-ezer span.cm-tag { color: #000080; }
+.cm-s-ezer span.cm-link { color: #0000FF; }
+
+.cm-s-ezer.CodeMirror { background: oldlace; }
+.cm-s-ezer .CodeMirror-gutters { background: silver; }
+.cm-s-ezer .CodeMirror-linenumber { color:black; }
+.cm-s-ezer .CodeMirror-activeline-background { background: #FFFAE3; }
+
+.cm-s-ezer span.cm-builtin { color: #30a; }
+.cm-s-ezer span.cm-bracket { color: #cc7; }
+
+.cm-s-ezer  { font-size: 8pt; font-family: monospace,consolas; }
+
+.cm-s-ezer .CodeMirror-matchingbracket { outline:1px solid cyan; color:black !important; }
+.cm-s-ezer .CodeMirror-nonmatchingbracket { outline:1px solid red; color:black !important; }
+
+.CodeMirror-hints.ezer { font-family: Consolas; color: #616569; background-color: #ebf3fd !important; }
+.CodeMirror-hints.ezer .CodeMirror-hint-active { background-color: #a2b8c9 !important; color: #5c6065 !important; }      
+      
     </style>
   </head>
   <body id='body' style="background-color:$background;">
@@ -281,7 +329,9 @@ div.inverzniCG div.mooTree_selected {
         </select>
         <ul id="notes"><li>notes</li></ul>
       </div>
+      <textarea id='editor' style="display:none"></textarea>
       <div id='lines'>
+        <div id='gutter'></div>
         <div id='border'></div>
         <ul><li>lines</li></ul>
       </div>
@@ -307,40 +357,6 @@ function dbg_server($x) {
     $file= "{$x->file}.ezer";
     $name= "{$x->app}/$file";
     $path= "{$_SESSION[$x->app]['abs_root']}/$name";
-    $notepad= 'C:\Program Files (x86)\Notepad++\notepad++';
-    $dbg3_bat= 'C:\Ezer\beans\ezer3.1\dbg3.bat';
-    $subpath= $x->app;
-    if ( file_exists($path) ) {
-      $y->name= $name;
-    }
-    else {
-      $name= "ezer3.1/$file";
-      $subpath= 'ezer3.1';
-      $path= "{$_SESSION[$x->app]['abs_root']}/$name";
-      if ( file_exists($path) ) {
-        $y->name= $name;
-      }
-      else {
-        $y->msg= "modul {$x->file} se nepodařilo najít";
-      }
-    }
-    if (!isset($y->msg)) {
-      $cmd= 'start "'.$notepad.'" '.$name." -n{$x->line}";
-      $cmd= "start cmd.exe";
-      $cmd= $dbg3_bat;
-      $y->msg= $cmd;
-//      exec("start /B notepad");
-      exec($cmd);
-//      $pid= popen("start /B ". $cmd, "r");
-//      if ( $pid ) {
-//        $msg= fread($pid, 2096);
-//        $y->msg= "start editoru ($pid,$msg)";
-//        pclose($pid);
-//      }
-//      else {
-//        $y->msg= "$file -- start editoru zhavaroval";
-//      }
-    }
     break;
   case 'source_php': // -------------------------------- get PHP
     $before= 12;
@@ -432,6 +448,16 @@ function dbg_server($x) {
     // předáme CG
     $y->cg= $cg;
     break;
+  case 'save_source': // ---------------------------------- save file (file, type, value)
+    $file= "{$x->file}.ezer";
+    $name= "{$x->app}/$file";
+    $path= "{$_SESSION[$x->app]['abs_root']}/$name";
+    $subpath= $x->app;
+    if ( file_exists($path) ) {
+      file_put_contents("$path.x.ezer",$x->value);
+    }
+    $y->msg= "file=$name";
+    break;
   }
   return $y;
 }
@@ -448,4 +474,3 @@ function array2object(array $array) {
   }
   return $object;
 }
-
