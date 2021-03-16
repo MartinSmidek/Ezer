@@ -1,4 +1,4 @@
-/* global dbg, doc, Cookie, Ezer */
+/* global dbg, doc, Cookie, Ezer, dbg_onclick_start */
 
 // (c) 2020 Martin Smidek <martin@smidek.eu>
 
@@ -7,7 +7,7 @@
 // ------------------------------------------------------------------------------- dbg onclick_start
 var dbg_last_script= '';
 function dbg_onclick_start(file) {
-  dbg_reload(file,dbg.pick);
+  dbg_reload(file,dbg.pick,1);
   // -----------------------------------==> .. click na poznámku
   dbg.notes
     .click( el => {
@@ -50,7 +50,8 @@ function dbg_onclick_start(file) {
     })
     // -----------------------------------==> .. kontextové menu pro zdrojový text
     .contextmenu( menu_el => {
-      var l= dbg_context(menu_el.target),
+      var file= doc.Ezer.sys.dbg.file,
+          l= dbg_context(menu_el.target),
           c= get_caret(),
           text= "lc="+l+','+c; 
       menu_el.stopImmediatePropagation();
@@ -67,19 +68,29 @@ function dbg_onclick_start(file) {
       // zobraz kontextové menu podle kontextu elem
       let editovat= [
         'editovat '+file, function(el) { 
-          doc.Ezer.fce.echo('editace'); 
+          let pick= doc.Ezer.sys.dbg.files[doc.Ezer.sys.dbg.file].pick,
+              top= dbg.lines.find('ul').offset().top;
+          top= (4-top)/13;
+          doc.Ezer.fce.echo(top);
           // -------------------------------------- ukončení editace a uložení souboru
           CodeMirror.commands.save= function(cm) {
             cm.toTextArea();
-            editor.hide(); lines.show(); 
-            //saveTextAsFile(editor.val(),'try.txt');
-            dbg_save(file,'ezer',editor.val());
+            editor.hide(); //lines.show(); 
+            // save and reload
+            dbg_save_load(doc.Ezer.sys.dbg.file,'ezer',editor.val());
+          }
+          // ------------------------------------- ukončení editace bez uložení souboru
+          CodeMirror.commands.quit= function(cm) {
+            cm.toTextArea();
+            editor.val(''); 
+            editor.hide(); lines.show();
           }
           // -------------------------------------- zahájení editace
           editor.val(doc.Ezer.sys.dbg.files[doc.Ezer.sys.dbg.file].lines.join("\n"));
           lines.hide(); help.hide(); wcg.hide(); 
           editor.show(); 
-          CodeMirror.fromTextArea(editor[0],{
+          CodeMirror_init();
+          let cm= CodeMirror.fromTextArea(editor[0],{
             lineNumbers: true,
             mode: "ezer",
             theme: "ezer",
@@ -88,15 +99,21 @@ function dbg_onclick_start(file) {
             indentUnit: 2,
             smartIndent: true,
             startOpen: false,
+            styleActiveLine: true,
             extraKeys: {
-              'Esc': // ---------------------------- ukončení editace bez uložení souboru
-                function(cm){ 
-                  cm.toTextArea();
-                  editor.val(''); 
-                  editor.hide(); lines.show();
-                }
+              'Esc': function(cm){ CodeMirror.commands.quit(cm); }
             }
-          });          
+          });
+          cm.on('contextmenu',function(cm,el){
+            dbg_contextmenu([ 
+              ['ulož '+file+' (ctrl-s)',function() { CodeMirror.commands.save(cm) }],
+              ['konec bez uložení (esc)',function() { CodeMirror.commands.quit(cm) }]
+            ],el);
+            return false;
+          });
+          cm.focus();
+          cm.scrollTo(0,top*13);
+          cm.setCursor(pick-1,0);          
           
           
 //          let app= opener ? opener.Ezer.root : window.Ezer.root;
@@ -544,27 +561,36 @@ function dbg_reload_php(fce) {
 function dbg_reload_php_(y) {
   dbg_show_php(y.lines,y.calls,y.start,y.header); 
 }
-// ---------------------------------------------------------------------------------------- dbg save
-function dbg_save(file,type,value) {
-  let app= opener ? opener.Ezer.root : window.Ezer.root;
-  dbg_ask({cmd:'save_source',app:app,file:file,type:type,value:value},dbg_save_);
+// ----------------------------------------------------------------------------------- dbg save_load
+// save and reload
+function dbg_save_load(file,type,value) {
+  let app= opener ? opener.Ezer.root : window.Ezer.root,
+      mtime= doc.Ezer.sys.dbg.files[file].mtime;
+  dbg_ask({cmd:'save_source',app:app,file:file,type:type,value:value,mtime:mtime},dbg_save_load_,file);
 }
-function dbg_save_(y) {
-  dbg_write('saved:'+y.msg);
+function dbg_save_load_(y,file) {
+  dbg_write(y.msg);
+  if (!y.err)
+    dbg_reload(file,pick,undefined,false);
+  else {
+    dbg_show_text(editor.val().split("\n"));
+    lines.show();
+  }
 }
 // -------------------------------------------------------------------------------------- dbg reload
-function dbg_reload(file,ln=0,cg_on=0) {
+function dbg_reload(file,ln=0,clear=0) {
   let app= opener ? opener.Ezer.root : window.Ezer.root;
-  dbg_ask({cmd:'source',app:app,file:file,line:ln},dbg_reload_,cg_on);
+  dbg_ask({cmd:'source',app:app,file:file,line:ln},dbg_reload_,clear);
 }
-function dbg_reload_(y,cg_on) {
+function dbg_reload_(y,clear) {
   dbg.name= y.name;
   doc.Ezer.sys.dbg.file= y.file;
   let files= doc.Ezer.sys.dbg.files;
   if (files[y.file]==undefined) {
-    files[y.file]= {pick:Number(y.line),stop:0,traces:[],stops:[],lines:[]};
+    files[y.file]= {pick:Number(y.line),stop:0,traces:[],stops:[],lines:[],mtime:0};
   }
   files[y.file].lines= y.lines;
+  files[y.file].mtime= y.mtime;
   // -----------------------------------==> .. doplnění seznamu modulů
   dbg.files.empty();
   for (let file in files) {
@@ -585,8 +611,9 @@ function dbg_reload_(y,cg_on) {
   }
   // pokud není definovaná line použij zapamatovanou
   let line= Number(y.line) ? Number(y.line) : files[y.file].pick;
-  dbg.dbg_show_line(line,'pick');
-  if (cg_on) dbg.wcg.show();
+  dbg.dbg_show_line(line,'pick',undefined,clear);
+  lines.show();
+  if (y.msg) dbg.dbg_write(y.msg);
 }
 // ==========================================================================> Komunikace s aplikací
 // ----------------------------------------------------------------------------------- dbg proc_stop
@@ -692,7 +719,7 @@ function dbg_show_php(lns,cls,start,header) {
 }
 // ------------------------------------------------------------------------------==> . dbg show_text
 // zobrazení textu ve struktuře
-function dbg_show_text(ln,cg) {
+function dbg_show_text(ln,cg=null) {
 //  // najdi dokument debuggeru
 //  var dbg= Ezer.sys ? Ezer.sys.dbg.win_ezer.document : document;
   // odstraň staré src
@@ -715,6 +742,7 @@ function dbg_show_text(ln,cg) {
   // vytvoř substituční schema z CG
   // vytvoř from={php_fce:[ezer_fce,...],...}
   let subst= [], from= {};
+  if (cg)
   for (let ifce in cg) {
     for (let icall in cg[ifce]) {
       let call= cg[ifce][icall].split('-');
@@ -789,12 +817,12 @@ function htmlentities(h) {
 }
 // ------------------------------------------------------------------------------==> . dbg show_line
 // zobrazení textu ve struktuře
-function dbg_show_line(ln,css='pick',el=undefined) {
+function dbg_show_line(ln,css='pick',el=undefined,clear=true) {
   if (el!=undefined) 
     el.stopImmediatePropagation();
   else if (window.event!=undefined) 
     window.event.stopImmediatePropagation();
-  dbg.dbg_clear();
+  if (clear) dbg.dbg_clear();
   dbg.lines.find('li.pick').removeClass('pick');
   if ( dbg.src[ln] ) {
     dbg.src[ln]
@@ -1160,6 +1188,7 @@ function doc_ask (fce,args,then,x) {
 // =====================================================================================> CodeMirror
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
 // Distributed under an MIT license: https://codemirror.net/LICENSE
+// Adapted for Ezer by Martin Šmídek
 
 (function(mod) {
   if (typeof exports == "object" && typeof module == "object") // CommonJS
@@ -1374,6 +1403,7 @@ function doc_ask (fce,args,then,x) {
   }
 });
 
+function CodeMirror_init() {
 CodeMirror.defineSimpleMode("ezer", {
   // The start state contains the rules that are initially used
   start: [
@@ -1385,9 +1415,16 @@ CodeMirror.defineSimpleMode("ezer", {
      token: ["keyword", null, "variable-2"]},
     // Rules are matched in the order in which they appear, so there is
     // no ambiguity between this one and the one above
-    {regex: /(?:func|proc|var|php|js|fork|return|if|for|while|else|this|panel|form|use|view|field|list|browse|show|select|radio|case|check|chat)\b/,
+  
+    // ezerscript specific
+    {regex: /(?:area|array|box|break|browse|button|case|const|date|desc|edit|else|elseif|ezer|field|form|foreach|fork|for|func|group|chat|check|if|item|js|label|list|map|menu|module|number|object|of|panel|php|pragma|proc|radio|report|return|select|show|switch|system|table|tabs|text|this|time|use|var|view|while)\b/,
      token: "keyword"},
-    {regex: /true|false|null|undefined/, token: "atom"},
+    {regex: /(?:onblur|onclick|ondrop|onfirstfocus|onfocus|onstart|onready|onbusy|onmenu|onmarkclick|onchange|onchanged|onchoice|onload|onresize|onrowclick|onsave|onsubmit)\b/,
+     token: "keyword-event"},
+    {regex: /(?:skill|has_skill)\b/,
+     token: "keyword-skill"},
+
+    {regex: /this/, token: "atom"},
     {regex: /0x[a-f\d]+|[-+]?(?:\.\d+|\d+\.?\d*)(?:e[-+]?\d+)?/i,
      token: "number"},
     {regex: /\/\/.*/, token: "comment"},
@@ -1419,3 +1456,4 @@ CodeMirror.defineSimpleMode("ezer", {
     lineComment: "//"
   }
 });
+}

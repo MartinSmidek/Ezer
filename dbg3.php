@@ -2,6 +2,7 @@
 
 // ============================================================================================> PHP
 
+  error_reporting(E_ALL ^ E_NOTICE);
   session_start();
   
   $CodeMirror= 1;
@@ -44,6 +45,7 @@
     <script src="/ezer3.1/client/licensed/codemirror/mode/php/php.js"></script>
     <script src="/ezer3.1/client/licensed/codemirror/addon/edit/matchbrackets.js"></script>
     <script src="/ezer3.1/client/licensed/codemirror/addon/edit/closebrackets.js"></script>
+    <script src="/ezer3.1/client/licensed/codemirror/addon/selection/active-line.js"></script>
 __EOD;
   }
   
@@ -111,7 +113,7 @@ __EOD;
       body, select {
         font-size: 8pt; font-family: monospace,consolas; overflow: hidden; margin: 0; }
       li {
-        white-space: pre; list-style-type: none; /*text-overflow: ellipsis; overflow: hidden;*/ }
+        white-space: pre; list-style-type: none; height:13px; }
       /* ----------------------- help */
       div#help {
         position: fixed; display: none; right: 30px; top: 25px; width: 300px; 
@@ -269,7 +271,10 @@ div.inverzniCG div.mooTree_selected {
       /* ----------------------- CodeMirror */
 .cm-s-ezer span.cm-meta { color: #808000; }
 .cm-s-ezer span.cm-number { color: #0000FF; }
-.cm-s-ezer span.cm-keyword { line-height: 1em; font-weight: bold; color: #000000; text-shadow: 0 0 black; }
+.cm-s-ezer span.cm-keyword { font-weight: bold; text-shadow: 0 0 black; }
+.cm-s-ezer span.cm-keyword-event { font-style: italic; background: lightgreen; text-shadow: 0 0 black; }
+.cm-s-ezer span.cm-keyword-func { background: #ffdf6b; }
+.cm-s-ezer span.cm-keyword-skill { background: lightsalmon; }
 .cm-s-ezer span.cm-atom { font-weight: bold; color: #000080; }
 .cm-s-ezer span.cm-def { color: #000000; }
 .cm-s-ezer span.cm-variable { color: black; }
@@ -298,6 +303,8 @@ div.inverzniCG div.mooTree_selected {
 
 .cm-s-ezer .CodeMirror-matchingbracket { outline:1px solid cyan; color:black !important; }
 .cm-s-ezer .CodeMirror-nonmatchingbracket { outline:1px solid red; color:black !important; }
+.cm-s-ezer .CodeMirror-activeline-gutter { background: #ffff00; }
+.cm-s-ezer .CodeMirror-activeline-background { background: #ffffaa; }
 
 .CodeMirror-hints.ezer { font-family: Consolas; color: #616569; background-color: #ebf3fd !important; }
 .CodeMirror-hints.ezer .CodeMirror-hint-active { background-color: #a2b8c9 !important; color: #5c6065 !important; }      
@@ -351,19 +358,22 @@ __EOD;
 // AJAX volání z dbg3_ask
 // na vstupu je definováno: x.app
 function dbg_server($x) {
+  global $ezer_path_root, $ezer_root;
+  $ezer_path_root= $_SESSION[$x->app]['abs_root'];
+  $ezer_root= $x->app;
+  chdir($ezer_path_root);
   $y= $x;
   switch ($x->cmd) {
   case 'editor': // ------------------------------------ edit {file,line}
     $file= "{$x->file}.ezer";
     $name= "{$x->app}/$file";
-    $path= "{$_SESSION[$x->app]['abs_root']}/$name";
+    $path= "$ezer_path_root/$name";
     break;
   case 'source_php': // -------------------------------- get PHP
     $before= 12;
     $start= 0;
     $ezer_root= $x->app;
     $fce= $x->fce;
-//    $abs_root= $_SESSION[$ezer_root]['abs_root'];
     $cg= $_SESSION[$ezer_root]['CG'];
     if (isset($cg->cg_calls) && isset($cg->cg_calls[$fce])) {
       // zjištění seznamu bezprostředně volaných funkcí
@@ -416,18 +426,20 @@ function dbg_server($x) {
   case 'source': // ------------------------------------ get Ezer + CG
     $file= "{$x->file}.ezer";
     $name= "{$x->app}/$file";
-    $path= "{$_SESSION[$x->app]['abs_root']}/$name";
-    $subpath= $x->app;
+    $path= "$ezer_path_root/$name";
+    $root= $x->app;
     if ( file_exists($path) ) {
       $y->lines= file($path,FILE_IGNORE_NEW_LINES);
+      $y->mtime= filemtime($path);
       $y->name= $name;
     }
     else {
       $name= "ezer3.1/$file";
-      $subpath= 'ezer3.1';
-      $path= "{$_SESSION[$x->app]['abs_root']}/$name";
+      $root= 'ezer3.1';
+      $path= "$ezer_path_root/$name";
       if ( file_exists($path) ) {
         $y->lines= file($path,FILE_IGNORE_NEW_LINES);
+        $y->mtime= filemtime($path);
         $y->name= $name;
       }
       else {
@@ -436,27 +448,58 @@ function dbg_server($x) {
     }
     // získáme překlad a z něj CG
     $cg= null;
-    $cpath= "{$_SESSION[$x->app]['abs_root']}/$subpath/code/{$x->file}.json";
+    $cpath= "$ezer_path_root/$root/code/{$x->file}.json";
     if ( file_exists($cpath)) {
       $loads= json_decode(file_get_contents($cpath));
       $cg= $loads->info->ezer;
 //      $y->lines[]= "CG ok - $path - $cpath";
     }
     else {
-      $y->lines[]= "CG ko - $path - $cpath";
+      $y->msg[]= "CG ko - $path - $cpath";
     }
     // předáme CG
     $y->cg= $cg;
     break;
   case 'save_source': // ---------------------------------- save file (file, type, value)
+    global $ezer_php, $ezer_php_libr, $ezer_ezer, $trace, $err;
     $file= "{$x->file}.ezer";
     $name= "{$x->app}/$file";
-    $path= "{$_SESSION[$x->app]['abs_root']}/$name";
-    $subpath= $x->app;
+    $path= "$ezer_path_root/$name";
+    $root= $ezer_root= $x->app;
+    require_once("ezer3.1/server/comp2.php");
+    require_once("ezer3.1/server/sys_doc.php");
+    if (file_exists("$root.inc.php"))
+      require_once("$root.inc.php");
+    else
+      require_once("$root/$root.inc.php");
     if ( file_exists($path) ) {
-      file_put_contents("$path.x.ezer",$x->value);
+      $mtime= filemtime($path);
+      // uložíme pouze, pokud nedošlo k externí změně
+      if ($mtime==$x->mtime) {
+        // napřed uložíme kopii do *.bak
+        $bak= file_get_contents($path);
+        file_put_contents("$path.bak",$bak);
+        // potom uložíme změněný stav
+        file_put_contents($path,$x->value);
+        // a zkompilujeme a obnovíme CG
+        $state= comp_file($x->file,$root);
+        $ok= substr($state,0,2);
+        $y->msg= "'$name' uložen, kompilace $ok";
+        if ($ok=='ok') {
+          doc_php_cg();
+          $cg_ok= isset($_SESSION[$root]['CG']) ? 'ok' : 'ko';
+          $y->msg.= ", CG $cg_ok";
+        }
+        else {
+          $y->err= 1;
+          $y->msg.= "<br>$err<hr>$state<hr>$trace";
+        }
+      }
+      else 
+        $y->msg= "'$name' byl během editace změněn externím programem - vaše změny nebyly provedeny";
     }
-    $y->msg= "file=$name";
+    else 
+      $y->msg= "'$name' (už) neexistuje";
     break;
   }
   return $y;

@@ -1,6 +1,6 @@
 <?php # (c) 2007-2020 Martin Smidek <martin@smidek.eu>
 
-global $x, $y, $trace, $err,$ezer_path_code, $debugger;
+global $trace, $err,$ezer_path_code, $debugger;
 
 # zaslepení funkcí
 function note_time() {}
@@ -23,6 +23,7 @@ function comp ($src) {
 # $root je jméno hlavního objektu aplikace a může být uvedeno jen pro $name='$'
 # $list_only omezí listing kódu procedur na daná jména (oddělená čárkou)
 # $comp_php znamená volání z comp.php
+# pokud je v SESSION snímek call grafu, zruší jej
 function comp_file ($name,$root='',$_list_only='',$_comp_php=false) {  #trace();
   global $ezer, $ezer_path_root, $err, $comp_php,$list_only,
     $code, $module, $procs, $context, $ezer_name, $ezer_app, $errors, $includes, $onloads;
@@ -112,7 +113,7 @@ function comp_file ($name,$root='',$_list_only='',$_comp_php=false) {  #trace();
 //                                                         debug($load,$cname);
 //                                                         display($cname);
           $code= $load->code;
-          if ( $code->library )
+          if ( isset($code->library) && $code->library )
             $is_library= true;
 //                                                         display("$try includes ".($code->library?'is library':''));
           $includes[$try]= $code;
@@ -266,6 +267,8 @@ function comp_file ($name,$root='',$_list_only='',$_comp_php=false) {  #trace();
   unset($loads->code);
 //                                                         debug($loads,"ENVIRONMENT $myname");
 end:
+  // zrušíme CG - snímek call grafu
+  if (isset($_SESSION[$root]['CG'])) unset($_SESSION[$root]['CG']);
   return "$ok = kompilace a link $ename => $cname";
 }
 # -------------------------------------------------------------------------------------------- xlist

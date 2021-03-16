@@ -96,28 +96,23 @@ Ezer.ajax= function (options) {
   jQuery.extend(options,defaults);
   return jQuery.ajax(options);    
 };
-// ----------------------------------------------------------------------------- ON unload
-window.addEventListener("beforeunload", function() {
-  if ( Ezer && Ezer.sys ) {
-    if ( Ezer.sys.dbg ) {
-      if ( Ezer.sys.dbg.win_ezer ) {
-        Ezer.sys.dbg.win_ezer.close();
-      }
-      if ( Ezer.sys.dbg.win_php ) {
-        Ezer.sys.dbg.win_php.close();
-      }
-    }
-  }
-});
-// ----------------------------------------------------------------------------- ON load
+// ----------------------------------------------------------------------------- ON load, ON unload
 jQuery(document)
   .ready( () => {
-    Ezer.app= new Application(Ezer.options);
-    Ezer.app._mini_debug(Ezer.app.options.mini_debug);
-    // převzetí případně parametrizace debuggeru
-    if ( Ezer.options.dbg ) jQuery.extend(Ezer.sys.dbg,Ezer.options.dbg);
-    if ( Ezer.app.options.ondomready ) ondomready();
-  });
+      Ezer.app= new Application(Ezer.options);
+      Ezer.app._mini_debug(Ezer.app.options.mini_debug);
+      // převzetí případně parametrizace debuggeru
+      if ( Ezer.options.dbg ) jQuery.extend(Ezer.sys.dbg,Ezer.options.dbg);
+      if ( Ezer.app.options.ondomready ) ondomready();
+      if ( Ezer && Ezer.sys && Ezer.sys.dbg && Ezer.sys.dbg.win_ezer ) 
+        Ezer.sys.dbg.win_ezer.close();
+    });
+jQuery(window).on({
+  beforeunload: () => {
+    if ( Ezer && Ezer.sys && Ezer.sys.dbg && Ezer.sys.dbg.win_ezer ) 
+      Ezer.sys.dbg.win_ezer.close();
+  }
+});
 // ----------------------------------------------------------------------------- ON popstate
 if ( Ezer.browser!=='IE' )                               // IE nepodporuje HTML5
   window.addEventListener("popstate", function(e) {
