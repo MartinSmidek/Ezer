@@ -42,13 +42,14 @@
     $scripts= <<<__EOD
     <script src="/ezer3.1/client/licensed/codemirror/lib/codemirror.js"></script>
     <link rel="stylesheet" href="/ezer3.1/client/licensed/codemirror/lib/codemirror.css">
+    <script src="/ezer3.1/client/licensed/codemirror/mode/clike/clike.js"></script>
     <script src="/ezer3.1/client/licensed/codemirror/mode/php/php.js"></script>
     <script src="/ezer3.1/client/licensed/codemirror/addon/edit/matchbrackets.js"></script>
     <script src="/ezer3.1/client/licensed/codemirror/addon/edit/closebrackets.js"></script>
     <script src="/ezer3.1/client/licensed/codemirror/addon/selection/active-line.js"></script>
 __EOD;
   }
-  
+  if (1)
   $html= <<<__EOD
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="cs" dir="ltr">
@@ -90,6 +91,7 @@ __EOD;
     opener.dbg= dbg= window;
     // zapamatované elementy DOM
     log=    jQuery('#log');
+    header= jQuery('#header');
     prompt= jQuery('#prompt');
     help=   jQuery('#help');
     wcg=     jQuery('#cg');
@@ -97,6 +99,7 @@ __EOD;
     wcg_grf= jQuery('#cg_grf');
     lines=  jQuery('#lines');
     editor= jQuery('#editor');
+    php_editor= jQuery('#php_editor');
     php=  jQuery('#php');
     notes=  jQuery('#notes');
     files=  jQuery('#files');
@@ -122,7 +125,7 @@ __EOD;
         box-shadow: 5px 5px 10px #567; }
       /* ----------------------- cg */
       div#cg {
-        position:fixed; right: 30px; top: 25px; width: 300px; 
+        position:fixed; display:none; right: 30px; top: 25px; width: 300px; 
         min-height: 100px; height: calc(50% - 30px); max-height: 300px; 
         background-color: #eee; border: 1px solid #aaa; z-index: 2;
         box-shadow: 5px 5px 10px #567; }
@@ -135,10 +138,6 @@ __EOD;
       div#cg_grf {
         overflow-y: auto; width:100%; }
       
-      div#xxxhelp_div span {
-        text-decoration: underline; color: blue; cursor: alias;}
-      div#xxxhelp_div span.go {
-        text-decoration: none; color: black; cursor: pointer; }
       #sources {
         position: fixed; right: 10px; top: 2px; font-size: 16px; color: lightgray; }
       /* ----------------------- notes */
@@ -155,6 +154,9 @@ __EOD;
         padding: 0; top:50%; height: 50%;
         left: 120px; right: 0px; position: absolute; 
         background-color:#e5f2ff; margin-top: 5px; border-top: 3px double black; }
+      body div.CodeMirror {
+        padding: 0; top: calc(50% + 21px); height: calc(50% - 21px); 
+        left: 120px; right: 0px; position: absolute; }
       div#php-border {
         width: 100%; top: 0; height: 13px; background-color:#cce; 
         padding-left: 30px; border-right: 1px solid #ff00004a; }
@@ -166,15 +168,20 @@ __EOD;
       #php span.call {
         background-color:#cce; cursor:pointer; font-weight: bold; }
       /* ----------------------- source */
-      textarea#editor, div.CodeMirror {
-        height: 100%; left: 120px; width: calc(100% - 120px); position: absolute; }
+      textarea#editor, body div#work div.CodeMirror {
+        top:14px; height: calc(100% - 14px); left: 120px; width: calc(100% - 120px); position: absolute; }
+      div#header {
+        position:fixed; width: 100%; top: 0; left: 120px; height: 14px; background-color:silver; 
+        padding-left: 30px; }
+      div#header span.edit {
+        color:yellow; font-weight:bold; }
       div#lines {
-        padding: 0; overflow-y: scroll; height: 100%; margin-top: 4px;
-        left: 120px; right: 0px; position: absolute; }
+        padding: 0; overflow-y: scroll; height: calc(100% - 14px); top: 14px;
+        left: 120px; right: 0px; position: absolute; padding-top: 4px; }
       div#gutter {
         position: fixed; left: 120px; width: 29px; top: 0; height: 100%; background: silver; }
       div#border {
-        position: fixed; left: 747px; width: 0; top: 0; height: 100%; 
+        position: fixed; left: 747px; width: 0; top: 14px; height: 100%; 
         border-right: 1px solid #ff00004a; }
       #lines ul {
         padding: 0; margin-top: 0; scroll-behavior: smooth;}
@@ -268,7 +275,7 @@ div.inverzniCG div.mooTree_selected {
 .ContextMenu3 li.disabled3:hover { background-color:#eee; }
 .ContextFocus3 { background-color:#ffa !important;
 }
-      /* ----------------------- CodeMirror */
+      /* ----------------------- CodeMirror ---------------------- Ezer */
 .cm-s-ezer span.cm-meta { color: #808000; }
 .cm-s-ezer span.cm-number { color: #0000FF; }
 .cm-s-ezer span.cm-keyword { font-weight: bold; text-shadow: 0 0 black; }
@@ -296,6 +303,8 @@ div.inverzniCG div.mooTree_selected {
 .cm-s-ezer .CodeMirror-linenumber { color:black; }
 .cm-s-ezer .CodeMirror-activeline-background { background: #FFFAE3; }
 
+div#php .cm-s-ezer.CodeMirror { background: #e5f2ff; }
+      
 .cm-s-ezer span.cm-builtin { color: #30a; }
 .cm-s-ezer span.cm-bracket { color: #cc7; }
 
@@ -309,7 +318,45 @@ div.inverzniCG div.mooTree_selected {
 .CodeMirror-hints.ezer { font-family: Consolas; color: #616569; background-color: #ebf3fd !important; }
 .CodeMirror-hints.ezer .CodeMirror-hint-active { background-color: #a2b8c9 !important; color: #5c6065 !important; }      
       
-    </style>
+      /* ----------------------- CodeMirror ---------------------- PHP */
+.cm-s-php span.cm-meta { color: #808000; }
+.cm-s-php span.cm-number { color: #0000FF; }
+.cm-s-php span.cm-keyword { font-weight: bold; text-shadow: 0 0 black; }
+.cm-s-php span.cm-keyword-event { font-style: italic; background: lightgreen; text-shadow: 0 0 black; }
+.cm-s-php span.cm-keyword-func { background: #ffdf6b; }
+.cm-s-php span.cm-keyword-skill { background: lightsalmon; }
+.cm-s-php span.cm-atom { font-weight: bold; color: #000080; }
+.cm-s-php span.cm-def { color: #000000; }
+.cm-s-php span.cm-variable { color: black; }
+.cm-s-php span.cm-variable-2 { color: black; }
+.cm-s-php span.cm-variable-3, .cm-s-php span.cm-type { color: black; }
+.cm-s-php span.cm-property { color: black; }
+.cm-s-php span.cm-operator { color: black; }
+.cm-s-php span.cm-comment { color: #999999; }
+.cm-s-php span.cm-string { color: #008000; }
+.cm-s-php span.cm-string-2 { color: #008000; }
+.cm-s-php span.cm-qualifier { color: #555; }
+.cm-s-php span.cm-error { color: #FF0000; }
+.cm-s-php span.cm-attribute { color: #0000FF; }
+.cm-s-php span.cm-tag { color: #000080; }
+.cm-s-php span.cm-link { color: #0000FF; }
+
+.cm-s-php.CodeMirror { background: #e5f2ff; }
+.cm-s-php .CodeMirror-gutters { background: #cce; }
+.cm-s-php .CodeMirror-linenumber { color:black; }
+.cm-s-php .CodeMirror-activeline-background { background: #FFFAE3; }
+
+.cm-s-php span.cm-builtin { color: #30a; }
+.cm-s-php span.cm-bracket { color: #cc7; }
+
+.cm-s-php  { font-size: 8pt; font-family: monospace,consolas; }
+
+.cm-s-php .CodeMirror-matchingbracket { outline:1px solid cyan; color:black !important; }
+.cm-s-php .CodeMirror-nonmatchingbracket { outline:1px solid red; color:black !important; }
+.cm-s-php .CodeMirror-activeline-gutter { background: #ffff00; }
+.cm-s-php .CodeMirror-activeline-background { background: #ffffaa; }
+
+ </style>
   </head>
   <body id='body' style="background-color:$background;">
     <div id="help" style='display:none'></div>
@@ -336,6 +383,7 @@ div.inverzniCG div.mooTree_selected {
         </select>
         <ul id="notes"><li>notes</li></ul>
       </div>
+      <div id='header'></div>
       <textarea id='editor' style="display:none"></textarea>
       <div id='lines'>
         <div id='gutter'></div>
@@ -345,6 +393,7 @@ div.inverzniCG div.mooTree_selected {
       <span id='log'></span>
       <span id='prompt'><span></span><input></span>
     </div>
+    <textarea id='php_editor' style="display:none"></textarea>
     <div id='php' style='display:none'>
       <div id='php-border'></div>
       <ul><li>lines</li></ul>
