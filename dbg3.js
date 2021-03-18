@@ -7,7 +7,8 @@
 // ------------------------------------------------------------------------------- dbg onclick_start
 var mode='ezer',  // ezer|ezer_edit|php|php_edit
     dbg_last_script= '',
-    php_fce= null, php_source= null, php_start= 0, php_source_ln= 0, php_source_ln1= 0; // aktuálně zobrazená php fce
+    php_header= '', php_fce= null, php_source= null, php_start= 0, 
+    php_source_ln= 0, php_source_ln1= 0; // aktuálně zobrazená php fce
 function dbg_mode(_mode) { doc.Ezer.fce.echo('mode: ',mode,' -> ',_mode); mode= _mode; }
 function dbg_onclick_start(file) {
   dbg_reload(file,dbg.pick,1);
@@ -80,16 +81,22 @@ function dbg_onclick_start(file) {
           top= (4-top)/13;
           // -------------------------------------- ukončení editace a uložení souboru
           CodeMirror.commands.save= function(cm) {
+            dbg.header.html("VIEW "+dbg.name);
+            let pos= cm.getCursor(); // {line,ch}
             cm.toTextArea();
             editor.hide(); //lines.show(); 
             // save and reload
             dbg_save_load(doc.Ezer.sys.dbg.file,'ezer',editor.val());
+            dbg_show_line(pos.line+1);
           }
           // ------------------------------------- ukončení editace bez uložení souboru
           CodeMirror.commands.quit= function(cm) {
+            dbg.header.html("VIEW "+dbg.name);
+            let pos= cm.getCursor(); // {line,ch}
             cm.toTextArea();
             editor.val(''); 
             editor.hide(); lines.show();
+            dbg_show_line(pos.line+1);
           }
           // -------------------------------------- zahájení editace ezerscriptu
           editor.val(doc.Ezer.sys.dbg.files[doc.Ezer.sys.dbg.file].lines.join("\n"));
@@ -255,22 +262,42 @@ function dbg_onclick_start(file) {
     // -----------------------------------==> .. click na PHP zdrojový text
     .click( el => {
       if (!(mode=='php'||mode=='ezer')) return false;
-      var php_ln= dbg_context_php(el.target).substr(3);
+      let php_ln= dbg_context_php(el.target).substr(3);
       dbg_show_line_php(php_ln,'pick');
       return false;
     })
     // -----------------------------------==> .. kontextové menu pro PHP zdrojový text
     .contextmenu( menu_el => {
       if (!(mode=='php'||mode=='ezer')) return false;
+      menu_el.stopImmediatePropagation();
+      let php_ln= dbg_context_php(menu_el.target).substr(3);
+      dbg_show_line_php(php_ln);
       dbg_contextmenu([
         ["editovat '"+php_fce+"'", function(el) { 
           dbg_mode('php_edit');
+          jQuery('#php-border').html("<span class='edit'>EDIT</span> "+php_header);
+          let top= dbg.php.find('li#php'+php_source_ln1).position().top;
+          top= (17-top)/13;
+          // ------------------------------------- ukončení editace PHP a vložení změn do souboru
+          CodeMirror.commands.quit= function(cm) {
+            dbg_mode('php');
+            jQuery('#php-border').html('VIEW '+php_header);
+            let pos= cm.getCursor(); // {line,ch}
+            cm.toTextArea();
+            php_editor.hide(); php.find('ul').show();
+            // save and reload
+            dbg_save_load(doc.Ezer.sys.dbg.file,'php',editor.val());
+            dbg_show_line_php(php_source_ln1+pos.line-1);
+          }
           // ------------------------------------- ukončení editace PHP bez uložení souboru
           CodeMirror.commands.quit= function(cm) {
             dbg_mode('php');
+            jQuery('#php-border').html('VIEW '+php_header);
+            let pos= cm.getCursor(); // {line,ch}
             cm.toTextArea();
             php_editor.val(''); 
             php_editor.hide(); php.find('ul').show();
+            dbg_show_line_php(php_source_ln1+pos.line-1);
           }
           // -------------------------------------- zahájení editace PHP fce
           php_editor.val(php_source);
@@ -279,7 +306,7 @@ function dbg_onclick_start(file) {
           let cm= CodeMirror.fromTextArea(php_editor[0],{
             lineNumbers: true,
             firstLineNumber: php_source_ln1-php_start,
-            mode: { name:"php", startOpen: true },
+            mode: { name:"php", startOpen: true, styleActiveLine: true },
             theme: "php",
             matchBrackets: true,
             autoCloseBrackets: true,
@@ -299,10 +326,8 @@ function dbg_onclick_start(file) {
             return false;
           });
           cm.focus();
-          let top= dbg.php.find('ul').offset().top;
-          top= (4-top)/13;
           doc.Ezer.fce.echo('top=',top,',php_source_ln=',php_source_ln,',php_start=',php_start);
-//          cm.scrollTo(0,top*13);
+          cm.scrollTo(0,top*13);
           cm.setCursor({line:php_source_ln-php_source_ln1+1,ch:1});          
           return false; 
         }]
@@ -616,7 +641,9 @@ function dbg_reload_php(fce) {
   dbg_ask({cmd:'source_php',app:app,fce:fce},dbg_reload_php_);
 }
 function dbg_reload_php_(y) {
-  dbg_show_php(y.lines,y.calls,y.start,y.header); 
+  php_header= y.header;
+  jQuery('#php-border').html('VIEW '+php_header);
+  dbg_show_php(y.lines,y.calls,y.start); 
 }
 // ----------------------------------------------------------------------------------- dbg save_load
 // save and reload
@@ -682,10 +709,8 @@ function dbg_context_php(el) {
 }
 // -------------------------------------------------------------------------------==> . dbg show_php
 // zobrazení textu PHP funkce
-function dbg_show_php(lns,cls,start,header) {
-//  doc.Ezer.fce.echo(doc.Ezer.fce.debug(lns));
+function dbg_show_php(lns,cls,start) {
   // odstraň staré src
-  jQuery('#php-border').html(header);
   let ul= dbg.php.find('ul'),
       rex= '(^|\\W)('+cls.join('|')+')(\\s*\\()',
       keywords= new RegExp("\\b(?<!\\$)(abstract|and|array|as|break|callable|case|catch|-class|clone|"
@@ -730,8 +755,10 @@ function dbg_show_line_php(ln,css='pick') {
   let ul= dbg.php.find('ul'),
       li= ul.find('#php'+ln);
   ul.find('li.'+css).removeClass(css);
-  li.addClass(css).scrollIntoViewIfNeeded();
-  php_source_ln= Number(ln);
+  if (li.length) {
+    li.addClass(css).scrollIntoViewIfNeeded();
+    php_source_ln= Number(ln);
+  }
 }
 // ====================================================================================> source EZER
 // ----------------------------------------------------------------------------------- dbg proc_stop

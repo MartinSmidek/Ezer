@@ -160,6 +160,8 @@ __EOD;
       div#php-border {
         width: 100%; top: 0; height: 13px; background-color:#cce; 
         padding-left: 30px; border-right: 1px solid #ff00004a; }
+      div#php-border span.edit {
+        color:yellow; font-weight:bold; }
       #php ul {
         overflow-x: auto; overflow-y: scroll; position:relative;
         padding: 0; scroll-behavior: smooth; margin:0; height: calc(100% - 19px);}
@@ -301,10 +303,7 @@ div.inverzniCG div.mooTree_selected {
 .cm-s-ezer.CodeMirror { background: oldlace; }
 .cm-s-ezer .CodeMirror-gutters { background: silver; }
 .cm-s-ezer .CodeMirror-linenumber { color:black; }
-.cm-s-ezer .CodeMirror-activeline-background { background: #FFFAE3; }
 
-div#php .cm-s-ezer.CodeMirror { background: #e5f2ff; }
-      
 .cm-s-ezer span.cm-builtin { color: #30a; }
 .cm-s-ezer span.cm-bracket { color: #cc7; }
 
@@ -341,10 +340,11 @@ div#php .cm-s-ezer.CodeMirror { background: #e5f2ff; }
 .cm-s-php span.cm-tag { color: #000080; }
 .cm-s-php span.cm-link { color: #0000FF; }
 
-.cm-s-php.CodeMirror { background: #e5f2ff; }
+body .cm-s-php.CodeMirror { background: #e5f2ff; }
 .cm-s-php .CodeMirror-gutters { background: #cce; }
 .cm-s-php .CodeMirror-linenumber { color:black; }
-.cm-s-php .CodeMirror-activeline-background { background: #FFFAE3; }
+.cm-s-php .CodeMirror-activeline-gutter { background: #ffff00; }
+.cm-s-php .CodeMirror-activeline-background { background: #ffffaa; }
 
 .cm-s-php span.cm-builtin { color: #30a; }
 .cm-s-php span.cm-bracket { color: #cc7; }
@@ -353,8 +353,6 @@ div#php .cm-s-ezer.CodeMirror { background: #e5f2ff; }
 
 .cm-s-php .CodeMirror-matchingbracket { outline:1px solid cyan; color:black !important; }
 .cm-s-php .CodeMirror-nonmatchingbracket { outline:1px solid red; color:black !important; }
-.cm-s-php .CodeMirror-activeline-gutter { background: #ffff00; }
-.cm-s-php .CodeMirror-activeline-background { background: #ffffaa; }
 
  </style>
   </head>
@@ -434,7 +432,7 @@ function dbg_server($x) {
       $fname= $cg->cg_phps[$cg->cg_calls[$fce][1]];
       $line1= $cg->cg_calls[$fce][2];
       $line2= $cg->cg_calls[$fce][3];
-      $y->header= array("$fce: $fname ($line1-$line2)");
+      $y->header= array("<b>$fce<b> in $fname ($line1-$line2)");
       $file= new SplFileObject($fname);
       $file->setFlags(SplFileObject::DROP_NEW_LINE);
       $lines= array();
