@@ -503,10 +503,14 @@ jQuery.fn.contextPopup = function(menuData,e) {
     options.items.forEach( item => {
       if ( !item ) return;
       var del= item[0].match(/^[-=]/) ? item[0][0] : '',
-          label= del ? item[0].substr(1) : item[0];
-      jQuery('<li>'+label+'</li>')
+          label= del ? item[0].substr(1) : item[0],
+          label_key= label.split("\t"), key= '';
+      label= label_key[0].replace(/\[fa-([^\]]+)\]/g,"<i class='fa fa-fw fa-$1'></i>");
+      if (label_key.length==2)
+        key= `<span>${label_key[1]}</span>`;
+      jQuery('<li>'+label+key+'</li>')
         .appendTo(menu)
-        .css({borderTop: del ? (del=='-' ? "1px solid #AAAAAA" : "3px double #AAAAAA") : ''})
+        .css({borderTop: del ? (del=='-' ? "2px solid #ccc" : "3px double #ccc") : ''})
         .click( () => {
           item[1](options.focus); return false;
         })

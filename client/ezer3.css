@@ -348,13 +348,15 @@ div.MenuGroup3 .disabled3 i.fa-darkviolet { color:grey
 /* -------------------------------------------------------------------------------==> MenuContext */
 
 .ContextMenu3 { border:1px solid #ccc; padding:2px; background:#fff; width:200px; list-style-type:none;
-  display:none; position:absolute; box-shadow:5px 5px 10px #567; cursor:default; }
+  display:none; position:absolute; box-shadow:5px 5px 10px #567,inset 20px 0 0 0px #ccc; cursor:default; }
 .ContextMenu3 li { margin:0; padding:0; color:#000; }
-.ContextMenu3 li { display:block; padding:2px 2px 0px 25px; width:173px; text-decoration:none; }
-.ContextMenu3 li i { margin-left:-15px; }
+.ContextMenu3 li { display:block; padding:2px 2px 0px 21px; text-decoration:none; }
+.ContextMenu3 li i { margin-left:-18px; }
 .ContextMenu3 li:hover { background-color:#b2b4bf; }
 .ContextMenu3 li.disabled3 { color:#ccc; font-style:italic; }
 .ContextMenu3 li.disabled3:hover { background-color:#eee; }
+.ContextMenu3 li span { float: right; font-style: italic; }
+.ContextMenu3 .fa-fw { width: 17px; text-align: left; }
 .ContextFocus3 { background-color:#ffa !important;
 }
 

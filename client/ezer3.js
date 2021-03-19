@@ -2053,14 +2053,16 @@ class Item extends Block {
       break;
     }
     case 'menu.context': {
-      let title= this.options.title||this.id,
+      let title= this.options.title||this.id, key= '',
           del= title.match(/^[-=]/);
       title= del ? title.substr(1) : title;
+      [title,key]= title.split("\\t")
       title= title.replace(/\[fa-([^\]]+)\]/g,"<i class='fa fa-fw fa-$1'></i>");
-      this.DOM_Block= jQuery(`<li>${title}</li>`)
+      key= key ? `<span>${key}</span>` : '';
+      this.DOM_Block= jQuery(`<li>${title}${key}</li>`)
         .appendTo(this.owner.DOM)
         .data('ezer',this)
-        .css({borderTop: del ? (del=='-' ? "1px solid #AAAAAA" : "3px double #AAAAAA") : ''})
+        .css({borderTop: del ? (del=='-' ? "2px solid #ccc" : "3px double #ccc") : ''})
         .click( el => {
             if ( el.shiftKey ) return dbg_onshiftclick(this);  /* context.item */
             if ( !jQuery(el.target).hasClass('disabled3') ) {
