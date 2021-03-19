@@ -233,7 +233,9 @@ function sys_user_skilled($skill) {
 # vygeneruje přehlednou tabulku oprávnění pro Excel
 function sys_user_skills($file='') {
   global $ezer_system;
-  require_once 'ezer3.1/server/vendor/autoload.php';
+  if (!function_exists('Excel5_n2col')) {
+   require_once 'ezer3.1/server/vendor/autoload.php';
+  }
   $result= '';
   $cells= $clmns= $rows= array();
   $qryu= "SELECT * FROM $ezer_system._user ORDER BY surname";
