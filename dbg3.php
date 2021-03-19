@@ -76,7 +76,7 @@ __EOD;
   var pick= '$pick';        // GET pick
   var src= not= [];         // array of DOM ezer, array of DOM poznámek, array of php function lines
   var help, help_div, log, prompt,    // DOM elements
-      php, lines, notes, files, 
+      wphp, lines, notes, files, 
       wcg, wcg_hdr, wcg_grf,
       editor;
   var doc, dbg;             // document aplikace a debuggeru
@@ -100,7 +100,7 @@ __EOD;
     lines=  jQuery('#lines');
     editor= jQuery('#editor');
     php_editor= jQuery('#php_editor');
-    php=  jQuery('#php');
+    wphp=  jQuery('#php');
     notes=  jQuery('#notes');
     files=  jQuery('#files');
     // reakce na zavření dbg okna 
@@ -405,17 +405,13 @@ __EOD;
 // AJAX volání z dbg3_ask
 // na vstupu je definováno: x.app
 function dbg_server($x) {
-  global $ezer_path_root, $ezer_root;
+  global $ezer_path_root, $ezer_root, $trace;
+  $trace= '';
   $ezer_path_root= $_SESSION[$x->app]['abs_root'];
   $ezer_root= $x->app;
   chdir($ezer_path_root);
   $y= $x;
   switch ($x->cmd) {
-  case 'editor': // ------------------------------------ edit {file,line}
-    $file= "{$x->file}.ezer";
-    $name= "{$x->app}/$file";
-    $path= "$ezer_path_root/$name";
-    break;
   case 'source_php': // -------------------------------- get PHP
     $before= 12;
     $start= 0;
@@ -433,6 +429,8 @@ function dbg_server($x) {
       $line1= $cg->cg_calls[$fce][2];
       $line2= $cg->cg_calls[$fce][3];
       $y->header= array("<b>$fce<b> in $fname ($line1-$line2)");
+      $y->path= $fname;
+      $y->mtime= filemtime($fname);
       $file= new SplFileObject($fname);
       $file->setFlags(SplFileObject::DROP_NEW_LINE);
       $lines= array();
@@ -464,7 +462,9 @@ function dbg_server($x) {
       foreach ($lines as $ln=>$line) {
         $y->lines[$ln]= $line;
       }
-      $y->start= $start;
+      $y->begin= $line1-$start;
+      $y->func= $line1;
+      $y->end= $line2;
     }
     else {
       $y->lines= array("zdrojový modul PHP funkce '$fce' nelze najít");
@@ -479,6 +479,7 @@ function dbg_server($x) {
       $y->lines= file($path,FILE_IGNORE_NEW_LINES);
       $y->mtime= filemtime($path);
       $y->name= $name;
+      $y->path= $path;
     }
     else {
       $name= "ezer3.1/$file";
@@ -488,6 +489,7 @@ function dbg_server($x) {
         $y->lines= file($path,FILE_IGNORE_NEW_LINES);
         $y->mtime= filemtime($path);
         $y->name= $name;
+        $y->path= $path;
       }
       else {
         $y->lines= array("modul {$x->file} se nepodařilo najít");
@@ -508,17 +510,11 @@ function dbg_server($x) {
     $y->cg= $cg;
     break;
   case 'save_source': // ---------------------------------- save file (file, type, value)
-    global $ezer_php, $ezer_php_libr, $ezer_ezer, $trace, $err;
-    $file= "{$x->file}.ezer";
+    global $ezer_php, $ezer_php_libr, $ezer_ezer, $err;
+    $file= "{$x->file}.{$x->type}";
     $name= "{$x->app}/$file";
-    $path= "$ezer_path_root/$name";
+    $path= $x->path; //"$ezer_path_root/$name";
     $root= $ezer_root= $x->app;
-    require_once("ezer3.1/server/comp2.php");
-    require_once("ezer3.1/server/sys_doc.php");
-    if (file_exists("$root.inc.php"))
-      require_once("$root.inc.php");
-    else
-      require_once("$root/$root.inc.php");
     if ( file_exists($path) ) {
       $mtime= filemtime($path);
       // uložíme pouze, pokud nedošlo k externí změně
@@ -526,14 +522,38 @@ function dbg_server($x) {
         // napřed uložíme kopii do *.bak
         $bak= file_get_contents($path);
         file_put_contents("$path.bak",$bak);
-        // potom uložíme změněný stav
-        file_put_contents($path,$x->value);
-        // a zkompilujeme a obnovíme CG
-        $state= comp_file($x->file,$root);
-        $ok= substr($state,0,2);
-        $y->msg= "'$name' uložen, kompilace $ok";
+        // potom je to jiné pro EZER a PHP
+        switch ($x->type) {
+          case 'ezer': // uložení zdroje EZER
+            // potom uložíme změněný stav
+            file_put_contents($path,$x->value);
+            // a zkompilujeme 
+            require_once("ezer3.1/server/comp2.php");
+            $state= comp_file($x->file,$root);
+            $ok= substr($state,0,2);
+            $y->msg= "'$name' uložen, kompilace $ok";
+            break;
+          case 'php': // výměna těla funkce v PHP
+            require_once("ezer3.1/server/ae_slib.php");
+            $file= file($path,FILE_IGNORE_NEW_LINES);
+            $new_fce= explode("\n",$y->value);
+//            debug($new_fce,"$y->fce");
+            array_splice($file,$y->begin-1,$y->end-$y->begin+1,$new_fce);
+            $text= implode("\n",$file);
+            file_put_contents($path,$text);
+//            display('jsem display'); 
+//            debug($file,"po výměně");
+            $ok= 'ok';
+            break;
+        }
         if ($ok=='ok') {
-          doc_php_cg();
+          // restaurace CG
+          require_once("ezer3.1/server/sys_doc.php");
+          if (file_exists("$root.inc.php"))
+            require_once("$root.inc.php");
+          else
+            require_once("$root/$root.inc.php");
+          doc_php_cg('*','',1); // vždy přepočítat, nebrat ze SESSION
           $cg_ok= isset($_SESSION[$root]['CG']) ? 'ok' : 'ko';
           $y->msg.= ", CG $cg_ok";
         }
@@ -549,6 +569,7 @@ function dbg_server($x) {
       $y->msg= "'$name' (už) neexistuje";
     break;
   }
+  if ($trace) $y->trace= $trace;
   return $y;
 }
 # ------------------------------------------------------------------------------------- array2object

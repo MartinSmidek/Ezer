@@ -251,10 +251,10 @@ function doc_ezer_state ($fname,&$files) { trace();
 #   .lines    -- lines[fce]= číslo řádku s definicí fce
 #   .called   -- called[fce]= seznam volajících funkcí
 #   .html     -- text chybových hlášek
-# pokud se nezměnily $app_php,$sys_php bere se objekt z SESSION[app][CG]
-function doc_php_cg ($app_php='*',$sys_php='') { trace();
+# pokud se nezměnily $app_php,$sys_php bere se objekt z SESSION[app][CG], pokud neni $restore
+function doc_php_cg ($app_php='*',$sys_php='',$restore=false) { trace();
   global $ezer_root, $ezer_path_root, $EZER, $ezer_php_libr, $ezer_php;
-  if (isset($_SESSION[$ezer_root]['CG']) 
+  if (!$restore && isset($_SESSION[$ezer_root]['CG']) 
       && $app_php==$_SESSION[$ezer_root]['CG']->app_php
       && $sys_php==$_SESSION[$ezer_root]['CG']->sys_php ) {
     // pokud se nezměnily požadované moduly vezmeme výsledek ze SESSION
