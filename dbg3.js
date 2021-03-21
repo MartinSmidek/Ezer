@@ -28,7 +28,7 @@ function dbg_onclick_start(file) {
   // -----------------------------------==> .. periodické ujištění o existenci laděné aplikace
   // pro případ, že event befireunload v laděné apliakci není proveden
   setInterval(function(){
-    if (doc.Ezer.sys.dbg.files==undefined) {
+    if (!Object.keys(doc.Ezer.sys.dbg.files).length) {
       dbg.close();
     }
   },9000);  
@@ -96,7 +96,7 @@ function dbg_onclick_start(file) {
       
       // zobraz kontextové menu podle kontextu elem
       let editovat= [
-        'editovat '+file, function(el) { 
+        "[fa-edit] editovat "+file+".ezer", function(el) { 
           dbg.header.html("<span class='edit'>EDIT</span> "+dbg.name);
           let pick= doc.Ezer.sys.dbg.files[doc.Ezer.sys.dbg.file].pick,
               top= dbg.lines.find('ul').offset().top;
@@ -141,8 +141,8 @@ function dbg_onclick_start(file) {
           });
           cm.on('contextmenu',function(cm,el){
             dbg_contextmenu([ 
-              ['ulož '+file+' (ctrl-s)',function() { CodeMirror.commands.save(cm) }],
-              ['konec bez uložení (esc)',function() { CodeMirror.commands.quit(cm) }]
+              [`[fa-save] ulož ezerscript\t(ctrl-s)`,function() { CodeMirror.commands.save(cm) }],
+              [`[fa-undo] konec bez uložení\t(esc)`,function() { CodeMirror.commands.quit(cm) }]
             ],el);
             return false;
           });
@@ -162,7 +162,7 @@ function dbg_onclick_start(file) {
         case 'select': case 'select.map': case 'select.map0': case 'select.auto':{
           dbg_contextmenu([
             editovat,
-            ['zjisti hodnotu', function(el) {
+            [`[fa-question] zjisti hodnotu`, function(el) {
                 let value= elem.get();
                 if ( typeof value == "object" )
                   value= doc.Ezer.fce.debug(value,elem.id,3);
@@ -171,7 +171,7 @@ function dbg_onclick_start(file) {
                 dbg_touch(value,menu_el)
                 return false;
             }],
-            ['změň hodnotu', function(el) {
+            [`[fa-pencil] změň hodnotu`, function(el) {
                 let value= elem.get();
                 if ( typeof value == "object" ) {
                   value= doc.Ezer.fce.debug(value,elem.id+" ... NELZE ZMĚNIT",3);
@@ -187,7 +187,7 @@ function dbg_onclick_start(file) {
         case 'case':{
           dbg_contextmenu([
             editovat,
-            ['zjisti hodnotu', function(el) {
+            [`[fa-question] zjisti hodnotu`, function(el) {
                 let value= elem.owner.get();
                 value= 'radio of '+elem.id+'='+value;
                 dbg_touch(value,menu_el)
@@ -214,22 +214,22 @@ function dbg_onclick_start(file) {
           }
           dbg_contextmenu([
             editovat,
-            ['nastav trasování', function(el) {
+            ['[fa-film] nastav trasování', function(el) {
                 elem.proc_trace(1);
                 touch('trace',1);
                 return false;
             }],
-            ['zruš trasování', function(el) {
+            ['[fa-times] zruš trasování', function(el) {
                 elem.proc_trace(0);
                 touch('trace',0);
                 return false;
             }],
-            ['-zastopuj proceduru', function(el) {
+            ['-[fa-anchor] zastopuj proceduru', function(el) {
                 elem.proc_stop(1);
                 touch('break',1);
                 return false;
             }],
-            ['uvolni proceduru', function(el) {
+            ['[fa-times] uvolni proceduru', function(el) {
                 elem.proc_stop(0);
                 touch('break',0);
                 return false;
@@ -252,7 +252,7 @@ function dbg_onclick_start(file) {
 //                    },menu_el);
 //                return false;
 //            }],
-            ["-vyhodnoť tělo func", function(el) {
+            ["=[fa-play] vyhodnoť tělo func", function(el) {
                 dbg_prompt(`výraz je v kontextu procedury ${elem.id}`,dbg_last_script,
                     function(script){
                       dbg_last_script= script;
@@ -295,7 +295,7 @@ function dbg_onclick_start(file) {
       let php_ln= dbg_context_php(menu_el.target).substr(3);
       dbg_show_line_php(php_ln);
       dbg_contextmenu([
-        ["editovat '"+php.fce+"'", function(el) { 
+        [`[fa-edit] editovat '${php.fce}'`, function(el) { 
           dbg_mode('php_edit');
           jQuery('#php-border').html("<span class='edit'>EDIT</span> "+php.header);
           let top= dbg.wphp.find('li#php'+php.ln_function).position().top;
@@ -341,8 +341,8 @@ function dbg_onclick_start(file) {
           });
           cm.on('contextmenu',function(cm,el){
             dbg_contextmenu([ 
-              ['ulož '+php.fce+' (ctrl-s)',function() { CodeMirror.commands.save(cm) }],
-              ['konec bez uložení (esc)',function() { CodeMirror.commands.quit(cm) }]
+              [`[fa-save] ulož PHP funkci\t(ctrl-s)`,function() { CodeMirror.commands.save(cm) }],
+              [`[fa-undo] konec bez uložení\t(esc)`,function() { CodeMirror.commands.quit(cm) }]
             ],el);
             return false;
           });

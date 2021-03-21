@@ -187,11 +187,11 @@ __EOD;
         border-right: 1px solid #ff00004a; }
       #lines ul {
         padding: 0; margin-top: 0; scroll-behavior: smooth;}
-      li b {
+      #work li b {
         text-shadow:0 0 black; }
-      li i {
+      #work li i {
         text-shadow:0 0 black; background: lightgreen; }
-      li u {
+      #work li u {
         text-shadow:0 0 black; background: lightsalmon; text-decoration: none}
       li span.notext {
         margin-left:34px; display: block; color:#999; }
@@ -268,13 +268,14 @@ div.inverzniCG div.mooTree_selected {
   margin-right:0; }
       /* ----------------------- context menu */
 .ContextMenu3 { border:1px solid #ccc; padding:2px; background:#fff; width:200px; list-style-type:none;
-  display:none; position:absolute; box-shadow:5px 5px 10px #567; cursor:default; }
+  display:none; position:absolute; box-shadow:5px 5px 10px #567,inset 20px 0 0 0px #ccc; cursor:default; }
 .ContextMenu3 li { margin:0; padding:0; color:#000; }
-.ContextMenu3 li { display:block; padding:2px 2px 0px 25px; width:173px; text-decoration:none; }
+.ContextMenu3 li { display:block; padding:2px 2px 0px 16px; text-decoration:none; }
 .ContextMenu3 li i { margin-left:-15px; }
 .ContextMenu3 li:hover { background-color:#b2b4bf; }
 .ContextMenu3 li.disabled3 { color:#ccc; font-style:italic; }
 .ContextMenu3 li.disabled3:hover { background-color:#eee; }
+.ContextMenu3 li span { float: right; font-style: italic; }
 .ContextFocus3 { background-color:#ffa !important;
 }
       /* ----------------------- CodeMirror ---------------------- Ezer */
@@ -554,6 +555,7 @@ function dbg_server($x) {
           else
             require_once("$root/$root.inc.php");
           doc_php_cg('*','',1); // vždy přepočítat, nebrat ze SESSION
+//          doc_php_cg('*','server/ae_slib.php',1); // vždy přepočítat, nebrat ze SESSION
           $cg_ok= isset($_SESSION[$root]['CG']) ? 'ok' : 'ko';
           $y->msg.= ", CG $cg_ok";
         }
