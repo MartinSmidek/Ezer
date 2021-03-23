@@ -2835,7 +2835,7 @@ function save_file($path,$text) {
 }
 # ---------------------------------------------------------------------------------------- item_help
 # typ=ezer|php
-function item_help($typ,$item) {
+function item_help($typ,$item,$sys_php='') {
   global $ezer_path_serv, $ezer_path_root, $ezer_root;
   $item= strtolower($item);
   $ret= (object)array(
@@ -2851,11 +2851,11 @@ function item_help($typ,$item) {
 //      $ret->typ= 'php';
 //      $ret->php= $names[$item]->php;
 //    }
-    $cg= doc_php_cg();
+    $cg= doc_php_cg('*',$sys_php);
     if (isset($cg->called[$item])) {
       $fpath= $cg->cg_phps[$cg->cg_calls[$item][1]];
-      $ret->cg= doc_php_tree($item);
-      $ret->gc= doc_php_tree($item,'*',null,1);
+      $ret->cg= doc_php_tree($item,'*',$sys_php);
+      $ret->gc= doc_php_tree($item,'*',$sys_php,1);
       $ret->php= str_replace("$ezer_path_root/",'',$fpath);
       $ret->line= $cg->lines[$item];
       $ret->html= "<b>$item</b> je PHP funkce aplikace z {$ret->php};{$ret->line}";

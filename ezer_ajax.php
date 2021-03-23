@@ -76,7 +76,7 @@
     "$server/ae_slib.php",
     "$server/ezer_lib3.php",
     "$server/reference.php",
-    "ezer2_fce.php",
+    "../{$EZER->version}/ezer2_fce.php",
     "$server/sys_doc.php",
     "$server/ezer2.php",
 //    "$server/vendor/autoload.php"
@@ -97,4 +97,4 @@
 //  debug($_SESSION);
 //  return 1;
 //}
-?>
+

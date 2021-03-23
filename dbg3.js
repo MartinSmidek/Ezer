@@ -353,7 +353,18 @@ function dbg_onclick_start(file) {
           return false; 
         }]
       ],menu_el);
-    })
+    });
+  dbg.wcg
+    .contextmenu( menu_el => {
+      dbg_contextmenu([
+        [`[fa-plus] zobrazovat systémové funkce`, function(el) { 
+          dbg_reload_cg(1); 
+        }],
+        [`[fa-minus] skrývat systémové funkce`, function(el) { 
+          dbg_reload_cg(0); 
+        }]
+      ],menu_el);
+    });
 }
 // ---------------------------------------------------------------------------------- saveTextAsFile
 // https://stackoverflow.com/questions/51315044/how-do-i-save-the-content-of-the-editor-not-the-whole-html-page
@@ -655,6 +666,15 @@ function dbg_clear() {
   dbg.wcg.hide();
   dbg.wphp.hide(); php.fce= null;
 }
+// ----------------------------------------------------------------------------------- dbg reload_cg
+function dbg_reload_cg(sys_fce) {
+  let app= opener ? opener.Ezer.root : window.Ezer.root;
+  CG.sysphp= sys_fce;
+  dbg_ask({cmd:'reload_cg',app:app,item:CG.item,inverzni:CG.cg_gc,sys_fce:sys_fce},dbg_reload_cg_);
+}
+function dbg_reload_cg_(y) {
+  dbg_cg_gc(CG.cg_gc);  
+}
 // -------------------------------------------------------------------------------------- dbg reload
 function dbg_reload(file,ln=0,clear=0) {
   let app= opener ? opener.Ezer.root : window.Ezer.root;
@@ -768,7 +788,7 @@ function dbg_context_php(el) {
 function dbg_show_php(lns,cls=null,start=0) {
   // odstraň staré src
   let ul= dbg.wphp.find('ul'),
-      rex= cls ? '(^|\\W)('+cls.join('|')+')(\\s*\\()' : null, // calls
+      rex= cls ? '(^|[^>]\b)('+cls.join('|')+')(\\s*\\()' : null, // calls
       keywords= new RegExp("\\b(?<!\\$)(abstract|and|array|as|break|callable|case|catch|-class|clone|"
         + "const|continue|declare|default|die|do|echo|else|elseif|empty|enddeclare|endfor|endforeach|"
         + "endif|endswitch|endwhile|eval|exit|extends|final|for|foreach|function|global|goto|if|"
@@ -925,6 +945,13 @@ function dbg_show_text(ln,cg=null) {
   for (i= 0; i<ln.length; i++) {
     var i1= i+1, lni= ln[i];
     lni= htmlentities(ln[i]);
+    // detekce dokumentace
+    var note= ln[i].indexOf('=='+'>');
+    if ( note!=-1 ) {
+      dbg.not[i1]= dbg.jQuery(`<li id="${'N_'+i1}">${ln[i].substr(note+3)}</li>`)
+        .appendTo(dbg.notes)
+    }
+    // detekce komentářů
     if (lni.match(/^\s*(\/\/|#)/)) {
       // celořádkový komentář zobraz šedě
       dbg.src[i1]= dbg.jQuery(
@@ -959,12 +986,6 @@ function dbg_show_text(ln,cg=null) {
       dbg.src[i1]= dbg.jQuery(
         `<li id="${i1}"><span class="line">${i1}</span><span class="text">${lni}</span></li>`)
         .appendTo(ul);
-      // detekce dokumentace
-      var note= ln[i].indexOf('=='+'>');
-      if ( note!=-1 ) {
-        dbg.not[i1]= dbg.jQuery(`<li id="${'N_'+i1}">${i}${ln[i].substr(note+3)}</li>`)
-          .appendTo(dbg.notes)
-      }
     }
   }
 }
@@ -1074,7 +1095,8 @@ function dbg_write (msg,append=false) {
 var CG = {
       item:0,   // poslední zobrazený
       cg_gc:0,  // 0=graf volaných 1=graf volajících
-      expand:1
+      sysphp:0, // 1=zahrnout i systémové PHP funkce
+      expand:1  // 1=zobrazit expandované uzly 
     }
 function dbg_cg_gc(inverzni) {
   window.event.stopImmediatePropagation();
@@ -1095,9 +1117,9 @@ function dbg_cg_gc(inverzni) {
 // dotaz na server o help pro daný item
 function dbg_find_help (typ,item) {
   CG.item= item;
-  dbg.doc_ask('item_help',[typ,item],_dbg_find_help); // fce z ezer2.php
+  dbg.doc_ask('item_help',[typ,item,CG.sysphp?'*':''],dbg_find_help_); // fce z ezer2.php
 }
-function _dbg_find_help(y) { 
+function dbg_find_help_(y) { 
   if ( y.args[0]=='php' ) {
     // zobraz CG
     dbg.help.hide();

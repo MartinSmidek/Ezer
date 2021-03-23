@@ -243,6 +243,7 @@ function doc_ezer_state ($fname,&$files) { trace();
 # --------------------------------------------------------------------------------------- doc php_cg
 # test CG
 # při $app_php=='*' se vezmou všechny uživatelské moduly tj. seznam $ezer_php
+# při $sys_php=='*' se vezmou všechny systémové moduly tj. seznam $ezer_php_libr
 # navrací objekt se složkami (a uloží jej do SESSION[app][CG])
 #   .app_php a .sys_php -- zapamatované parametry 
 #   .cg_calls -- cg_calls[fce]= [[volaná fce,..],i_source,first_line,last_line]
@@ -252,11 +253,11 @@ function doc_ezer_state ($fname,&$files) { trace();
 #   .called   -- called[fce]= seznam volajících funkcí
 #   .html     -- text chybových hlášek
 # pokud se nezměnily $app_php,$sys_php bere se objekt z SESSION[app][CG], pokud neni $restore
-function doc_php_cg ($app_php='*',$sys_php='',$restore=false) { trace();
+function doc_php_cg ($app_php='*',$sys_php0='',$restore=false) { trace();
   global $ezer_root, $ezer_path_root, $EZER, $ezer_php_libr, $ezer_php;
   if (!$restore && isset($_SESSION[$ezer_root]['CG']) 
       && $app_php==$_SESSION[$ezer_root]['CG']->app_php
-      && $sys_php==$_SESSION[$ezer_root]['CG']->sys_php ) {
+      && $sys_php0==$_SESSION[$ezer_root]['CG']->sys_php ) {
     // pokud se nezměnily požadované moduly vezmeme výsledek ze SESSION
     $ret= $_SESSION[$ezer_root]['CG'];
     goto end;
@@ -267,6 +268,10 @@ function doc_php_cg ($app_php='*',$sys_php='',$restore=false) { trace();
 //    require "$ezer_path_root/ezer3.1/comp.php";
     require "$ezer_path_root/ezer3.1/server/comp2.php";
   }
+  if ($sys_php0=='*')
+    $sys_php= implode(',',$ezer_php_libr);
+  else
+    $sys_php= $sys_php0;
   $html= "";
   $ezer_path= "$ezer_path_root/{$EZER->version}";
   $fnames= array();
@@ -277,8 +282,15 @@ function doc_php_cg ($app_php='*',$sys_php='',$restore=false) { trace();
   $php_sys= null;
   if ($sys_php) {
     $php_sys= explode(',',$sys_php);
-    foreach ($php_sys as $i=>$fname) { $fnames[]= "$ezer_path/$fname"; }
+    foreach ($php_sys as $i=>$fname) { 
+      $fpath= "$ezer_path_root/$fname"; 
+      $fpath= $fname; 
+      $fpath= str_replace('ezer3.1/../ezer3.1','ezer3.1',$fpath);
+      if (!in_array($fpath,$fnames))
+        $fnames[]= $fpath; 
+    }
   }
+                            debug($fnames,"fnames: $sys_php");
   # výstup tokenů
   function token_debug($xs,$fname) {
     $y= array();
@@ -358,8 +370,8 @@ function doc_php_cg ($app_php='*',$sys_php='',$restore=false) { trace();
 //      if ( is_array($ts[$i]) && $ts[$i][0]==T_WHITESPACE ) continue;
       // seznam funkcí
       if ( !is_array($ts[$i]) ) continue;
-      if ( $ts[$i][0]==T_OBJECT_OPERATOR ) {
-//        $i+= 1;
+      if ( $ts[$i][0]==T_OBJECT_OPERATOR ) {  // vynecháme objekt->člen
+        $i+= 1;
       }
       elseif ( $ts[$i][0]==T_FUNCTION && $ts[$i+1]!='(' ) {
         $ln= $ts[$i][2];
@@ -413,7 +425,7 @@ function doc_php_cg ($app_php='*',$sys_php='',$restore=false) { trace();
   }
   // struktura CG
   $ret= (object)array(
-      'app_php'=>$app_php,'sys_php'=>$sys_php,'app_ezer'=>$ezers, 'php_called'=>$php_called,
+      'app_php'=>$app_php,'sys_php'=>$sys_php0,'app_ezer'=>$ezers, 'php_called'=>$php_called,
       'cg_calls'=>$cg_calls,'cg_phps'=>$fnames,
       'calls'=>$phps,'lines'=>$lines,'called'=>$fce,'html'=>$html);
   $_SESSION[$ezer_root]['CG']= $ret;
@@ -424,8 +436,8 @@ end:
 # vrátí strukturu pro zobrazení CG v ezer_tree3.js
 # pokud je $save_in_session=true uchovají se rozbory PHP modulů v SESSION a neprovádí se již parsing
 # inverzni=0 normální CG, inverzni=1 graf volajících
-function doc_php_tree($root,$app_php='*',$sys_php='',$inverzni=0) { trace();
-  $cg_list= doc_php_cg($app_php,$sys_php);
+function doc_php_tree($root,$app_php='*',$sys_php='',$inverzni=0,$restore=false) { trace();
+  $cg_list= doc_php_cg($app_php,$sys_php,$restore);
   $calls= $cg_list->cg_calls;
   $called= $cg_list->called;
   $php_called= $cg_list->php_called;

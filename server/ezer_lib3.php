@@ -779,4 +779,4 @@ function root_inc3($db,$dbs,$tracking,$tracked) { //,$path_root=null,$path_pspad
   // knihovní moduly
   require_once("$ezer_path_root/ezer3.1/ezer2_fce.php");
 }
-?>
+

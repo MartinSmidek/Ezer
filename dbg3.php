@@ -554,7 +554,7 @@ function dbg_server($x) {
             require_once("$root.inc.php");
           else
             require_once("$root/$root.inc.php");
-          doc_php_cg('*','',1); // vždy přepočítat, nebrat ze SESSION
+          doc_php_cg('*','*',1); // vždy přepočítat, nebrat ze SESSION
 //          doc_php_cg('*','server/ae_slib.php',1); // vždy přepočítat, nebrat ze SESSION
           $cg_ok= isset($_SESSION[$root]['CG']) ? 'ok' : 'ko';
           $y->msg.= ", CG $cg_ok";
@@ -569,6 +569,21 @@ function dbg_server($x) {
     }
     else 
       $y->msg= "'$name' (už) neexistuje";
+    break;
+  case 'reload_cg': // ---------------------------------- přepočítat CG
+    // restaurace CG
+    global $ezer_root, $ezer_path_root, $ezer_php_libr, $ezer_php, $ezer_ezer;
+    require_once("ezer3.1/server/sys_doc.php");
+    if (file_exists("{$x->app}.inc.php"))
+      require_once("{$x->app}.inc.php");
+    else
+      require_once("{$x->app}/{$x->app}.inc.php");
+    if ($x->sys_fce) {
+      $y->cg= doc_php_tree($x->item,'*','*',$x->inverzni,true);
+    }
+    else {
+      $y->cg= doc_php_tree($x->item,'*','',$x->inverzni,true);
+    }
     break;
   }
   if ($trace) $y->trace= $trace;

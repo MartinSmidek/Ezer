@@ -49,6 +49,7 @@ panel str [,,770,] {type:'right', title:'Struktura', _sys:'*', skill:'m'
     menu stav {title:'stav',type:'group'
       item {title:'Ezer moduly'         proc onclick () { clear; u.fill(ask('doc_ezer')) } }
       item {title:'PHP moduly'          par:{app:'*',sys:''}}
+      item {title:'... i systémové'     par:{app:'*',sys:'*'}}
       item {title:'... jen sys_doc'     par:{app:'',sys:'server/sys_doc.php'}}
       item {title:'... jen kompilátor'  par:{app:'',sys:'server/comp2.php'}}
       item {title:'Seznam PHP funkcí'   proc onclick () { clear; u.fill(ask('doc_called')) } }
