@@ -159,11 +159,15 @@ panel nov [,,770,] {type:'right', title:'Přehled změn', _sys:'*'
   use msg_a: form _msg_a [12,35,,] { tag:'ma', format:'n' }
   use msg_g: form _msg_g [12,35,,] { tag:'mg', format:'n' }
   use msg_k: form _msg_k [12,35,,] { tag:'mk', format:'n' }
+  use msg_m: form _msg_m [12,35,,] { tag:'mm', format:'n' }
 
   menu m {type:'left', active:m.chngs.month
     proc onstart() {
       [ sys('options','group_db')     | has_skill('ah'); w.g.enable(0) ];
       [ sys('options','curr_version') | has_skill('ah'); w.k.enable(0) ];
+    }
+    menu msg {title:'Administrátorská zpráva',type:'group', skill:'a'
+      item m {title:'[fa-envelope] vytvoření zprávy uživatelům', par:°{tag:'mm',level:'m'}}
     }
     menu chngs {title:'Změny aplikace',type:'group'
       item month {title:'Přehled změn za měsíc', par:°{days:30} }
@@ -187,14 +191,68 @@ panel nov [,,770,] {type:'right', title:'Přehled změn', _sys:'*'
       item a {title:'[fa-exclamation] změna aplikace',                par:°{tag:'ma',level:'a'} }
       item g {title:'[fa-exclamation-circle] změna skupiny aplikací', par:°{tag:'mg',level:'g'} }
       item k {title:'[fa-cog] změna jádra Ezer', skill:'m',           par:°{tag:'mk',level:'k'} }
-      proc onclick(i) {
-        u.tit(conc(i.owner.title,' - ',i.title));
-        panel.display(2,i.par.tag);
-        panel.call(conc('msg_',i.par.level,'.start'));
-      }
+    }
+    proc onclick(i) {
+      u.tit(conc(i.owner.title,' - ',i.title));
+      panel.display(2,i.par.tag);
+      panel.call(conc('msg_',i.par.level,'.start'));
     }
   }
   use u: form f [12,4,,]
+  # ------------------------------------------------------------------------ _msg_m
+  form _msg_m [,,*,500] {
+    var virgin= 1, a_version= 0
+    func start() { if (virgin) refresh(); virgin= 0 }
+    func refresh() { s.browse_load("kind='m'") }
+    view h: table _help
+
+    // příkazy
+    label  [12,5,145,30] { css:'ae_parm'}
+    button [20,11,,] { title:"[fa-database] Nový", func onclick() { var ver_max:number
+      form.init(2); 
+      datum.set(now()); datum.change(); txt.change(); 
+    }}
+    button [79,11,,] { title:"[fa-trash-o] Vymazat", func onclick() {
+      if (confirm(`Opravdu vymazat zprávu "${s.txt}"?`)) {
+        _help.delete_record(`id_help=${s.id_help}`); 
+        refresh() 
+    }}}
+
+    label  [240,5,123,30] { css:'ae_parm'}
+    button [250,11,,] { title:"[fa-save] Ulož",  func onclick() { the_formsave(form,s) }}
+    button [306,11,,] { title:"[fa-undo] Zpět", func onclick() { form.key(s.id_help); form.load() }}
+    
+    button [420,11,,] {title:'test zobrazení' func onclick() {
+        function('_TXT_','_DAT_',
+            "Ezer.fce.DOM.confirm(_TXT_,null,[{tit:'Beru na vědomí'}],
+              {heading:'UPOZORNĚNÍ uživatelům pro den '+_DAT_})",
+            s.txt,s.dat);
+    }}
+
+    label  [14,43,720,42] { title:"
+                            Zpráva se během doby platnosti zobrazí každému uživateli
+                            během příští minuty nebo hned po přihlášení do aplikace. 
+                            Uživatel kliknutím na [Beru na vědomí] přidá svou zkratku
+                            do seznamu. Tlačítko <b>[test zobrazení]</b> je na kontrolní zobrazení." }
+
+    // nová zpráva
+    field kind { data:h.kind, value:'m' }
+    field datum [12,100,79,] { type:'date', title:'^zobrazovat do' data:h.datum }
+    field name  { data:h.name }
+    edit txt [100,85,300,140] { data:h.help, format:'' }
+    edit seen [420,100,200,80] {title:'^přečtení zprávy potvrdili', data:h.seen }
+    // seznam změn
+    browse s [0,245,150,100] { rows:10, qry_rows:1
+      show id_help { data:h.id_help }
+      show dat [,,72,] { title:'datum', data:h.datum, format:'s-r' }
+      show txt [,,575,] { title:'až do uvedeného data se bude zobrazovat tento text', 
+          data:h.help, format:'t' }
+      show [,,55,] { title:'čteno', expr:"ROUND(LENGTH(h.seen)/4)", format:'r' }
+      func onrowclick() {
+        form.key(id_help); form.load();
+      }
+    }
+  }
   # ------------------------------------------------------------------------ _msg_a
   form _msg_a [,,*,500] {
     var virgin= 1, a_version= 0

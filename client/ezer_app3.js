@@ -436,7 +436,8 @@ class Application {
         // v případě hlídání verzí
         ["-alert:  verze",    function(el) { Ezer.app.bar_chat({op:'message?'},true); }],
         ["test verze",    function(el) { Ezer.app.bar_chat({op:'message?'}); }],
-        ["-uživatelé",    function(el) { Ezer.app.bar_chat({op:'users?'},false,'_show_users'); }]
+        ["-uživatelé",    function(el) { Ezer.app.bar_chat({op:'users?'},true,'_show_users'); }],
+        ["zpráva?",       function(el) { Ezer.app.bar_chat({op:'sysmsg?'},true,'_show_users'); }]
         );
       };
       if ( true ) {
@@ -780,7 +781,9 @@ class Application {
       return false;
     var wait= 5;              // minuty na zobrazení výzvy k prodloužení sezení přes nečinnost
     if ( Ezer.sys.user.id_user && !quiet ) {
-      // pokud je někdo přihlášený, podíváme se na změny během uplynulé minuty
+      // pokud je někdo přihlášený, zjistíme jestli _help enobsahuje nepřečtenou zprávu
+      this.bar_chat({op:'sysmsg?'});
+      // pak se podíváme na změny během uplynulé minuty
       this.clock_tics++;
       this.session_tics++;
       if ( this.hits !== this.last_hits ) {
@@ -904,9 +907,10 @@ class Application {
           Ezer.error('EVAL: syntaktická chyba na serveru:'+y,'E');
         }
         else {
-          if ( test ) {
-            Ezer.debug(y,'bar_chat (response)');
-            Ezer.fce.DOM.alert(y.msg);
+          if ( y.op=='sysmsg?' && y.msg ) {
+            Ezer.fce.DOM.confirm(y.msg,null,[{tit:'Beru na vědomí'}],
+                {heading:`<b style='color:yellow'>UPOZORNĚNÍ uživatelům pro den ${y.datum}</b>`});
+            Ezer.app.bar_chat({op:'sysmsg!'});
           }
           else if ( Ezer.options.watch_git && y.refresh ) {
             var msg= "Na serveru byly provedeny programové změny, obnovte prosím okno prohlížeče"
@@ -917,6 +921,10 @@ class Application {
                 {tit:'Obnov nyní (doporučeno)',val:1},{tit:'Provedu za chvíli ...',val:0}],{heading:
                 "<span style='color:orange;text-align:center;display:block'>Upozornění systému</span>",
                 width:460});
+          }
+          else if ( test && y.msg ) {
+            Ezer.debug(y,'bar_chat (response)');
+            Ezer.fce.DOM.alert(y.msg);
           }
         }
       }.bind(this)});

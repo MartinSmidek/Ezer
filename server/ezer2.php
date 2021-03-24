@@ -93,21 +93,7 @@
   require_once("$path/$ezer_root_inc");
   require_once("$ezer_path_serv/ae_slib.php");
   $php_start= getmicrotime();                        // měření času
-  // licensované knihovny I
-//  require_once("$ezer_path_serv/licensed/JSON_Ezer.php");
-//  $json= new Services_JSON_Ezer();
   ezer_connect();
-//  # --------------------------------------------------------------------------------------- json ...
-//  if ( !function_exists("json_encode") ) {
-//    function json_encode ($x) {
-//      global $json;
-//      return $json->encode($x);
-//    }
-//    function json_decode ($x) {
-//      global $json;
-//      return $json->decode($x);
-//    }
-//  }
   # ------------------------------------------------------------------------------------ FancyUpload
   # zpracování požadavku na Upload
   if ( isset($_GET['upload']) ) {
@@ -117,8 +103,6 @@
   # ----------------------------------------------------------------------------------------- params
   # cmd    - příkaz
   # x      - parametry
-//  if (get_magic_quotes_gpc()) $_POST= stripSlashes_r($_POST); // vrací FALSE od PHP 5.4.0
-//   $x= (object)$_POST;
   $x= array2object($_POST);
   switch ( $x->cmd ) {
   # ================================================================================================ VOLÁNÍ bez návratu
@@ -209,62 +193,49 @@
   # chat : pravidelná relace s klientem se vzkazy: relogme
   case 'chat':
     // parametr lifetime=Ezer.App.options.session_interval
-    $answer= (object)array();
+    $answer= (object)array('op'=>$x->op);
+    $abbr= isset($_SESSION[$ezer_root]['user_abbr']) ? $_SESSION[$ezer_root]['user_abbr'] : '???';
     switch ( $x->op ) {
-    case 'message?':          // {op:'message?',user_id:...,hits:n});
+    case 'sysmsg?':           // {op:'sysmsg?'}
+      // test tabulky _help na aktuální zprávu pro uživatele
       $answer->msg= '';
-      $answer->curr_version= $x->curr_version;
-      if ( $x->curr_version ) {
-        // pokud se má zjišťovat aktuální verze
-//        check_version($answer);
-//        if ( $x->svn ) {
-//          $answer->sa_version= root_svn(1);
-//          if ( $answer->sa_version!='?' ) {
-//            $answer->sk_version= root_svn(0);
-//            $answer->msg.= "<br><br><b>SVN</b><br>$ezer_root=$answer->sa_version, ezer=$answer->sk_version";
-//          }
-//        }
-        if ( $x->git ) {
-          check_version_git($answer,1);
-//          $answer->sa_version= $sa= root_git(1);
-//          $answer->sk_version= $sk= root_git(0);
-//          $_sa= $_SESSION[$ezer_root]['git_app']==$sa ? '' : 'need refresh';
-//          $_sk= $_SESSION[$ezer_root]['git_ezer']==$sk ? '' : 'need refresh';
-//          $answer->msg.= "<b>GIT last pull</b><br>$ezer_root: ".date("j.n.Y H:i:s",$sa)." ($sa) $_sa"
-//          . "<br>ezer: ".date("j.n.Y H:i:s",$sk)." ($sk) $_sk";
-//          // test pro refresh
-//          if ( $_sk || $_sa ) {
-//            $answer->refresh= 1;
-//          }
-        }
-//        if ( $answer->d_version ) {
-//          $answer->msg.= "<br><br><b>poslední změna dat</b><br>$answer->d_version";
-//        }
+      $nectena= "kind='m' AND DATE(NOW())<=datum AND LOCATE('$abbr',seen)=0 ORDER BY datum LIMIT 1";
+      $new_msg= select('COUNT(*)','_help',$nectena);
+      if ($new_msg) {
+        list($answer->msg,$datum)= select('help,datum','_help',$nectena);
+        $answer->datum= sql_date1($datum);
       }
       break;
-    case 'users?':            // {op:'users?'});
+    case 'sysmsg!':           // {op:'sysmsg!'}
+      // zapíše do tabulky _help potvrzení poslední zprávy
+      $nectena= "kind='m' AND DATE(NOW())<=datum AND LOCATE('$abbr',seen)=0 ";
+      query("UPDATE _help SET seen=CONCAT(seen,' $abbr') WHERE $nectena ORDER BY datum LIMIT 1");
+      break;
+    case 'message?':          // {op:'message?'}
+      $answer->msg= '';
+      $answer->curr_version= $x->curr_version;
+      if ( $x->curr_version && $x->git ) {
+        check_version_git($answer,1);
+      }
+      break;
+    case 'users?':            // {op:'users?'}
       check_users($answer);
       if ( $x->git ) {
         check_version_git($answer);
       }
       break;
-    case 're_log_me':         // {op:'re_log_me',user_id:...,hits:n});
+    case 're_log_me':         // {op:'re_log_me',user_id:...,hits:n}
       $_SESSION[$ezer_root]['relog']++;
       // obnova SESSION
       $ezer_user_id= $x->user_id;
-//      if ( $ezer_session=='ezer' )
-//        sess_revive();
       $_SESSION['ID']= session_id();
       session_regenerate_id();
       session_start();
       setcookie(session_name(),session_id(),time()+$x->lifetime);
-      $answer->msg= "relog {$x->hits} ID:".session_id()." {$_SESSION[$ezer_root]['user_abbr']}";
-      // kontrola verze
-//      check_version($answer); -- chybuje 190503
+      $answer->msg= "relog {$x->hits} ID:".session_id()." $abbr";
       break;
     }
     header('Content-type: application/json; charset=UTF-8');
-//    echo $json->encode($answer);
     echo json_encode($answer);
     exit;
   # ------------------------------------------------------------------------------------------------ server
