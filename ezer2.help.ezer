@@ -226,14 +226,15 @@ panel nov [,,770,] {type:'right', title:'Přehled změn', _sys:'*'
         function('_TXT_','_DAT_',
             "Ezer.fce.DOM.confirm(_TXT_,null,[{tit:'Beru na vědomí'}],
               {heading:'UPOZORNĚNÍ uživatelům pro den '+_DAT_})",
-            s.txt,s.dat);
+            txt,datum);
     }}
 
     label  [14,43,720,42] { title:"
                             Zpráva se během doby platnosti zobrazí každému uživateli
                             během příští minuty nebo hned po přihlášení do aplikace. 
-                            Uživatel kliknutím na [Beru na vědomí] přidá svou zkratku
-                            do seznamu. Tlačítko <b>[test zobrazení]</b> je na kontrolní zobrazení." }
+                            Uživatel kliknutím na <b>[Beru na vědomí]</b> přidá svou zkratku
+                            do seznamu. Tlačítko <b>[test zobrazení]</b> je na kontrolní 
+                            zobrazení (ostré má žluté záhlaví)." }
 
     // nová zpráva
     field kind { data:h.kind, value:'m' }

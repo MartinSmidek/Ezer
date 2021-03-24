@@ -107,6 +107,19 @@
   if ( @file_exists("$deep_root/ezer.keys.php"))
     require_once("$deep_root/ezer.keys.php");
   
+  // pokud existují soubory $app/version.php a $ezer31/version.php 
+  // použij proměnnou $version pro výběr aktuální verze *.js
+  $v_sys= '';
+  if (file_exists("$abs_root/ezer3.1/version.php")) {
+    require "$abs_root/ezer3.1/version.php";
+    $v_sys= "?v=$version";
+  }
+  $v_app= '';
+  if (file_exists("$app/version.php")) {
+    require "$app/version.php";
+    $v_app= "?v=$version";
+  }
+    
   $app_js= array_values(array_filter($app_js)); // vynechání všech false
   $js= array_merge(
     // ckeditor 
@@ -119,8 +132,8 @@
     array($touch ? "$licensed/jquery.touchSwipe.min.js" : ''),
     // jádro Ezer3.1
     array(
-      "$client/ezer_app3.js","$client/ezer3.js","$client/ezer_area3.js",
-      "$client/ezer_rep3.js","$client/ezer_lib3.js","$client/ezer_tree3.js"
+      "$client/ezer_app3.js$v_sys","$client/ezer3.js$v_sys","$client/ezer_area3.js$v_sys",
+      "$client/ezer_rep3.js$v_sys","$client/ezer_lib3.js$v_sys","$client/ezer_tree3.js$v_sys"
     ),
     // rozhodnout zda používat online mapy
     $gmap==1 ? array(
@@ -129,8 +142,9 @@
 //      "https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js",
 //      "https://maps.googleapis.com/maps/api/js?sensor=false") : array(),
     // uživatelské skripty
-//    $app_js
-      array_map(function($x){global $http_rel_root; return $http_rel_root.$x;},$app_js)
+      array_map(function($x) use ($http_rel_root,$v_app) {
+        return $http_rel_root.$x.$v_app;
+      },$app_js)
   );
   $app_css= array_values(array_filter($app_css)); // vynechání všech false
   $css= array_merge(
