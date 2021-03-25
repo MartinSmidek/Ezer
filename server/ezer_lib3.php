@@ -446,10 +446,14 @@ __EOD;
     foreach($css as $x) {
       // rozklad zápisu href=id
       $id= $get= '';
-      list($href,$id)= explode('=',"$x=");
+      list($base,$par)= explode('?',$x);
+      list($href,$id)= explode('=',"$base=");
       if ( $id ) {
         $id= "id='$id'";
-        $get= "?root=$ezer_root&skin=";
+        $get= ($par ? "$par&" : '?')."root=$ezer_root&skin=";
+      }
+      else {
+        $get= "?$par";
       }
       $head.= "\n  <link $id rel='stylesheet' href='$href$get' type='text/css' media='screen' charset='utf-8' />";
     }

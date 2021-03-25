@@ -115,8 +115,8 @@
     $v_sys= "?v=$version";
   }
   $v_app= '';
-  if (file_exists("$app/version.php")) {
-    require "$app/version.php";
+  if (file_exists("$abs_root/$app/version.php")) {
+    require "$abs_root/$app/version.php";
     $v_app= "?v=$version";
   }
     
@@ -143,16 +143,18 @@
 //      "https://maps.googleapis.com/maps/api/js?sensor=false") : array(),
     // uživatelské skripty
       array_map(function($x) use ($http_rel_root,$v_app) {
-        return $http_rel_root.$x.$v_app;
+        return "$http_rel_root/$x$v_app";
       },$app_js)
   );
   $app_css= array_values(array_filter($app_css)); // vynechání všech false
   $css= array_merge(
-    array("$client/ezer3.css","$client/ezer3.css.php=skin",      
+    array("$client/ezer3.css$v_sys","$client/ezer3.css.php=skin",      
     "$client/licensed/font-awesome/css/font-awesome.min.css",
     "$client/licensed/pikaday/pikaday.css","$client/licensed/jquery-ui.min.css"),
     // uživatelské styly
-    $app_css  
+    array_map(function($x) use ($http_rel_root,$v_app) {
+      return "$http_rel_root/$x$v_app";
+    },$app_css)
   );
   
   // nastavení jádra
