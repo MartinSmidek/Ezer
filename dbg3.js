@@ -198,11 +198,21 @@ function dbg_onclick_start(file) {
         case 'proc':{
           let lc= elem.desc._lc ? elem.desc._lc.split(',') : null;
           l= lc ? lc[0] : l;
-          let touch= function(type,on) {x
+          let touch= function(type,on,ln) {x
             let elem= type=='break' ? 'stops' : 'traces',
                 list= doc.Ezer.sys.dbg.files[doc.Ezer.sys.dbg.file][elem];
             dbg_touch('proc '+elem.id,menu_el);
-            if ( on ) {
+            if (type=='break') {
+              if (on) {
+//                dbg.src[l].find('span.text').addClass(type);
+                dbg.src[ln].find('span.line').addClass(type);
+              }
+              else {
+//                dbg.src[l].find('span.text').removeClass(type);
+                dbg.src[ln].find('span.line').removeClass(type);
+              }
+            }
+            else if ( on ) {
               dbg.src[l].addClass(type);
               list.push(l);
             }
@@ -225,13 +235,15 @@ function dbg_onclick_start(file) {
                 return false;
             }],
             ['-[fa-anchor] zastopuj proceduru', function(el) {
-                elem.proc_stop(1);
-                touch('break',1);
+                let ln= Number(jQuery(el).parent().attr('id'));
+                elem.proc_stop(1,ln);
+                touch('break',1,ln);
                 return false;
             }],
             ['[fa-times] uvolni proceduru', function(el) {
-                elem.proc_stop(0);
-                touch('break',0);
+                let ln= Number(jQuery(el).parent().attr('id'));
+                elem.proc_stop(0,ln);
+                touch('break',0,ln);
                 return false;
             }],
 //            ["-vyhodnoť tělo proc", function(el) {

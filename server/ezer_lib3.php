@@ -450,7 +450,7 @@ __EOD;
       list($href,$id)= explode('=',"$base=");
       if ( $id ) {
         $id= "id='$id'";
-        $get= ($par ? "$par&" : '?')."root=$ezer_root&skin=";
+        $get= ($par ? "?$par&" : '?')."root=$ezer_root&skin=";
       }
       else {
         $get= "?$par";

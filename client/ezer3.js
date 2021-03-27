@@ -2916,11 +2916,18 @@ class Proc extends Block {
     this.code= desc.code;
     this.prior= this.options && this.options.prior ? this.options.prior : 0;
     this.context= context;
-    this.stop= 0;
+    this.stop= [];
     this.trace= 0;
   }
-  proc_stop (on) {
-    this.stop= on;
+  proc_stop (on,line) {
+    if (on) {
+      this.stop.push(line)
+    }
+    else {
+      let i= this.stop.indexOf(line);
+      this.stop.splice(i,1);
+    }
+                                                        debug(this.stop,`stop lines of ${this.id}`);
   }
   proc_trace (on) {
     this.trace= on;

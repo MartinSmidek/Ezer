@@ -35,6 +35,9 @@
     error_reporting(E_ALL & ~E_NOTICE);
     ini_set('display_errors', 'Off');
   }
+  
+  // verze 5 awesome fontu?
+  $awe= isset($_GET['awe']) && $_GET['awe']==5 ? 5 : 4;
 
   // parametry aplikace
   $app= $app_root;
@@ -148,8 +151,10 @@
   );
   $app_css= array_values(array_filter($app_css)); // vynechání všech false
   $css= array_merge(
-    array("$client/ezer3.css$v_sys","$client/ezer3.css.php=skin",      
-    "$client/licensed/font-awesome/css/font-awesome.min.css",
+    array("$client/ezer3.css$v_sys","$client/ezer3.css.php=skin",  
+    $awe==5
+      ? "$client/licensed/font-awesome-5/css/all.min.css"
+      : "$client/licensed/font-awesome/css/font-awesome.min.css",
     "$client/licensed/pikaday/pikaday.css","$client/licensed/jquery-ui.min.css"),
     // uživatelské styly
     array_map(function($x) use ($http_rel_root,$v_app) {

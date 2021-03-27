@@ -212,8 +212,11 @@ __EOD;
       li span.cg {
         background-color: #e5f2ff; cursor:pointer;   }
       /* ----------------------- break */
-      li.break span {
+      /*li.break span {
         background-color: #ff244861;
+        color: black; }*/
+      span.break {
+        background-color: #ff244861 !important;
         color: black; }
       li.stop span {
         background-color: #ff2448eb;

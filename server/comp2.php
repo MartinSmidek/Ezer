@@ -1061,7 +1061,7 @@ function gen_func($c,&$desc,$name) {
   $desc->code= $c;
 }
 # --------------------------------------------------------------------------------------------- gen2
-# generuje kód příkazů
+# generuje kód příkazů pro FUNC
 #   $i je použit pro překladu call
 #   $depth je hloubka zanoření cyklů a switch - používá se pro doplnění překladu break a continue
 function gen2($pars,$vars,$c) {

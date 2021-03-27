@@ -1190,7 +1190,7 @@ class Application {
         code[ic]= tr;
       }
       Ezer.debug(code,
-        obj.desc.type+' '+obj.id+(obj.desc.stop?' STOP':'')+(obj.desc.trace?' TRACE':''));
+        obj.desc.type+' '+obj.id+(obj.desc.stop.length?' STOP':'')+(obj.desc.trace?' TRACE':''));
     }
   }
   // ------------------------------------------------------------------------------------- load_root
@@ -2297,7 +2297,8 @@ class Eval {
                     this.proc,this.nargs,this.nvars,'T',cc.i);
               }
               // řešení zastopování procedury
-              if ( this.step || this.proc.stop || this.proc.desc && this.proc.desc.stop ) {
+              if ( this.step || this.proc.stop.length 
+                || this.proc.desc && this.proc.desc.stop && this.proc.desc.stop.length ) {
                 this.trace_proc(cc.s,'>>>STOP '+this.context.id+'.'+cc.i,this.proc,this.nargs,this.nvars,'T');
                 jQuery('#logoContinue').css({display:'block'});
                 jQuery('#maskContinue').css({display:'block'});
