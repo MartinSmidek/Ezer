@@ -129,16 +129,21 @@ function cms_form(cmd,par) {
       jQuery.post(Ezer.web.index,{cms:1,cmd:'CMS_mail',par:par,test:Ezer.cms.test,
           mail:mail.val().trim()})
         .done(y=>{
-          if ( Ezer.cms.test ) pin.val(y.pin); // *DBG*
-          info.html(y.info);
-          if ( y.ok ) {
-            if ( y.ido!==undefined ) 
-              form.data('ido',y.ido);
-            form.find("[name=pin]").removeClass('disabled3');
-            pin.focus();
+          if (y) {
+            if ( Ezer.cms.test ) pin.val(y.pin); // *DBG*
+            info.html(y.info);
+            if ( y.ok ) {
+              if ( y.ido!==undefined ) 
+                form.data('ido',y.ido);
+              form.find("[name=pin]").removeClass('disabled3');
+              pin.focus();
+            }
+            else {
+              form.find("[name=mail]").removeClass('disabled3');
+            }
           }
           else {
-            form.find("[name=mail]").removeClass('disabled3');
+            info.html(TEXT('cms_error')); 
           }
         })
         .fail(e=>{ 

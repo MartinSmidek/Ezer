@@ -532,6 +532,7 @@ function dbg_server($x) {
             // potom uložíme změněný stav
             file_put_contents($path,$x->value);
             // a zkompilujeme 
+            require_once("ezer3.1/server/ae_slib.php");
             require_once("ezer3.1/server/comp2.php");
             $state= comp_file($x->file,$root);
             $ok= substr($state,0,2);

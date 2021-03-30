@@ -10577,7 +10577,7 @@ class Show extends Elem {
 // funkce vrací true. pokud je dotaz na i-tém qry-řádku definován
   DOM_qry_empty (i) {
     return this.DOM_qry_select[i]
-      ? this.DOM_qry_select[i]._key==0
+      ? this.DOM_qry_select[i]._key===0
       : this.DOM_qry[i].val()=='';
   }
 }
