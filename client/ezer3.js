@@ -10136,7 +10136,8 @@ class Show extends Elem {
         else if ( this.qry_type=='=' || this.qry_type=='#' ) {
           // 'q=' test na rovnost, 'q#' test na rovnost s číselníkovou hodnotou
           for (let iq= 1; iq<=this.owner.options.qry_rows; iq++ ) {
-            if (( q= this.DOM_qry_get(iq) )) {
+            if ( !this.DOM_qry_empty(iq) ) {
+              q= this.DOM_qry_get(iq);
               if ( typ=='date' ) q= Ezer.fce.date2sql(q);
               qry+= del+id+"='"+q+"'";
               del= ' OR ';
@@ -10577,7 +10578,7 @@ class Show extends Elem {
 // funkce vrací true. pokud je dotaz na i-tém qry-řádku definován
   DOM_qry_empty (i) {
     return this.DOM_qry_select[i]
-      ? this.DOM_qry_select[i]._key===0
+      ? this.DOM_qry_select[i]._key==0 && this.DOM_qry[i].val()==''
       : this.DOM_qry[i].val()=='';
   }
 }
