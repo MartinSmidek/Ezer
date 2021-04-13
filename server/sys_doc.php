@@ -7,8 +7,7 @@ function doc_ezer($info_only=false) { trace();
   global $ezer_root, $ezer_php, $ezer_dbg_names, $ezer_path_root;
 //                                                 display("$ezer_root, $ezer_php"); return;
   $ezer_dbg_names= array();
-  $html= "<div class='CSection CMenu'>";
-  $html.= "<h3 class='CTitle'>Komentovaný seznam Ezer modulů aplikace '$ezer_root'</h3>";
+  $html= "<div class='karta'>Komentovaný seznam Ezer modulů aplikace '$ezer_root'</div>";
   $html.= "
     <i>Seznam <b style='color:blue'>Ezer-modulů</b> aplikace se seznamem PHP-funkcí, volaných
     prostřednictvím <b>ask</b>, <b>make</b> a použitých v atributu <b>sql_pipe</b>, uspořádaným
@@ -73,15 +72,77 @@ function doc_ezer($info_only=false) { trace();
   $html.= "</dl>";
   $html.= "</div>";
 //                                                 $ezer_dbg_names= array(1,2,3);
-//                                                debug($ezer_dbg_names);
+                                                debug($ezer_dbg_names,'ezer_dbg_names');
+  return $info_only ? $ezer_dbg_names : $html;
+}
+# ----------------------------------------------------------------------------------------- doc ezer
+# seznam Ezer modulů spolu s jejich funkcemi
+# $ezer_dbg_names= [ name: {typ:'php', php:file}, ... ];
+function doc_ezer_fce($info_only=false) { trace();
+  global $ezer_root;
+  $ezer_dbg_names= array();
+  $php_called= (object)array(); // {php-fce:[ezer-fce/isource, ...], ...}
+  $html= "<div class='karta'>Podrobný seznam Ezer modulů aplikace '$ezer_root'</div>";
+  $html.= "
+    <i>Seznam <b style='color:blue'>Ezer-modulů</b> aplikace se seznamem Ezer-funkcí, 
+    spolu s jimi přímo volanými Ezer a PHP funkcemi
+    </i>";
+  $e_srcs= doc_ezer_list();
+  $kap= '';
+  $html.= "<br><br>";
+  $isource= 0;
+  foreach($e_srcs as $e_src=>$desc) {
+//    $ids= explode('.',$e_src);
+//    if ( count($ids)==2 && $kap!=$ezer ) {
+//      $kap= $e_src;
+//      $html.= "<h3>$kap</h3>";
+//    }
+    $html.= "<h4><b  style='color:blue'>$e_src.ezer</b></h4><dl>";
+    $state= $desc->state;
+    $info= $desc->info;
+    // obsažené funkce
+    $ezer= (array)$info->ezer;
+    if (is_array($ezer) && count($ezer)) {
+                                                  debug($ezer,$e_src);
+      foreach ($ezer as $efce=>$list) {
+        if (!count($list)) continue;
+        $html.= "<dt>$efce<dd>";
+        $del= '';
+        foreach ($list as $pfce) {
+          list($pfce)= explode('-',$pfce);
+          $html.= "$del$pfce";
+          $del= ', ';
+          if ($pfce[0]=='$') {
+            // volání PHP fcí
+            $pfce= substr($pfce,1);
+            if (!isset($php_called->$pfce)) 
+              $php_called->$pfce= array();
+            array_push($php_called->$pfce,"$efce:$isource");
+          }
+          else {
+            // volání ezer fcí
+            if (!isset($php_called->$pfce)) 
+              $php_called->$pfce= array();
+            array_push($php_called->$pfce,"$efce:$isource");
+          }
+        }
+        $html.= "</dd></dt>";
+      }
+      $isource++;
+    }
+//    if ( count($lst) ) {
+//      $html.= "<dd><b style='color:green'></b> ".implode(', ',$lst)."</dd>";
+//    }
+    $html.= "</dl>";
+  }
+                                                  debug($php_called,"php_called $e_src");
   return $info_only ? $ezer_dbg_names : $html;
 }
 # ------------------------------------------------------------------------------------------ doc php
 # seznam PHP modulů s označením nepoužitých
-function doc_php($app_phps='*',$sys_phps='') {
+function doc_php($app_phps='*',$sys_phps='') { trace();
   global $ezer_root, $ezer_php;
-  $html= "<div class='CSection CMenu'>";
-  $html.= "<h3 class='CTitle'>Komentovaný seznam PHP modulů aplikace '$ezer_root'</h3>";
+  $html= "<div class='karta'>Komentovaný seznam PHP modulů aplikace '$ezer_root'</div>";
   $html.= "
     <i>Seznam ezer-modulů aplikace se seznamem php-funkcí.
     Číslo před jménem funkce je řádek její definice, 
@@ -159,10 +220,9 @@ function doc_php($app_phps='*',$sys_phps='') {
 }
 # --------------------------------------------------------------------------------------- doc called
 # called graph PHP modulů
-function doc_called() {
+function doc_called() { trace();
   global $ezer_root, $ezer_php;
-  $html= "<div class='CSection CMenu'>";
-  $html.= "<h3 class='CTitle'>Seznam PHP funkcí aplikace '$ezer_root'</h3>";
+  $html= "<div class='karta'>Seznam PHP funkcí aplikace '$ezer_root'</div>";
   $html.= "<i>Abecední seznam PHP funkcí se seznamem funkcí, ze kterých jsou volány.<br>
     Volání z modulů Ezer jsou uvedena <b style='color:blue'>tučně</b>.</i>";
   $ezers= doc_ezer_list();
@@ -190,21 +250,23 @@ function doc_called() {
 }
 # ------------------------------------------------------------------------------------ doc ezer_list
 # seznam Ezer modulů s informací o aktuálnost
-function doc_ezer_list() {
+function doc_ezer_list() { trace();
   global $ezer_path_appl, $ezer_path_code, $ezer_ezer, $ezer_path_root;
+//  $TEST= 'tut.cmp';
   // projití složky aplikace
   $files= array();
-  if ($dh= opendir($ezer_path_appl)) {
+  if (($dh= opendir($ezer_path_appl))) {
     while (($file= readdir($dh)) !== false) {
-      if ( substr($file,-5)=='.ezer' ) {
+      if ( substr($file,-5)==='.ezer' ) {
         $name= substr($file,0,strlen($file)-5);
-        $etime= @filemtime("$ezer_path_appl/$name.ezer");
-        $ctime= @filemtime($cname= "$ezer_path_code/$name.json");
+        if (isset($TEST) && $TEST!==$name) continue;
+        $etime= filemtime("$ezer_path_appl/$name.ezer");
+        $ctime= filemtime($cname= "$ezer_path_code/$name.json");
         $files[$name]= (object)array();
         if ( !$ctime)
           $files[$name]->state= 'err';
         else
-          $files[$name]->state= !$ctime || $ctime<$etime || $ctime<$xtime ? "old" : "ok";
+          $files[$name]->state= !$ctime || $ctime<$etime /*|| $ctime<$xtime*/ ? "old" : "ok";
         // získání informace z překladu
         if ( $files[$name]->state=='ok' ) {
           $code= json_decode(file_get_contents($cname));
@@ -215,8 +277,10 @@ function doc_ezer_list() {
     closedir($dh);
   }
   // přidání případných modulů z jiné složky
-  foreach($ezer_ezer as $fname) {
-    doc_ezer_state($fname,$files);
+  if (!isset($TEST)) {
+    foreach($ezer_ezer as $fname) {
+      doc_ezer_state($fname,$files);
+    }
   }
   ksort($files);
 //                                                         debug($files,'ezer files');
@@ -290,7 +354,7 @@ function doc_php_cg ($app_php='*',$sys_php0='',$restore=false) { trace();
         $fnames[]= $fpath; 
     }
   }
-                            debug($fnames,"fnames: $sys_php");
+//                            debug($fnames,"fnames: $sys_php");
   # výstup tokenů
   function token_debug($xs,$fname) {
     $y= array();
@@ -347,7 +411,7 @@ function doc_php_cg ($app_php='*',$sys_php0='',$restore=false) { trace();
     $last= "?";
     $prev= ''; // předchozí fce
     $ts= array();
-    $ts0= token_get_all(file_get_contents($fname));
+    $ts0= @token_get_all(file_get_contents($fname));
     $endline= 9990;
     for ($i= count($ts0); $i>0; $i--) {
       if (is_array($ts0[$i])) {
@@ -404,7 +468,7 @@ function doc_php_cg ($app_php='*',$sys_php0='',$restore=false) { trace();
   $files= doc_ezer_list();
   $isource= 0;
   foreach ($files as $source=>$info) {
-    $ezer= $info->info->ezer;
+    $ezer= (array)$info->info->ezer;
     $ezers[$isource]= $source;
 //    debug($ezer,"PHP_CALLED $source");
     if (is_array($ezer) && count($ezer))
@@ -413,10 +477,19 @@ function doc_php_cg ($app_php='*',$sys_php0='',$restore=false) { trace();
       foreach ($list as $pfce) {
         list($pfce)= explode('-',$pfce);
         if ($pfce[0]=='$') {
+          // volání PHP fcí
           $pfce= substr($pfce,1);
+          $fce[$pfce][]= "$efce:$isource";
           if (!isset($php_called->$pfce)) 
             $php_called->$pfce= array();
           array_push($php_called->$pfce,"$efce:$isource");
+        }
+        else {  
+          // volání mezi ezer funkcemi
+          $pfce= "$pfce:$isource";
+          if (!isset($fce[$pfce])) 
+            $fce[$pfce]= array();
+          array_push($fce[$pfce],"$efce:$isource");
         }
       }
     }
@@ -476,48 +549,67 @@ function doc_php_tree($root,$app_php='*',$sys_php='',$inverzni=0,$restore=false)
   end:  
     return $cg;
   };
-  $up= function($fce) use (&$calls,$called,$php_called,$phps,$ezers,$lines,&$up) {
+  $up= function($xfce) use (&$calls,$called,$php_called,$phps,$ezers,$lines,&$up) {
     global $ezer_path_root;
-    $calls[$fce][4]= 1; // zabráníme opakování kresby
-    $modul= str_replace("$ezer_path_root/",'',$phps[$calls[$fce][1]]);
-    $modul.= " ({$calls[$fce][2]}-{$calls[$fce][3]})";
-    $cg= 
-      (object)array(
-        'prop' => (object)array('id'=>$fce,'title'=>$modul,'data'=>$lines[$fce]),
-        'down' => array()
-      );    
-    // volání z PHP funkcí
-    if (is_array($called[$fce])) {
-      foreach ($called[$fce] as $call) {
-        if (isset($calls[$call][4])) {
-          $modul= str_replace("$ezer_path_root/",'',$phps[$calls[$call][1]]);
-          $modul.= " {$calls[$call][2]}-{$calls[$call][3]}";
-          $node= (object)array(
-              'prop'=>(object)array('id'=>"* $call",'title'=>$modul,'data'=>$lines[$call]));
-        }
-        else {
+    $calls[$xfce][4]= 1; // zabráníme opakování kresby
+    list($fce,$emodul)= explode(':',$xfce);
+    if (isset($emodul)) {
+      // ezer funkce
+      list($efce,$line,$clmn)= explode('.',$fce);
+      $modul= $ezers[$emodul];
+      $cg= (object)array(
+          'prop'=>(object)array('id'=>$efce, 'css'=>'fce_ezer', 'title'=>"$modul;$line",
+              'data'=>(object)array('ezer'=>$modul,'line'=>$line)));
+      // volání z ezer funkcí
+      if (is_array($called[$xfce])) {
+        foreach ($called[$xfce] as $call) {
           $node= $up($call);
+          $cg->down[]= $node;
         }
-        $cg->down[]= $node;
       }
     }
     else {
-      display("'$fce' nenalezena");
-    }
-    // volání z Ezer-funkcí
-    if (isset($php_called) && is_array($php_called) && count($php_called)) {
-      if (isset($php_called->$fce))
-      foreach ($php_called->$fce as $call_source) {
-        list($call,$isource)= explode(':',$call_source);
-        list($efce,$line,$clmn)= explode('.',$call);
-        $modul= $ezers[$isource];
-        $node= (object)array(
-            'prop'=>(object)array('id'=>"<span class='go' style='background:#ffdf6b'>$efce</span>",
-                'title'=>"$modul;$line",
-                'data'=>(object)array('ezer'=>$modul,'line'=>$line)));
-        $cg->down[]= $node;
+      // PHP funkce
+      $modul= str_replace("$ezer_path_root/",'',$phps[$calls[$fce][1]]);
+      $modul.= " ({$calls[$fce][2]}-{$calls[$fce][3]})";
+      $cg= 
+        (object)array(
+          'prop' => (object)array('id'=>$fce, 'css'=>'fce_php','title'=>$modul,'data'=>$lines[$fce]),
+          'down' => array()
+        );    
+      // volání z PHP funkcí
+      if (is_array($called[$fce])) {
+        foreach ($called[$fce] as $call) {
+          if (isset($calls[$call][4]) && !strpos($call,':')) {
+            $modul= str_replace("$ezer_path_root/",'',$phps[$calls[$call][1]]);
+            $modul.= " {$calls[$call][2]}-{$calls[$call][3]}";
+            $node= (object)array(
+                'prop'=>(object)array('id'=>"* $call",'title'=>$modul,'data'=>$lines[$call]));
+          }
+          else {
+            $node= $up($call);
+          }
+          $cg->down[]= $node;
+        }
+      }
+      else {
+        display("'$fce' nenalezena");
       }
     }
+//    // volání z Ezer-funkcí
+//    if (isset($php_called)) {
+//      if (isset($php_called->$fce))
+//      foreach ($php_called->$fce as $call_source) {
+//        list($call,$isource)= explode(':',$call_source);
+//        list($efce,$line,$clmn)= explode('.',$call);
+//        $modul= $ezers[$isource];
+//        $node= (object)array(
+//            'prop'=>(object)array('id'=>"<span class='go' style='background:#ffdf6b'>$efce</span>",
+//                'title'=>"$modul;$line",
+//                'data'=>(object)array('ezer'=>$modul,'line'=>$line)));
+//        $cg->down[]= $node;
+//      }
+//    }
   end:  
     return $cg;
   };
@@ -528,8 +620,7 @@ function doc_php_tree($root,$app_php='*',$sys_php='',$inverzni=0,$restore=false)
 # vygeneruje definici syntaxe pro Ezer pro PSPad
 function pspad_gen() {
   global $ezer_path_pspad;
-  $html= "<div class='CSection CMenu'>";
-  $html.= "<h3 class='CTitle'>Barvení syntaxe EzerScript pro PSPad</h3>";
+  $html= "<div class='karta'>Barvení syntaxe EzerScript pro PSPad</div>";
   $fname= "$ezer_path_pspad/Ezer.ini";
   $now= date('d.m.Y');
   pspad_keys($res,$key1,$key2,$key3);

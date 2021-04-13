@@ -653,3 +653,8 @@ td.BrowseNoClmn img.sort {
   transform: scaleX(-1); direction: rtl; display: flex; }
 .inverzniCG div.mooTree_selected {
   margin-right:0; }
+ /* ----------------------- uzly CG */
+span.fce_php {
+  background-color:#aaf; } 
+span.fce_ezer {
+  background-color:#faa; } 

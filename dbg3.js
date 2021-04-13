@@ -224,6 +224,10 @@ function dbg_onclick_start(file) {
           }
           dbg_contextmenu([
             editovat,
+            ['-[fa-usb] zobraz graf volání', function(el) {
+                dbg_get_ezer_cg(elem);
+                return false;
+            }],
             ['[fa-film] nastav trasování', function(el) {
                 elem.proc_trace(1);
                 touch('trace',1);
@@ -677,6 +681,7 @@ function dbg_clear() {
   dbg.help.hide();
   dbg.wcg.hide();
   dbg.wphp.hide(); php.fce= null;
+  dbg.lines.removeClass('upper');
 }
 // ----------------------------------------------------------------------------------- dbg reload_cg
 function dbg_reload_cg(sys_fce) {
@@ -1125,6 +1130,11 @@ function dbg_cg_gc(inverzni) {
   }
   dbg_find_help('php',CG.item);
 }
+// --------------------------------------------------------------------------------- dbg get_ezer_cg
+// dotaz na server o CG dané ezer funkce
+function dbg_get_ezer_cg (proc) {
+  doc.Ezer.fce.echo(`CG pro ${proc.id}.${proc.desc._lc}`);
+}
 // ----------------------------------------------------------------------------------- dbg find_help
 // dotaz na server o help pro daný item
 function dbg_find_help (typ,item) {
@@ -1150,6 +1160,29 @@ function dbg_find_help_(y) {
 // ----------------------------------------------------------------------------------- dbg make_tree
 function dbg_make_tree(cg) {
   // načte další generaci pod root podle popisu v desc
+//  function load(root,desc) {
+//    if ( desc.down ) {
+//      for (var i= 0; i<desc.down.length; i++) {
+//        var down= desc.down[i];
+//        let dots= down.prop.id.split('.');
+//        if (dots.length>1) {
+//        // funkce ezerscriptu
+//          down.prop.class= 'ezer_fce'; 
+//          if ( !down.prop.text )
+//            down.prop.text= down.prop.data && down.prop.data.name||down.prop.id;
+//        }
+//        else {
+//          // funkce PHP
+//          if ( !down.prop.text )
+//            down.prop.text= down.prop.data && down.prop.data.name||down.prop.id;
+//        }
+//        // úprava down.prop.id na složené jméno
+//        down.prop.id= root.id+'.'+down.prop.id;
+//        var node= root.insert(down.prop);
+//        load(node,down);
+//      }
+//    }
+//  }
   function load(root,desc) {
     if ( desc.down ) {
       for (var i= 0; i<desc.down.length; i++) {
@@ -1200,13 +1233,14 @@ function dbg_make_tree(cg) {
             else {
               if (typeof node.data==='object') {
                 // ezer
-                dbg_reload(node.data.ezer,node.data.line,1); // let CG on screen
+                dbg_reload(node.data.ezer,node.data.line,0); // let CG on screen
               }
               else {
                 // PHP
                 //doc.Ezer.fce.echo('click on PHP:',fce,';',ndata);
                 dbg_mode('php');
                 dbg.wphp.show();
+                dbg.lines.addClass('upper');
                 dbg_reload_php(fce);
               }
             }

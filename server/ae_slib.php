@@ -98,6 +98,7 @@ function doc_chngs_show($type='ak',$days=30,$app_name='') { trace();
   $header= function($d,$w,$a='') use ($s2u) {
     $d= $s2u($d);
     $w= trim($w);
+    $a= str_replace("'","&#39;",$a);
     return "<span class='chng_day' title='$a'>$d $w:</span>";
   };
   $get_help= function($db='.main.',$level='a',$abbr) use (&$lines,$ezer_db,$days,$header) {
@@ -114,7 +115,7 @@ function doc_chngs_show($type='ak',$days=30,$app_name='') { trace();
           $n= $level=='k' ? 'Ezer' : ' ';
         $hdr= $header($h->datum,$n,"oprava $abbr");
         $version= str_pad($h->version,10,'0',STR_PAD_LEFT);
-        $tit= addslashes($h->help);
+        $tit= str_replace("'","&#39;",$h->help);
         $lines[]= "$h->datum $version"
                 . "<div class='chng'>$hdr <span class='chng_hlp' title='$tit'>$h->help</span></div>";
       }
@@ -145,7 +146,7 @@ function doc_chngs_show($type='ak',$days=30,$app_name='') { trace();
     while ( $rh && ($h= pdo_fetch_object($rh)) ) {
       $who= "požadavek {$h->kdo} ".$s2u($h->kdy_zadal);
       $hdr= $header($h->kdy_skoncil,$h->zkratka,$who);
-      $tit= addslashes($h->zprava);
+      $tit= str_replace("'","&#39;",$h->zprava);
       $lines[]= "$h->kdy_skoncil 00:00:00 9876543210"
               . "<div class='chng'>$hdr<span class='chng_hlp' title='$tit'>$h->zprava</span></div>";
     }

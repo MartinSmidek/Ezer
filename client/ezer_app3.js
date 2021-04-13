@@ -4366,7 +4366,8 @@ Ezer.fce.href= function (path) {
               A.shift();
               args.extend(A);
             }
-            new Eval(part.code,part.context||part.owner,args,part.id,false,false,part);
+//            new Eval(part.code,part.context||part.owner,args,part.id,false,false,part);
+            new Eval([{o:'c',i:part.id,a:args.length,s:part.lc}],part.context,args,part.id);
             break;
           default:
             Ezer.fce.warning('odkaz '+path+' má chybnou ',i+1,'. část');

@@ -180,6 +180,8 @@ __EOD;
       div#lines {
         padding: 0; overflow-y: scroll; height: calc(100% - 14px); top: 14px;
         left: 120px; right: 0px; position: absolute; padding-top: 4px; }
+      div#lines.upper {
+        height: calc(50% - 21px); top: 22px; }
       div#gutter {
         position: fixed; left: 120px; width: 29px; top: 0; height: 100%; background: silver; }
       div#border {
@@ -211,6 +213,11 @@ __EOD;
         background-color: #ffdf6b; cursor:pointer;   }
       li span.cg {
         background-color: #e5f2ff; cursor:pointer;   }
+      /* ----------------------- uzly CG */
+      span.fce_php {
+        background-color:#e5f2ff; } 
+      span.fce_ezer {
+        background-color:#ffdf6b; } 
       /* ----------------------- break */
       /*li.break span {
         background-color: #ff244861;
@@ -409,11 +416,15 @@ __EOD;
 // AJAX volání z dbg3_ask
 // na vstupu je definováno: x.app
 function dbg_server($x) {
-  global $ezer_path_root, $ezer_root, $trace;
+  global $ezer_path_root, $ezer_root, $trace, $dbg_info;
   $trace= '';
   $ezer_path_root= $_SESSION[$x->app]['abs_root'];
   $ezer_root= $x->app;
   chdir($ezer_path_root);
+  if (file_exists("$ezer_root.inc.php"))
+    require_once("$ezer_root.inc.php");
+  else
+    require_once("$ezer_root/$ezer_root.inc.php");
   $y= $x;
   switch ($x->cmd) {
   case 'source_php': // -------------------------------- get PHP
@@ -475,29 +486,22 @@ function dbg_server($x) {
     }
     break;
   case 'source': // ------------------------------------ get Ezer + CG
-    $file= "{$x->file}.ezer";
-    $name= "{$x->app}/$file";
-    $path= "$ezer_path_root/$name";
-    $root= $x->app;
-    if ( file_exists($path) ) {
-      $y->lines= file($path,FILE_IGNORE_NEW_LINES);
-      $y->mtime= filemtime($path);
-      $y->name= $name;
-      $y->path= $path;
-    }
-    else {
-      $name= "ezer3.1/$file";
-      $root= 'ezer3.1';
+    $roots= isset($dbg_info) ? $dbg_info->src_path : array($x->app,'ezer3.1');
+    foreach ($roots as $root) {
+      $file= "{$x->file}.ezer";
+      $name= "$root/$file";
       $path= "$ezer_path_root/$name";
+      $y->lines= null;
       if ( file_exists($path) ) {
         $y->lines= file($path,FILE_IGNORE_NEW_LINES);
         $y->mtime= filemtime($path);
         $y->name= $name;
         $y->path= $path;
+        break;
       }
-      else {
-        $y->lines= array("modul {$x->file} se nepodařilo najít");
-      }
+    }
+    if ($y->lines===null) {
+      $y->lines= array("modul {$x->file} se nepodařilo najít");
     }
     // získáme překlad a z něj CG
     $cg= null;
@@ -554,10 +558,6 @@ function dbg_server($x) {
         if ($ok=='ok') {
           // restaurace CG
           require_once("ezer3.1/server/sys_doc.php");
-          if (file_exists("$root.inc.php"))
-            require_once("$root.inc.php");
-          else
-            require_once("$root/$root.inc.php");
           doc_php_cg('*','*',1); // vždy přepočítat, nebrat ze SESSION
 //          doc_php_cg('*','server/ae_slib.php',1); // vždy přepočítat, nebrat ze SESSION
           $cg_ok= isset($_SESSION[$root]['CG']) ? 'ok' : 'ko';

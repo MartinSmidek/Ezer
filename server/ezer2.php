@@ -82,11 +82,11 @@
     }
   }
   if ( !$ezer_root_inc ) {
-//    fce_error("SYSTEM: inconsistent kernel call");
-    header('Content-type: application/json; charset=UTF-8');
-    $y= (object)array('error'=>'SYSTEM: inconsistent kernel call');
-    $yjson= json_encode($y);
-    echo $yjson;
+    header("Refresh:0");
+//    header('Content-type: application/json; charset=UTF-8');
+//    $y= (object)array('error'=>'SYSTEM: inconsistent kernel call');
+//    $yjson= json_encode($y);
+//    echo $yjson;
     exit;
 
   }

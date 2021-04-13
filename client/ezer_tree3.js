@@ -146,6 +146,7 @@ class MooTreeControl {
     icon - use this to customize the icon of the node. The following predefined values may be used: '_open', '_closed' and '_doc'. Alternatively, specify the URL of a GIF or PNG image to use - this should be exactly 18x18 pixels in size. If you have a strip of images, you can specify an image number (e.g. 'my_icons.gif#4' for icon number 4).
     openicon - use this to customize the icon of the node when it's open.
     data - an object containing whatever data you wish to associate with this node (such as an url and/or an id, etc.)
+    css - when given put it into span element
 
   Events:
     onExpand - called when the node is expanded or collapsed: function(state) - where state is a boolean meaning true:expanded or false:collapsed.
@@ -157,6 +158,7 @@ class MooTreeNode {
   // ----------------------------------------------------------------------- constructor
   constructor (options) {
     this.text=  options.text;           // the text displayed by this node
+    this.css=  options.css||'';         // the css class for span insode node
     this.title= options.title;          // the text displayed by this node +gn150203
     this.id=    options.id || null;     // the node's unique id
     this.nodes= [];                     // subnodes nested beneath this node (MooTreeNode objects)
@@ -299,7 +301,9 @@ class MooTreeNode {
       // update the text:
       x= this.div.text;
       x.empty();
-      x.html(this.text);                            //+gn150203 show node text as html
+      // when options.css given put it inside span element
+      let css= this.css ? ` class="${this.css}"` : '';
+      x.append(jQuery(`<span${css}>${this.text}</span>`)); 
       if ( this.title ) x.prop('title',this.title); //+gn150203 show node title
       if (this.color) x.css('color',this.color);
       // update the icon:
