@@ -92,9 +92,10 @@ panel str [,,770,] {type:'right', title:'Struktura', _sys:'*', skill:'m'
           this.tree_show(obj,'cg',0,{theme:'mootree.gif',mode:'folders'});
           this.tree_expand(expand?99:1);
         }
-        func tree_onclick(fid,id,dat,com,x,txt,txts) { var fd:text
-          fce= replace(id,'\* ','');
-          echo('tree click:',fce);
+        func tree_onclick(fid,id,dat:object,com,x,txt,txts) { var fd:text
+//          fce= replace(id,'\* ','');
+          fce= dat.full;
+          echo(`tree click:${id} (${dat.full})`);
         }
       }
     }

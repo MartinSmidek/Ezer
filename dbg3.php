@@ -117,6 +117,7 @@ __EOD;
         font-size: 8pt; font-family: monospace,consolas; overflow: hidden; margin: 0; }
       li {
         white-space: pre; list-style-type: none; height:13px; }
+      .blur { filter: blur(5px); }
       /* ----------------------- help */
       div#help {
         position: fixed; display: none; right: 30px; top: 25px; width: 300px; 
@@ -181,7 +182,7 @@ __EOD;
         padding: 0; overflow-y: scroll; height: calc(100% - 14px); top: 14px;
         left: 120px; right: 0px; position: absolute; padding-top: 4px; }
       div#lines.upper {
-        height: calc(50% - 21px); top: 22px; }
+        height: calc(50% - 14px); top: 14px; }
       div#gutter {
         position: fixed; left: 120px; width: 29px; top: 0; height: 100%; background: silver; }
       div#border {
@@ -416,7 +417,7 @@ __EOD;
 // AJAX volání z dbg3_ask
 // na vstupu je definováno: x.app
 function dbg_server($x) {
-  global $ezer_path_root, $ezer_root, $trace, $dbg_info;
+  global $ezer_path_root, $ezer_root, $trace, $dbg_info, $ezer_php_libr, $ezer_php, $ezer_ezer;
   $trace= '';
   $ezer_path_root= $_SESSION[$x->app]['abs_root'];
   $ezer_root= $x->app;
@@ -574,14 +575,9 @@ function dbg_server($x) {
     else 
       $y->msg= "'$name' (už) neexistuje";
     break;
-  case 'reload_cg': // ---------------------------------- přepočítat CG
+  case 'reload_cg': // ---------------------------------- přepočítat CG pro: item, file
     // restaurace CG
-    global $ezer_root, $ezer_path_root, $ezer_php_libr, $ezer_php, $ezer_ezer;
     require_once("ezer3.1/server/sys_doc.php");
-    if (file_exists("{$x->app}.inc.php"))
-      require_once("{$x->app}.inc.php");
-    else
-      require_once("{$x->app}/{$x->app}.inc.php");
     if ($x->sys_fce) {
       $y->cg= doc_php_tree($x->item,'*','*',$x->inverzni,true);
     }

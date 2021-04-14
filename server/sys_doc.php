@@ -72,7 +72,7 @@ function doc_ezer($info_only=false) { trace();
   $html.= "</dl>";
   $html.= "</div>";
 //                                                 $ezer_dbg_names= array(1,2,3);
-                                                debug($ezer_dbg_names,'ezer_dbg_names');
+//                                                debug($ezer_dbg_names,'ezer_dbg_names');
   return $info_only ? $ezer_dbg_names : $html;
 }
 # ----------------------------------------------------------------------------------------- doc ezer
@@ -103,14 +103,17 @@ function doc_ezer_fce($info_only=false) { trace();
     // obsažené funkce
     $ezer= (array)$info->ezer;
     if (is_array($ezer) && count($ezer)) {
-                                                  debug($ezer,$e_src);
+//                                                  debug($ezer,$e_src);
       foreach ($ezer as $efce=>$list) {
         if (!count($list)) continue;
-        $html.= "<dt>$efce<dd>";
+        $href= "href='ezer://doc.str.str_click/$efce:$isource'";
+        list($id,$ln)= explode('.',$efce);
+        $html.= "<dt><a style='background:#fbb' $href>$id</a>.$ln<dd>";
         $del= '';
         foreach ($list as $pfce) {
           list($pfce)= explode('-',$pfce);
           $html.= "$del$pfce";
+
           $del= ', ';
           if ($pfce[0]=='$') {
             // volání PHP fcí
@@ -135,7 +138,7 @@ function doc_ezer_fce($info_only=false) { trace();
 //    }
     $html.= "</dl>";
   }
-                                                  debug($php_called,"php_called $e_src");
+//                                                  debug($php_called,"php_called $e_src");
   return $info_only ? $ezer_dbg_names : $html;
 }
 # ------------------------------------------------------------------------------------------ doc php
@@ -261,7 +264,7 @@ function doc_ezer_list() { trace();
         $name= substr($file,0,strlen($file)-5);
         if (isset($TEST) && $TEST!==$name) continue;
         $etime= filemtime("$ezer_path_appl/$name.ezer");
-        $ctime= filemtime($cname= "$ezer_path_code/$name.json");
+        $ctime= @filemtime($cname= "$ezer_path_code/$name.json");
         $files[$name]= (object)array();
         if ( !$ctime)
           $files[$name]->state= 'err';
@@ -319,6 +322,7 @@ function doc_ezer_state ($fname,&$files) { trace();
 # pokud se nezměnily $app_php,$sys_php bere se objekt z SESSION[app][CG], pokud neni $restore
 function doc_php_cg ($app_php='*',$sys_php0='',$restore=false) { trace();
   global $ezer_root, $ezer_path_root, $EZER, $ezer_php_libr, $ezer_php;
+  // optimalizace - CG necháváme v SESSION
   if (!$restore && isset($_SESSION[$ezer_root]['CG']) 
       && $app_php==$_SESSION[$ezer_root]['CG']->app_php
       && $sys_php0==$_SESSION[$ezer_root]['CG']->sys_php ) {
@@ -355,22 +359,22 @@ function doc_php_cg ($app_php='*',$sys_php0='',$restore=false) { trace();
     }
   }
 //                            debug($fnames,"fnames: $sys_php");
-  # výstup tokenů
-  function token_debug($xs,$fname) {
-    $y= array();
-    foreach ($xs as $i=>$x) {
-      if ( is_array($x) ) {
-        if (in_array($x[0],array(T_WHITESPACE,T_COMMENT))) continue;
-//        if (in_array($x[0],array(T_WHITESPACE,T_COMMENT,T_VARIABLE))) continue;
-        $y[$i]= token_name($x[0])."   $x[1] ($x[2])";
-      }
-      else {
-        if (!in_array($x[0],array('{','}','('))) continue;
-        $y[$i]= $x;
-      }
-    }
-    debug($y,$fname);
-  }
+//  # výstup tokenů
+//  function token_debug($xs,$fname) {
+//    $y= array();
+//    foreach ($xs as $i=>$x) {
+//      if ( is_array($x) ) {
+//        if (in_array($x[0],array(T_WHITESPACE,T_COMMENT))) continue;
+////        if (in_array($x[0],array(T_WHITESPACE,T_COMMENT,T_VARIABLE))) continue;
+//        $y[$i]= token_name($x[0])."   $x[1] ($x[2])";
+//      }
+//      else {
+//        if (!in_array($x[0],array('{','}','('))) continue;
+//        $y[$i]= $x;
+//      }
+//    }
+//    debug($y,$fname);
+//  }
   // seznam funkcí vynechaných ze seznamu volaných - odvozený z $ezer_php_libr
   $omi= array();
   foreach($ezer_php_libr as $fname) {
@@ -396,7 +400,7 @@ function doc_php_cg ($app_php='*',$sys_php0='',$restore=false) { trace();
   // $fce = seznam dostupných funkcí
   $fce_lst= get_defined_functions();   // pozor! převádí jména na lowercase
   $usr= $fce_lst['user'];
-  $fce= array();
+  $fce= array(); // inverzní CG (ezer+php) funkcí
   foreach($usr as $u) {
     if (!in_array($u,$omi) )
       $fce[$u]= array();
@@ -462,9 +466,10 @@ function doc_php_cg ($app_php='*',$sys_php0='',$restore=false) { trace();
       }
     }
   }
-  // vytvoření volání PHP z ezerscriptu
+  // vytvoření CG (ezer+php) z ezerscriptu
   $php_called= (object)array(); // {php-fce:[ezer-fce/isource, ...], ...}
   $ezers= array();
+  $cg_fce= array(); // CG ezer funkcí 
   $files= doc_ezer_list();
   $isource= 0;
   foreach ($files as $source=>$info) {
@@ -474,22 +479,33 @@ function doc_php_cg ($app_php='*',$sys_php0='',$restore=false) { trace();
     if (is_array($ezer) && count($ezer))
     foreach ($ezer as $efce=>$list) {
       if (!count($list)) continue;
+      $efcei= "$efce:$isource";
       foreach ($list as $pfce) {
         list($pfce)= explode('-',$pfce);
         if ($pfce[0]=='$') {
           // volání PHP fcí
           $pfce= substr($pfce,1);
-          $fce[$pfce][]= "$efce:$isource";
+          $fce[$pfce][]= $efcei;
+          // inverzní CG
           if (!isset($php_called->$pfce)) 
             $php_called->$pfce= array();
-          array_push($php_called->$pfce,"$efce:$isource");
+          array_push($php_called->$pfce,$efcei);
+          // přímý CG
+          if (!isset($cg_fce[$efcei]))
+            $cg_fce[$efcei]= array();
+          array_push($cg_fce[$efcei],$pfce);
         }
         else {  
           // volání mezi ezer funkcemi
           $pfce= "$pfce:$isource";
+          // inverzní CG
           if (!isset($fce[$pfce])) 
             $fce[$pfce]= array();
-          array_push($fce[$pfce],"$efce:$isource");
+          array_push($fce[$pfce],$efcei);
+          // přímý CG
+          if (!isset($cg_fce[$efcei]))
+            $cg_fce[$efcei]= array();
+          array_push($cg_fce[$efcei],$pfce);
         }
       }
     }
@@ -497,9 +513,10 @@ function doc_php_cg ($app_php='*',$sys_php0='',$restore=false) { trace();
 //    break;
   }
   // struktura CG
+//                                                          debug($cg_fce,"ecalls");
   $ret= (object)array(
       'app_php'=>$app_php,'sys_php'=>$sys_php0,'app_ezer'=>$ezers, 'php_called'=>$php_called,
-      'cg_calls'=>$cg_calls,'cg_phps'=>$fnames,
+      'cg_calls'=>$cg_calls,'cg_phps'=>$fnames, 'ecalls'=>$cg_fce,
       'calls'=>$phps,'lines'=>$lines,'called'=>$fce,'html'=>$html);
   $_SESSION[$ezer_root]['CG']= $ret;
 end:
@@ -512,39 +529,83 @@ end:
 function doc_php_tree($root,$app_php='*',$sys_php='',$inverzni=0,$restore=false) { trace();
   $cg_list= doc_php_cg($app_php,$sys_php,$restore);
   $calls= $cg_list->cg_calls;
+  $ecalls= $cg_list->ecalls;
   $called= $cg_list->called;
   $php_called= $cg_list->php_called;
   $phps=  $cg_list->cg_phps;
   $ezers=  $cg_list->app_ezer;
   $lines= $cg_list->lines;
-  $down= function($fce) use (&$calls,$phps,$lines,&$down) {
+  $down= function($xfce) use (&$calls,$ecalls,$ezers,$phps,$lines,&$down) {
     global $ezer_path_root;
-    list($fce,$ln)= explode(';',$fce);
-    $calls[$fce][4]= 1; // zabráníme opakování kresby
-    $modul= str_replace("$ezer_path_root/",'',$phps[$calls[$fce][1]]);
-    $modul.= " ({$calls[$fce][2]}-{$calls[$fce][3]})";
-    $cg= 
-      (object)array(
-        'prop' => (object)array('id'=>$fce,'title'=>"$ln:$modul",'data'=>$lines[$fce]),
-        'down' => array()
-      );    
-    if (is_array($calls[$fce][0])) {
-      foreach ($calls[$fce][0] as $called_line) {
-        list($called,$ln)= explode(';',$called_line);
-        if (isset($calls[$called][4])) {
-          $modul= str_replace("$ezer_path_root/",'',$phps[$calls[$called][1]]);
-          $modul.= " {$calls[$called][2]}-{$calls[$called][3]}";
-          $node= (object)array(
-              'prop'=>(object)array('id'=>"* $called",'title'=>"$ln:$modul",'data'=>$lines[$called]));
+    list($fce,$emodul)= explode(':',$xfce);
+    if (isset($emodul)) {
+      // volání z ezer funkce - modul může být dán jako jméno ezer-souboru z $ezers
+      if (is_numeric($emodul)) {
+        $modul= $ezers[$emodul];
+      }
+      else {
+        $modul= $emodul; 
+        $emodul= array_search($emodul,$ezers);
+        $xfce= "$fce:$emodul";
+      }
+      list($efce,$line,$clmn)= explode('.',$fce);
+      $cg= (object)array(
+          'prop'=>(object)array('id'=>$efce, 'css'=>'fce_ezer', 'title'=>"$modul;$line",
+              'data'=>(object)array('ezer'=>$modul,'line'=>$line, 'full'=>$xfce)));
+      // zpracuj ezer volání z této funkce
+      if (is_array($ecalls[$xfce])) {
+        foreach ($ecalls[$xfce] as $call) {
+          $node= $down($call);
+          $cg->down[]= $node;
         }
-        else {
-          $node= $down($called_line);
+      }
+      // a volání php
+      if (is_array($calls[$fce][0])) {
+        foreach ($calls[$fce][0] as $called_line) {
+          list($called,$ln)= explode(';',$called_line);
+          if (isset($calls[$called][4])) {
+            $modul= str_replace("$ezer_path_root/",'',$phps[$calls[$called][1]]);
+            $modul.= " {$calls[$called][2]}-{$calls[$called][3]}";
+            $node= (object)array(
+                'prop'=>(object)array('id'=>"* $called", 'css'=>'fce_php', 'title'=>"$ln:$modul",
+                'data'=>(object)array('line'=>$lines[$called], 'full'=>$called)));
+          }
+          else {
+            $node= $down($called_line);
+          }
+          $cg->down[]= $node;
         }
-        $cg->down[]= $node;
       }
     }
     else {
-      display("'$fce' nenalezena");
+      // volání z PHP funkce
+      list($fce,$ln)= explode(';',$fce);
+      $calls[$fce][4]= 1; // zabráníme opakování kresby
+      $modul= str_replace("$ezer_path_root/",'',$phps[$calls[$fce][1]]);
+      $modul.= " ({$calls[$fce][2]}-{$calls[$fce][3]})";
+      $cg= 
+        (object)array(
+            'prop' => (object)array('id'=>$fce, 'css'=>'fce_php', 'title'=>"$ln:$modul",
+            'data'=>(object)array('line'=>$lines[$fce],'full'=>$fce, 'down' => array())));    
+      if (is_array($calls[$fce][0])) {
+        foreach ($calls[$fce][0] as $called_line) {
+          list($called,$ln)= explode(';',$called_line);
+          if (isset($calls[$called][4])) {
+            $modul= str_replace("$ezer_path_root/",'',$phps[$calls[$called][1]]);
+            $modul.= " {$calls[$called][2]}-{$calls[$called][3]}";
+            $node= (object)array(
+                'prop'=>(object)array('id'=>"* $called", 'css'=>'fce_php', 'title'=>"$ln:$modul",
+                'data'=>(object)array('line'=>$lines[$called], 'full'=>$called)));
+          }
+          else {
+            $node= $down($called_line);
+          }
+          $cg->down[]= $node;
+        }
+      }
+      else {
+        display("'$fce' nenalezena");
+      }
     }
   end:  
     return $cg;
@@ -559,7 +620,7 @@ function doc_php_tree($root,$app_php='*',$sys_php='',$inverzni=0,$restore=false)
       $modul= $ezers[$emodul];
       $cg= (object)array(
           'prop'=>(object)array('id'=>$efce, 'css'=>'fce_ezer', 'title'=>"$modul;$line",
-              'data'=>(object)array('ezer'=>$modul,'line'=>$line)));
+          'data'=>(object)array('ezer'=>$modul, 'line'=>$line, 'full'=>$xfce)));
       // volání z ezer funkcí
       if (is_array($called[$xfce])) {
         foreach ($called[$xfce] as $call) {
@@ -574,8 +635,8 @@ function doc_php_tree($root,$app_php='*',$sys_php='',$inverzni=0,$restore=false)
       $modul.= " ({$calls[$fce][2]}-{$calls[$fce][3]})";
       $cg= 
         (object)array(
-          'prop' => (object)array('id'=>$fce, 'css'=>'fce_php','title'=>$modul,'data'=>$lines[$fce]),
-          'down' => array()
+          'prop' => (object)array('id'=>$fce, 'css'=>'fce_php','title'=>$modul,
+          'data'=>(object)array('line'=>$lines[$fce])), 'full'=>$fce, 'down' => array()
         );    
       // volání z PHP funkcí
       if (is_array($called[$fce])) {
@@ -584,7 +645,8 @@ function doc_php_tree($root,$app_php='*',$sys_php='',$inverzni=0,$restore=false)
             $modul= str_replace("$ezer_path_root/",'',$phps[$calls[$call][1]]);
             $modul.= " {$calls[$call][2]}-{$calls[$call][3]}";
             $node= (object)array(
-                'prop'=>(object)array('id'=>"* $call",'title'=>$modul,'data'=>$lines[$call]));
+                'prop'=>(object)array('id'=>"* $call", 'css'=>'fce_php', 'title'=>$modul,
+                'data'=>(object)array('line'=>$lines[$call], 'full'=>$call)));
           }
           else {
             $node= $up($call);
@@ -613,7 +675,8 @@ function doc_php_tree($root,$app_php='*',$sys_php='',$inverzni=0,$restore=false)
   end:  
     return $cg;
   };
-  return $inverzni ? $up($root) : $down($root);
+  $cg= $inverzni ? $up($root) : $down($root);
+  return $cg;
 }
 /** =========================================================================================> PSPAD */
 # ---------------------------------------------------------------------------------------- pspad_gen

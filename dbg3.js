@@ -225,7 +225,9 @@ function dbg_onclick_start(file) {
           dbg_contextmenu([
             editovat,
             ['-[fa-usb] zobraz graf volání', function(el) {
-                dbg_get_ezer_cg(elem);
+                CG.item= `${elem.id}.${elem.desc._lc.replace(',','.')}`+':'+doc.Ezer.sys.dbg.file;
+                CG.cg_gc= 0;
+                dbg_cg_gc();
                 return false;
             }],
             ['[fa-film] nastav trasování', function(el) {
@@ -1113,10 +1115,12 @@ var CG = {
       item:0,   // poslední zobrazený
       cg_gc:0,  // 0=graf volaných 1=graf volajících
       sysphp:0, // 1=zahrnout i systémové PHP funkce
-      expand:1  // 1=zobrazit expandované uzly 
+      expand:1, // 1=zobrazit expandované uzly 
+      tree:null // zobrazený strom
     }
 function dbg_cg_gc(inverzni) {
   window.event.stopImmediatePropagation();
+  // změna css až po výpočtu
   if (inverzni==99) {
     // expanse
     CG.expand= 1-CG.expand;
@@ -1124,16 +1128,30 @@ function dbg_cg_gc(inverzni) {
   else {
     CG.cg_gc= inverzni;
     if (inverzni) 
-      dbg.wcg_grf.addClass('inverzniCG');
+      dbg.wcg_grf.addClass('inverzniCG blur');
     else
-      dbg.wcg_grf.removeClass('inverzniCG')
+      dbg.wcg_grf.removeClass('inverzniCG').addClass('blur')
   }
-  dbg_find_help('php',CG.item);
+  if (CG.item.indexOf(':'))
+    dbg_get_ezer_cg();
+  else
+    dbg_find_help('php',CG.item);
 }
 // --------------------------------------------------------------------------------- dbg get_ezer_cg
 // dotaz na server o CG dané ezer funkce
-function dbg_get_ezer_cg (proc) {
-  doc.Ezer.fce.echo(`CG pro ${proc.id}.${proc.desc._lc}`);
+function dbg_get_ezer_cg () {
+  let app= opener ? opener.Ezer.root : window.Ezer.root;
+  dbg_ask({cmd:'reload_cg',app:app,item:CG.item,inverzni:CG.cg_gc,sys_fce:CG.sysphp},dbg_get_ezer_cg_);
+}
+function dbg_get_ezer_cg_(y) {
+  doc.Ezer.fce.echo(`done`);
+  dbg.cg= y.cg;
+  dbg.wcg_hdr.html(y.item);
+  dbg.wcg_grf.empty();
+  if ( dbg.cg )
+    dbg_make_tree(dbg.cg);
+  // odstraň rozmazání
+  dbg.wcg_grf.removeClass('blur');
 }
 // ----------------------------------------------------------------------------------- dbg find_help
 // dotaz na server o help pro daný item
@@ -1155,34 +1173,13 @@ function dbg_find_help_(y) {
   else {
     doc.Ezer.sys.dbg.win_ezer.dbg_show_help(y.value);
   }
+  // odstraň rozmazání
+  dbg.wcg_grf.removeClass('blur');
   return y.value;
 }
 // ----------------------------------------------------------------------------------- dbg make_tree
 function dbg_make_tree(cg) {
   // načte další generaci pod root podle popisu v desc
-//  function load(root,desc) {
-//    if ( desc.down ) {
-//      for (var i= 0; i<desc.down.length; i++) {
-//        var down= desc.down[i];
-//        let dots= down.prop.id.split('.');
-//        if (dots.length>1) {
-//        // funkce ezerscriptu
-//          down.prop.class= 'ezer_fce'; 
-//          if ( !down.prop.text )
-//            down.prop.text= down.prop.data && down.prop.data.name||down.prop.id;
-//        }
-//        else {
-//          // funkce PHP
-//          if ( !down.prop.text )
-//            down.prop.text= down.prop.data && down.prop.data.name||down.prop.id;
-//        }
-//        // úprava down.prop.id na složené jméno
-//        down.prop.id= root.id+'.'+down.prop.id;
-//        var node= root.insert(down.prop);
-//        load(node,down);
-//      }
-//    }
-//  }
   function load(root,desc) {
     if ( desc.down ) {
       for (var i= 0; i<desc.down.length; i++) {
@@ -1197,73 +1194,75 @@ function dbg_make_tree(cg) {
     }
   }
   function tree_expand (n) {
-    tree.collapse();
+    CG.tree.collapse();
     if ( n )
-      tree.root.toggle(true, true, n-1);
+      CG.tree.root.toggle(true, true, n-1);
   }
   var active= null;
-  let tree= new MooTreeControl({
-        div:dbg.wcg_grf,
-        grid:true,
-        mode:'folders',             
-        path:'.'+doc.Ezer.paths.images_lib,     // cesta k mootree.gif
-        theme:'mootree.gif',
-        // ----------------------------------------------------------------- onclick
-        onClick: function(node,context) { // při kliknutí na libovolný uzel context=true/undefined
-          // spočítáme sumu data - shora dolů
-          if (!(mode=='php'||mode=='ezer')) return false;
-          if ( node ) {
-            var data= {}, datas= [], texts= '', del= '';
-            for (var x= node; x; x= x.parent) {
-              datas.unshift(x.data);
-              texts= (x.text||'')+del+texts; del= '|';
-            }
-            for (let d of datas) {
-              Object.assign(data,d);
-            }
-            var ndata= JSON.stringify(node.data, undefined, 2);
-            var adata= JSON.stringify(data, undefined, 2);
-            var fid= node.id.split('.');
-            var fce= fid[fid.length-1].replace('* ','');
-            CG.item= fce;
-            if ( context ) {
-              window.event.preventDefault();
-              doc.Ezer.fce.echo('context:',fce,';',ndata);
+  CG.tree= new MooTreeControl({
+      div:dbg.wcg_grf,
+      grid:true,
+      mode:'folders',             
+      path:'.'+doc.Ezer.paths.images_lib,     // cesta k mootree.gif
+      theme:'mootree.gif',
+      // ----------------------------------------------------------------- onclick
+      onClick: function(node,context) { // při kliknutí na libovolný uzel context=true/undefined
+        // spočítáme sumu data - shora dolů
+        if (!(mode=='php'||mode=='ezer')) return false;
+        if ( node ) {
+          var data= {}, datas= [], texts= '', del= '';
+          for (var x= node; x; x= x.parent) {
+            datas.unshift(x.data);
+            texts= (x.text||'')+del+texts; del= '|';
+          }
+          for (let d of datas) {
+            Object.assign(data,d);
+          }
+          var ndata= JSON.stringify(node.data, undefined, 2);
+          var adata= JSON.stringify(data, undefined, 2);
+          var fid= node.id.split('.');
+          var fce= fid[fid.length-1].replace('* ','');
+          CG.item= fce;
+          if ( context ) {
+            window.event.preventDefault();
+            doc.Ezer.fce.echo('context:',fce,';',ndata);
+          }
+          else {
+            if (node.data.ezer) {
+              // ezer
+              dbg_reload(node.data.ezer,node.data.line,0); // let CG on screen
+              CG.item= node.data.full;
             }
             else {
-              if (typeof node.data==='object') {
-                // ezer
-                dbg_reload(node.data.ezer,node.data.line,0); // let CG on screen
-              }
-              else {
-                // PHP
-                //doc.Ezer.fce.echo('click on PHP:',fce,';',ndata);
-                dbg_mode('php');
-                dbg.wphp.show();
-                dbg.lines.addClass('upper');
-                dbg_reload_php(fce);
-              }
+              // PHP
+              //doc.Ezer.fce.echo('click on PHP:',fce,';',ndata);
+              dbg_mode('php');
+              dbg.wphp.show();
+              dbg.lines.addClass('upper');
+              dbg_reload_php(fce);
             }
           }
-          return false;
         }
-      },{
-        text:cg.prop.id,open:true
-      });
-  tree.disable(); // potlačí zobrazení
+        return false;
+      }
+    },{
+      text:cg.prop.id,open:true
+    }
+  );
+  CG.tree.disable(); // potlačí zobrazení
   if ( cg && cg.prop ) {
-    Object.assign(tree.root,cg.prop);
-    tree.root.text= tree.root.data && tree.root.data.name||tree.root.id;
-    tree.index[tree.root.id]= tree.root;
-    load(tree.root,cg);
-    tree.expand();
+    Object.assign(CG.tree.root,cg.prop);
+    CG.tree.root.text= CG.tree.root.data && CG.tree.root.data.name||CG.tree.root.id;
+    CG.tree.index[CG.tree.root.id]= CG.tree.root;
+    load(CG.tree.root,cg);
+    CG.tree.expand();
     if (!CG.expand)
       tree_expand(1);
   }
-  if ( active && tree.get(active) )
-    tree.select(tree.get(active));
-  tree.enable(); // zviditelní
-  tree.select(tree.root,null);
+  if ( active && CG.tree.get(active) )
+    CG.tree.select(CG.tree.get(active));
+  CG.tree.enable(); // zviditelní
+  CG.tree.select(CG.tree.root,null);
   // zobraz CG
   dbg.help.hide();
   dbg.wcg.show();
