@@ -268,7 +268,7 @@ __EOD;
     // ověření přístupu - externí přístup hlídat vždy, lokální jen je-li  no_local=true
     if ( $pars->watch_key && ($watch_key= isset($_POST['watch_try']) ? $_POST['watch_try'] : '') ) {
       $watch_lock= 
-          @file_get_contents("{$_SESSION[$ezer_root]['abs_root']}/$ezer_root/code/$ezer_root.key");
+          @file_get_contents("{$_SESSION[$ezer_root]['abs_root']}/$ezer_root/code/$ezer_root.key.php");
       $ip_ok= $watch_lock==$watch_key;
       $key_msg= $ip_ok ? '' : '<u>správného</u>';
     }
