@@ -46,13 +46,11 @@
   # ------------------------------------------------------------------------- test existence SESSION
   # po uplynutí gc_maxlifetime je session zrušena (runtimem PHP) => vrátit informaci do klienta
   if ( !count($_SESSION) ) {
-    if ( !in_array($_POST['cmd'],array('user_login','load_code2','map_load','touch')) ) {
-      header('Content-type: application/json; charset=UTF-8');
-      $y= (object)array('session_none'=>1,'error'=>'nepřihlášen');
-      $yjson= json_encode($y);
-      echo $yjson;
-      exit;
-    }
+    header('Content-type: application/json; charset=UTF-8');
+    $y= (object)array('session_none'=>1,'error'=>'odhlášeno pro nečinnost');
+    $yjson= json_encode($y);
+    echo $yjson;
+    exit;
   }
   # -------------------------------------------------------------------------- test verze jádra EZER
   # při zjištění staré verze jádra v SESSION je vynucen restart 
@@ -1872,6 +1870,7 @@
     function dbg_includes() { trace();
       global $includes;
       if ( $includes ) foreach($includes as $ids=>$include) {
+        if ($include->include=='onclick') continue;
         $id= strrpos($ids,'.') ? substr($ids,strrpos($ids,'.')+1) : $ids;
         $includes[$ids]->id= $id;
       }
@@ -2126,6 +2125,7 @@
         # přidej includes
         if ( isset($loads->includes) && $loads->includes ) {
           foreach($loads->includes as $udesc) {
+            if ($udesc->include=='onclick') continue;
             $new_part= (object)array('file'=>$udesc->file,'block'=>$udesc->block,'code'=>$loads->code,
               'old_file'=>$fname,'old_app'=>$app);
 //                                         debug($new_part,'new_part',0,2);
