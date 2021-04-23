@@ -34,19 +34,21 @@
   $file= isset($_GET['file']) ? $_GET['file'] : '';
 
   $app= $_GET['app'];
+  $rel_root= isset($_SERVER['HTTPS']) && $_SERVER['HTTPS']=='on' ? 'https://' : 'http://';
+  $rel_root.= $_SESSION[$app]['rel_root'];
   
   $html= "";
   $background= 'oldlace';
   $scripts= '';
   if ($CodeMirror) {
     $scripts= <<<__EOD
-    <script src="/ezer3.1/client/licensed/codemirror/lib/codemirror.js"></script>
-    <link rel="stylesheet" href="/ezer3.1/client/licensed/codemirror/lib/codemirror.css">
-    <script src="/ezer3.1/client/licensed/codemirror/mode/clike/clike.js"></script>
-    <script src="/ezer3.1/client/licensed/codemirror/mode/php/php.js"></script>
-    <script src="/ezer3.1/client/licensed/codemirror/addon/edit/matchbrackets.js"></script>
-    <script src="/ezer3.1/client/licensed/codemirror/addon/edit/closebrackets.js"></script>
-    <script src="/ezer3.1/client/licensed/codemirror/addon/selection/active-line.js"></script>
+    <script src="$rel_root/ezer3.1/client/licensed/codemirror/lib/codemirror.js"></script>
+    <link rel="stylesheet" href="$rel_root/ezer3.1/client/licensed/codemirror/lib/codemirror.css">
+    <script src="$rel_root/ezer3.1/client/licensed/codemirror/mode/clike/clike.js"></script>
+    <script src="$rel_root/ezer3.1/client/licensed/codemirror/mode/php/php.js"></script>
+    <script src="$rel_root/ezer3.1/client/licensed/codemirror/addon/edit/matchbrackets.js"></script>
+    <script src="$rel_root/ezer3.1/client/licensed/codemirror/addon/edit/closebrackets.js"></script>
+    <script src="$rel_root/ezer3.1/client/licensed/codemirror/addon/selection/active-line.js"></script>
 __EOD;
   }
   if (1)
@@ -219,6 +221,8 @@ __EOD;
         background-color:#e5f2ff; } 
       span.fce_ezer {
         background-color:#ffdf6b; } 
+      span.elem_ezer {
+        background-color:lightgreen; } 
       /* ----------------------- break */
       /*li.break span {
         background-color: #ff244861;

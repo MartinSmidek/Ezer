@@ -860,6 +860,7 @@ class Block {
                 continue;
   //               Ezer.error('složené jméno '+name+' nelze v '+this.type+' '+this.id+' pochopit');
               }
+              // element bude zapojen místo pod DOM pod context.DOM (viz corr z run_name)
               if ( DOM ) DOM= context.DOM;
             }
             let part= null;
@@ -990,6 +991,11 @@ class Block {
               part.id= id;
               if ( !context.part ) context.part= {};
               context.part[id]= part;
+              // v režimu debuggeru přidej odkázanou proceduru i do this.part 
+              // aby ji bylo možné detekovat v řetězci part podle polohy
+              // takto přidaná procedura je ovšem z kódu nepřístupná
+              if (Ezer.get.dbg && id!=name && desc.type=='proc')
+                this.part[name]= part;
               if ( wrap_fce )
                 wrap_fce(this,part);
             }

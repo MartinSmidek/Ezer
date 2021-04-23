@@ -29,14 +29,14 @@ function comp_file ($name,$root='',$_list_only='',$_comp_php=false) {  #trace();
     $code, $module, $procs, $context, $ezer_name, $ezer_app, $errors, $includes, $onloads;
   global $pragma_library, $pragma_syntax, $pragma_attrs, $pragma_names, $pragma_get, $pragma_prefix,
     $pragma_group, $pragma_box, $pragma_if, $pragma_switch;
-  global $call_php, $call_ezer;
+  global $call_php, $call_ezer, $call_elem;
   global $doxygen;    // $doxygen=1 pokud se má do složky data generovat *.cpp pro doxygen
   $list_only= $_list_only;
   $comp_php= $_comp_php;
   $doxygen= 1;
   $errors= 0;
   try {
-    $call_php= $call_ezer= $includes= $including= $onloads= array();
+    $call_php= $call_ezer= $call_elem= $includes= $including= $onloads= array();
     $is_library= false;
     $ezer_name= $name;
     $ezer_app= $root;
@@ -241,6 +241,8 @@ function comp_file ($name,$root='',$_list_only='',$_comp_php=false) {  #trace();
                                                         if ($_GET['trace']==4) debug($loads,"kód");
     // informace o kódu pro informaci o struktuře aplikace
     $loads->info= (object)array('php'=>$call_php,'ezer'=>$call_ezer);
+    $loads->info->elem= $call_elem;
+                                                        debug($call_elem,'call elem');
     $json_loads= json_encode($loads,JSON_HEX_AMP);
     // zabezpečení přenosy vnořených uvozovek a zpětných lomítek
     file_put_contents($cname,$json_loads);
@@ -654,20 +656,20 @@ function link_code(&$c,$name,$isroot,$block) {
       // sběr include:onload
       else if ( $id=='include' ) {
         list($typ,$iname)= explode(',',$desc);
-        if ( $typ=='onload' ) {
+//        if ( $typ=='onload' ) {
           // jména z include:onload dávej do pole $onloads
           global $onloads, $ezer_app;
           if ( $iname ) {
             $ids= explode('.',$iname);
-            $inc= (object)array('file'=>"{$ids[0]}/$iname",'block'=>$block);
+            $inc= (object)array('file'=>"{$ids[0]}/$iname",'block'=>$block,'include'=>$typ);
           }
           else {
 //             $iname= $isroot ? substr($name,2) : $ezer_app.substr($name,1);
             $iname= substr($name,2);
-            $inc= (object)array('file'=>"$ezer_app/$iname",'block'=>$block);
+            $inc= (object)array('file'=>"$ezer_app/$iname",'block'=>$block,'include'=>$typ);
           }
-          array_push($onloads,$inc);
-        }
+          array_push($onloads,$inc); 
+//        }
       }
       else if ( $id=='sql_pipe' ) {
         list($fce)= explode(':',$desc);
@@ -682,7 +684,7 @@ function link_code(&$c,$name,$isroot,$block) {
 # $context= [id=>objekt,...]
 function proc(&$c,$name) { #trace();
   global $trace_me;
-  global $context, $procs, $error_code_lc, $names, $full;
+  global $context, $procs, $error_code_lc, $names, $full, $call_elem, $call_ezer;
 //                                                 if ( $name='dbg' || $name=='$.test.fce.dbg._d.test' ) debug($context,"proc($name)",(object)array('depth'=>3));
   if ( $c->type=='proc' ) {
     $trace_me= $_GET['trace']==1; //&& $c->id=='xonclick';
@@ -713,6 +715,18 @@ function proc(&$c,$name) { #trace();
       if ( $do )
       display("<table class='proc'><tr><td colspan=2>$PROC $name</td></tr>".
         "<tr><td valign='top'>$before</td><td valign='top'>".debugx($c)."</td></tr></table>");
+    }
+    // vložení do call-elem (zatím pro button)
+    $elem= end($context)->ctx;
+    if ($elem->type=='button') {
+      $elem_name_lc= $elem->id.'.'.(str_replace(',','.',$elem->_lc));
+      $func_name_lc= $c->options->name.'.'.(str_replace(',','.',$c->_lc));
+      if (!isset($call_elem[$func_name_lc]))
+        $call_elem[$func_name_lc]= array();
+      $call_elem[$func_name_lc][]= $elem_name_lc;
+//      // případně doplň call_ezer
+//      if (!isset($call_ezer[$func_name_lc]))
+//        $call_ezer[$func_name_lc]= array();
     }
   }
   else if ( $c->part ) {

@@ -22,7 +22,10 @@ var mode='ezer',  // ezer|ezer_edit|php|php_edit
       header: '',     // záhlaví pro view i edit
       mtime: '',      // poslední modifikace souboru
       source: null    // text funkce
-    }
+    },
+    old_ff= window.navigator.userAgent.match(/Firefox\/([0-9]+)\./);
+    old_ff= (old_ff ? parseInt(old_ff[1])<53 : 0);
+
 function dbg_mode(_mode) { doc.Ezer.fce.echo('mode: ',mode,' -> ',_mode); mode= _mode; }
 function dbg_onclick_start(file) {
   // -----------------------------------==> .. periodické ujištění o existenci laděné aplikace
@@ -195,6 +198,17 @@ function dbg_onclick_start(file) {
             }]
           ],menu_el);
           break;}
+
+        case 'button':{
+          dbg_contextmenu([
+            editovat,
+            [`[fa-question] zobraz funkce`, function(el) {
+                alert('n.y.i.');
+                return false;
+            }]
+          ],menu_el);
+          break;}
+         
         case 'proc':{
           let lc= elem.desc._lc ? elem.desc._lc.split(',') : null;
           l= lc ? lc[0] : l;
@@ -502,13 +516,14 @@ function dbg_oncontextmenu(line,op) {
 // op= stop+ | stop- | trace+ | trace- | dump
 function dbg_find_block(name,l,c) {
   var find_block, find_elem, lc_code, // vnitřní funkce
-      block_file, block= null, elem= null, msg= '', 
-      elems= [
-        'var','const',
-        'label','radio','check',
-        'field','field.list','field.date',
-        'select','select.map','select.map0','select.auto'
-      ];
+      block_file, block= null, elem= null, 
+//      elems= [
+//        'var','const','proc',
+//        'label','radio','check',
+//        'field','field.list','field.date',
+//        'select','select.map','select.map0','select.auto'
+//      ],
+      msg= '';
   // -------------------------------- lc code
   lc_code= function(b_lc) { 
     b_lc= b_lc.split(',');
@@ -564,7 +579,7 @@ function dbg_find_block(name,l,c) {
             }
           }
         }
-        else if ( elems.includes(b.type) && lc_inside(b) ) {
+        else if ( /*elems.includes(b.type) &&*/ lc_inside(b) ) {
           // našli jsme element ... projdeme případné složky
           if ( b.part ) {
             for (let pi in b.part) {
@@ -572,6 +587,11 @@ function dbg_find_block(name,l,c) {
               if ( lc_inside(p) ) {
                 found_elem= found_elem ? found_elem : p;
                 found_block= found_block ? found_block : b;
+                break;
+              }
+              else if (['proc','button'].includes(p.type) && p.owner!==b) {
+                found_elem= p;
+                found_block= p.owner;
                 break;
               }
             }            
@@ -808,7 +828,7 @@ function dbg_show_php(lns,cls=null,start=0) {
   // odstraň staré src
   let ul= dbg.wphp.find('ul'),
       rex= cls ? '(^|[^>]\b)('+cls.join('|')+')(\\s*\\()' : null, // calls
-      keywords= new RegExp("\\b(?<!\\$)(abstract|and|array|as|break|callable|case|catch|-class|clone|"
+      keywords= old_ff ? null : new RegExp("\\b(?<!\\$)(abstract|and|array|as|break|callable|case|catch|-class|clone|"
         + "const|continue|declare|default|die|do|echo|else|elseif|empty|enddeclare|endfor|endforeach|"
         + "endif|endswitch|endwhile|eval|exit|extends|final|for|foreach|function|global|goto|if|"
         + "implements|include|include_once|instanceof|insteadof|interface|isset|list|namespace|"
@@ -832,7 +852,8 @@ function dbg_show_php(lns,cls=null,start=0) {
     }
     else {
       if (rex) ln= ln.replace(rex,"$1<span class='call' onclick='dbg_reload_php(\"$2\");'>$2</span>$3");
-      ln= ln.replace(keywords,'<b>$1</b>');
+      if (!old_ff)
+        ln= ln.replace(keywords,'<b>$1</b>');
     }
     dbg.jQuery(
       `<li id='php${lni}'><span class="line">${lni}</span><span class="${styl}">${ln}</span></li>`)
@@ -918,21 +939,22 @@ function dbg_show_help(ret) {
 function dbg_show_text(ln,cg=null) {
 //  // najdi dokument debuggeru
 //  var dbg= Ezer.sys ? Ezer.sys.dbg.win_ezer.document : document;
+  // detekce starého FireFox /napříklsd pro systémy s WindowsXP)
   // odstraň staré src
   let ul= dbg.lines.find('ul'),
-      skills= new RegExp("(?<=\\b)("
-        + "skill|has_skill"
-        + ")(?=\\s*[:(])",'g'),
-      events= new RegExp("(?<=^|\\W)("
-        + "onblur|onclick|ondrop|onfirstfocus|onfocus|onstart|onready|onbusy|onmenu|onmarkclick|"
-        + "onchange|onchanged|onchoice|onload|onresize|onrowclick|onsave|onsubmit"
-        + ")(?=[^=_'\"\\w]|$)",'g'),
-      keywords= new RegExp("(?<=^|\\W)("
-        + "area|array|box|break|browse|button|case|const|date|desc|edit|else|elseif|ezer|"
+      skills= old_ff ? null : new RegExp(("(?<=\\b)")
+        + "(skill|has_skill)"
+        + "(?=\\s*[:(])",'g'),
+      events= old_ff ? null : new RegExp("(?<=^|\\W)"
+        + "(onblur|onclick|ondrop|onfirstfocus|onfocus|onstart|onready|onbusy|onmenu|onmarkclick|"
+        + "onchange|onchanged|onchoice|onload|onresize|onrowclick|onsave|onsubmit)"
+        + "(?=[^=_'\"\\w]|$)",'g'),
+      keywords= old_ff ? null : new RegExp("(?<=^|\\W)"
+        + "(area|array|box|break|browse|button|case|const|date|desc|edit|else|elseif|ezer|"
         + "field|form|foreach|fork|for|func|group|chat|check|if|item|js|label|list|map|menu|"
         + "module|number|object|of|panel|php|pragma|proc|radio|report|return|select|show|switch|"
-        + "system|table|tabs|text|this|time|use|var|view|while"
-        + ")(?=[^_'\"\\w]|$)",'g');
+        + "system|table|tabs|text|this|time|use|var|view|while)"
+        + "(?=[^_'\"\\w]|$)",'g');
   ul.empty();
   dbg.notes.empty();
   // vytvoř substituční schema z CG
@@ -998,10 +1020,12 @@ function dbg_show_text(ln,cg=null) {
           }
         }
       }
-      // zobraz text
-      lni= lni.replace(keywords,'<b>$1</b>');
-      lni= lni.replace(events,'<i>$1</i>');
-      lni= lni.replace(skills,'<u>$1</u>');
+      // zobraz text - syntax obarvi jen pro vyšší verze FireFox než je 52
+      if (!old_ff) {
+        lni= lni.replace(keywords,'<b>$1</b>');
+        lni= lni.replace(events,'<i>$1</i>');
+        lni= lni.replace(skills,'<u>$1</u>');
+      }
       dbg.src[i1]= dbg.jQuery(
         `<li id="${i1}"><span class="line">${i1}</span><span class="text">${lni}</span></li>`)
         .appendTo(ul);

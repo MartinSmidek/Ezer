@@ -707,8 +707,8 @@ function sys_watch_key() {
   for($i=0; $i<32; $i++) {
     $key.= chr(mt_rand(ord('A'),ord('Z')));
   }
-  $path= "$ezer_root/code/{$ezer_root}.key";
-  $ok= @file_put_contents($path,"$key.php");
+  $path= "$ezer_root/code/{$ezer_root}.key.php";
+  $ok= @file_put_contents($path,$key);
   $html= $ok ? "Uložte <a href='$path' target='key'>tento odkaz</a>. 
     Odstraňte koncovku '.php' aby končil '.key' a rozešlete jako klíč oprávněným uživatelům"
     : "Klíč se nepovedlo vygenerovat";

@@ -332,7 +332,7 @@ function doc_php_cg ($app_php='*',$sys_php0='',$restore=false) { trace();
   }
   // jinak vypočteme a uložíme do SESSION
                           display('přepočet CG');
-  if (stripos($sys_php,'comp2.php')) {
+  if (stripos($sys_php0,'comp2.php')) {
 //    require "$ezer_path_root/ezer3.1/comp.php";
     require "$ezer_path_root/ezer3.1/server/comp2.php";
   }
@@ -469,11 +469,16 @@ function doc_php_cg ($app_php='*',$sys_php0='',$restore=false) { trace();
   // vytvoření CG (ezer+php) z ezerscriptu
   $php_called= (object)array(); // {php-fce:[ezer-fce/isource, ...], ...}
   $ezers= array();
+  $elems= array();
   $cg_fce= array(); // CG ezer funkcí 
   $files= doc_ezer_list();
   $isource= 0;
   foreach ($files as $source=>$info) {
     $ezer= (array)$info->info->ezer;
+    if ($info->info->elem)
+    foreach($info->info->elem as $efce=>$elem) {
+      $elems["$efce:$isource"]= "$elem[0]:$isource";
+    }
     $ezers[$isource]= $source;
 //    debug($ezer,"PHP_CALLED $source");
     if (is_array($ezer) && count($ezer))
@@ -516,7 +521,7 @@ function doc_php_cg ($app_php='*',$sys_php0='',$restore=false) { trace();
 //                                                          debug($cg_fce,"ecalls");
   $ret= (object)array(
       'app_php'=>$app_php,'sys_php'=>$sys_php0,'app_ezer'=>$ezers, 'php_called'=>$php_called,
-      'cg_calls'=>$cg_calls,'cg_phps'=>$fnames, 'ecalls'=>$cg_fce,
+      'cg_calls'=>$cg_calls,'cg_phps'=>$fnames, 'ecalls'=>$cg_fce, 'elems'=>$elems,
       'calls'=>$phps,'lines'=>$lines,'called'=>$fce,'html'=>$html);
   $_SESSION[$ezer_root]['CG']= $ret;
 end:
@@ -531,11 +536,13 @@ function doc_php_tree($root,$app_php='*',$sys_php='',$inverzni=0,$restore=false)
   $calls= $cg_list->cg_calls;
   $ecalls= $cg_list->ecalls;
   $called= $cg_list->called;
-  $php_called= $cg_list->php_called;
+//  $php_called= $cg_list->php_called;
   $phps=  $cg_list->cg_phps;
   $ezers=  $cg_list->app_ezer;
+  $elems= $cg_list->elems;
   $lines= $cg_list->lines;
-  $down= function($xfce) use (&$calls,$ecalls,$ezers,$phps,$lines,&$down) {
+  $drawn= array();
+  $down= function($xfce) use (&$calls,$ecalls,$ezers,$phps,$lines,&$down,&$drawn) {
     global $ezer_path_root;
     list($fce,$emodul)= explode(':',$xfce);
     if (isset($emodul)) {
@@ -548,12 +555,14 @@ function doc_php_tree($root,$app_php='*',$sys_php='',$inverzni=0,$restore=false)
         $emodul= array_search($emodul,$ezers);
         $xfce= "$fce:$emodul";
       }
-      list($efce,$line,$clmn)= explode('.',$fce);
+      list($efce,$line)= explode('.',$fce);
+      $again= in_array($xfce,$drawn) ? '* ' : '';
       $cg= (object)array(
-          'prop'=>(object)array('id'=>$efce, 'css'=>'fce_ezer', 'title'=>"$modul;$line",
+          'prop'=>(object)array('id'=>"$again$efce", 'css'=>'fce_ezer', 'title'=>"$modul;$line",
               'data'=>(object)array('ezer'=>$modul,'line'=>$line, 'full'=>$xfce)));
       // zpracuj ezer volání z této funkce
-      if (is_array($ecalls[$xfce])) {
+      if (is_array($ecalls[$xfce]) && !in_array($xfce,$drawn)) {
+        $drawn[]= $xfce;
         foreach ($ecalls[$xfce] as $call) {
           $node= $down($call);
           $cg->down[]= $node;
@@ -610,23 +619,34 @@ function doc_php_tree($root,$app_php='*',$sys_php='',$inverzni=0,$restore=false)
   end:  
     return $cg;
   };
-  $up= function($xfce) use (&$calls,$called,$php_called,$phps,$ezers,$lines,&$up) {
+  $up= function($xfce) use (&$calls,$called,$phps,$ezers,$elems,$lines,&$up,&$drawn) {
     global $ezer_path_root;
     $calls[$xfce][4]= 1; // zabráníme opakování kresby
     list($fce,$emodul)= explode(':',$xfce);
     if (isset($emodul)) {
       // ezer funkce
-      list($efce,$line,$clmn)= explode('.',$fce);
+      list($efce,$line)= explode('.',$fce);
       $modul= $ezers[$emodul];
+      $again= in_array($xfce,$drawn) ? '* ' : '';
       $cg= (object)array(
-          'prop'=>(object)array('id'=>$efce, 'css'=>'fce_ezer', 'title'=>"$modul;$line",
+          'prop'=>(object)array('id'=>"$again$efce", 'css'=>'fce_ezer', 'title'=>"$modul;$line",
           'data'=>(object)array('ezer'=>$modul, 'line'=>$line, 'full'=>$xfce)));
       // volání z ezer funkcí
-      if (is_array($called[$xfce])) {
+      if (is_array($called[$xfce]) && !in_array($xfce,$drawn)) {
+        $drawn[]= $xfce;
         foreach ($called[$xfce] as $call) {
           $node= $up($call);
           $cg->down[]= $node;
         }
+      }
+      // přidání elementu - zatím jen button
+      if (isset($elems[$xfce])) {
+        $elem= $elems[$xfce];
+        list($elem_id,$line)= explode('.',$elem);
+        $cg->down[]= (object)array(
+            'prop'=>(object)array('id'=>$elem_id, 'css'=>'elem_ezer', 'title'=>"$modul;$line",
+            'data'=>(object)array('ezer'=>$modul, 'line'=>$line, 'full'=>$elem)));
+        
       }
     }
     else {
