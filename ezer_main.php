@@ -110,7 +110,7 @@
   if ( @file_exists("$deep_root/ezer.keys.php"))
     require_once("$deep_root/ezer.keys.php");
   
-  // pokud existují soubory $app/version.php a $ezer31/version.php 
+  // pokud existují soubory $app/version.php (resp. $app_version_in/version.php) a $ezer31/version.php 
   // použij proměnnou $version pro výběr aktuální verze *.js
   $v_sys= '';
   if (file_exists("$abs_root/ezer3.1/version.php")) {
@@ -120,6 +120,10 @@
   $v_app= '';
   if (file_exists("$abs_root/$app/version.php")) {
     require "$abs_root/$app/version.php";
+    $v_app= "?v=$version";
+  }
+  elseif (isset($app_version_in) && file_exists("$abs_root/$app_version_in/version.php")) {
+    require "$abs_root/$app_version_in/version.php";
     $v_app= "?v=$version";
   }
     
