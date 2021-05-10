@@ -13,7 +13,7 @@
  */
 //  echo("ezer_main.php start, ezer_server=$ezer_server");
 
-  global $app_root, $ezer_root;
+  global $app_root, $ezer_root, $api_key;
   $ezer_root= $app_root;
   
   // platí buďto isnull($ezer_local) nebo isnull($ezer_server)
