@@ -4274,7 +4274,7 @@ class LabelDrop extends Label {
         this.cloud=='S:' ? Ezer.options.path_files_s : (
         this.cloud=='U:' ? Ezer.options.path_files_u : Ezer.options.path_files_h);
       if ( subdir )
-        this.folder+= this.folder + (this.folder.substr(-1)=='/' ? '' : '/') + subdir;
+        this.folder= this.folder + (this.folder.substr(-1)=='/' ? '' : '/') + subdir;
       this.ask({cmd:'lsdir',base:path_files,folder:this.folder,mask:this.mask},'_lsdir');
       return this;
     }

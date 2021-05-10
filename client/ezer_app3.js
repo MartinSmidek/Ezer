@@ -806,7 +806,7 @@ class Application {
       else if ( Ezer.options.must_log_in 
           && !this.waiting && this.clock_tics > Ezer.App.options.login_interval  ) {
         // čas uplynul a uživatel nic nedělal => zobrazení možnosti prodloužit sezení
-       var wait_msg= "Delší dobu jste neprovedli žádnou činnost v rámci aplikace. "
+        var wait_msg= "Delší dobu jste neprovedli žádnou činnost v rámci aplikace. "
                 + "<br>Pokud si přejete v práci pokračovat, stiskněte tlačítko OK. "
                 + "<br>Pokud tak neučiníte během následujících "+wait
                 + " minut, budete z aplikace automaticky odhlášeni.";
@@ -4326,7 +4326,9 @@ Ezer.fce.href= function (path) {
   var ps= hs[0].split('/');             // oddělení parametrů
   var xs= ps[0].split('.');             // definice cesty k objektu či proceduře
   if ( xs[0] ) {
-    var part= Ezer.run.$.part[Ezer.root].part[xs[0]];
+    var part= Ezer.run.$.part[xs[0]] 
+      ? Ezer.run.$.part[xs[0]] 
+      :  Ezer.run.$.part[Ezer.root].part[xs[0]];
     walk:
     if ( part && part._focus ) {
       if (part instanceof Tabs && part!=part.owner.activeTabs) {

@@ -232,11 +232,12 @@ panel nov [,,770,] {type:'right', title:'Přehled změn', _sys:'*'
     }}
 
     label  [14,43,720,42] { title:"
-                            Zpráva se během doby platnosti zobrazí každému uživateli
-                            během příští minuty nebo hned po přihlášení do aplikace. 
+                            Zpráva se v době své platnosti zobrazí přihlášenému uživateli
+                            (během příští minuty) případně při nejližším přihlášení do aplikace. 
                             Uživatel kliknutím na <b>[Beru na vědomí]</b> přidá svou zkratku
-                            do seznamu. Tlačítko <b>[test zobrazení]</b> je na kontrolní 
-                            zobrazení (ostré má žluté záhlaví)." }
+                            do seznamu (a zamezí dalšímu zobrazení)). 
+                            Tlačítko <b>[test zobrazení]</b> je na kontrolní 
+                            zobrazení textu zprávy (ostrá má žluté záhlaví)." }
 
     // nová zpráva
     field kind { data:h.kind, value:'m' }

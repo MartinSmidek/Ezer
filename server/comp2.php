@@ -242,7 +242,7 @@ function comp_file ($name,$root='',$_list_only='',$_comp_php=false) {  #trace();
     // informace o kódu pro informaci o struktuře aplikace
     $loads->info= (object)array('php'=>$call_php,'ezer'=>$call_ezer);
     $loads->info->elem= $call_elem;
-                                                        debug($call_elem,'call elem');
+//                                                        debug($call_elem,'call elem');
     $json_loads= json_encode($loads,JSON_HEX_AMP);
     // zabezpečení přenosy vnořených uvozovek a zpětných lomítek
     file_put_contents($cname,$json_loads);
