@@ -1217,6 +1217,7 @@ function tab_append_using($table,$idt) {
 # ukaž záznamy dané tabulky s danou podmínkou
 function tab_append($table,$cond) { 
   global $app_tables;
+  $limit= 7;
   list($path,$css)= explode(',',$app_tables->_);
   $html= '';
   // vytvoř header a nalezni primární klíč
@@ -1236,7 +1237,7 @@ function tab_append($table,$cond) {
   // čti tabulku
   $html.= "<table class='$css'><tr>$ths</tr>";
   $cond= str_replace('*',$key,$cond);
-  $rt= pdo_qry("SELECT * FROM $table WHERE $cond ORDER BY $key");
+  $rt= pdo_qry("SELECT * FROM $table WHERE $cond ORDER BY $key DESC LIMIT $limit");
   while ( $rt && ($t= pdo_fetch_object($rt)) ) {
     $html.= '<tr>';
     foreach ($fld as $f) {
