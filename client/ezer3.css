@@ -300,6 +300,7 @@ div.Popup3 div.pop_close { position: absolute; right: 0; top: 0; cursor: pointer
 div.Popup3 div.pop_body { position: absolute; /*overflow: auto; */
   width:calc(100% - 30px); height:calc(100% - 42px); 
 }
+div.Popup3 div.pop_head i.fa { display:initial; }
 
 /* --------------------------------------------------------------------------------------==> Help */
 
