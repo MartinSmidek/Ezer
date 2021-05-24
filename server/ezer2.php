@@ -47,7 +47,7 @@
   # po uplynutí gc_maxlifetime je session zrušena (runtimem PHP) => vrátit informaci do klienta
   if ( !count($_SESSION) ) {
     header('Content-type: application/json; charset=UTF-8');
-    $y= (object)array('session_none'=>1,'error'=>'odhlášeno pro nečinnost');
+    $y= (object)array('session_none'=>1,'error'=>'odhlášeno pro nečinnost','POST'=>$_POST,'GET'=>$_GET);
     $yjson= json_encode($y);
     echo $yjson;
     exit;
