@@ -290,6 +290,17 @@ function cms_server(&$y) {
       $y->info.= $TEXT('CMS_submit_3').' ';
     }
     else if ( $idr && !count($chngs_r) ) {
+      // pokud existuje SQL pro obnovení účasti (např. po zrušení odhlášením)
+      if ( isset($SQL['Rrefresh']) ) { 
+        list($fld,$val)= explode('=',$SQL['Rrefresh']);
+        $chngs_r[]= (object)array('fld'=>$fld,'op'=>'u','val'=>$val);
+        // pokud se zaznamenává den změny 
+        if ( isset($SQL['Rchange']) ) { 
+          $chngs_r[]= (object)array('fld'=>$SQL['Rchange'],'op'=>'u','val'=>date('Y-m-d'));
+        }
+        ezer_connect($SQL['select_R'][0]);
+        ezer_qry("UPDATE",$R[0],$idr,$chngs_r,$R[1]);
+      }
       $y->info.= $TEXT('CMS_submit_4').' ';
     }
     else if ( !$idr ) {
