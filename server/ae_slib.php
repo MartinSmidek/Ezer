@@ -261,10 +261,12 @@ function recursive_mkdir($path, $sep="\\", $mode = 0777) {
 }
 # -------------------------------------------------------------------------------------- kolik 1_2_5
 # výběr správného tvaru slova podle množství a tabulky tvarů pro 1,2-4,5 a více
-# např. kolik_1_2_5(dosp,"dospělý,dospělí,dospělých")
+# např. kolik_1_2_5(dosp,'dospělý,dospělí,dospělých')
+# např. kolik_1_2_5(dosp,'je $ dospělý,jsou $ dospělí,je $ dospělých')
 function kolik_1_2_5($kolik,$tvary) {
   $tvar= explode(',',$tvary);
-  return "$kolik ".($kolik>4 ? $tvar[2] : ($kolik>1 ? $tvar[1] : ($kolik>0 ? $tvar[0] : $tvar[2])));
+  $tvar= $kolik>4 ? $tvar[2] : ($kolik>1 ? $tvar[1] : ($kolik>0 ? $tvar[0] : $tvar[2]));
+  return strstr($tvar,'$') ? str_replace('$',$kolik,$tvar) : "$kolik $tvar";
 }
 # -------------------------------------------------------------------------------------- lorem ipsum
 # vrátí požadovaný počet odstavců výplňového textu
