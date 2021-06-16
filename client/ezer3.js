@@ -1855,6 +1855,13 @@ class MenuGroup extends Menu {
 // Ezer.MenuGroup.implement({
 //   Implements: [Ezer.Help],
 //   _enabled: 1,
+// ------------------------------------------------------------------------------------ attach_code
+//fm: MenuGroup.attach_code (o)
+// doplní MenuGroup o zadané itemy
+  attach_code (o) {
+    this.subBlocks(o,this.DOM,null,'rewrite');  
+    return 1;
+  }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  DOM initialize
   DOM_initialize () {
     this._enabled= 1;
