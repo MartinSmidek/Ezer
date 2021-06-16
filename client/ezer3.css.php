@@ -31,7 +31,8 @@ div#popup3 { background-color: $b_item; color: $c_item;
 
 .work { background-color:$b_work; }
 .parm { background-color:$b_parm; }
-.karta { background:$b_group url($path/doc_menu.gif) no-repeat left center; color:$c_group; 
+.karta { background:$b_group url($path/doc_menu.gif) no-repeat left center; color:$c_group; }
+.v_karte div.Label3 { color:$c_group; 
 }
 
 .systable th {

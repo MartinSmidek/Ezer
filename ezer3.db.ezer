@@ -1,0 +1,76 @@
+#pragma library
+
+// Systém Ezer - knihovní modul DB pro zobrazení struktury a obsahu databáze
+// (c) 2021 Martin Šmídek <martin@smidek.eu>
+
+# ===================================================================================== DATABÁZE
+var db_info:object
+func onstart() { 
+  db_info= php.sys_db_info(this.par,this.self()); 
+  mdb.str.attach_code(db_info.group);
+}
+func append(x) { info.append(x) }
+func tab_append(tab,cond,mode) {
+  clear();
+  if (mode==1)
+    info.append(php.sys_db_append_using(tab,cond));
+  elseif (mode==2)
+    info.append(php.sys_db_append(tab,`TRUE`));
+  elseif (mode==3)
+    info.append(php.man_append(tab,cond));
+  else // mode==0
+    info.append(php.sys_db_append(tab,cond));
+}
+use info: form right [12,4,,] 
+menu mdb {type:'left', active:*
+  menu  {title:'Zobrazení dat aplikace', type:'group', skill:'m'
+    item {title:'[fa-question] zobrazení záznamů'
+      func onclick (i:ezer) { 
+        clear(); info.header(i); info.display(1,'t');
+        if (!info.tab) {
+          info.tab.selects(php.sys_db_selects());
+          info.tab.key(1);
+        }
+      }
+    }
+  }
+  menu str {title:'Struktura dat aplikace', type:'group'
+    // itemy budou doplněny v onstart metodou attach_code
+    func onclick (i:ezer) {
+      clear(); info.header(i); info.display(0,'t');
+      info.append(i.par.tab ? php.sys_db_struct(i.par.tab,0) : i.par.info);
+    }
+  }
+  menu  {title:'Struktura dat jádra', type:'group', skill:'m'
+    item {title:'[fa-database] tabulka _CIS', par:{tab:'_cis'} }
+    func onclick (i:ezer) {
+      clear(); info.header(i); info.display(0,'t');
+      info.append(php.sys_db_struct(i.par.tab,0));
+    }
+  }
+}
+# ==> formulář pro levostranné menu s postupným zápisem 
+form right [,,*,50] {
+  label head [0,0,*,50]  { title:' ' }
+  label note [0,36,*,] { title:' ' }
+  proc header(i) {
+   fill(replace_fa(conc(i.owner.title,' - ',i.title)),' ');
+  }
+  proc fill(h,n) {
+    [ h; head.set(conc("<div class='karta'>",h,"</div>")) ];
+    [ n; note.set(n) ]
+  }
+  proc append(n) {
+    note.set(conc(note.get,n))
+  }
+  select tab [-253,5,150,] {tag:'t', title:'tabulka', css:'v_karte', format:'t', skill:'m|m'}
+  field idt [-152,5,70,] {tag:'t', title:'klíč', css:'v_karte', format:'t', skill:'m|m'}
+  button [-82,5,,] {tag:'t', title:'zobraz', skill:'m|m'
+    func onclick() {
+      clear(); form.note= conc(form.note,
+          php.sys_db_append(tab,idt ? `*='${idt}'`:'TRUE')); // * bude primary_key
+  }}
+  button [-22,5,,] {tag:'t', title:'vymaž', skill:'m|m'
+    func onclick() { form.note= '';
+  }}
+}

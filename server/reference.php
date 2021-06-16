@@ -1175,55 +1175,284 @@ function i_doc_table_struct($tab,$all=1,$css='stat') {  #trace();
   return $html;
 }
 /** =======================================================================================> TABLES */
-# zobrazované tabulky >* je označuje klíč, >tab ozančuje klíč jiné tabulky
-//$app_tables= (object)array(
-//  'ora_a'  => "id_a>*,attr_a",
-//  'ora_ab' => "id_ab>-,id_a>ora_a,id_b>ora_b,attr_ab",
-//  'ora_b'  => "id_b>*,attr_b"
-//  'menu'   => "mid>*,elem>;"  -- středníkem oddělený seznam name=value
-//  '...' => 'sand.tab,css' // cesta k funkci tab_append, css tabulky
+//# zobrazované tabulky >* je označuje klíč, >tab ozančuje klíč jiné tabulky
+////$app_tables= (object)array(
+////  'ora_a'  => "id_a>*,attr_a",
+////  'ora_ab' => "id_ab>-,id_a>ora_a,id_b>ora_b,attr_ab",
+////  'ora_b'  => "id_b>*,attr_b"
+////  'menu'   => "mid>*,elem>;"  -- středníkem oddělený seznam name=value
+////  '...' => 'sand.tab,css' // cesta k funkci tab_append, css tabulky
+////);
+//# -------------------------------------------------------------------------------------- tab selects
+//function tab_selects() { 
+//  global $app_tables;
+//  $selects= $del= '';
+//  $key= 1;
+//  foreach ((array)$app_tables as $id=>$flds) {
+//    if ($id=='_') continue;
+//    $selects.= "$del$id:$key";
+//    $del= ',';
+//    $key++;
+//  }
+//  return $selects;
+//}
+//# --------------------------------------------------------------------------------- tab append_using
+//# zobraz všechny záznamy ve všech tabulkách obsahujících daný primární klíč dané tabulky
+//function tab_append_using($table,$idt) {
+//  global $app_tables;
+//  $html= '';
+//  // najdi tabulky referující danou tabulku
+//  foreach ($app_tables as $tab=>$flds) {
+//    $fld= explode(',',$flds);
+//    foreach ($fld as $f) {
+//      list($f,$tab2)= explode('>',$f);
+//      if ($tab2==$table) {
+//        $html.= tab_append($tab,"$f=$idt");
+//      }
+//    }
+//  }
+//  return $html;
+//}
+//# --------------------------------------------------------------------------------------- tab append
+//# ukaž záznamy dané tabulky s danou podmínkou
+//function tab_append($table,$cond) { 
+//  global $app_tables;
+//  $limit= 7;
+//  list($path,$css)= explode(',',$app_tables->_);
+//  $html= '';
+//  // vytvoř header a nalezni primární klíč
+//  $ths= $key= '';  
+//  $fld= explode(',',$app_tables->$table);
+//  foreach ($fld as $f) {
+//    list($f,$x)= explode('>',$f);
+//    $ff= $f;
+//    if ($x=='-' || $x=='*') {
+//      $key= $f;
+//      $href= "href='ezer://$path.tab_append/$table//2'";
+//      $ff= "<a title='$table' $href>$f</a>";
+//    }
+//    $ths.= "<th>$ff</th>";
+//  }
+//  if (!$key) { $html= "chybí primární klíč"; goto end; }
+//  // čti tabulku
+//  $html.= "<table class='$css'><tr>$ths</tr>";
+//  $cond= str_replace('*',$key,$cond);
+//  $rt= pdo_qry("SELECT * FROM $table WHERE $cond ORDER BY $key DESC LIMIT $limit");
+//  while ( $rt && ($t= pdo_fetch_object($rt)) ) {
+//    $html.= '<tr>';
+//    foreach ($fld as $f) {
+//      list($f,$tab2)= explode('>',$f);
+//      $val= $t->$f;
+//      if ($tab2=='*') {
+//        // zobraz záznamy obsahující tento klíč
+//        $href= "href='ezer://$path.tab_append/$table/$val/1'";
+//        $html.= "<th><a title='$tab2' $href>$val</a></th>";
+//      }
+//      elseif ($tab2==';') { 
+//        // rozkóduj $val jako středníkem oddělené elementy, pro každý dej odkaz
+//        $vals= explode(';',$val);
+//        $vals= array_map(function($elem) use ($path,$tab){
+//          return "<a href='ezer://$path.tab_append/$tab/$elem/3'>$elem</a>";
+//        },$vals);
+//        $html.= "<th>".implode(';',$vals)."</th>";
+//      }
+//      elseif ($tab2 && $tab2!='-') {
+//        // ukaž záznam s tímto klíčem
+//        $fld2= explode(',',$app_tables->$tab2);
+//        list($key2)= explode('>',$fld2[0]);
+//        $href= "href='ezer://$path.tab_append/$tab2/$key2=$val/0'";
+//        $html.= "<th><a title='$tab2' $href>$val</a></th>";
+//      }
+//      else {
+//        $html.= "<td>$val</td>";
+//      }
+//    }
+//    $html.= '</tr>';
+//  }
+//  $html.= "</table><br>";
+//end:  
+//  return $html;
+//}
+
+
+/** =======================================================================================> TABLES */
+# zobrazované tabulky >* je označuje klíč, >tab označuje klíč jiné tabulky
+//$sys_db_info= (object)array(
+//    tables => array(
+//      ora_a  => "id_a>*,attr_a",
+//      ora_ab => "id_ab>-,id_a>ora_a,id_b>ora_b,attr_ab",
+//      ora_b  => "id_b>*,attr_b"
+//    ),
+//    schema => "Schema databáze<br><br><img src='tut/img/schema_db_2021.png'>",
+//    path => 'syst.data,stat' // cesta k funkci tab_append
 //);
-# -------------------------------------------------------------------------------------- tab selects
-function tab_selects() { 
-  global $app_tables;
+# -------------------------------------------------------------------------------------- sys db_info
+function sys_db_info($par,$panel_self) { debug($par);
+  global $sys_db_info, $ezer_root;
+  $_SESSION[$ezer_root]['sys_db_info']= $sys_db_info= $par;
+  $sys_db_info->path= implode('.',array_slice(explode('.',$panel_self),2));
+  $ret= (object)array(group=>null,schema=>$sys_db_info->schema);
+  // doplnění leftmenu o itemy pro informativní výpisy např. schema db
+  $itms= array();
+  foreach ($sys_db_info->infos as $item) {
+    $itms[]= (object)array('type'=>'item','options'=>(object)array(
+        'title'=>$item->title,
+        'par'=>(object)array('info'=>$item->html)
+      ));
+  }
+  // doplnění leftmenu o itemy pro jednotlivé tabulky
+  foreach ($sys_db_info->tables as $name=>$flds_title) {
+    list($desc,$title)= explode('|',$flds_title);
+    $title= $title ?: wu("tabulka ").strtoupper($name);
+    $itms[]= (object)array('type'=>'item','options'=>(object)array(
+        'title'=>"[fa-database] $title",
+        'par'=>(object)array('tab'=>$name)
+      ));
+  }
+  $ret->group= (object)array('type'=>'menu.group','options'=>(object)array(),'part'=>$itms);
+  debug($ret);
+  return $ret;
+}
+# ----------------------------------------------------------------------------------- sys db_selects
+function sys_db_selects() { 
+  global $sys_db_info, $ezer_root;
+  $sys_db_info= $_SESSION[$ezer_root]['sys_db_info'];
   $selects= $del= '';
   $key= 1;
-  foreach ((array)$app_tables as $id=>$flds) {
-    if ($id=='_') continue;
-    $selects.= "$del$id:$key";
+  foreach (array_keys((array)$sys_db_info->tables) as $name) {
+    $selects.= "$del$name:$key";
     $del= ',';
     $key++;
   }
   return $selects;
 }
-# --------------------------------------------------------------------------------- tab append_using
-# zobraz všechny záznamy ve všech tabulkách obsahujících daný primární klíč dané tabulky
-function tab_append_using($table,$idt) {
+# ------------------------------------------------------------------------------------ sys db_struct
+# ASK - zobrazení struktury tabulky, předpokládá strukturované okomentování řádků tabulek
+# #cis   - cis je jméno číselníku - expanduje se současná hodnota položek tohoto číselníku
+# ##cis  - cis je jméno číselníku v ezer_group
+# ###cis - cis je jméno číselníku v ezer_kernel
+# -x    - položka je označena jako méně důležitá (tiskne se jen, pokud je all=1)
+function sys_db_struct($tab,$all=1) {  #trace();
+  global $sys_db_info, $ezer_root;
+  $sys_db_info= $_SESSION[$ezer_root]['sys_db_info'];
+  $css= $sys_db_info->css;
+  $html= '';
+  $row= 0;
+  $max_note= 200;
+//   query("SET group_concat_max_len=1000000");
+  $res= pdo_query("SHOW FULL COLUMNS FROM $tab");
+  if ( $res ) {
+    $db= sql_query("SHOW TABLE STATUS LIKE '$tab'");
+    $html.= "tabulka <b>".strtoupper($tab)."</b> <i>= "
+        .($db->Comment ? "{$db->Comment}" : '')."</i><br><br>";
+    $html.= "<table class='$css' style='width:100%'>";
+    $joins= 0;
+    while ( $res && ($c= pdo_fetch_object($res)) ) {
+      if ( !$row ) {
+        // záhlaví tabulky
+        $html.= "<tr><th>Key</th><th>Null</th><th>Default</th><th>Sloupec</th><th>Typ</th><th>Komentář</th></tr>";
+      }
+      // řádek tabulky
+      $key= $c->Key; // ? '*' : '';
+      $note= $c->Comment;
+      if ( $all || $note[0]!='-' ) {
+        if ( $note[0]=='#' ) {
+          $db= ''; $inote= 1;
+          if ( $note[1]=='#' && $note[2]=='#' ) {
+            $db= 'ezer_kernel.'; $inote= 3;
+          }
+          elseif ( $note[1]=='#' && isset($_SESSION[$ezer_root]['group_db']) ) {
+            $db= $_SESSION[$ezer_root]['group_db'].'.'; $inote= 2;
+          }
+          // číselníková položka
+          $joins++;
+          $strip= false;
+          $zkratka= substr($note,$inote);
+          if ( strstr($note,'...') ) {
+            $zkratka= trim(str_replace('...','',$zkratka));
+            $strip= true;
+          }
+          $note= "číselník <b>'$zkratka'</b> <i>";
+          $note.= select("popis","{$db}_cis","druh='_meta_' AND zkratka='$zkratka'");
+          $note.= "</i> (";
+          // nelze použít GROUP_CONCAT kvůli omezení v ORDER
+          $del= '';
+          $resd= mysql_qry("SELECT * FROM {$db}_cis WHERE druh='$zkratka' ORDER BY LPAD(5,'0',data)");
+          while ( (!$strip || strlen($note)<$max_note) && $resd && ($d= pdo_fetch_object($resd))){
+            if ( $d->hodnota != '---' ) {
+              $popis= $d->hodnota ?: $d->zkratka;
+              $note.= "$del{$d->data}:$popis";
+              $del= ", ";
+            }
+          }
+          if ( $strip && strlen($note)>$max_note )
+            $note= substr($note,0,$max_note).' ...';
+          $note.= ")";
+        }
+        $nul= $c->Null=='NO' ? '' : 'x';
+        $def= $c->Default;
+        $html.= "<tr><td>$key</td><td>$nul</td><td>$def</td><td>{$c->Field}</td><td>{$c->Type}</td><td>$note</td></tr>";
+      }
+      $row++;
+    }
+    $html.= "</table>";
+//    $html.= "<br>Hvězdička označuje sloupec s indexem<br>";
+    if ( $joins ) {
+      $html.= "<br>K hodnotám položky 'p' označené v komentáři jako číselník 'x' se lze dostat připojením
+      <pre>      SELECT ... x.hodnota ...
+      LEFT JOIN _cis AS x ON druh='x' AND data=p</pre>";
+    }
+  }
+  return $html;
+}
+# ------------------------------------------------------------------------------ sys db_append_pairs
+# zobraz záznam referovaný daným elementem
+function sys_db_append_pairs($table,$elem) {
   global $app_tables;
   $html= '';
+  // rozeber element
+  list($name,$value)= explode('=',trim($elem,' -'));
+  switch ($name) {
+    case 'clanek':
+      $html.= tab_append('clanek',"id_clanek='$value'");
+      break;
+  }
+  return $html;
+}
+# ------------------------------------------------------------------------------ sys db_append_using
+# zobraz všechny záznamy ve všech tabulkách obsahujících daný primární klíč dané tabulky
+function sys_db_append_using($table,$idt) {
+  global $sys_db_info, $ezer_root;
+  $sys_db_info= $_SESSION[$ezer_root]['sys_db_info'];
+  $html= '';
   // najdi tabulky referující danou tabulku
-  foreach ($app_tables as $tab=>$flds) {
+  foreach ($sys_db_info->tables as $tab=>$flds_title) {
+    list($flds,$title)= explode('|',$flds_title);
     $fld= explode(',',$flds);
     foreach ($fld as $f) {
       list($f,$tab2)= explode('>',$f);
       if ($tab2==$table) {
-        $html.= tab_append($tab,"$f=$idt");
+        $html.= sys_db_append($tab,"$f=$idt");
       }
     }
   }
   return $html;
 }
-# --------------------------------------------------------------------------------------- tab append
+# ------------------------------------------------------------------------------------ sys db_append
 # ukaž záznamy dané tabulky s danou podmínkou
-function tab_append($table,$cond) { 
-  global $app_tables;
+function sys_db_append($table,$cond) { 
+  global $sys_db_info, $ezer_root;
+  $sys_db_info= $_SESSION[$ezer_root]['sys_db_info'];
   $limit= 7;
-  list($path,$css)= explode(',',$app_tables->_);
+  $path= $sys_db_info->path;
+  $css= $sys_db_info->css;
+  $tables= array_keys((array)$sys_db_info->tables);
   $html= '';
   // vytvoř header a nalezni primární klíč
-  $ths= $key= '';  
-  $fld= explode(',',$app_tables->$table);
-  foreach ($fld as $f) {
+  $ths= $key= '';  $n= 0;
+  list($flds)= explode('|',$sys_db_info->tables->$table);
+  $flds= explode(',',$flds);
+  foreach ($flds as $f) {
     list($f,$x)= explode('>',$f);
     $ff= $f;
     if ($x=='-' || $x=='*') {
@@ -1239,8 +1468,9 @@ function tab_append($table,$cond) {
   $cond= str_replace('*',$key,$cond);
   $rt= pdo_qry("SELECT * FROM $table WHERE $cond ORDER BY $key DESC LIMIT $limit");
   while ( $rt && ($t= pdo_fetch_object($rt)) ) {
+    $n++;
     $html.= '<tr>';
-    foreach ($fld as $f) {
+    foreach ($flds as $f) {
       list($f,$tab2)= explode('>',$f);
       $val= $t->$f;
       if ($tab2=='*') {
@@ -1248,21 +1478,32 @@ function tab_append($table,$cond) {
         $href= "href='ezer://$path.tab_append/$table/$val/1'";
         $html.= "<th><a title='$tab2' $href>$val</a></th>";
       }
-      elseif ($tab2==';') { 
-        // rozkóduj $val jako středníkem oddělené elementy, pro každý dej odkaz
-        $vals= explode(';',$val);
-        $vals= array_map(function($elem) use ($path,$tab){
-          return "<a href='ezer://$path.tab_append/$tab/$elem/3'>$elem</a>";
-        },$vals);
-        $html.= "<th>".implode(';',$vals)."</th>";
+      elseif ($tab2=='-') {
+        // klíč bez odkazu
+        $html.= "<td>$val</td>";
       }
-      elseif ($tab2 && $tab2!='-') {
-        // ukaž záznam s tímto klíčem
-        $fld2= explode(',',$app_tables->$tab2);
-        list($key2)= explode('>',$fld2[0]);
-        $href= "href='ezer://$path.tab_append/$tab2/$key2=$val/0'";
-        $html.= "<th><a title='$tab2' $href>$val</a></th>";
+      elseif ($tab2 && preg_match("/[\w]*/",$tab2)) { 
+        if ( in_array($tab2,$tables)) {
+          // ukaž záznam s tímto klíčem
+          $fld2= explode(',',$sys_db_info->tables->$tab2);
+          list($key2)= explode('>',$fld2[0]);
+          $href= "href='ezer://$path.tab_append/$tab2/$key2=$val/0'";
+          $html.= "<th><a title='$tab2' $href>$val</a></th>";
+        }
+        else {
+          // zavolej uživatelskou funkci
+          $href= "href='ezer://$path.$tab2/$table/$val'";
+          $html.= "<th><a title='$tab2' $href>$val</a></th>";
+        }
       }
+//      elseif ($tab2==';') { 
+//        // rozkóduj $val jako středníkem oddělené elementy, pro každý dej odkaz
+//        $vals= explode(';',$val);
+//        $vals= array_map(function($elem) use ($path,$tab){
+//          return "<a href='ezer://$path.tab_append/$tab/$elem/3'>$elem</a>";
+//        },$vals);
+//        $html.= "<th>".implode(';',$vals)."</th>";
+//      }
       else {
         $html.= "<td>$val</td>";
       }
@@ -1271,5 +1512,5 @@ function tab_append($table,$cond) {
   }
   $html.= "</table><br>";
 end:  
-  return $html;
+  return $n ? $html : '';
 }
