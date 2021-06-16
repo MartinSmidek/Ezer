@@ -4,8 +4,7 @@
 // (c) 2021 Martin Šmídek <martin@smidek.eu>
 
 # ===================================================================================== DATABÁZE
-var db_info:object
-func onstart() { 
+func onstart() { var db_info:object
   db_info= php.sys_db_info(this.par,this.self()); 
   mdb.str.attach_code(db_info.group);
 }
@@ -16,8 +15,8 @@ func tab_append(tab,cond,mode) {
     info.append(php.sys_db_append_using(tab,cond));
   elseif (mode==2)
     info.append(php.sys_db_append(tab,`TRUE`));
-  elseif (mode==3)
-    info.append(php.man_append(tab,cond));
+//  elseif (mode==3)
+//    info.append(php.man_append(tab,cond));
   else // mode==0
     info.append(php.sys_db_append(tab,cond));
 }
@@ -49,7 +48,7 @@ menu mdb {type:'left', active:*
     }
   }
 }
-# ==> formulář pro levostranné menu s postupným zápisem 
+# ==> formulář pro levostranné menu s postupným zápisem a obsluhou zobrazení tabulek
 form right [,,*,50] {
   label head [0,0,*,50]  { title:' ' }
   label note [0,36,*,] { title:' ' }

@@ -1405,20 +1405,20 @@ function sys_db_struct($tab,$all=1) {  #trace();
   }
   return $html;
 }
-# ------------------------------------------------------------------------------ sys db_append_pairs
-# zobraz záznam referovaný daným elementem
-function sys_db_append_pairs($table,$elem) {
-  global $app_tables;
-  $html= '';
-  // rozeber element
-  list($name,$value)= explode('=',trim($elem,' -'));
-  switch ($name) {
-    case 'clanek':
-      $html.= tab_append('clanek',"id_clanek='$value'");
-      break;
-  }
-  return $html;
-}
+//# ------------------------------------------------------------------------------ sys db_append_pairs
+//# zobraz záznam referovaný daným elementem
+//function sys_db_append_pairs($table,$elem) {
+//  global $app_tables;
+//  $html= '';
+//  // rozeber element
+//  list($name,$value)= explode('=',trim($elem,' -'));
+//  switch ($name) {
+//    case 'clanek':
+//      $html.= tab_append('clanek',"id_clanek='$value'");
+//      break;
+//  }
+//  return $html;
+//}
 # ------------------------------------------------------------------------------ sys db_append_using
 # zobraz všechny záznamy ve všech tabulkách obsahujících daný primární klíč dané tabulky
 function sys_db_append_using($table,$idt) {
@@ -1491,9 +1491,23 @@ function sys_db_append($table,$cond) {
           $html.= "<th><a title='$tab2' $href>$val</a></th>";
         }
         else {
-          // zavolej uživatelskou funkci
-          $href= "href='ezer://$path.$tab2/$table/$val'";
-          $html.= "<th><a title='$tab2' $href>$val</a></th>";
+          // zavolej uživatelskou funkci 
+          if (substr($tab2,-1,1)==';') {
+            // pokud je ukončena oddělovačem ; rozděl hodnotu na části podlw ;
+            $fce= substr($tab2,0,-1);
+            $html.= "<th>";
+            $del= '';
+            foreach (explode(';',$val) as $vi) {
+              $href= "href='ezer://$path.$fce/$table/$vi'";
+              $html.= "$del<a title='$fce' $href>$vi</a>";
+              $del= ';';
+            }
+            $html.= "</th>";
+          }
+          else {
+            $href= "href='ezer://$path.$tab2/$table/$val'";
+            $html.= "<th><a title='$tab2' $href>$val</a></th>";
+          }
         }
       }
 //      elseif ($tab2==';') { 
