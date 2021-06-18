@@ -1291,7 +1291,7 @@ function sys_db_info($par,$panel_self) { debug($par);
   global $sys_db_info, $ezer_root;
   $_SESSION[$ezer_root]['sys_db_info']= $sys_db_info= $par;
   $sys_db_info->path= implode('.',array_slice(explode('.',$panel_self),2));
-  $ret= (object)array(group=>null,schema=>$sys_db_info->schema);
+  $ret= (object)array('group'=>null,'schema'=>$sys_db_info->schema);
   // doplnění leftmenu o itemy pro informativní výpisy např. schema db
   $itms= array();
   foreach ($sys_db_info->infos as $item) {
