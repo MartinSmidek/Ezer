@@ -8034,6 +8034,7 @@ class Browse extends Block {
 //a: set        - nastaví klíče podle daného seznamu (string s klíči oddělenými čárkou)
 //   unset      - zruší výběr klíčů podle daného seznamu
 //   get        - vrátí seznam param prvních (pro option='D' posledních) klíčů  nebo všech klíčů, pokud je param 0
+//   count      - vrátí počet vybraných řádků
 //   clear      - zruší výběr param prvních klíčů nebo všech klíčů, pokud je param 0
 //   set_page   - zruší výběr a nastaví jako vybrané ty viditelné
 //   add_page   - přidá k výběru ty viditelné
@@ -8106,6 +8107,10 @@ class Browse extends Block {
           result+= del+this.keys_sel[k];
           del= ',';
         }
+        break;
+      }
+      case 'count': { // vrátí počet vybraných řádků
+        result= this.keys_sel.length;
         break;
       }
       case 'set_page': { // zruší výběr a nastaví jako vybrané ty viditelné
