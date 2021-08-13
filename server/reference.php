@@ -1287,7 +1287,7 @@ function i_doc_table_struct($tab,$all=1,$css='stat') {  #trace();
 //    path => 'syst.data,stat' // cesta k funkci tab_append
 //);
 # -------------------------------------------------------------------------------------- sys db_info
-function sys_db_info($par,$panel_self) { debug($par);
+function sys_db_info($par,$panel_self) { //debug($par);
   global $sys_db_info, $ezer_root;
   $_SESSION[$ezer_root]['sys_db_info']= $sys_db_info= $par;
   $sys_db_info->path= implode('.',array_slice(explode('.',$panel_self),2));
@@ -1310,7 +1310,7 @@ function sys_db_info($par,$panel_self) { debug($par);
       ));
   }
   $ret->group= (object)array('type'=>'menu.group','options'=>(object)array(),'part'=>$itms);
-  debug($ret);
+//  debug($ret);
   return $ret;
 }
 # ----------------------------------------------------------------------------------- sys db_selects
