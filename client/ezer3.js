@@ -9318,7 +9318,7 @@ class Browse extends Block {
       this.DOM_qry_row= [];
       for (let i= 1; i<=this.options.qry_rows; i++) {
         this.DOM_tbody.append(
-          this.DOM_qry_row[i]= jQuery(`<tr><td class="tag0">`)
+          this.DOM_qry_row[i]= jQuery(`<tr><td class="tag0 BrowseNoQuery"></td></tr>`)
             .dblclick( event => {
               event.stopPropagation();
               if ( this.enabled && event.target.tagName=="INPUT") {
@@ -9326,6 +9326,13 @@ class Browse extends Block {
               }
             })
         );
+        this.DOM_qry_row[i].find('td')
+          .click( event => {
+            event.stopPropagation();
+            if ( this.enabled ) {
+              this.init_queries();
+            }
+          });
       }
       // scroll bar začíná pod hlavičkou
       if ( this.options.qry_rows>0 )

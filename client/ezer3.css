@@ -594,12 +594,13 @@ td.BrowseNoClmn img.sort {
   height:15px; position:relative; margin:-1px 2px -1px -3px; padding-left:2px;
   outline:2px dotted yellow; border:0px; font:inherit; background-color:#ffffaa}
 /* reload */
-.BrowseSmart td.BrowseReload {
-  
+.BrowseSmart td.BrowseReload {  
+  padding:0; width:8px; }
+/* init queries */
+.BrowseSmart td.BrowseNoQuery {  
   padding:0; width:8px; }
 /* posuvník */
-.BrowseSmart td.BrowseSet {
-  
+.BrowseSmart td.BrowseSet {  
   padding:0; width:16px; }
 .BrowseSmart div.BrowsePosuv {
   z-index:1; width:16px; }

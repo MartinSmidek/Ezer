@@ -229,9 +229,12 @@ div.BrowseSmart div.BrowsePosuv3 span.BrowseHandle3:hover {
 .BrowseSmart td.BrowseReload {
   background:url($path/browse_reload.png) no-repeat !important; cursor:pointer !important;
   }
+/* init queries */
+.BrowseSmart td.BrowseNoQuery {  
+  background:url($path/browse_noquery.png) no-repeat !important; cursor:pointer !important; }
 /* posuvník */
 .BrowseSmart td.BrowseSet {
-  background:url($path/browse_set.png) no-repeat !important; cursor:pointer !important;
+  background:url($path/browse_set.png) no-repeat !important; cursor:pointer !important; 
   }
 .BrowseSmart div.BrowsePosuv {
   background-color:$b5_brow; }
