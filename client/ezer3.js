@@ -249,38 +249,43 @@ class Block {
   set_attrib (name,val,desc) {
     Ezer.assert(typeof(name)=='string','první parametr není jménem atributu',this);
     var ids= name.split('.');
-    Ezer.assert(desc===undefined || this.desc.part[desc],desc+" není popsáno v "+this.id,this);
-    var o= desc===undefined ? this.options : this.desc.part[desc].options;
+    // pokud this je proměnná typu ezer budeme měnit atribut bloku, který je její hodnotou
+    let block= this instanceof Var && this._of=='ezer' ? this.value : this; 
+    Ezer.assert(desc===undefined || block.desc.part[desc],desc+" není popsáno v "+block.id,block);
+    var o= desc===undefined ? block.options : block.desc.part[desc].options;
     for (var i= 0; i<ids.length-1; i++) {
-      Ezer.assert(o[ids[i]],name+" je chybné jméno v set_attrib",this);
+      Ezer.assert(o[ids[i]],name+" je chybné jméno v set_attrib",block);
       o= o[ids[i]];
     }
     o[ids[i]]= val;
     // promítni změnu do DOM pro: help
-    if ( name=='help' && this.DOM_Block ) {
-      if ( this.DOM_Block instanceof jQuery )
-        this.DOM_Block.attr('title',val);
+    if ( name=='help' && block.DOM_Block ) {
+      if ( block.DOM_Block instanceof jQuery )
+        block.DOM_Block.attr('title',val);
       else
-        this.DOM_Block.set('title',val);
+        block.DOM_Block.set('title',val);
     }
     // promítni změnu do DOM pro: popup.title (nesmí být prázdné)
-    if ( name=='title' && this instanceof PanelPopup ) {
-      this.DOM.find('div.pop_head span').first().html(val);
+    if ( name=='title' && block instanceof PanelPopup ) {
+      block.DOM.find('div.pop_head span').first().html(val);
     }
-    else if ( name=='title' && this.DOM_Label ) {
-      this.DOM_Label.html(val);
+    else if ( name=='title' && block.DOM_Label ) {
+      block.DOM_Label.html(val);
     }
-    else if ( name=='title' && this instanceof MenuGroup ) {
-      this.DOM_Block.find('a').html(val);
+    else if ( name=='title' && block instanceof MenuGroup ) {
+      block.DOM_Block.find('a').html(val);
+    }
+    else if ( name=='title' && block instanceof Item ) {
+      block.set_attrib(name,val,desc);
     }
     // oživ show.map_pipe
-    if ( name=='map_pipe' && this instanceof Show ) {
-      this.start();
-      this._start2();
+    if ( name=='map_pipe' && block instanceof Show ) {
+      block.start();
+      block._start2();
     }
     // oživ select.options
-    if ( name=='options' && this instanceof SelectMap ) {
-      this._options_load();
+    if ( name=='options' && block instanceof SelectMap ) {
+      block._options_load();
     }
     return 1;
   }
@@ -2039,8 +2044,7 @@ class Item extends Block {
           a= this.desc.options.skill && this.desc.options.skill.match(/\ba\b/g) ? ' a' : '',
           m= this.desc.options.skill && this.desc.options.skill.match(/\bm\b/g) ? ' m' : '',
           am= a || m ? ` class="${a}${m}"` : '';
-      title= title.replace(/\[fa-([^\]]+)\]/g,`<i class='fa fa-fw fa-$1' title='${text}'></i>`);
-      this.DOM_Block= jQuery(`<li${am}${help}>${title}</li>`)
+      this.DOM_Block= jQuery(`<li${am}${help}></li>`)
         .addClass(this._fc('d') ? 'disabled3' : '')
         .appendTo(this.owner.DOM_Block.find('ul'))
         .click( e => {
@@ -2063,19 +2067,13 @@ class Item extends Block {
           }
           return false;
         });
+      this.set_attrib ('title',title);
       break;
     }
     case 'menu.context': {
-      let title= this.options.title||this.id, key= '',
-          del= title.match(/^[-=]/);
-      title= del ? title.substr(1) : title;
-      [title,key]= title.split("\\t")
-      title= title.replace(/\[fa-([^\]]+)\]/g,"<i class='fa fa-fw fa-$1'></i>");
-      key= key ? `<span>${key}</span>` : '';
-      this.DOM_Block= jQuery(`<li>${title}${key}</li>`)
+      this.DOM_Block= jQuery(`<li></li>`)
         .appendTo(this.owner.DOM)
         .data('ezer',this)
-        .css({borderTop: del ? (del=='-' ? "2px solid #ccc" : "3px double #ccc") : ''})
         .click( el => {
             if ( el.shiftKey ) return dbg_onshiftclick(this);  /* context.item */
             if ( !jQuery(el.target).hasClass('disabled3') ) {
@@ -2084,6 +2082,7 @@ class Item extends Block {
             }
           }
         );
+      this.set_attrib ('title',this.options.title||this.id);
       if ( this._fc('d') ) {
         this.DOM_Block.addClass('disabled3');
       }
@@ -2092,6 +2091,38 @@ class Item extends Block {
     default:
       Ezer.error('chybné menu - item mimo group nebo context');
     }
+  }
+// ------------------------------------------------------------------------------------ set attrib
+//fm: Item.set_attrib (name,val[,desc=])       
+//      nahradí zobrazený text itemu předanou hodnotou
+//a: name - 'title'
+//   val - nový text 
+  set_attrib (name,title,desc) {
+    if ( name=='title' ) {                                     //Ezer.trace('*','browse.set_attrib');
+      switch (this.owner.type) {
+        case 'menu.group': {
+          let text= title.replace(/\[fa-([^\]]+)\]/g,'');
+          title= title.replace(/\[fa-([^\]]+)\]/g,`<i class='fa fa-fw fa-$1' title='${text}'></i>`);
+          this.DOM_Block.html(title);
+          break;
+        }
+        case 'menu.context': {
+          let key= '',
+              del= title.match(/^[-=]/);
+          title= del ? title.substr(1) : title;
+          [title,key]= title.split("\\t")
+          title= title.replace(/\[fa-([^\]]+)\]/g,"<i class='fa fa-fw fa-$1'></i>");
+          key= key ? `<span>${key}</span>` : '';
+          this.DOM_Block
+            .html(`${title}${key}`)
+            .css({borderTop: del ? (del=='-' ? "2px solid #ccc" : "3px double #ccc") : ''});
+          break;
+        }
+      }
+    }
+    else
+      super.set_attrib(name,val,desc);
+    return 1;
   }
 // ------------------------------------------------------------------------------------ DOM enabled
 //*f: Item-DOM.DOM_enabled (on)
