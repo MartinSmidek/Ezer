@@ -1792,7 +1792,7 @@ __XLS;
           $val= $vs[0];
           $fmt= isset($vs[1]) ? $vs[1] : '';
           if ( $list ) $html.= "CELL-$an-$val-$fmt";
-          if ( preg_match("/^\s*[-+]{0,1}[0-9]+\.{0,1}[0-9]*\s*$/u",$val) ) {
+          if ( $fmt!='text' && preg_match("/^\s*[-+]{0,1}[0-9]+\.{0,1}[0-9]*\s*$/u",$val) ) {
             if ( $list )     $html.= "NUMBER $an-$val-$fmt";
             if ( $ws )
               $ws->getCell($an)->setValueExplicit($val,PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_NUMERIC);
@@ -1819,7 +1819,10 @@ __XLS;
               ? substr($dir,1).'/'
               : "$ezer_path_root/docs/".($dir?"$dir/":'');
           $fpath.= "{$wb->name}.{$excel}";
-          $objWriter->save($fpath);
+          if (@unlink($fpath)) 
+            $objWriter->save($fpath);
+          else 
+            fce_warning("soubor $fpath je patrně otevřený v Excelu, nemohu jej uložit");
           if ( $list ) $html.= "CLOSE $fpath";
         }
       }
@@ -1869,6 +1872,7 @@ function Excel5_f(&$ws,$range,$v,&$err) {
 //     case 'date': $wcs->getNumberFormat()->setFormatCode('d. m. yyyy'); break;
 //     case 'date': $wcs->getNumberFormat()->setFormatCode(PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY); break;
     case 'date': $wcs->getNumberFormat()->setFormatCode('dd/mm/yyyy'); break;
+    case 'text': $wcs->getNumberFormat()->setFormatCode('@'); break;
     // border=t,r,b,l | border=o   -- 1 je tečkovaná, 2 tenká, 3 tlustá
     case 'border':
       $xs= explode(',',$x);
