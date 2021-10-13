@@ -1790,9 +1790,9 @@ __XLS;
           # adr value [::format]
           $vs= explode('::',$v);
           $val= $vs[0];
-          $fmt= isset($vs[1]) ? $vs[1] : '';
+          $fmt= trim(isset($vs[1]) ? $vs[1] : '');
           if ( $list ) $html.= "CELL-$an-$val-$fmt";
-          if ( $fmt!='text' && preg_match("/^\s*[-+]{0,1}[0-9]+\.{0,1}[0-9]*\s*$/u",$val) ) {
+          if ( strpos($fmt,'text')===false && preg_match("/^\s*[-+]{0,1}[0-9]+\.{0,1}[0-9]*\s*$/u",$val) ) {
             if ( $list )     $html.= "NUMBER $an-$val-$fmt";
             if ( $ws )
               $ws->getCell($an)->setValueExplicit($val,PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_NUMERIC);
