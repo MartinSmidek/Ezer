@@ -1819,7 +1819,7 @@ __XLS;
               ? substr($dir,1).'/'
               : "$ezer_path_root/docs/".($dir?"$dir/":'');
           $fpath.= "{$wb->name}.{$excel}";
-          if (@unlink($fpath)) 
+          if (!file_exists($fpath) || @unlink($fpath)) 
             $objWriter->save($fpath);
           else 
             fce_warning("soubor $fpath je patrně otevřený v Excelu, nemohu jej uložit");
