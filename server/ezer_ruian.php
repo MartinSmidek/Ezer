@@ -32,7 +32,7 @@ function ruian_adresa($adr) {  //debug($adr,"ruian_adresa");
   };
   $geo->url= $OvereniAdresy($ulice,$cis,$cast,$psc,$obec);
   display("URL 1: {$geo->url}");
-  $html= file_get_contents($geo->url);
+  $html= curl_get_contents($geo->url);
   $m= array();
   $ok= preg_match_all('~href="/vdp/ruian/adresnimista/(\d+)"~',$html,$m);
 //  debug($m,"ok/misto=$ok");
@@ -40,7 +40,7 @@ function ruian_adresa($adr) {  //debug($adr,"ruian_adresa");
     list($obec,$cast)= preg_split('~\s*-\s*~',$obec);
     $geo->url= $OvereniAdresy($ulice,$cis,$cast,$psc,$obec);
     display("URL 2: {$geo->url}");
-    $html= file_get_contents($geo->url);
+    $html= curl_get_contents($geo->url);
     $m= array();
     $ok= preg_match_all('~href="/vdp/ruian/adresnimista/(\d+)"~',$html,$m);
   }
@@ -51,7 +51,7 @@ function ruian_adresa($adr) {  //debug($adr,"ruian_adresa");
     $Detail= "https://vdp.cuzk.cz/vdp/ruian/adresnimista";
     $url= "$Detail/{$kod}";
 //    display("URL=$url");
-    $html= file_get_contents($url);
+    $html= curl_get_contents($url);
     // získání kódu obce
     $ok= preg_match('~href="/vdp/ruian/obce/(\d+)"~',$html,$m);
 //    debug($m,"ok/obec=$ok");
@@ -108,6 +108,27 @@ end:
 //                                                        debug($geo);
   return $geo;
 }
+# -------------------------------------------------------------------------------- curl_get_contents
+function curl_get_contents($url) {
+  global $ezer_server;
+  switch ($ezer_server) {
+    case 0:
+      $html= file_get_contents($url); 
+      break;
+    default:
+      $ctx= stream_context_create(['ssl' => 
+          ['crypto_method' => STREAM_CRYPTO_METHOD_TLS_CLIENT]]);
+      $ch= curl_init(); 
+      curl_setopt($ch, CURLOPT_URL, $url); 
+      curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+      curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1); 
+      $html= curl_exec($ch); 
+      curl_close($ch);
+      break;
+  }
+  return $html;
+}
+# ---------------------------------------------------------------------------------------- Converter
 /**
  * Class Converter
  * @package JTSK

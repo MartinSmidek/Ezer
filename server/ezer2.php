@@ -786,7 +786,7 @@
   // x: table, cond, order, fields, from, cursor, rows, [{joins}] [group [having]]   -- field:{id:i, field:f|expr:s}
   // y: count, from, rows, values[i]
   case 'browse_scroll':
-//                                                         debug($x,"browse_scroll");
+                                                         debug($x,"browse_scroll");
 
     // předávané zpět pro smarter scroll
     $y->r= 0+$x->r;
