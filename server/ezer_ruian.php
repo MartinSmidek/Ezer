@@ -31,7 +31,7 @@ function ruian_adresa($adr) {  //debug($adr,"ruian_adresa");
     . "&as.cisOr.cisloOrientacniText={$cis_or}&as.nazevCo={$cast}&as.nazevOb={$obec}&as.psc={$psc}"
     . "&asg.sort=UZEMI&search=Vyhledat";
   };
-  $geo->url= $OvereniAdresy($ulice,$cis,'',$cast,$psc,$obec);
+  $geo->url= $OvereniAdresy($ulice,$cis,$cis_or,$cast,$psc,$obec);
   display("URL 1: {$geo->url}");
   $html= curl_get_contents($geo->url);
   $m= array();
