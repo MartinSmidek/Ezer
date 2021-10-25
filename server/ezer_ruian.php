@@ -25,7 +25,7 @@ function ruian_adresa($adr) {  //debug($adr,"ruian_adresa");
   }
   // ověření adresy
   $OvereniAdresy= function($ulice,$cis_dom,$cis_or,$cast,$psc,$obec) {
-    $server= "https://vdp.cuzk.cz/vdp/ruian/overeniadresy/vyhledej";
+    $server= "http://vdp.cuzk.cz/vdp/ruian/overeniadresy/vyhledej";
     return "$server?as.nazevUl={$ulice}&as.cisDom={$cis_dom}"
     . "&as.cisOr.cisloOrientacniText={$cis_or}&as.nazevCo={$cast}&as.nazevOb={$obec}&as.psc={$psc}"
     . "&asg.sort=UZEMI&search=Vyhledat";
@@ -47,7 +47,7 @@ function ruian_adresa($adr) {  //debug($adr,"ruian_adresa");
   if (!$ok) {
     // zkusíme to s pomocí mapy.cz
     $addr= "$ulice%20$cis,$cast,$psc%20$obec";
-    $geo->url= "http://api4.mapy.cz/geocode?query=$addr";
+    $geo->url= "https://api4.mapy.cz/geocode?query=$addr";
     display("URL 3: {$geo->url}");
     $xml= curl_get_contents($geo->url);
     display(htmlentities("XML $xml"));
@@ -171,6 +171,7 @@ function curl_get_contents($url) {
       curl_setopt($ch, CURLOPT_URL, $url); 
       curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
       curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1); 
+      curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0); 
       $html= curl_exec($ch); 
       curl_close($ch);
       break;
