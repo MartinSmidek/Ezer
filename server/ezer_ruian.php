@@ -24,13 +24,13 @@ function ruian_adresa($adr) {  //debug($adr,"ruian_adresa");
     $obec= urlencode($obec);
   }
   // ověření adresy
-  $OvereniAdresy= function($ulice,$cis,$cast,$psc,$obec) {
+  $OvereniAdresy= function($ulice,$cis_dom,$cis_or,$cast,$psc,$obec) {
     $server= "https://vdp.cuzk.cz/vdp/ruian/overeniadresy/vyhledej";
-    return "$server?as.nazevUl={$ulice}&as.cisDom={$cis}"
+    return "$server?as.nazevUl={$ulice}&as.cisDom={$cis_dom}"
     . "&as.cisOr.cisloOrientacniText={$cis_or}&as.nazevCo={$cast}&as.nazevOb={$obec}&as.psc={$psc}"
     . "&asg.sort=UZEMI&search=Vyhledat";
   };
-  $geo->url= $OvereniAdresy($ulice,$cis,$cast,$psc,$obec);
+  $geo->url= $OvereniAdresy($ulice,$cis,'',$cast,$psc,$obec);
   display("URL 1: {$geo->url}");
   $html= curl_get_contents($geo->url);
   $m= array();
@@ -38,11 +38,60 @@ function ruian_adresa($adr) {  //debug($adr,"ruian_adresa");
 //  debug($m,"ok/misto=$ok");
   if (!$ok && $ulice && $cis && $psc && !$cast && strpos($obec,'-')!==false ) {
     list($obec,$cast)= preg_split('~\s*-\s*~',$obec);
-    $geo->url= $OvereniAdresy($ulice,$cis,$cast,$psc,$obec);
+    $geo->url= $OvereniAdresy($ulice,$cis,'',$cast,$psc,$obec);
     display("URL 2: {$geo->url}");
     $html= curl_get_contents($geo->url);
     $m= array();
     $ok= preg_match_all('~href="/vdp/ruian/adresnimista/(\d+)"~',$html,$m);
+  }
+  if (!$ok) {
+    // zkusíme to s pomocí mapy.cz
+    $addr= "$ulice%20$cis,$cast,$psc%20$obec";
+    $geo->url= "http://api4.mapy.cz/geocode?query=$addr";
+    display("URL 3: {$geo->url}");
+    $xml= curl_get_contents($geo->url);
+    display(htmlentities("XML $xml"));
+    $isaddr= preg_match('~type="addr"~',$xml);
+    if ($isaddr) {
+      $hastitle= preg_match('~title="([^,\n]*)(?:,([^,\n]*)|)(?:,([^,\n]*)|)*"~um',$xml,$m);
+      debug($m,$hastitle?1:0);
+      $line= urlencode($m[1].$m[2]);
+      $server= "http://ags.cuzk.cz/arcgis/rest/services/RUIAN/Vyhledavaci_sluzba_nad_daty_RUIAN"
+          . "/MapServer/exts/GeocodeSOE/findAddressCandidates";
+      $geo->url= "$server?SingleLine=$line&magicKey=&outSR=&maxLocations=&outFields=&searchExtent=&f=json";
+      display("URL 4: {$geo->url}");
+      $json= curl_get_contents($geo->url);
+//      display("JSON $json");
+      $ags= json_decode($json);
+//      debug($ags);
+      // zkusíme, jestli se identifikovalo adresní místo
+      $adresa= '';
+      if (isset($ags->candidates)) {
+        foreach ($ags->candidates as $adr) {
+          if ($adr->attributes->Type=='AdresniMisto') {
+            $adresa= $adr->attributes->Match_addr;
+            $psc_ok= preg_match("~$psc~",$adresa);
+            if ($psc_ok) break;
+          }
+        }
+        display("ADRESA $adresa");
+        if ($adresa) {
+          $m= null;
+          $ok= preg_match('~(?:č.p.|)([^\d]*)\s*(\d+)(?:\/(\d+)|),\s*(?:(.*),|)\s*(\d{5})\s+(.+)~',$adresa,$m);
+          debug($m,"ADRESA");
+          if ($ok) {
+            $geo->url= $OvereniAdresy(urlencode($m[1]),$m[2],$m[3],urlencode($m[4]),$m[5],urlencode($m[6]));
+            display("URL 5: {$geo->url}");
+            $html= curl_get_contents($geo->url);
+            $m= array();
+            $ok= preg_match_all('~href="/vdp/ruian/adresnimista/(\d+)"~',$html,$m);
+            if ($ok) {
+              $ok= preg_match_all('~href="/vdp/ruian/adresnimista/(\d+)"~',$html,$m);
+            }
+          }
+        }
+      }
+    }
   }
   if ($ok) {
     // detail adresního místa
