@@ -9,7 +9,8 @@ function ruian_adresa($adr) {  //debug($adr,"ruian_adresa");
 //  $geo->query= $adr;
   $ulice= '';
   if (isset($adr->ulice)) {
-    $ulice= preg_replace("~\snám\.~"," náměstí ",trim($adr->ulice));
+    $ulice= $adr->ulice;
+    //$ulice= preg_replace("~\snám\.~"," náměstí ",trim($adr->ulice)); -- nelze, jsou i jen "nám."
     $ulice= preg_replace("~č\.pop\.|č\.p\.~iu",'',$ulice);
     $ulice= urlencode($ulice);
   }
