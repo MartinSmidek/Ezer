@@ -7390,7 +7390,7 @@ class Select extends Elem {
     if ( this.DOM_DropList )
       this.DOM_DropList.empty();
     if ( this.map_options && this.map_options.data_order ) {
-      if ( this instanceof SelectMap0 ) {
+      if ( this instanceof SelectMap0 && this.Items[0]!==undefined && this.Items[0][0]===undefined ) {
         create.bind(this)(this.Items[0],0);
       }
       for (var i in this.map_options.data_order) {
@@ -7601,7 +7601,7 @@ class SelectMap extends Select {
     Ezer.assert(1==Ezer.run_name(this.options.options,this.owner.owner,m)
       ,'options:'+this.options.options+' je chybné jméno map',this);
     this.map_options= m[1];
-    this.Items= this instanceof SelectMap0 ? {0:''} : {};
+    this.Items= this instanceof SelectMap0 && m[0]!==undefined && m[0][0]===undefined ? {0:''} : {};
     for (var im in m[0]) {
       this.Items[im]= m[0][im];
     }
@@ -9888,17 +9888,13 @@ class Show extends Elem {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  _start2
 // po načtení všech map - volá se z
   _start2 () {
-    var m= this.map_pipe.map.data[this.map_pipe.field];
+//    var m= this.map_pipe.map.data[this.map_pipe.field];
     // načtení options pro show-select
     for (var i= 0; i<this.DOM_qry_select.length; i++) {
       // vytvoř z mapy seznam možností pro případný výběrový select
       var sel= this.DOM_qry_select[i];
       if ( sel ) {
-        sel.Items[0]= '';
-        for (var k in m) {
-          sel.Items[k]= m[k];
-        }
-        sel.DOM_addItems();
+        sel._options_load();
       }
     }
   }
