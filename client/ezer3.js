@@ -7078,7 +7078,7 @@ class Select extends Elem {
       })
       .focus ( event => {
         if ( this.DOM_DropList.css('display')=='none') {
-          if ( this.options.par && this.options.par.subtype=='browse' && this.Items[0]=='?' )
+          if ( this.options.par && this.options.par.subtype=='browse' && this.Items[0]===undefined )
             this.owner._start2();         // owner obsahuje Show pokud je do něj vnořeno
           Ezer.fce.touch('block',this,'focus');   // informace do _touch na server
           event.target.select();
@@ -9349,7 +9349,7 @@ class Browse extends Block {
       this.DOM_qry_row= [];
       for (let i= 1; i<=this.options.qry_rows; i++) {
         this.DOM_tbody.append(
-          this.DOM_qry_row[i]= jQuery(`<tr><td class="tag0 BrowseNoQuery"></td></tr>`)
+          this.DOM_qry_row[i]= jQuery(`<tr><td class="tag0"></td></tr>`)
             .dblclick( event => {
               event.stopPropagation();
               if ( this.enabled && event.target.tagName=="INPUT") {
@@ -9357,13 +9357,16 @@ class Browse extends Block {
               }
             })
         );
-        this.DOM_qry_row[i].find('td')
-          .click( event => {
-            event.stopPropagation();
-            if ( this.enabled ) {
-              this.init_queries();
-            }
-          });
+        if (i==1) {
+          this.DOM_qry_row[1].find('td')
+            .addClass('BrowseNoQuery')
+            .click( event => {
+              event.stopPropagation();
+              if ( this.enabled ) {
+                this.init_queries();
+              }
+            });
+        }
       }
       // scroll bar začíná pod hlavičkou
       if ( this.options.qry_rows>0 )
@@ -10426,7 +10429,6 @@ class Show extends Elem {
               part:{onchanged:{type:'proc',par:{},code:code}}};
             var sel_owner= {DOM_Block:td,_option:{}};
             var sel= new SelectMap0(sel_owner,sel_desc,td,'','');
-            sel.Items[0]= '?';
             sel.owner= this;
             sel.DOM_Block.css({marginTop:1});
             td.append(sel.DOM_Block);
