@@ -2232,7 +2232,7 @@ class Eval {
                 obj= o[i];
               }
               else if ( o instanceof ListRow || o instanceof Form ) { 
-                o= o.part[i]; 
+                obj= o.part[i]; 
               }
               else if ( o instanceof List ) {
                 if ( o.part[i]==undefined )

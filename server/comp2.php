@@ -3948,7 +3948,8 @@ function get_stmnt($context,&$st) {
           # 'for' '(' id '=' expr ';' expr ';' stmnt ')' '{' slist '}'
           # --> {expr:for,init:G(id=expr),test:G(e/2),incr:G(s),stmnt:(slist)}
           get_expr4($context,$expr);
-          $init= (object)array('expr'=>'call','op'=>"$var.set",'par'=>array($expr),'lc'=>$last_lc);
+//          $init= (object)array('expr'=>'call','op'=>"$var.set",'par'=>array($expr),'lc'=>$last_lc);
+          $init= (object)array('expr'=>'asgn','left'=>$var,'right'=>$expr,'lc'=>$last_lc);
           get_delimiter(';');
           get_expr4($context,$expr);
           get_delimiter(';');
