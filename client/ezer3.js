@@ -7853,15 +7853,12 @@ class List extends Block {
   }
 // ------------------------------------------------------------------------------------ changed
 //fm: List.changed ()
-//      zjistí jestli je příznak změny v nějakém vnořeném elementu
+//      zjistí jestli je příznak změny v nějakém vnořeném řádku
   changed () {
     for (let ir in this.part) {        // projdi řádky
-      let part= this.part[ir].part;
-      for (var ie in part) {           // projdi elementy
-        let elem= part[ie];
-        if ( elem instanceof Elem && elem.changed() ) {
-          return 1;
-        }
+      let row= this.part[ir];
+      if ( row.changed() ) {
+        return 1;
       }
     }
     return 0;
@@ -7892,6 +7889,18 @@ class ListRow extends Block {
     super(owner,desc,DOM,id,skill);
     // bez vložení podčástí
     this.DOM_add(DOM);
+  }
+// ------------------------------------------------------------------------------------ changed
+//fm: ListRow.changed ()
+//      zjistí jestli je příznak změny v nějakém vnořeném elementu
+  changed () {
+    for (var ie in this.part) {           // projdi elementy
+      let elem= this.part[ie];
+      if ( elem instanceof Elem && elem.changed() ) {
+        return 1;
+      }
+    }
+    return 0;
   }
 // ========================================================================================> ListRow
 //*c: ListRow-DOM
