@@ -7851,6 +7851,21 @@ class List extends Block {
     }
     return 1;
   }
+// ------------------------------------------------------------------------------------ changed
+//fm: List.changed ()
+//      zjistí jestli je příznak změny v nějakém vnořeném elementu
+  changed () {
+    for (let ir in this.part) {        // projdi řádky
+      let part= this.part[ir].part;
+      for (var ie in part) {           // projdi elementy
+        let elem= part[ie];
+        if ( elem instanceof Elem && elem.changed() ) {
+          return 1;
+        }
+      }
+    }
+    return 0;
+  }
 // ------------------------------------------------------------------------------------ DOM add
 // vytvoří kontejner na řádky
   DOM_add () {
