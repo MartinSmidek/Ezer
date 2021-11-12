@@ -1,5 +1,5 @@
 // Ezer3.1 - část nezávislá na jQuery 
-/* global Ezer, Object, Function, google, gapi, args, CKEDITOR */ // pro práci s Netbeans
+/* global Ezer, Object, Function, google, gapi, args, CKEDITOR, SMap, Loader */ // pro práci s Netbeans
 "use strict";
 // 'DOM' je vlastnost se kterou se smí pracovat jen jako s celkem
 // (aby v některé implementaci mohla být objektem)
@@ -1245,6 +1245,7 @@ class Block {
 //         if ( desc._helpThis ) desc._helpThis(on);
 //       });
 //   }
+//
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  fire
 // provede obsluhu přerušení
 // el obsahuje kontext přerušení
@@ -1928,8 +1929,8 @@ class MenuContext extends Menu {
   }
   DOM_add2 () {
     var owner= this.owner.DOM_Block || this.owner.value.DOM_Block;
-    if ( this.options.par && this.options.par.trigger=='click' ) {
-      this.options.trigger='click';
+    if ( this.options.par && this.options.par.trigger ) {
+      this.options.trigger= this.options.par.trigger;
     }
     if ( this._f('m')>=0 ) { OBSOLETE("ContextMenu - format:'m'");
       // zvýraznit oblast kontextového menu pomocí masky - musí existovat element s id='mask'
@@ -3738,11 +3739,12 @@ class Form extends Block {
     return this._key ? 1 : 0;
   }
 // ------------------------------------------------------------------------------------ save
-//fx: Form.save ()
+//fx: Form.save ([quiet=0])
 //      uložení změněných elementů formuláře do záznamu s klíčem form.key.
+//      pokud je quiet=1 nebude hlášen warning při neprovedení změny
 // Pozn. Odlišné posouzení 'changed' u elementů typu EditHtml je upřesněno u EditHtml.changed
 //e: onsave - před uložením formuláře (test nesmí být asynchronní funkce)
-  save (omitt) {
+  save (quiet) {
     var ok= this.fire('onsave');                        // proveď akci před uložením dat
     Ezer.assert(ok!==false,'form.save: test formuláře nesmí být asynchronní funkce');
     var x= null, changes= 0;
@@ -3772,7 +3774,8 @@ class Form extends Block {
           x= {cmd:'form_save', db:table.options.db||'', table:table.id,
             key_id:table.options.key_id, key:this._key, fields:fields};
         }
-        else Ezer.fce.warning("'save' - nebyla provedena žádná změna");
+        else if (!quiet)
+          Ezer.fce.warning("'save' - nebyla provedena žádná změna");
       }
       else Ezer.error("RUN ERROR 'save' - nulový klíč");
       this._key_id= x ? x.key_id : '';
@@ -4793,7 +4796,7 @@ class LabelDrop extends Label {
 
 // =======================================================================================> LabelMap
 //c: LabelMap ()
-//      prvek pro práci s GoogleMaps a s geo-objekty
+//      prvek pro práci s GoogleMaps resp. s Mapy.cz a s geo-objekty
 //t: Block,Label
 //s: Block
 class LabelMap extends Label {
@@ -4815,14 +4818,58 @@ class LabelMap extends Label {
     this.geocode_counter= 1;   // geocode
   }
 // ---------------------------------------------------------------------------------------- init
-//fm: LabelMap.init ([TERRAIN|ROADMAP][,options])
+//fm: LabelMap.init ([TERRAIN|ROADMAP][,options,[map_type='gmap'])
 // inicializace oblasti se zobrazením mapy ČR
 // pokud mapy google nejsou dostupné vrací 0
-  init (type,options) {
-    this.map= null;
+  init (type,options,map_type) {
+    if (map_type=='smap') {
+      var ok= typeof Loader!="undefined" ? 1 : 0;
+      if ( ok ) {
+        // pokud existuje stará mapa zrušíme ji
+        if (this.map && this.map_type=='smap')
+          this.map.$destructor();
+        // vytvoříme novou
+        this.map_type= 'smap';
+        Loader.async= true;
+        Loader.load(null,null,
+          function() {
+            let stred= SMap.Coords.fromWGS84(15.6, 49.8);
+            this.map= new SMap(this.DOM_Block[0], stred, 7);
+            this.map.addDefaultLayer(SMap.DEF_BASE).enable();
+            this.map.addDefaultControls();	
+            // layer pro samostatné značky
+            this.layer_mark= new SMap.Layer.Marker();
+            this.map.addLayer(this.layer_mark);
+            this.layer_mark.enable();
+            // vrstvy pro mnohoúhelníku
+            this.layer_poly= new SMap.Layer.Geometry();
+            this.map.addLayer(this.layer_poly);
+            this.layer_poly.enable();
+            // ... podvrstva pro rohy mnohoúhelníku
+            this.layer_poly_mark= new SMap.Layer.Marker();
+            this.map.addLayer(this.layer_poly_mark);
+            this.layer_poly_mark.enable();
+            // ... IDs signálů pro editaci mnohoúhelníku
+            this.poly_signals= [];
+            // povolená gesta myši
+            let mouse= new SMap.Control.Mouse(SMap.MOUSE_PAN | SMap.MOUSE_WHEEL | SMap.MOUSE_ZOOM);
+            this.map.addControl(mouse);
+          }.bind(this)
+        );
+        this.poly= null;
+        this.rect= null;
+        this.mark= {};
+      }
+      else {
+        this.map= null;
+        this.map_type= '';
+      }
+      return ok;
+    }
     this.clustering= options && options.clustering==1 ? true : false;
     var ok= typeof google!="undefined" && google.maps ? 1 : 0;
     if ( ok ) {
+      this.map_type= 'gmap';
       var stredCR= new google.maps.LatLng(49.8, 15.6);
       var map_id= google.maps.MapTypeId[type||'TERRAIN'];
       var g_options= {zoom:7, center:stredCR, mapTypeId:map_id,
@@ -4832,6 +4879,10 @@ class LabelMap extends Label {
       if ( options )
         Object.assign(g_options,options);
       this.map= new google.maps.Map(this.DOM_Block[0],g_options);
+    }
+    else {
+      this.map= null;
+      this.map_type= '';
     }
     this.poly= null;
     this.rect= null;
@@ -4844,7 +4895,8 @@ class LabelMap extends Label {
 // pokud mapa neexistuje vrací objekt {ok:0}
   dump () {
     let ans= {ok:0};
-    if ( this.map ) {
+    if (this.map_type=='smap') Ezer.error("dump nelze v mapy.cz použít",'user',this);
+    else if ( this.map && this.map_type=='gmap') {
       var visible= 0;
       var viewPort= this.map ? this.map.getBounds() : null;
       if ( viewPort ) {
@@ -4906,16 +4958,25 @@ class LabelMap extends Label {
         break;
       case 'poly':
         ret= '';
-        let del= '';
         if ( this.poly ) {
-          var paths= this.poly.getPaths();
-          for (var n= 0; n < paths.length; n++) {
-            let vertices= paths.getAt(n);
-            for (var i= 0; i < vertices.length; i++) {
-              ret+= del+vertices.getAt(i).toUrlValue();
+          let del= '';
+          if (this.map_type=='smap') {
+            let paths= this.poly.getCoords();
+            for (let xy of paths) {
+              ret+= del+xy.y+','+xy.x;
               del= ';';
             }
-            del= '|'
+          }
+          else if (this.map_type=='gmap') {
+            let paths= this.poly.getPaths();
+            for (let n= 0; n < paths.length; n++) {
+              let vertices= paths.getAt(n);
+              for (let i= 0; i < vertices.length; i++) {
+                ret+= del+vertices.getAt(i).toUrlValue();
+                del= ';';
+              }
+              del= '|'
+            }
           }
         }
         break;
@@ -4926,8 +4987,9 @@ class LabelMap extends Label {
 // ----------------------------------------------------------------------------------------- set
 //fm: LabelMap.set (gobject)
 // zobrazí v mapě informace předané objektem geo
-//   set({mark:'mark*'[,ezer]...) - doplní do mapy značky s informacemi podle popisu
-//                                  k vytvořeným značkám přidá případně objekt ezer
+//   set({mark:'mark*'[,ezer],clear:0|1...) - zaplní mapu značkami s informacemi podle popisu
+//                               pokud je clear=0 neruší ty předchozí (default je clear=1)
+//                               k vytvořeným značkám přidá případně objekt ezer
 //   set({poly:'bod+',...})    - doplní do mapy polygon podle seznamu bodů oddělovaných středníky
 //   set({zoom:'bod;bod',...}) - zvětší mapu aby byl právě vidět (nezobrazený) obdélník SW;NE
 //   set({rect:'bod;bod',...}) - zobrazí ohraničující obdélník SW;NE
@@ -4935,14 +4997,18 @@ class LabelMap extends Label {
 // mark = id,lat,ltd[,title[,icon]]
 // id   = nenulový klíč
 // bod  = lat,ltd
-// icon = CIRCLE[,scale:1-10][,ontop:1]|cesta k bitmapě
+// icon = url bitmapy[,posunx[,posuny]]             -- pro mapy.cz 
+// icon = url bitmapy|CIRCLE[,scale:1-10][,ontop:1] -- pro google maps
   set (geo) {
     var ret= 1, mark;
     if ( this.map ) {
       // -------------------------------------------- MARK
-      if ( geo.mark == '' && this.mark ) {                // zruš všechny značky
-  //       Object.each(this.mark,function(m){m.setMap(null);});
-        for (let im in this.mark) { this.mark[im].setMap(null); }
+      if ( geo.mark == '' && this.mark 
+          && (geo.clear==undefined || geo.clear==1)) {  // zruš všechny značky
+        if (this.map_type=='smap') 
+          this.layer_mark.removeAll();
+        else if (this.map_type=='gmap') 
+          for (let im in this.mark) { this.mark[im].setMap(null); }        
         this.mark= {};
       }
       else if ( geo.mark ) {                              // přidej nové značky
@@ -4953,165 +5019,294 @@ class LabelMap extends Label {
         geo.mark.split(';').map(function(xy) {
           var p= xy.split(',');
           var id= p[0];
-          var ll= new google.maps.LatLng(p[1],p[2]);
-          var map_opts= {position:ll,map:this.map};
-          if ( p[3] ) map_opts.title= p[3];               // přidá label
-          if ( p[4] ) {
-            // přidá ikonu - buď bitmapa, nebo CIRCLE a následuje barva fill a barva border
-            if ( p[4]=='CIRCLE' ) {
-              map_opts.icon= {
-                path: google.maps.SymbolPath.CIRCLE, scale: 7,
-                fillColor: p[5], fillOpacity: 0.3, strokeColor: p[6], strokeWeight: 1
-              };
-              if ( p[7] )
-                map_opts.zIndex= google.maps.Marker.MAX_ZINDEX + 1;
-              if ( p[8] )
-                map_opts.icon.scale= Number.parseInt(p[8]);
+          if (this.map_type=='smap') {
+            // mapy.cz
+            let ll= SMap.Coords.fromWGS84(p[2],p[1]);
+            let options= {};
+            if (p[3]) options.title= p[3];
+            if (p[4] && p[4]!='CIRCLE') {
+              options.url= p[4]; // optimální pro značku 11x11px
+              options.anchor= {left:p[5]?p[5]:5,bottom:p[6]?p[6]:(p[5]?p[5]:5)}; 
             }
-            else {
-              map_opts.icon= p[4];
+            mark= new SMap.Marker(ll,id,options);
+            if ( this.mark[id] ) 
+              this.layer_mark.removeMarker(this.mark[id]);
+            this.layer_mark.addMarker(mark);
+            this.mark[id]= mark;
+            mark.id= id;
+            // pokud existuje obsluha onmarkclick, přidej listener
+            if ( this.part && this.part.onmarkclick ) {
+              this.map.getSignals().addListener(mark,'marker-click', function() {
+                if ( typeof label.part.onmarkclick === 'function' )
+                  label.part.onmarkclick(this);
+                else
+                  label._call(0,'onmarkclick',this);
+              }.bind(mark));
             }
           }
-          if ( geo.ezer ) map_opts.ezer= geo.ezer;        // přidá hodnoty složky ezer
-          ret= mark= new google.maps.Marker(map_opts);    // vrací se vytvořený marker
-          if ( this.mark[id] ) {
-            this.mark[id].setMap(null);                   // případný marker se stejným id vymaž
-          }
-          this.mark[id]= mark;
-          mark.id= id;
-          // pokud existuje obsluha onmarkclick, přidej listener
-          if ( this.part && this.part.onmarkclick ) {
-            google.maps.event.addListener(mark,'click', function() {
-              if ( typeof label.part.onmarkclick === 'function' )
-                label.part.onmarkclick(this);
-              else
-                label._call(0,'onmarkclick',this);
-            });
+          else if (this.map_type=='gmap') {
+            // google map
+            var ll= new google.maps.LatLng(p[1],p[2]);
+            var map_opts= {position:ll,map:this.map};
+            if ( p[3] ) map_opts.title= p[3];               // přidá label
+            if ( p[4] ) {
+              // přidá ikonu - buď bitmapa, nebo CIRCLE a následuje barva fill a barva border
+              if ( p[4]=='CIRCLE' ) {
+                map_opts.icon= {
+                  path: google.maps.SymbolPath.CIRCLE, scale: 7,
+                  fillColor: p[5], fillOpacity: 0.3, strokeColor: p[6], strokeWeight: 1
+                };
+                if ( p[7] )
+                  map_opts.zIndex= google.maps.Marker.MAX_ZINDEX + 1;
+                if ( p[8] )
+                  map_opts.icon.scale= Number.parseInt(p[8]);
+              }
+              else {
+                map_opts.icon= p[4];
+              }
+            }
+            if ( geo.ezer ) map_opts.ezer= geo.ezer;        // přidá hodnoty složky ezer
+            ret= mark= new google.maps.Marker(map_opts);    // vrací se vytvořený marker
+            if ( this.mark[id] ) {
+              this.mark[id].setMap(null);                   // případný marker se stejným id vymaž
+            }
+            this.mark[id]= mark;
+            mark.id= id;
+            // pokud existuje obsluha onmarkclick, přidej listener
+            if ( this.part && this.part.onmarkclick ) {
+              google.maps.event.addListener(mark,'click', function() {
+                if ( typeof label.part.onmarkclick === 'function' )
+                  label.part.onmarkclick(this);
+                else
+                  label._call(0,'onmarkclick',this);
+              });
+            }
           }
         }.bind(this));
-        // volitelné sdružování značek (marker clustering)
-        // https://developers.google.com/maps/documentation/javascript/marker-clustering
-        if ( this.clustering ) {
-          let gridSize= 40;
-          new MarkerClusterer(this.map, this.mark, {imagePath:
-              'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m',
-            gridSize:gridSize
-          });
+        if (this.map_type=='gmap') {
+          // volitelné sdružování značek (marker clustering)
+          // https://developers.google.com/maps/documentation/javascript/marker-clustering
+          if ( this.clustering ) {
+            let gridSize= 40;
+            new MarkerClusterer(this.map, this.mark, {imagePath:
+                'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m',
+              gridSize:gridSize
+            });
+          }
         }
       }
       // -------------------------------------------- ZOOM
-      if ( geo.zoom == '' && this.zoom ) {                // zruš ohraničení
-        this.zoom= null;
-      }
-      else if ( geo.zoom ) {                              // definuj ohraničení
+      if ( geo.zoom ) {                              // definuj výřez
         var ps= geo.zoom.split(';');
         var _sw, _ne;
         var SW= ps[0].split(','), NE= ps[1].split(',');
-        _sw= new google.maps.LatLng(SW[0],SW[1]);
-        _ne= new google.maps.LatLng(NE[0],NE[1]);
-        this.zoom= new google.maps.LatLngBounds(_sw,_ne);
-        this.map.fitBounds(this.zoom);
+        if (this.map_type=='smap') {
+          _sw= SMap.Coords.fromWGS84(SW[1],SW[0]);
+          _ne= SMap.Coords.fromWGS84(NE[1],NE[0]);
+          let stred_zoom= this.map.computeCenterZoom([_sw,_ne]);
+          this.map.setCenterZoom(stred_zoom[0],stred_zoom[1]);
+          this.zoom= stred_zoom[1];
+        }
+        else if (this.map_type=='gmap') {
+          _sw= new google.maps.LatLng(SW[0],SW[1]);
+          _ne= new google.maps.LatLng(NE[0],NE[1]);
+          this.zoom= new google.maps.LatLngBounds(_sw,_ne);
+          this.map.fitBounds(this.zoom);
+        }
       }
       // -------------------------------------------- RECT
-      if ( geo.rect == '' && this.rect ) {                // zruš obdélník
-        this.rect.setMap(null);
+      if ( geo.rect=='' && this.rect) {                   // zruš obdélník
+        if (this.map_type=='smap') 
+          this.layer_rect.removeAll();
+        else if (this.map_type=='gmap') 
+          this.rect.setMap(null);    
         this.rect= null;
       }
       else if ( geo.rect ) {                              // zobraz obdélník
-        if ( this.rect ) this.rect.setMap(null);          // zruš napřed starý
         let paths = [],
             ps= geo.rect.split(';'),
             SW= ps[0].split(','), NE= ps[1].split(',');
-        paths.push(new google.maps.LatLng(SW[0],SW[1]));
-        paths.push(new google.maps.LatLng(SW[0],NE[1]));
-        paths.push(new google.maps.LatLng(NE[0],NE[1]));
-        paths.push(new google.maps.LatLng(NE[0],SW[1]));
-        this.rect= new google.maps.Polygon({
-          paths: paths, fillOpacity: 0, strokeWeight: 1, strokeColor: 'grey'
-        });
-        this.rect.setMap(this.map);
+        if (this.map_type=='smap') {
+          this.layer_poly.removeAll();
+          paths.push(SMap.Coords.fromWGS84(SW[1],SW[0]));
+          paths.push(SMap.Coords.fromWGS84(SW[1],NE[0]));
+          paths.push(SMap.Coords.fromWGS84(NE[1],NE[0]));
+          paths.push(SMap.Coords.fromWGS84(NE[1],SW[0]));
+          this.rect= new SMap.Geometry(SMap.GEOMETRY_POLYGON, null, paths, {color:'grey'});
+          this.layer_poly.addGeometry(this.rect);
+        }
+        else if (this.map_type=='gmap') { // gmap
+          if ( this.rect ) this.rect.setMap(null);          // zruš napřed starý
+          paths.push(new google.maps.LatLng(SW[0],SW[1]));
+          paths.push(new google.maps.LatLng(SW[0],NE[1]));
+          paths.push(new google.maps.LatLng(NE[0],NE[1]));
+          paths.push(new google.maps.LatLng(NE[0],SW[1]));
+          this.rect= new google.maps.Polygon({
+            paths: paths, fillOpacity: 0, strokeWeight: 1, strokeColor: 'grey'
+          });
+          this.rect.setMap(this.map);
+        }
       }
       // -------------------------------------------- POLY
-      if ( geo.poly == '' /*&& this.poly*/ ) {                // zruš polygon
-        if ( this.poly ) this.poly.setMap(null);
+      if ( geo.poly=='' && this.poly) {                   // zruš polygon
+        if (this.map_type=='smap') {
+          this.layer_poly.removeAll();
+          this.layer_poly_mark.removeAll();
+        }
+        else if (this.map_type=='gmap') 
+          this.poly.setMap(null);    
         this.poly= null;
       }
-      else if ( geo.poly ) {                              // zobraz polygon
-//        if ( this.poly ) this.poly.setMap(null);          // zruš napřed starý
-        geo.poly.split('|').map(function(pxy) {
-          let coords= pxy.split(';').map(function(xy) {
-            let p= xy.split(',');
-            return new google.maps.LatLng(p[0],p[1]);
-          });
-          if ( this.poly ) {
-            // přidej k existující
-            let paths= this.poly.getPaths();
-            paths.push(new google.maps.MVCArray(coords));
-            this.poly.setPaths(paths);
+      else if ( geo.poly!=undefined ) {                   // zobraz polygon
+        if (this.map_type=='smap') {
+          this.layer_poly.removeAll();
+          let paths = [];
+          for (let ll of geo.poly.split(';')) {
+            ll= ll.split(',');
+            paths.push(SMap.Coords.fromWGS84(ll[1],ll[0]));
           }
-          else {
-            // vytvoř první
-            this.poly= new google.maps.Polygon({
-              paths: coords, fillOpacity: 0, strokeWeight: 1, strokeColor: 'red'
+          this.poly= new SMap.Geometry(SMap.GEOMETRY_POLYGON, null, paths, {color:'red'});
+          this.layer_poly.addGeometry(this.poly);
+        }
+        else if (this.map_type=='gmap') {
+          if (this.poly) this.poly.setMap(null);
+          geo.poly.split('|').map(function(pxy) {
+            let coords= pxy.split(';').map(function(xy) {
+              let p= xy.split(',');
+              return new google.maps.LatLng(p[0],p[1]);
             });
-          }
-        }.bind(this));
-        this.poly.setMap(this.map);
+            if ( this.poly ) {
+              // přidej k existující
+              let paths= this.poly.getPaths();
+              paths.push(new google.maps.MVCArray(coords));
+              this.poly.setPaths(paths);
+            }
+            else {
+              // vytvoř první
+              this.poly= new google.maps.Polygon({
+                paths: coords, fillOpacity: 0, strokeWeight: 1, strokeColor: 'red'
+              });
+            }
+          }.bind(this));
+          this.poly.setMap(this.map);
+        }
       }
     }
     return ret;
   }
 // ------------------------------------------------------------------------------------ option
 //fm: LabelMap.option (obj)
-//   pro obj={poly_edit:{1|0}} 1=zapne resp. 0=vypne editaci polygonů v mapě
-//   při zapnuté editaci lze pravým uchem myši smazat vrchol
+//   kde obj={poly_edit:{1|0}} 1=zapne resp. 0=vypne editaci polygonů v mapě.
+//   V mapy.cz se body přidávají kliknutím na polygon.
+//   V google maps při zapnuté editaci lze pravým uchem myši smazat vrchol.
   option (obj) {
     if ( this.poly ) {
-      this.poly.setEditable(obj.poly_edit?true:false);
-      if ( obj.poly_edit ) {
-        var deleteNode= function(mev) {
-          Ezer.fce.echo('delete ',mev.path,'/',mev.vertex);
-          if (mev.vertex != null) {
-            let path= this.poly.getPaths().getAt(mev.path),
-                length= path.getLength();
-            if ( length>2 ) {
-              path.removeAt(mev.vertex);
+      if (this.map_type=='smap') {
+        let signal= this.map.getSignals();
+        this.layer_poly_mark.removeAll();
+        if (this.poly_signals.length) {
+          signal.removeListeners(this.poly_signals);
+          this.poly_signals= [];
+        }
+        if ( obj.poly_edit ) {
+          let coords= this.poly.getCoords();
+//          let start= function(e) {
+//            let node= e.target.getContainer();
+//            node[SMap.LAYER_MARKER].style.cursor= "url(ezer3.1/client/img/cursor_marker.png), auto"; //"grabbing";
+//          }.bind(this);
+          let stop= function(e) {
+            let mark= e.target, coords= this.poly.getCoords();
+//            mark.getContainer()[SMap.LAYER_MARKER].style.cursor= "help";
+            let i= mark.getId();
+            coords[i]= mark.getCoords();
+            this.poly.setCoords(coords);
+          }.bind(this);
+          let double= function(e) {
+            let coords= this.poly.getCoords(), c= [], len= coords.length;
+            for (let i= 0; i<len; i++) {
+              c.push(coords[i]);
+              let i1= i==len-1 ? 0 : i+1,
+                  xy= SMap.Coords.fromWGS84(
+                    (coords[i].x+coords[i1].x)/2,(coords[i].y+coords[i1].y)/2);
+              c.push(xy);
             }
-            else {
-              path.clear();
-            }
+            this.layer_poly.removeAll();
+            this.poly= new SMap.Geometry(SMap.GEOMETRY_POLYGON, null, c, {color:'red'});
+            this.layer_poly.addGeometry(this.poly);
+            this.option({poly_edit:1});
+          }.bind(this);
+          this.poly_signals= [];
+//          this.poly_signals.push(signal.addListener(window, "marker-drag-start", start));
+          this.poly_signals.push(signal.addListener(window, "marker-drag-stop", stop));
+          this.poly_signals.push(signal.addListener(window, "geometry-click", double));
+          for (let i in coords) {
+            let ll= SMap.Coords.fromWGS84(coords[i].x,coords[i].y),
+                mark= new SMap.Marker(ll,i,
+                  {url:'./ezer3.1/client/img/circle_red_11x11.png',anchor:{left:5,top:6},title:i});
+            mark.decorate(SMap.Marker.Feature.Draggable);
+            this.layer_poly_mark.addMarker(mark);
           }
-        }.bind(this);
-        google.maps.event.addListener(this.poly, 'rightclick', deleteNode);
+        }
+      }
+      else if (this.map_type=='gmap') {
+        this.poly.setEditable(obj.poly_edit?true:false);
+        if ( obj.poly_edit ) {
+          var deleteNode= function(mev) {
+            Ezer.fce.echo('delete ',mev.path,'/',mev.vertex);
+            if (mev.vertex != null) {
+              let path= this.poly.getPaths().getAt(mev.path),
+                  length= path.getLength();
+              if ( length>2 ) {
+                path.removeAt(mev.vertex);
+              }
+              else {
+                path.clear();
+              }
+            }
+          }.bind(this);
+          google.maps.event.addListener(this.poly, 'rightclick', deleteNode);
+        }
       }
     }
     return 1;
   }
 // ------------------------------------------------------------------------------------ set_mark
 //fm: LabelMap.set_mark (mark,option)
-// zpřístupní vlastnosti dané značky
+// zpřístupní vlastnosti dané značky zadané svým id nebo přímo jako objekt.
+// V mapy.cz zatím jen ezer a delete
   set_mark (mark,ids,value) {
     let res= 1,
         id= ids.split('.');
     if ( this.map ) {
+      // pokud je mark zadán přes id, najdi ho
+      if (typeof(mark)=='string') {
+        mark= this.mark[mark];
+      }
       switch (id[0]) {
       // set_mark(x,'distance.dir',dist_m) - vrátí bod vzdálený dist_m ve směru dir (0=N,90=E,...)
       case 'distance':
+        if (this.map_type=='smap') Ezer.error("set_mark/distance nelze v mapy.cz použít",'user',this);
         var point= mark.getPosition();
         point= google.maps.geometry.spherical.computeOffset(point,value,id[1]);
         res= point.lat()+','+point.lng();
         break;
       // set_mark(x,'delete') - vymaže marker x
       case 'delete':
-        if ( mark.id && this.mark[mark.id]==mark ) {
-          this.mark[mark.id].setMap(null);
-          delete this.mark[mark.id];
+        if ( mark.id && this.mark && this.mark[mark.id]==mark ) {
+          if (this.map_type=='smap') {
+            this.layer_mark.removeMarker(mark);
+          }
+          else {
+            this.mark[mark.id].setMap(null);
+            delete this.mark[mark.id];
+          }
         }
         break;
       case 'ezer':
         mark.ezer[id[1]]= value;
         break;
       case 'fill':
+        if (this.map_type=='smap') Ezer.error("set_mark/fill nelze v mapy.cz použít",'user',this);
         mark.icon.fillColor= value;
         mark.setOptions({icon:mark.icon});
         break;
@@ -5120,27 +5315,51 @@ class LabelMap extends Label {
     return res;
   }
 // ------------------------------------------------------------------------------------ get_bounds
-//fm: LabelMap.get_bounds ()
-// vrátí souřadnice severovýchodního a jihozápadního rohu mapy spojené středníkem
-  get_bounds () {
+//fm: LabelMap.get_bounds ([return_poly=0])
+// vrátí souřadnice jihozápadního a severovýchodního rohu mapy spojené středníkem,
+// pokud je return_rect=1 vrátí souřadnice obdélníku
+  get_bounds (return_poly) {
     let rect= "";
     if ( this.map ) {
-      let bounds= this.map.getBounds();
-      if ( bounds ) {
-        let point= bounds.getSouthWest();
-        rect+= point.lat()+','+point.lng()+';';
-        point= bounds.getNorthEast();
-        rect+= point.lat()+','+point.lng();
+      let w,e,n,s;
+      if (this.map_type=='smap') {
+        let size= this.map.getSize(),
+            koef= 0.4,
+            wn= new SMap.Pixel(-size.x*koef, -size.y*koef).toCoords(this.map),
+            se= new SMap.Pixel( size.x*koef,  size.y*koef).toCoords(this.map);
+        w= wn.x; n= wn.y; s= se.y; e= se.x;
+        rect= return_poly
+            ? `${n},${w};${n},${e};${s},${e};${s},${w}`
+            : `${n},${w};${s},${e}`;
+      }
+      else if (this.map_type=='gmap') {
+        let bounds= this.map.getBounds();
+        if ( bounds ) {
+          let point, k=0.1, we, ew, sn, ns;
+          point= bounds.getSouthWest(); s= point.lat(); w= point.lng();
+          point= bounds.getNorthEast(); n= point.lat(); e= point.lng();
+          we= w+k*(e-w); ew= w+(1-k)*(e-w);
+          sn= s+k*(n-s); ns= s+(1-k)*(n-s);
+          rect= return_poly
+              ? `${ns},${we};${ns},${ew};${sn},${ew};${sn},${we}`
+              : `${ns},${we};${sn},${ew}`;
+        }
       }
     }
     return rect;
   }
-// ------------------------------------------------------------------------------------ fit_Bounds
+// ------------------------------------------------------------------------------------ fit_bounds
 //fm: LabelMap.fit_bounds ()
 // zvolí měřítko a polohu mapy tak, aby byly vidět všechny nastavené značky
   fit_bounds () {
     if ( this.map ) {
-      if ( Object.keys(this.mark).length ) {
+      if (this.map_type=='smap' && !jQuery.isEmptyObject(this.layer_mark._markers)) {
+        let coords= this.layer_mark.getMarkers().map(function(m){return m.getCoords()});
+        let stred_zoom= this.map.computeCenterZoom(coords);
+        this.map.setCenterZoom(stred_zoom[0],stred_zoom[1]);
+        this.zoom= stred_zoom[1];
+      }
+      else if (this.map_type=='gmap' && Object.keys(this.mark).length ) {
         var box= new google.maps.LatLngBounds();
         for (let ip in this.mark) {
           box.extend(this.mark[ip].getPosition());
@@ -5151,11 +5370,13 @@ class LabelMap extends Label {
     return 1;
   }
 // ------------------------------------------------------------------------------------ geocode
-//fi: LabelMap.geocode (gobject)
+//fi: LabelMap.geocode (gobject) 
 // doplní do gobjektu souřadnice obsažené adresy nebo je vymaže,
 // pokud adresa nebyla poznána
 //   geocode({id,address:x,...}) => {mark:'id,lat,ltd',...}
+// (zatím pouze pro google maps)
   geocode (geo) {
+    if (this.map_type=='smap') Ezer.error("geocode nelze v mapy.cz použít",'user',this);
     if ( !this.geocoder ) this.geocoder= new google.maps.Geocoder();
     this.geo= geo;
     this.geocode_counter++;

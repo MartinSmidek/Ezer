@@ -379,6 +379,15 @@ div.MenuGroup3 .disabled3 i.fa-darkviolet { color:grey
   
 }
 
+/* ----------------------------------------------------------------------------------==> LabelMap */
+
+div.smap div > img { /* marker, geometrie v mapy.cz */ 
+  cursor:url(img/cursor_marker.png), auto;
+}
+div.smap > div { /* obecně v mapy.cz */
+  cursor: url(img/cursor_marker.png), auto !important;
+}
+
 /* ---------------------------------------------------------------------------------==> LabelDrop */
 
 div.LabelDrop3 {

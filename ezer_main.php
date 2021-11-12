@@ -46,6 +46,7 @@
   $dbg=      isset($_GET['dbg'])     ? $_GET['dbg']     : 0;
   $gapi=     isset($_GET['gapi'])    ? $_GET['gapi']    : 0; //!($ezer_local || $ezer_ksweb);
   $gmap=     isset($_GET['gmap'])    ? $_GET['gmap']    : (isset($_COOKIE['gmap']) ? $_COOKIE['gmap']  : ($is_local?0:1));
+  $smap=     isset($_GET['smap'])    ? $_GET['smap']    : (isset($_COOKIE['smap']) ? $_COOKIE['smap']  : ($is_local?0:1));
   $touch=    isset($_GET['touch'])   ? $_GET['touch']   : 1;
 
   // inicializace SESSION
@@ -142,12 +143,11 @@
       "$client/ezer_app3.js$v_sys","$client/ezer3.js$v_sys","$client/ezer_area3.js$v_sys",
       "$client/ezer_rep3.js$v_sys","$client/ezer_lib3.js$v_sys","$client/ezer_tree3.js$v_sys"
     ),
-    // rozhodnout zda používat online mapy
+    // rozhodnout zda používat online mapy 
     $gmap==1 ? array(
       "https://maps.googleapis.com/maps/api/js?libraries=places&key=$api_key") : array(),
-//    $gmap ? array(
-//      "https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js",
-//      "https://maps.googleapis.com/maps/api/js?sensor=false") : array(),
+    $smap==1 ? array(
+      "https://api.mapy.cz/loader.js") : array(),
     // uživatelské skripty
       array_map(function($x) use ($http_rel_root,$v_app) {
         return "$http_rel_root/$x$v_app";

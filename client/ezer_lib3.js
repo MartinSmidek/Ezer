@@ -557,7 +557,7 @@ jQuery.fn.contextPopup = function(menuData,e) {
   }
   if ( options.persistent ) {
     // On contextmenu event (right click)
-    this.on('contextmenu', e => {
+    this.on('contextmenu'+(options.trigger?' '+options.trigger:''), e => {
       e.stopPropagation(); showMenu(e);
     });
   }
