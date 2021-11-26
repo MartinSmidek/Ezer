@@ -707,7 +707,13 @@ function sys_watch_key() {
   for($i=0; $i<32; $i++) {
     $key.= chr(mt_rand(ord('A'),ord('Z')));
   }
-  $path= "$ezer_root/code/{$ezer_root}.key.php";
+  // pokud existuje složka ../files/$ezer_root dej klíč tam - jinak do ./$ezer_root/code
+  $deep_root= "../files/$ezer_root";
+  $path= file_exists($deep_root) 
+      ? "$deep_root/$ezer_root.key.php" 
+      : "$ezer_root/code/{$ezer_root}.key.php";
+  display("path=$path");
+  
   $ok= @file_put_contents($path,$key);
   $html= $ok ? "Uložte <a href='$path' target='key'>tento odkaz</a>. 
     Odstraňte koncovku '.php' aby končil '.key' a rozešlete jako klíč oprávněným uživatelům"

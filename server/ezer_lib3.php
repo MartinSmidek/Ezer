@@ -266,9 +266,13 @@ __EOD;
   if ( (isset($pars->watch_ip) || isset($pars->watch_key))
     && (isset($pars->no_local) && $pars->no_local || !$is_local ) ) {
     // ověření přístupu - externí přístup hlídat vždy, lokální jen je-li  no_local=true
+    // nejprve klíč hledáme v deep_root až potom v code
     if ( $pars->watch_key && ($watch_key= isset($_POST['watch_try']) ? $_POST['watch_try'] : '') ) {
-      $watch_lock= 
-          @file_get_contents("{$_SESSION[$ezer_root]['abs_root']}/$ezer_root/code/$ezer_root.key.php");
+      $abs_root= $_SESSION[$ezer_root]['abs_root'];
+      chdir($abs_root);
+      $deep_root= "../files/$ezer_root";
+      $path= file_exists($deep_root) ? $deep_root : "$ezer_root/code";
+      $watch_lock= @file_get_contents("$path/$ezer_root.key");
       $ip_ok= $watch_lock==$watch_key;
       $key_msg= $ip_ok ? '' : '<u>správného</u>';
     }
