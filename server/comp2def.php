@@ -256,7 +256,7 @@ $attribs = array (
   'tabs'   =>  explode(",",'type:s,skill:s,title:s,active:i,include:s,where:s'),
 #  menu
   'menu'   =>  explode(",",'type:s,skill:s,title:s,par:o,active:i,format:s,join:i'),
-  'item'   =>  explode(",",'type:s,title:s,skill:s,par:o,format:s,help:s'),
+  'item'   =>  explode(",",'type:s,title:s,skill:s,par:o,format:s,help:s,active:i'),
 #  browse
   'browse' =>  explode(",",'key_id:s,type:s,buf_rows:n,qry_rows:n,wheel:n,css_rows:s,rows:nc,group_by:s,optimize:o,format:s'),
   'show'   =>  explode(",",'order:s,title:s,css_cell:s,data:i,expr:s,map_pipe:m,bgcolor:m,js_pipe:s,sql_pipe:s,format:s,help:s,skill:s'),

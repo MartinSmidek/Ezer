@@ -1674,8 +1674,8 @@ class MenuMain extends Menu {
 //s: Block
 class MenuLeft extends Menu {
 //oi: MenuLeft.active - vnořený Item, který má být aktivní hned po startu, 
-//                      hvězdička aktivuje první item, 'no' zamezí aktivaci z adresního řádku
-//                      (v tomn případě se aktivuje nadřazený panel či tabs či menu.main)
+//                      active:* aktivuje první item, active:no zamezí aktivaci z adresního řádku
+//                      (v druhém případě se aktivuje nadřazený panel či tabs či menu.main)
 //-
 //i: MenuLeft.onresize - volá se při změně šíře minimalizovatelného menu, parametr udává šíři v px
 //-
@@ -1748,8 +1748,11 @@ class MenuLeft extends Menu {
         var ids= Ezer.options.start.split('.');
         if ( ids.length==5 ) {
           var ok= Ezer.run_name(ids[2]+'.'+ids[3]+'.'+ids[4],this,ctx);
+          // pokud 4. část parametru menu je item
           if ( ok )
-            obj= ctx[0];
+            // aktivuj ho, pokud item nebo jeho group neobsahuje active:no
+            obj= ctx[0].options.active=='no'||ctx[0]._f('d')>=0 || ctx[0].owner.options.active=='no' 
+                ? null : ctx[0];
         }
       }
       if ( !obj && (id= this.options.active) ) {
@@ -1766,10 +1769,10 @@ class MenuLeft extends Menu {
       }
 //                                                 Ezer.trace('L','3. exciting '+this.type+' '+obj.id);
       this.DOM_excite(obj);
-      if (obj && obj.click) {
-        obj.click(null);
+        if (obj && obj.click) {
+          obj.click(null);
+        }
       }
-    }
     return 1;
   }
 // ===================================================================================> MenuLeft DOM
@@ -1843,7 +1846,7 @@ class MenuLeft extends Menu {
   DOM_excite (active) {
     // nalezení aktivního
     if ( active && active.type=='item' ) {
-      active._focus();
+        active._focus();
     }
     else {
       jQuery(this.DOM_Block).find('ul').first().slideDown(0);

@@ -189,18 +189,18 @@
     'watch_key' => false,
     'log_login' => true,        // jádro standardně zapisuje login do _touch (jako ve verzi 2.2)
     'CKEditor' => "{
-      version:'$CKEditor',
-      Minimal:{toolbar:[['Bold','Italic','Source']]},
-      EzerHelp2:{
-        toolbar:[['PasteFromWord','-','Bold','Italic','TextColor','BGColor',
-          '-','JustifyLeft','JustifyCenter','JustifyRight',
-          '-','Link','Unlink','HorizontalRule','Image',
-          '-','NumberedList','BulletedList',
-          '-','Outdent','Indent',
-          '-','Source','ShowBlocks','RemoveFormat']],
-        extraPlugins:'ezersave,imageresize', removePlugins:'image'
-      }
-    }"
+        version:'$CKEditor',
+        Minimal:{toolbar:[['Bold','Italic','Source']]},
+        EzerHelp2:{
+          toolbar:[['PasteFromWord','-','Bold','Italic','TextColor','BGColor',
+            '-','JustifyLeft','JustifyCenter','JustifyRight',
+            '-','Link','Unlink','HorizontalRule','Image',
+            '-','NumberedList','BulletedList',
+            '-','Outdent','Indent',
+            '-','Source','ShowBlocks','RemoveFormat']],
+          extraPlugins:'ezersave,imageresize', removePlugins:'image'
+        }
+      }"
   );
   if ( isset($kontakt) ) 
     $pars->contact= $kontakt;
