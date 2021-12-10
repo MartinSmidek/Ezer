@@ -84,7 +84,7 @@ function dbg_onclick_start(file) {
       if (!(mode=='php'||mode=='ezer')) return false;
       var file= doc.Ezer.sys.dbg.file,
           l= dbg_context(menu_el.target),
-          c= get_caret(),
+          c= get_column(menu_el.target),
           text= "lc="+l+','+c; 
       menu_el.stopImmediatePropagation();
       dbg_show_line(l,'pick',menu_el);
@@ -722,6 +722,7 @@ function dbg_reload(file,ln=0,clear=0) {
 function dbg_reload_(y,clear) {
   doc.Ezer.fce.clear(); 
   dbg.name= y.name;
+  dbg.app_ezer= y.app_ezer; // seznam všech ezer modulů ve stejném pořadí jako při kompilaci
   ezer.path= y.path;
   doc.Ezer.sys.dbg.file= y.file;
   let files= doc.Ezer.sys.dbg.files;
@@ -963,14 +964,16 @@ function dbg_show_text(ln,cg=null) {
   if (cg)
   for (let ifce in cg) {
     for (let icall in cg[ifce]) {
-      let call= cg[ifce][icall].split('-');
+      let callm= cg[ifce][icall].split(':'), // oddělíme index modulu
+          call= callm[0].split('-');
       if (call[1]) {
         let lc= call[1].split('.'),
             l= lc[0]-1,
-            c= lc[1]-1;
+            c= lc[1]-1,
+            m= callm[1];
         if (subst[l]==undefined)
           subst[l]= [];
-        subst[l].unshift([c,ifce,call[0]]);
+        subst[l].unshift([c,ifce,call[0],m]);
       }
       // konstrukce from
       if (call[0][0]=='$') {
@@ -1013,9 +1016,10 @@ function dbg_show_text(ln,cg=null) {
                 +lni.substr(Number(c)+xphp.length);
           }
           else {
-            // volání Exer fce
+            // volání Ezer fce - modul se přidá jako "desetinná" část
+            let im= subst[i][0][3]===undefined ? '' : `.${parseInt(subst[i][0][3])}`;
             lni= lni.substr(0,c)
-                +"<span class='go' onclick='dbg_show_line("+fce[1]+");'>"+fce[0]+'</span>'
+                +"<span class='go' onclick='dbg_show_line(\""+fce[1]+im+"\");'>"+fce[0]+'</span>'
                 +lni.substr(Number(c)+fce[0].length);
           }
         }
@@ -1038,35 +1042,54 @@ function htmlentities(h) {
 }
 // ------------------------------------------------------------------------------==> . dbg show_line
 // zobrazení textu ve struktuře
+// ln= řádek[.index souboru]
 function dbg_show_line(ln,css='pick',el=undefined,clear=true) {
   if (el!=undefined) 
     el.stopImmediatePropagation();
   else if (window.event!=undefined) 
     window.event.stopImmediatePropagation();
+  // odznač cílový řádek a zruš okno CG
   if (clear) dbg.dbg_clear();
   dbg.lines.find('li.pick').removeClass('pick');
-  if ( dbg.src[ln] ) {
-    dbg.src[ln]
-      .addClass(css)
-      .scrollIntoViewIfNeeded();
-    doc.Ezer.sys.dbg.files[doc.Ezer.sys.dbg.file].pick= ln;
+  // je zobrazený stejný soubor jako je cílový?
+  let name= doc.Ezer.sys.dbg.file;
+  if (typeof ln === 'string') {
+    let lns= ln.split('.');
+    ln= lns[0];
+    if (lns.length>1) {
+      name= dbg.app_ezer[lns[1]];
+    }
   }
-  // označení poznámek
-  dbg.notes.find('li.pick').removeClass('pick');
-  for (var i= 1; i<dbg.src.length; i++ ) {
-    if ( dbg.not[i] && ( i>=ln || i==dbg.not.length-1 )) {
-      dbg.not[i]
-        .addClass('pick')
+  // pokud je to odkaz do jiného modulu, načti jej
+  if (doc.Ezer.sys.dbg.file!=name) {
+    dbg_reload(name,ln,1);
+  }
+  // jinak je to zobrazený soubor
+  else {
+    // označ cílový řádek
+    if ( dbg.src[ln] ) {
+      dbg.src[ln]
+        .addClass(css)
         .scrollIntoViewIfNeeded();
-      if ( i>ln ) {
-        for (var j= i-1; j>0; j-- ) {
-          if ( dbg.not[j] ) {
-            dbg.not[j].addClass('pick');
-            break;
+      doc.Ezer.sys.dbg.files[doc.Ezer.sys.dbg.file].pick= ln;
+    }
+    // označení poznámek
+    dbg.notes.find('li.pick').removeClass('pick');
+    for (var i= 1; i<dbg.src.length; i++ ) {
+      if ( dbg.not[i] && ( i>=ln || i==dbg.not.length-1 )) {
+        dbg.not[i]
+          .addClass('pick')
+          .scrollIntoViewIfNeeded();
+        if ( i>ln ) {
+          for (var j= i-1; j>0; j-- ) {
+            if ( dbg.not[j] ) {
+              dbg.not[j].addClass('pick');
+              break;
+            }
           }
         }
+        break;
       }
-      break;
     }
   }
 }
@@ -1292,8 +1315,17 @@ function dbg_make_tree(cg) {
   dbg.wcg.show();
 }
 // --------------------------------------------------------------------------------------- get caret
-function get_caret() {
-  return window.getSelection().getRangeAt(0).startOffset;
+function get_column(el) {
+  let clmn= 0;
+      el_p= el.parentElement,
+      sel= window.getSelection(),
+      node= el_p.tagName=='LI' ? sel.baseNode : el, // element nebo #text
+      list= el_p.tagName=='LI' ? el.childNodes : el_p.childNodes;
+  for (let n of list) {
+    if (n==node) break;
+    clmn+= n.nodeType==3 ? n.length : n.innerText.length;
+  }
+  return clmn + sel.getRangeAt(0).startOffset;
 }
 // --------------------------------------------------------------------------------------- set caret
 function set_caret(node,caret) {

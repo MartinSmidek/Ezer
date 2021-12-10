@@ -521,6 +521,10 @@ function dbg_server($x) {
     }
     // předáme CG
     $y->cg= $cg;
+    // předáme seznam všech ezer modulů kvůli odkazům mezi nimi
+    require_once("ezer3.1/server/sys_doc.php");
+    $cg_list= doc_php_cg();
+    $y->app_ezer=  $cg_list->app_ezer;
     break;
   case 'save_source': // ---------------------------------- save file (file, type, value)
     global $ezer_php, $ezer_php_libr, $ezer_ezer, $err;

@@ -17,6 +17,30 @@ function comp ($src) {
   $code= $yobj;
   return $ycomp;
 }
+# ----------------------------------------------------------------------------------- comp ezer_list
+# seznam Ezer modulů s informací o aktuálnost
+# musí dát stejné seznam jako comp2:comp_ezer_list
+function comp_ezer_list() { trace();
+  global $app_ezers, $ezer_path_appl; //, $ezer_ezer;
+  // projití složky aplikace
+  $app_ezers= array();
+  if (($dh= opendir($ezer_path_appl))) {
+    while (($file= readdir($dh)) !== false) {
+      if ( substr($file,-5)==='.ezer' ) {
+        $name= substr($file,0,strlen($file)-5);
+        $app_ezers[]= $name;
+      }
+    }
+    closedir($dh);
+  }
+//  // přidání případných modulů z jiné složky
+//  foreach($ezer_ezer as $fname) {
+//    doc_ezer_state($fname,$files);
+//  }
+  sort($app_ezers);
+//                                                         debug($files,'ezer files');
+//  return $files;
+}
 # ---------------------------------------------------------------------------------------- comp_file
 # přeloží $aname do $cname pokud je překlad bez chyby
 # v případě chyby nechá $cname beze změny
@@ -31,6 +55,10 @@ function comp_file ($name,$root='',$_list_only='',$_comp_php=false) {  #trace();
     $pragma_group, $pragma_box, $pragma_if, $pragma_switch;
   global $call_php, $call_ezer, $call_elem;
   global $doxygen;    // $doxygen=1 pokud se má do složky data generovat *.cpp pro doxygen
+  global $app_ezers, $file_;
+  
+  comp_ezer_list(); // naplní $app_ezers
+  $file_= array_search($name,$app_ezers);
   $list_only= $_list_only;
   $comp_php= $_comp_php;
   $doxygen= 1;
@@ -857,6 +885,8 @@ function export(&$c,$id) {
       $e->lc_= $c->lc_;
     if ( $c->_c )
       $e->_c= $c->_c;
+    if ( isset($c->file_) )
+      $e->file_= $c->file_;
     if ( $c->type=='form' ) {
       // form si pamatuje svůj soubor
       $e->_app= $ezer_app;
@@ -1018,7 +1048,7 @@ function add_call($proc,$lc='',$name='') {
     $c+= strlen($name)-strlen($id);
     $lc= "-$l.$c";
   }
-  $call_ezer[$func_name_lc][]= $id_lc.$lc;
+  $call_ezer[$func_name_lc][]= $id_lc.$lc.(isset($proc->file_)?":$proc->file_":'');
 }
 # ------------------------------------------------------------------------------------- add call_php
 # přidá ezer-fce volání do CG
@@ -2846,6 +2876,7 @@ function get_if_block ($root,&$block,&$id) {
   global $blocs2, $blocs3, $specs, $last_lc;
   global $pragma_syntax, $pragma_group, $pragma_box, $call_php;
   global $errors; if ( $errors ) return false;
+  global $file_;
   $TEST_NEW_VAR= 1;  // ------------------------------------------------- testování var 
   $block= null; $nt= null; $key= $lc= $skip= 0;
   $ok= get_if_keyed_name ($key,$id,$lc,$nt);
@@ -2960,6 +2991,7 @@ function get_if_block ($root,&$block,&$id) {
                                                                      $block->options->name= $id;
                                                                      $block->vars= $vars;
                                                      if ( $doxygen ) $block->lc_= $lc_;
+                                                                     $block->file_= $file_;
                                                        if ( $prior ) $block->options->prior= $prior;
         }
         if ( in_array('code2',$specs[$key])
@@ -2969,6 +3001,7 @@ function get_if_block ($root,&$block,&$id) {
                                                                      $block->options->name= $id;
                                                                      $block->vars= $vars;
                                                      if ( $doxygen ) $block->lc_= $lc_;
+                                                                     $block->file_= $file_;
                                                        if ( $prior ) $block->options->prior= $prior;
         }
         if ( in_array('arg'  ,$specs[$key]) && get_if_args($args)  ) $block->arg= $args;

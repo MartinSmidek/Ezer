@@ -111,6 +111,7 @@ function doc_ezer_fce($info_only=false) { trace();
         $html.= "<dt><a style='background:#fbb' $href>$id</a>.$ln<dd>";
         $del= '';
         foreach ($list as $pfce) {
+          list($pfce,$imodul)= explode(':',$pfce);
           list($pfce)= explode('-',$pfce);
           $html.= "$del$pfce";
 
@@ -253,8 +254,9 @@ function doc_called() { trace();
 }
 # ------------------------------------------------------------------------------------ doc ezer_list
 # seznam Ezer modulů s informací o aktuálnost
+# musí dát stejné seznam jako comp2:comp_ezer_list
 function doc_ezer_list() { trace();
-  global $ezer_path_appl, $ezer_path_code, $ezer_ezer, $ezer_path_root;
+  global $ezer_path_appl, $ezer_path_code, $ezer_ezer;
 //  $TEST= 'tut.cmp';
   // projití složky aplikace
   $files= array();
@@ -486,6 +488,7 @@ function doc_php_cg ($app_php='*',$sys_php0='',$restore=false) { trace();
       if (!count($list)) continue;
       $efcei= "$efce:$isource";
       foreach ($list as $pfce) {
+        list($pfce,$imodul)= explode(':',$pfce);
         list($pfce)= explode('-',$pfce);
         if ($pfce[0]=='$') {
           // volání PHP fcí
@@ -502,7 +505,7 @@ function doc_php_cg ($app_php='*',$sys_php0='',$restore=false) { trace();
         }
         else {  
           // volání mezi ezer funkcemi
-          $pfce= "$pfce:$isource";
+          $pfce= "$pfce:$imodul"; 
           // inverzní CG
           if (!isset($fce[$pfce])) 
             $fce[$pfce]= array();
