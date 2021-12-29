@@ -1727,12 +1727,23 @@ class MenuLeft extends Menu {
 // ------------------------------------------------------------------------------------ enable
 //fm: MenuLeft.enable (enabled)
 //      parametr enabled=0 znecitliví levé menu, enabled=1 je opět povolí
-  enable (enabled) {
-    this.enabled= enabled=="0" ? 0 : enabled;
-    if ( this.enabled )
-      this.DOM_Block.removeClass('disabled3');
-    else
-      this.DOM_Block.addClass('disabled3');
+//      pokud je uveden regulární výraz tags, provede se pro vnořené groups
+  enable (enabled,tags) {
+    if (tags) {
+      for (let i in this.part) {
+        let group= this.part[i];
+        if (group instanceof MenuGroup) {
+          group.enable(enabled,tags);
+        }
+      }
+    }
+    else {
+      this.enabled= enabled=="0" ? 0 : enabled;
+      if ( this.enabled )
+        this.DOM_Block.removeClass('disabled3');
+      else
+        this.DOM_Block.addClass('disabled3');
+    }
     return true;
   }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  excite
