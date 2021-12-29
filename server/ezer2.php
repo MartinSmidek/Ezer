@@ -786,7 +786,7 @@
   // x: table, cond, order, fields, from, cursor, rows, [{joins}] [group [having]]   -- field:{id:i, field:f|expr:s}
   // y: count, from, rows, values[i]
   case 'browse_scroll':
-                                                         debug($x,"browse_scroll");
+//                                                         debug($x,"browse_scroll");
 
     // předávané zpět pro smarter scroll
     $y->r= 0+$x->r;
@@ -1170,7 +1170,7 @@
     $pipe= array();
     // výběr sloupců
     $shows= isset($x->par->show) ? explode(',',$x->par->show) : null;
-                                                                debug($shows,"show={$x->par->show}");
+//                                                                debug($shows,"show={$x->par->show}");
     // konstrukce JOIN
     $joins= '';
     if ( isset($x->joins) ) {
