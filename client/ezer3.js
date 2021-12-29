@@ -1727,13 +1727,18 @@ class MenuLeft extends Menu {
 // ------------------------------------------------------------------------------------ enable
 //fm: MenuLeft.enable (enabled)
 //      parametr enabled=0 znecitliví levé menu, enabled=1 je opět povolí
-//      pokud je uveden regulární výraz tags, provede se pro vnořené groups
+//      pokud je uveden regulární výraz tags, provede se pro vnořené groups a jejich itemy
   enable (enabled,tags) {
     if (tags) {
+      let re= new RegExp(tags);
       for (let i in this.part) {
         let group= this.part[i];
         if (group instanceof MenuGroup) {
           group.enable(enabled,tags);
+          // proveď změnu pro groups s atributem tag vyhovujícím dotazu
+          if ( group.options.tag && re.test(group.options.tag) ) {
+            group.enable(enabled);
+          }
         }
       }
     }
@@ -1913,7 +1918,10 @@ class MenuGroup extends Menu {
 //      změní vzhled na enabled/disabled podle parametru nebo this.options.enabled
   DOM_enabled (on) {
     this._enabled= on ? 1 : 0;
-    if ( !this._enabled ) {
+    if ( this._enabled )
+      this.DOM_Block.removeClass('disabled3');
+    else {
+      this.DOM_Block.addClass('disabled3');
       this._fold();
     }
   }
