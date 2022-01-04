@@ -129,6 +129,7 @@ panel cis [,,,*] {type:'right', title:'Číselníky', _sys:'cis', skill:'m|m'
       var count: number
       count.set(klice.lst.browse_count);
       form.init;
+      mklice.lst.browse_count;
       kdruh.set(mklice.lst.zkratka.get); cis_id.set(mklice.lst.id.get);
       kdruh.change;
       // návrh klíče
