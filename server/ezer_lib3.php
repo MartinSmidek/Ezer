@@ -310,10 +310,14 @@ __EOD;
       }
     }
   }
-  $cookie_usermail= str_replace("'",'',isset($_COOKIE['usermail']) ? $_COOKIE['usermail'] : '');  
-  $cookie_username= str_replace("'",'',isset($_COOKIE['username']) ? $_COOKIE['username'] : '');  
-  $url_pin= "$_SERVER[REQUEST_SCHEME]://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
-  $url_pin.= (strstr($url_pin,'?')===false ? '?' : '&').'pin=2';
+  $nebo_pin= $cookie_usermail= $cookie_username= '';
+  if ($pars->watch_pin) {
+    $cookie_usermail= str_replace("'",'',isset($_COOKIE['usermail']) ? $_COOKIE['usermail'] : '');  
+    $cookie_username= str_replace("'",'',isset($_COOKIE['username']) ? $_COOKIE['username'] : '');  
+    $url_pin= "$_SERVER[REQUEST_SCHEME]://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+    $url_pin.= (strstr($url_pin,'?')===false ? '?' : '&').'pin=2';
+    $nebo_pin= "nebo zaslaného <a href='$url_pin'>PINu</a>";
+  }
   $login= 
       $browser=='IE'
     ? <<<__EOD
@@ -346,7 +350,7 @@ __EOD
         <form id='watch_key' action='$app.php' method='post'>
           <input id='watch_try' name='watch_try' type='hidden' value='' />
           Z tohoto počítače se do aplikace <b>$app_name</b> není možné přihlásit
-          bez vložení $key_msg klíče nebo zaslaného <a href="$url_pin">PINu</a>.
+          bez vložení $key_msg klíče$nebo_pin.
           <br/><br/>O zřízení přístupu je možné v&nbsp;oprávněných případech
           požádat správce systému.
           <br/><br/>Kontaktní údaje jsou uvedeny vpravo.<br><small>$ip_msg</small>
