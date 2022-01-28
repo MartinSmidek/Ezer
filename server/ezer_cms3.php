@@ -483,7 +483,8 @@ function cms_mail_send($address,$subject,$body,$reply='') {
     $mail->IsHTML(true);
     // zpětné adresy
     $mail->ClearReplyTos();
-    $mail->AddReplyTo($reply ? $reply : $EZER->CMS->GMAIL->mail);
+    $replyto= $reply ? $reply : $EZER->CMS->GMAIL->mail;
+    $mail->AddReplyTo($replyto);
     $mail->SetFrom($EZER->CMS->GMAIL->mail, $EZER->CMS->GMAIL->name);
     // vygenerování mailu
     $mail->Subject= $subject;

@@ -332,6 +332,39 @@ class Application {
     jQuery('#login').css('display','block');
     jQuery('#login_msg').text(msg);
   }
+  // ----------------------------------------------------------------------------- loginDomPIN
+  // zjistí, zda je zobrazen přihlašovací dialog pro přihlášení PINem
+  loginDomPIN  () {
+    let watch_pin= jQuery('#watch_pin');
+    if (watch_pin.length) {
+      let usermail= jQuery('#usermail');
+      jQuery('#sent_pin').click( () => { // [Požádat o PIN]
+        this.ask({cmd:'sent_pin',mail:usermail.val()},'loginDomPIN_');
+        return false;
+      }); 
+      jQuery('#send_pin').click( () => { // [Přihlásit]
+        watch_pin[0].action= document.location.href; 
+        watch_pin[0].submit();
+      }); 
+      return true;
+    }
+    else 
+      return false;
+  }
+  // po pokusu o odeslání PINu
+  loginDomPIN_ (y) {
+    if (y.msg) {
+      jQuery('#msg_pin').html(y.msg).css({color:'red'});
+    }
+    else {
+      jQuery('#msg_pin').html('PIN byl odeslán ...').css({color:'green'});
+      jQuery('#pin').focus();
+      // zapamatuj si emailovou adresu
+      Ezer.fce.set_cookie('usermail',jQuery('#usermail').val());
+      Ezer.fce.set_cookie('username',y.username);
+    }
+    return false;
+  }
   // ----------------------------------------------------------------------------- loginDomKey
   // nastaví pro prohlížeč s file_api <span id='watch_key'> - viz fce ae_slib.php:root_php citlivou
   // pro příjem souboru s klíčem
@@ -372,7 +405,7 @@ class Application {
             var r= new FileReader();
             r.onload= function(e) {
               dropZone.find('#watch_try').val(e.target.result);
-              dropZone[0].action= document.location.href; //document.baseURI;     // aby se neztratily GET parametry
+              dropZone[0].action= document.location.href; // aby se neztratily GET parametry
               dropZone[0].submit();
             };
             r.readAsText(files[0]);
@@ -976,7 +1009,9 @@ class Application {
         this.putFoot(' obnovení');
       }
       else {
-        this.loginDomKey();
+        if (!this.loginDomPIN() ) {
+          this.loginDomKey();
+        }
         this.login();
         this.putFoot(' nepřihlášen');
       }

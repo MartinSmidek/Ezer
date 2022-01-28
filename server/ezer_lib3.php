@@ -34,6 +34,7 @@
 #     title_right          -- string: zobrazovat formátované jméno aplikace nebo selektor aplikace
 #     no_local             -- bool: nezohledňovat lokální přístup pro watch_key,watch_ip
 #     watch_key            -- bool: povolit přístup jen po vložení klíče
+#     watch_pin            -- bool: povolit přístup jen po vložení zaslaného PINu
 #     watch_ip             -- bool: povolit přihlášení pouze z IP adres v tabulce _user (default false)
 #     log_login            -- bool: zapisovat přihlašování do _touch (default true)
 #     autologin            -- string: dvojice uname/pword použitá pro automatické přihlášení
@@ -217,6 +218,7 @@ __EOD;
   }
   $js_options->watch_ip= $EZER->options->watch_ip= isset($pars->watch_ip) ? '1' : '0';
   $js_options->watch_key= $EZER->options->watch_key= isset($pars->watch_key) ? '1' : '0';
+  $js_options->watch_pin= $EZER->options->watch_pin= isset($pars->watch_pin) ? '1' : '0';
   $js_options->CKEditor= isset($pars->CKEditor) ? $pars->CKEditor : '{}';
   $js_options->dbg=      isset($pars->dbg) ? $pars->dbg : '0';
   $js_options->ondomready= isset($pars->ondomready) ? $pars->ondomready : '0';
@@ -259,7 +261,7 @@ __EOD;
 //__EOD;
 //  }
 
-  // SLEDOVÁNÍ IP ADRESY
+  // SLEDOVÁNÍ IP ADRESY & vloženého klíče & vloženého PINu
   $ip_ok= true;
   $ip_msg= '';
   $key_msg= '';
@@ -267,14 +269,26 @@ __EOD;
     && (isset($pars->no_local) && $pars->no_local || !$is_local ) ) {
     // ověření přístupu - externí přístup hlídat vždy, lokální jen je-li  no_local=true
     // nejprve klíč hledáme v deep_root až potom v code
-    if ( $pars->watch_key && ($watch_key= isset($_POST['watch_try']) ? $_POST['watch_try'] : '') ) {
+    if ( $pars->watch_key && !isset($_GET['pin'])) {
+      $watch_key= isset($_POST['watch_try']) ? $_POST['watch_try'] : '';
       $abs_root= $_SESSION[$ezer_root]['abs_root'];
       chdir($abs_root);
       $deep_root= "../files/$ezer_root";
       $path= file_exists($deep_root) ? $deep_root : "$ezer_root/code";
       $watch_lock= @file_get_contents("$path/$ezer_root.key");
       $ip_ok= $watch_lock==$watch_key;
-      $key_msg= $ip_ok ? '' : '<u>správného</u>';
+      $key_msg= !$watch_key || $ip_ok ? '' : '<i><b>správného</b></i>';
+    }
+    // zkoumáme, zda bylo použito ověření PINem
+    elseif ( $pars->watch_pin ) {
+      // přečti vygenerovaný PIN
+      $test_pin= isset($_POST['test_pin']) ? $_POST['test_pin'] : '';
+      ezer_connect(".main.",false,true);
+      $made_pin= select("pin","_user","usermail='{$_POST['mail']}'",'ezer_system');
+      query("UPDATE _user SET pin='' WHERE usermail='{$_POST['mail']}'",'ezer_system');
+      $ip_ok= $made_pin && $test_pin && $test_pin==$made_pin;
+      $pin_msg= !$made_pin ? '... požádat o nový PIN' : (
+                 $test_pin=='' ? '... opsat zaslaný PIN' : ($ip_ok ? '' : '... chybně opsaný PIN'));
     }
     elseif ( $pars->watch_ip ) {
       // nejprve zkusíme ověřit známost počítače - zjištění klientské IP
@@ -289,29 +303,37 @@ __EOD;
       if ( !$ip_ok ) {
         // zapiš pokus o neautorizovaný přístup
         $day= date('Y-m-d'); $time= date('H:i:s');
-        $browser= $_SERVER['HTTP_USER_AGENT'];
+        $user_agent= $_SERVER['HTTP_USER_AGENT'];
         $qry= "INSERT _touch (day,time,user,module,menu,msg)
-               VALUES ('$day','$time','','error','ip?','|$my_ip||$browser')";
+               VALUES ('$day','$time','','error','ip?','|$my_ip||$user_agent')";
         $res= pdo_qry($qry);
       }
     }
   }
-  $login= $browser=='IE'
+  $cookie_usermail= str_replace("'",'',isset($_COOKIE['usermail']) ? $_COOKIE['usermail'] : '');  
+  $cookie_username= str_replace("'",'',isset($_COOKIE['username']) ? $_COOKIE['username'] : '');  
+  $url_pin= "$_SERVER[REQUEST_SCHEME]://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+  $url_pin.= (strstr($url_pin,'?')===false ? '?' : '&').'pin=2';
+  $login= 
+      $browser=='IE'
     ? <<<__EOD
         <form id='watch_key' action='$app.php' method='post'>
           <input id='watch_try' name='watch_try' type='hidden' value='nic' />
-          Z tohoto počítače se do aplikace <b>$app_name</b> není možné přihlásit
-          bez vložení $key_msg klíče.
+          S aplikací <b>$app_name</b> není možné pracovat prohlížečem
+          Internet Explorer. 
+          <br/><br/>Použijte prosím jiný novější prohlížeč
+          (Firefix, Chrome, Edge, Safari, ...)
           <br/><br/>O zřízení přístupu je možné v&nbsp;oprávněných případech
           požádat správce systému.
           <br/><br/>Kontaktní údaje jsou uvedeny vpravo.<br><small>$ip_msg</small>
         </form>
 __EOD
-    : ( $ip_ok
+    : ( 
+      $ip_ok
     ? <<<__EOD
         <form id='logme' method="post" onsubmit="return false;" enctype="multipart/form-data">
           <span>uživatelské jméno</span><br />
-          <input id="username" type="text" tabindex="1" title="jméno" name="name" value="" /><br />
+          <input id="username" type="text" tabindex="1" title="jméno" name="name" value="$cookie_username" /><br />
           <span>heslo</span><br />
           <input id="password" type="password" tabindex="2" title="heslo" name="pass"  value="" /><br />
           <span id="login_msg"></span><br />
@@ -320,14 +342,40 @@ __EOD
           </button>
         </form>
 __EOD
-    : ( $pars->watch_key ? <<<__EOD
+    : ( $pars->watch_key && !isset($_GET['pin']) ? <<<__EOD
         <form id='watch_key' action='$app.php' method='post'>
           <input id='watch_try' name='watch_try' type='hidden' value='' />
           Z tohoto počítače se do aplikace <b>$app_name</b> není možné přihlásit
-          bez vložení $key_msg klíče.
+          bez vložení $key_msg klíče nebo zaslaného <a href="$url_pin">PINu</a>.
           <br/><br/>O zřízení přístupu je možné v&nbsp;oprávněných případech
           požádat správce systému.
           <br/><br/>Kontaktní údaje jsou uvedeny vpravo.<br><small>$ip_msg</small>
+        </form>
+__EOD
+    : ( $pars->watch_pin ? <<<__EOD
+        <form id='watch_pin' action='$app.php' method='post'>
+          <input id='state_pin' name='state_pin' type='hidden' value='$pin_msg' />
+          Z tohoto počítače se do aplikace <b>$app_name</b> lze přihlásit
+          po vložení PINu zaslaného na adresu oprávněného uživatele.
+          <p style="margin:15px 0 0 0">
+            <span>mailová adresa oprávněného uživatele</span><br />
+            <input id="usermail" type="text" tabindex="1" title="mail" name="mail" 
+              value="$cookie_usermail" style="width:202px;margin:0" />
+          </p>
+          <p style="margin:3px 0 0 0">
+            <span>zaslaný PIN</span><br/>
+            <input id="pin" tabindex="2" title="PIN" name="test_pin" value="$test_pin" 
+              style="width:60px;margin:0" />
+            <button id="sent_pin" tabindex="3" style="margin-left:15px">
+              Požádat o PIN&nbsp;&nbsp;<i class="fa fa-send-o"></i>
+            </button>
+          </p>
+          <p style="margin:15px 0 0 0">
+            <button id="send_pin" tabindex="4">
+              Přihlásit&nbsp;&nbsp;<i class="fa fa-thumbs-o-up fa-flip-horizontal"></i>
+            </button>
+            <span id="msg_pin" style="margin-left:5px">$pin_msg</span>
+          </p>
         </form>
 __EOD
     : <<<__EOD
@@ -336,7 +384,7 @@ __EOD
         požádat správce systému.
         <br/><br/>Kontaktní údaje jsou uvedeny vpravo.<br><small>$ip_msg</small>
 __EOD
-  ));
+  )));
   // PŘIHLAŠOVACÍ DIALOG
   $chngs= "";
   $css_login= "";

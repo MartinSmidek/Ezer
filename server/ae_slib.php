@@ -438,14 +438,14 @@ function debugx(&$gt,$label=false,$html=0,$depth=64,$length=64,$win1250=0,$getty
   return $x;
 }
 # ---------------------------------------------------------------------------------------------- PHP
-# ASK test PHP kódu
+# ASK test PHP kódu                                     !!! je v konfliktu s phpmailer od verze 6.0
 # Příklad: echo(ask('PHP','global $USER;display("ok");debug($USER);return $USER->options->email;'));
 # (používat výhradně pro účely ladění v debugeru! - eval nevrací paměť - viz informace na webu)
-function PHP($expr) {
-   display($expr);
-   $fce= eval($expr);
-  return $fce;
-}
+//function PHP($expr) {
+//   display($expr);
+//   $fce= eval($expr);
+//  return $fce;
+//}
 /*** ========================================================================================= MySQL */
 # --------------------------------------------------------------------------------------- table_lock
 # mode=on     - pokusí se zamknout daný řádek dané tabulky tzn. zapsat id_user a čas do _lock

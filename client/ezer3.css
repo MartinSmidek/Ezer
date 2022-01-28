@@ -93,7 +93,7 @@ div.tip { position:absolute; display:none; padding:2px 5px; z-index:999999; curs
 #login_2 div.login_notify { padding:5px; }
 #login form { margin:0; padding:0;  }
 #login span { margin:0; padding:0;  }
-#login input { margin:2px 0 10px; padding:0 2px; width:auto; overflow:visible;}
+#login input {margin:2px 0 10px;padding:0 2px;width:auto;overflow:visible;}
 #login h1 { color:#FFFFFF; font-size:9pt; margin:0; padding:2px 5px;}
 #login_on { text-decoration:none; position:absolute; }
 #login_no { position:absolute; left:110px; }

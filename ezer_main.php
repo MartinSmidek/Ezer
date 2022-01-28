@@ -64,6 +64,7 @@
     }
   }
   $_SESSION[$app]['GET']= $_GET;
+  $_SESSION[$app]['POST']= $_POST;
   $_SESSION[$app]['ezer']= '3.1';
   $_SESSION[$app]['ezer_server']= $ezer_server;
 
@@ -186,6 +187,7 @@
     'app_root' => "$rel_root",      // startovní soubory app.php a app.inc.php jsou v kořenu
     'dbg' => $dbg,                                              
     'watch_ip' => false,
+    'watch_pin' => false,
     'watch_key' => false,
     'log_login' => true,        // jádro standardně zapisuje login do _touch (jako ve verzi 2.2)
     'CKEditor' => "{

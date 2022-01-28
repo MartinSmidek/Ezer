@@ -165,7 +165,7 @@ panel cis [,,,*] {type:'right', title:'Číselníky', _sys:'cis', skill:'m|m'
     proc fill(h) { [ h; head.set(replace_fa(conc("<div class='karta'>",h,"</div>"))) ]; }
   }
 }
-# =================================================================================================> AKTIVITY
+# ========================================================================================> AKTIVITY
 panel act [,,*,] {type:'right', title:'Aktivita', _sys:'akt', skill:'a|a;aa|aa'
   menu left { type:'left', format:'f'
     menu a { title:'Aktivní uživatelé',type:'group'
@@ -248,11 +248,11 @@ panel act [,,*,] {type:'right', title:'Aktivita', _sys:'akt', skill:'a|a;aa|aa'
   proc onstart() { skip.set(0) }
   proc onfirstfocus() { left.a.d.click }
 }
-# =================================================================================================> UŽIVATELÉ
+# =======================================================================================> UŽIVATELÉ
 panel users [,,,543] {type:'right', title:'Uživatelé', _sys:'uzi', skill:'a|a'
 
   const sys_users_list = 22
-  const sys_users_skills = 16
+  const sys_users_skills = 14
   const sys_users_cmd = 476
 
   var last_par: object,
@@ -263,7 +263,7 @@ panel users [,,,543] {type:'right', title:'Uživatelé', _sys:'uzi', skill:'a|a'
   use uzivatele: form users [10,7,,],
   use uzivatel: form user [430+180,7,,]
   use cmd: form butt [22,sys_users_cmd,,],
-  use dskill: form desc_skills [430+180,127,,]
+  use dskill: form desc_skills [430+180,127+34,,]
 
   proc onfirstfocus() {
     watch_css;
@@ -341,7 +341,7 @@ panel users [,,,543] {type:'right', title:'Uživatelé', _sys:'uzi', skill:'a|a'
   form users [,,587,470] { css:'ae_work'
     view u: table _user
     view t: table _track { join_type:'NONE', join:"ON abbr=kdo" }
-    label [6,3,89,15] { title:'<h1>Uživatelé</h1>' }
+    label [6,4,89,15] { title:'Uživatelé' css:'karta' style:"color:white;font-size:14px" }
     browse lst [4,37,0,54] { rows:sys_users_list, qry_rows:1, buf_rows:100, group_by:'abbr'
       show user [,,27,] { title:'č.', help:'jednoznačné číslo uživatele',
         data:u.id_user, format:'rsq=' }
@@ -400,32 +400,34 @@ panel users [,,,543] {type:'right', title:'Uživatelé', _sys:'uzi', skill:'a|a'
     }
   }
   # ----------------------------------------------------------------==> ... user
-  form user [,,433,125] { css:'ae_work', style:"z-index:2"
+  form user [,,433,470] { css:'ae_work', // style:"z-index:2"
     view u: table _user,
-    label [5,6,89,15] { title:'<h1>Uživatel</h1>' }
+    label [5,4,89,15] { title:'Uživatel' css:'karta' style:"color:white;font-size:14px" }
     field skills [2,46,146,] { data:u.skills, format:'n' }
     field username [5,48,60,] { data:u.username, title:'^username' }
     field password [74,48,42,] { data:u.password, title:'^heslo', format:'p' }
     field znacka [124,48,34,] { data:u.abbr, title:'^zkratka' }
-    field prijmeni [5,92,152,] { data:u.surname, title:'^příjmení' }
-    field jmeno [168,92,117,] { data:u.forename, title:'^jméno' }
     select org [168,48,66,] { tag:'ac', data:u.org, format:'w', title:'^organizace' }
     select access [242,48,44,] { tag:'ac', data:u.access, format:'w', title:'^přístup k' }
-    edit ips [298,47,127,64] { tag:'ip', data:u.ips, title:'^povolené IP adresy' }
+    edit ips [298,47,127,97] { tag:'ip', data:u.ips, title:'^povolené IP adresy' }
+    field prijmeni [5,87,152,] { data:u.surname, title:'^příjmení' }
+    field jmeno [168,87,117,] { data:u.forename, title:'^jméno' }
+    // pro dvoufázové přihlášení
+    field usermail [5,126,207,] { data:u.usermail, title:'^mailová adresa' }    
     field login { data:u.login }
     field kdo { data:u.zmena_kdo }
     field kdy { data:u.zmena_kdy }
     proc onchanged() { cmd.get.enable(1,'c') }
   }
   # ----------------------------------------------------------------==> ... desc_skills
-  form desc_skills [,,433,200] { css:'ae_work'
-    label [2,3,100,15] { title:'oprávnění' }
+  form desc_skills [,,433,200] { //css:'ae_work'
+    label [5,3,100,15] { title:'oprávnění' }
     label missing [60,3,360,15]
-    browse seznam [2,20,180,198] { rows:sys_users_skills, qry_rows:1, buf_rows:100
+    browse seznam [5,20,180,198] { rows:sys_users_skills, qry_rows:1, buf_rows:100
       show id { data:_skill.id_skill }
       show abb [,,50,] { data:_skill.skill_abbr, title:'kód', format:'utsq*', skill:'a|m'
         proc onsubmit() { this.save } }
-      show dsc [,,345,] { data:_skill.skill_desc, title:'popis oprávnění', format:'uts+q$', skill:'a|m'
+      show dsc [,,343,] { data:_skill.skill_desc, title:'popis oprávnění', format:'uts+q$', skill:'a|m'
         proc onsubmit() { this.save } }
       # ----------------------------------------------==> ... kontext.menu
       menu { type:'context'
@@ -516,7 +518,7 @@ panel users [,,,543] {type:'right', title:'Uživatelé', _sys:'uzi', skill:'a|a'
     } }
   }
 }
-# =================================================================================================> POŽADAVKY
+# =======================================================================================> POŽADAVKY
 # v {root}.ini je možné mít řádky
 #   $EZER->todo->cond_browse= "{skill}:{SQL cond};..."; // např. "p:data IN (2,3)";
 #   $EZER->todo->cond_select= "{skill}:{SQL cond};..."; // např. "data IN (2,3)";
@@ -574,7 +576,7 @@ panel needs [,,770,] {type:'right', title:'Požadavky', _sys:'poz', skill:'sp'
    }
   }
   use u: form pozadavek [12,4,,],
-  # ---------------------------------------------------------------------------------------------==>pozadavek
+  # ------------------------------------------------------------------------------------==>pozadavek
   # editace_požadavku
   form pozadavek [,,740,565] {   //565 770
     const T= 330
@@ -798,8 +800,8 @@ panel needs [,,770,] {type:'right', title:'Požadavky', _sys:'poz', skill:'sp'
     }
   }
 }
-# =================================================================================================> POPUPS
-# -----------------------------------------------------------------------------------------------==> Track
+# ==========================================================================================> POPUPS
+# -----------------------------------------------------------------------------------------==> Track
 # přehled provedených změn
 panel Track [,,540,276] { title:'Historie oprav', type:'popup', css:'dialog'
   use back: form _back [0,16,,] { tabindex:20 },
@@ -824,7 +826,7 @@ panel Track [,,540,276] { title:'Historie oprav', type:'popup', css:'dialog'
     label [0,250,545,] { title:'ÚDAJE: i=vložení (insert), u=úprava, <br>ZÁZNAM: x=smazano, o=obnoveno' }
   }
 }
-# =================================================================================================> MAPY,TABULKY
+# ====================================================================================> MAPY,TABULKY
 table _todo { key_id:'id_todo'
   number id_todo      { key:'primary' }
   number typ          { help:"_cis:s_todo_typ (1:oprava,2:úprava,3:vlastnost)" }
@@ -882,6 +884,8 @@ table _user { key_id:'id_user', db:'ezer_system'
   text options { help:'privátní nastavení|ve formátu JSON' }
   text username,
   text password,
+  text usermail // pro přihlášení pomocí mailu pro $add_pars['watch_pin']==1
+  text pin      // ... místo pro 6 místný PIN
   text state,
   text forename,
   text surname,

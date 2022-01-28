@@ -273,7 +273,7 @@
   $y->qry_ms= 0;
   // ochrana proti ztrátě přihlášení
   if ( (!isset($USER->id_user) || !$USER->id_user)
-    && !in_array($x->cmd,array('user_login','user_prelogin','user_relogin','user_group_login')) ) {
+    && !in_array($x->cmd,array('user_login','user_prelogin','user_relogin','user_group_login','sent_pin')) ) {
     $y->error= "<big>Vaše přihlášení již vypršelo - odhlaste se prosím a znovu přihlaste</big>";
 //     $y->error.= debugx($x);
     $y->value= array();
@@ -1332,6 +1332,46 @@
     break; /* map_load */
   # ================================================================================================ VOLÁNÍ z APP
   # ------------------------------------------------------------------------------------------------ user_login
+  # 
+  case 'sent_pin':
+    $mail= trim($x->mail); $reason= null;
+    if (!$mail) {
+      $y->msg= 'vlož svoji adresu';
+    }
+    elseif (emailIsValid($mail,$reason)) {
+      list($id_user,$username,$usermail)= 
+          select('id_user,username,usermail',"$ezer_system._user","usermail='$mail'"); 
+      if ($id_user) {
+        // vygeneruj a zapiš PIN
+        $rand= mt_rand(100000, 999999);
+        query("UPDATE $ezer_system._user SET pin='$rand' WHERE id_user=$id_user");
+        // pošli mail
+        $app_name= trim($_SESSION[$ezer_root]['app_name']);
+        $subj= "Žádost o přístup do $app_name ($rand)";
+        $body= "<p>Někdo Vaším jménem požádal o přístup do aplikace <b>$app_name</b>,
+            <br>pokud jste to byl vy, napište do položky <i>zaslaný PIN</i> číslo <b>$rand</b>.</p>
+            <p>V opačném případě tento mail ignorujte</p>.";
+        $okmsg= cms_mail_send($usermail,$subj,$body);    
+        if ($okmsg->ok) {
+          $_SESSION[$ezer_root]['note']= ' ok ';
+          $y->username= $username;
+          $y->msg= '';
+        }
+        else {
+          $_SESSION[$ezer_root]['note']= " ko {$okmsg->msg}";
+          $y->msg= 'odeslání PINu selhalo';
+        }
+      }
+      else {
+        $y->msg= 'adresa nemá oprávnění';
+      }
+    }
+    else {
+      $_SESSION[$ezer_root]['note']= " ko $reason";
+      $y->msg= "divná mailová adresa";
+    }
+    break;
+  # ------------------------------------------------------------------------------------------------ user_login
   # přihlášení uživatele, zápis do SESSION, zápis do historie, zjištění klíčů _help
   # x: uname, pword      -- uname nesmí být prázdné
   # y: ok, user_id=id_user, user_abbr
@@ -2276,7 +2316,8 @@ function json_encode_short($data) {
 # -------------------------------------------------------------------------------------------------- browse_status
 # doplněk metody browse.browse_status
 # - z jejího výsledku zkonstruuje části dotazu a celý dotaz bez části LIMIT
-function browse_status($x) {
+# - do WHERE doplní "AND cond"
+function browse_status($x,$cond=1) {
   global $mysql_db, $ezer_db;
   $clmns= ''; $del= '';
   $y= (object)array();
@@ -2349,7 +2390,7 @@ function browse_status($x) {
     $del= ',';
   }
   // redakce odpovědi
-  $y->qry= "SELECT {$y->fields} FROM {$y->table} {$y->joins} WHERE {$y->cond} ";
+  $y->qry= "SELECT {$y->fields} FROM {$y->table} {$y->joins} WHERE ({$y->cond}) AND $cond ";
   if ( isset($x->group) && $x->group ) {
     $y->qry.= " GROUP BY {$x->group}";
     if ( isset($x->having) && $x->having ) $y->qry.= " HAVING {$x->having}";
