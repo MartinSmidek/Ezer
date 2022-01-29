@@ -316,7 +316,7 @@ __EOD;
     $cookie_username= str_replace("'",'',isset($_COOKIE['username']) ? $_COOKIE['username'] : '');  
     $url_pin= "$_SERVER[REQUEST_SCHEME]://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
     $url_pin.= (strstr($url_pin,'?')===false ? '?' : '&').'pin=2';
-    $nebo_pin= "nebo zaslaného <a href='$url_pin'>PINu</a>";
+    $nebo_pin= " nebo zaslaného <a href='$url_pin'>PINu</a>";
   }
   $login= 
       $browser=='IE'

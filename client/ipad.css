@@ -1,0 +1,19 @@
+/* (c) 2022 Martin Smidek <martin@smidek.eu> */
+
+button {
+  background-color: #eee;
+  border-color: #ccc;
+  border-style: solid;
+  border-width: 1px;
+  border-radius: 2px;
+}
+
+input {
+  padding:1px 2px;
+  background-color: #fff;
+  border-color: #ccc;
+  border-style: solid;
+  border-width: 1px;
+  border-radius: 2px;
+}
+

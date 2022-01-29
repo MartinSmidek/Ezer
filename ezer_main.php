@@ -39,6 +39,9 @@
   // verze 5 awesome fontu?
   $awe= isset($_GET['awe']) && $_GET['awe']==5 ? 5 : 4;
 
+  // styly pro mobilní zařízení
+  $ipad= isset($_GET['mobil']) && $_GET['mobil']==1;
+
   // parametry aplikace
   $app= $app_root;
   $CKEditor= isset($_GET['editor'])  ? $_GET['editor']  : (isset($_COOKIE['editor']) ? $_COOKIE['editor']  : '4.6');
@@ -154,6 +157,7 @@
         return "$http_rel_root/$x$v_app";
       },$app_js)
   );
+  if ($ipad) $app_css[]= "ezer3.1/client/ipad.css";
   $app_css= array_values(array_filter($app_css)); // vynechání všech false
   $css= array_merge(
     array("$client/ezer3.css$v_sys","$client/ezer3.css.php=skin",  
