@@ -276,8 +276,8 @@ __EOD;
       // zjištění dosud povolených IP
       $ips= select("GROUP_CONCAT(ips)","_user","ips!=''",'ezer_system');
       // kontrola
-      $ips= str_replace(' ','',$ips);
-      $ip_ok= strpos(",$ips,",",$my_ip,")!==false;
+      $ips= preg_split('~\s*,\s*~',$ips);
+      $ip_ok= in_array($my_ip,$ips);
       if ( !$ip_ok ) {
         // zapiš pokus o neautorizovaný přístup
         $day= date('Y-m-d'); $time= date('H:i:s');
