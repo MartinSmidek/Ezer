@@ -262,14 +262,32 @@ __EOD;
 //  }
 
   // SLEDOVÁNÍ IP ADRESY & vloženého klíče & vloženého PINu
-  $ip_ok= true;
+  $ip_ok= false;
   $ip_msg= '';
   $key_msg= '';
   if ( (isset($pars->watch_ip) || isset($pars->watch_key))
-    && (isset($pars->no_local) && $pars->no_local || !$is_local ) ) {
     // ověření přístupu - externí přístup hlídat vždy, lokální jen je-li  no_local=true
-    // nejprve klíč hledáme v deep_root až potom v code
-    if ( $pars->watch_key && !isset($_GET['pin'])) {
+    && (isset($pars->no_local) && $pars->no_local || !$is_local ) ) {
+    // 1) pokud se má hlídat IP a je v pořádku
+    if ( $pars->watch_ip ) {
+      // nejprve zkusíme ověřit známost počítače - zjištění klientské IP
+      $my_ip= isset($_SERVER['HTTP_X_FORWARDED_FOR'])
+        ? $_SERVER['HTTP_X_FORWARDED_FOR'] : $_SERVER['REMOTE_ADDR'];
+      // zjištění dosud povolených IP
+      $ips= select("GROUP_CONCAT(ips)","_user","ips!=''",'ezer_system');
+      // kontrola
+      $ips= str_replace(' ','',$ips);
+      $ip_ok= strpos(",$ips,",",$my_ip,")!==false;
+      if ( !$ip_ok ) {
+        // zapiš pokus o neautorizovaný přístup
+        $day= date('Y-m-d'); $time= date('H:i:s');
+        $user_agent= $_SERVER['HTTP_USER_AGENT'];
+        query("INSERT _touch (day,time,user,module,menu,msg)
+               VALUES ('$day','$time','','error','ip?','|$my_ip||$user_agent')");
+      }
+    }
+    // 2) potom, není-li zadán PIN tak hledáme klíč v deep_root (nekorektně kvůli kompatibilitě i v code)
+    if ( !$ip_ok && $pars->watch_key && !isset($_GET['pin'])) {
       $watch_key= isset($_POST['watch_try']) ? $_POST['watch_try'] : '';
       $abs_root= $_SESSION[$ezer_root]['abs_root'];
       chdir($abs_root);
@@ -279,8 +297,8 @@ __EOD;
       $ip_ok= $watch_lock==$watch_key;
       $key_msg= !$watch_key || $ip_ok ? '' : '<i><b>správného</b></i>';
     }
-    // zkoumáme, zda bylo použito ověření PINem
-    elseif ( $pars->watch_pin ) {
+    // 3) nakonec zkoumáme, zda bylo použito ověření PINem
+    elseif ( !$ip_ok && $pars->watch_pin ) {
       // přečti vygenerovaný PIN
       $test_pin= isset($_POST['test_pin']) ? $_POST['test_pin'] : '';
       ezer_connect(".main.",false,true);
@@ -290,25 +308,9 @@ __EOD;
       $pin_msg= !$made_pin ? '... požádat o nový PIN' : (
                  $test_pin=='' ? '... opsat zaslaný PIN' : ($ip_ok ? '' : '... chybně opsaný PIN'));
     }
-    elseif ( $pars->watch_ip ) {
-      // nejprve zkusíme ověřit známost počítače - zjištění klientské IP
-      $my_ip= isset($_SERVER['HTTP_X_FORWARDED_FOR'])
-        ? $_SERVER['HTTP_X_FORWARDED_FOR'] : $_SERVER['REMOTE_ADDR'];
-      // zjištění dosud povolených IP
-      ezer_connect(".main.",false,true);
-      $ips= select("GROUP_CONCAT(ips)","_user","ips!=''",'ezer_system');
-      // kontrola
-      $ips= str_replace(' ','',$ips);
-      $ip_ok= strpos(",$ips,",",$my_ip,")!==false;
-      if ( !$ip_ok ) {
-        // zapiš pokus o neautorizovaný přístup
-        $day= date('Y-m-d'); $time= date('H:i:s');
-        $user_agent= $_SERVER['HTTP_USER_AGENT'];
-        $qry= "INSERT _touch (day,time,user,module,menu,msg)
-               VALUES ('$day','$time','','error','ip?','|$my_ip||$user_agent')";
-        $res= pdo_qry($qry);
-      }
-    }
+  }
+  else {
+    $ip_ok= true; // nechráněný přihlašovací dialog dialog 
   }
   $nebo_pin= $cookie_usermail= $cookie_username= '';
   if ($pars->watch_pin) {
@@ -346,7 +348,7 @@ __EOD
           </button>
         </form>
 __EOD
-    : ( $pars->watch_key && !isset($_GET['pin']) ? <<<__EOD
+    : ( $pars->watch_key && (!isset($_GET['pin']) || !$_GET['pin']) ? <<<__EOD
         <form id='watch_key' action='$app.php' method='post'>
           <input id='watch_try' name='watch_try' type='hidden' value='' />
           Z tohoto počítače se do aplikace <b>$app_name</b> není možné přihlásit
