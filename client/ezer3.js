@@ -2837,6 +2837,7 @@ class Var extends Block {
         var form= new Form(this,ctx[0],DOM,this.options,ctx[0].id);
         this.set(form);
         this.value.id= id;
+        this.DOM_Block= form.DOM_Block;
       }
       else if ( desc._of=='area' && typeof Area==="function" ) {
         let name= desc._init,
