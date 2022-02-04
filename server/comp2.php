@@ -389,9 +389,9 @@ function list_parts($x) {
 function dbg_context_load ($ctx) {  #trace();
   $log= "";
   // části funkce comp2:comp_file
-  require_once("ezer3.1/server/comp2.php");
-  global $ezer_path_root, $including, $code, $context, $errors, $includes;
+  global $ezer_version, $ezer_path_root, $including, $code, $context, $errors, $includes;
   global $call_php, $call_ezer;
+  require_once("$ezer_version/server/comp2.php");
   $call_php= $call_ezer= array();
   $errors= 0;
   try {

@@ -984,7 +984,7 @@ function ask3(x,then) {
   x.root= Ezer.root;                  // název/složka aplikace
   x.app_root= Ezer.app_root;          // {root].inc.php je ve složce aplikace
   jQuery.ajax({
-    url: 'ezer3.1/server/ezer3.php',
+    url: 'ezer3.2/server/ezer3.php',
     method: 'POST',
     data: x
   })

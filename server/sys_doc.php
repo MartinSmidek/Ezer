@@ -323,7 +323,7 @@ function doc_ezer_state ($fname,&$files) { trace();
 #   .html     -- text chybových hlášek
 # pokud se nezměnily $app_php,$sys_php bere se objekt z SESSION[app][CG], pokud neni $restore
 function doc_php_cg ($app_php='*',$sys_php0='',$restore=false) { trace();
-  global $ezer_root, $ezer_path_root, $EZER, $ezer_php_libr, $ezer_php;
+  global $ezer_version, $ezer_root, $ezer_path_root, $EZER, $ezer_php_libr, $ezer_php;
   // optimalizace - CG necháváme v SESSION
   if (!$restore && isset($_SESSION[$ezer_root]['CG']) 
       && $app_php==$_SESSION[$ezer_root]['CG']->app_php
@@ -335,15 +335,14 @@ function doc_php_cg ($app_php='*',$sys_php0='',$restore=false) { trace();
   // jinak vypočteme a uložíme do SESSION
                           display('přepočet CG');
   if (stripos($sys_php0,'comp2.php')) {
-//    require "$ezer_path_root/ezer3.1/comp.php";
-    require "$ezer_path_root/ezer3.1/server/comp2.php";
+    require "$ezer_path_root/$ezer_version/server/comp2.php";
   }
   if ($sys_php0=='*')
     $sys_php= implode(',',$ezer_php_libr);
   else
     $sys_php= $sys_php0;
   $html= "";
-  $ezer_path= "$ezer_path_root/{$EZER->version}";
+  $ezer_path= "$ezer_path_root/$ezer_version";
   $fnames= array();
   if ($app_php) {
     $fnames= $app_php=='*' ? $ezer_php : explode(",",$app_php);
@@ -355,7 +354,7 @@ function doc_php_cg ($app_php='*',$sys_php0='',$restore=false) { trace();
     foreach ($php_sys as $i=>$fname) { 
       $fpath= "$ezer_path_root/$fname"; 
       $fpath= $fname; 
-      $fpath= str_replace('ezer3.1/../ezer3.1','ezer3.1',$fpath);
+      $fpath= str_replace("$ezer_version/../$ezer_version",$ezer_version,$fpath);
       if (!in_array($fpath,$fnames))
         $fnames[]= $fpath; 
     }
@@ -959,8 +958,8 @@ function map_user() {
 # ----------------------------------------------------------------------------------------- doc todo
 # vygeneruje přehled aktivit podle menu
 function doc_todo1($item,$source='app',$nic="<dl class='todo'><dt>V tomto období nebyly změny</dt></dl>") {
-  global $ezer_path_todo, $EZER, $ezer_path_root;
-  $ezer_path= "$ezer_path_root/{$EZER->version}";
+  global $ezer_path_todo, $ezer_version, $ezer_path_root;
+  $ezer_path= "$ezer_path_root/$ezer_version";
   $html= "<div class='CSection CMenu'>";
   $path= $source=='app' ? $ezer_path_todo : "$ezer_path/wiki/";
   $nove= 12;

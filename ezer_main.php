@@ -13,7 +13,7 @@
  */
 //  echo("ezer_main.php start, ezer_server=$ezer_server");
 
-  global $app_root, $ezer_root, $api_key;
+  global $app_root, $ezer_root, $api_key, $ezer_version;
   $ezer_root= $app_root;
   
   // platí buďto isnull($ezer_local) nebo isnull($ezer_server)
@@ -68,7 +68,7 @@
   }
   $_SESSION[$app]['GET']= $_GET;
   $_SESSION[$app]['POST']= $_POST;
-  $_SESSION[$app]['ezer']= '3.1';
+  $_SESSION[$app]['ezer']= substr($ezer_version,4);
   $_SESSION[$app]['ezer_server']= $ezer_server;
 
   // přepínač pro fáze migrace pod PDO - const EZER_PDO_PORT=1|2|3
@@ -102,24 +102,24 @@
   set_include_path(get_include_path().PATH_SEPARATOR.$abs_root);
   $_POST['root']= $ezer_root;
 
-  require_once("$abs_root/ezer3.1/server/ezer_pdo.php");
+  require_once("$abs_root/$ezer_version/server/ezer_pdo.php");
   require_once("$app.inc.php");
   
   $cms= "$http://$rel_root/$ezer_root";
-  $ezer31= "$http://$rel_root/ezer3.1";
-  $client= "$http://$rel_root/ezer3.1/client";
+  $ezer3= "$http://$rel_root/$ezer_version";
+  $client= "$http://$rel_root/$ezer_version/client";
   $licensed= "$client/licensed";
 
   // klíče, pokud jsou dostupné
-  $deep_root= "../files/ezer3.1";
+  $deep_root= "../files/$ezer_version";
   if ( @file_exists("$deep_root/ezer.keys.php"))
     require_once("$deep_root/ezer.keys.php");
   
-  // pokud existují soubory $app/version.php (resp. $app_version_in/version.php) a $ezer31/version.php 
+  // pokud existují soubory $app/version.php (resp. $app_version_in/version.php) a $ezer3/version.php 
   // použij proměnnou $version pro výběr aktuální verze *.js
   $v_sys= '';
-  if (file_exists("$abs_root/ezer3.1/version.php")) {
-    require "$abs_root/ezer3.1/version.php";
+  if (file_exists("$abs_root/$ezer_version/version.php")) {
+    require "$abs_root/$ezer_version/version.php";
     $v_sys= "?v=$version";
   }
   $v_app= '';
@@ -135,14 +135,14 @@
   $app_js= array_values(array_filter($app_js)); // vynechání všech false
   $js= array_merge(
     // ckeditor 
-    array("$licensed/ckeditor$CKEditor/ckeditor.js"),
+    array($CKEditor ? "$licensed/ckeditor$CKEditor/ckeditor.js" : ''),
     // kalendářový prvek
     array("$licensed/pikaday/pikaday.js"),
     // jQuery
     array("$licensed/jquery-$jQuery.min.js","$licensed/jquery-noconflict.js","$client/licensed/jquery-ui.min.js"),
     // podpora dotykového ovládání
     array($touch ? "$licensed/jquery.touchSwipe.min.js" : ''),
-    // jádro Ezer3.1
+    // jádro Ezer
     array(
       "$client/ezer_app3.js$v_sys","$client/ezer3.js$v_sys","$client/ezer_area3.js$v_sys",
       "$client/ezer_rep3.js$v_sys","$client/ezer_lib3.js$v_sys","$client/ezer_tree3.js$v_sys"
@@ -157,7 +157,7 @@
         return "$http_rel_root/$x$v_app";
       },$app_js)
   );
-  if ($ipad) $app_css[]= "ezer3.1/client/ipad.css";
+  if ($ipad) $app_css[]= "$ezer_version/client/ipad.css";
   $app_css= array_values(array_filter($app_css)); // vynechání všech false
   $css= array_merge(
     array("$client/ezer3.css$v_sys","$client/ezer3.css.php=skin",  
@@ -180,8 +180,8 @@
     'path_files_href' => "'$path_files_href'",  // relativní cesta do složky docs/{root}
     'path_files_s' => "'$path_files_s'",        // absolutní cesta do složky docs/{root}
     'path_files_h' => "'$path_files_h'",        // absolutní cesta do složky ../files/{root}
-    'server_url'   => "'$ezer31/server/ezer2.php'",
-    'kernel_url'   => "'$ezer31'"
+    'server_url'   => "'$ezer3/server/ezer2.php'",
+    'kernel_url'   => "'$ezer3'"
   );
 
   $pars= (object)array(

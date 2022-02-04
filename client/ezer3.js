@@ -1,4 +1,4 @@
-// Ezer3.1 - část nezávislá na jQuery 
+// Ezer3.x - část nezávislá na jQuery 
 /* global Ezer, Object, Function, google, gapi, args, CKEDITOR, SMap, Loader */ // pro práci s Netbeans
 "use strict";
 // 'DOM' je vlastnost se kterou se smí pracovat jen jako s celkem

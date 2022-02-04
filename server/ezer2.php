@@ -22,7 +22,7 @@
     ini_set('display_errors', 'Off');
   # --------------------------------------------------------------------------------- paths, globals
   # globální objekty ($json bude v PHP6 zrušeno)
-  global $app_root, $ezer_root, $ezer_path_serv, $ezer_path_appl, $ezer_path_root, $ezer_db, $ezer_system, $hash_password;
+  global $ezer_version, $app_root, $ezer_root, $ezer_path_serv, $ezer_path_appl, $ezer_path_root, $ezer_db, $ezer_system, $hash_password;
   global $ezer_local, $ezer_server;
   global $json, $USER, $EZER, $ezer_user_id;
   date_default_timezone_set("Europe/Prague");
@@ -55,7 +55,7 @@
   }
   # -------------------------------------------------------------------------- test verze jádra EZER
   # při zjištění staré verze jádra v SESSION je vynucen restart 
-  elseif ( isset($_SESSION[$ezer_root]['ezer']) && $_SESSION[$ezer_root]['ezer']!='3.1' ) {
+  elseif ( isset($_SESSION[$ezer_root]['ezer']) && $_SESSION[$ezer_root]['ezer']!='3.2' ) {
     header('Content-type: application/json; charset=UTF-8');
     $y= (object)array('session_none'=>1,'error'=>'nepovolený souběh se starou verzí jádra');
     $yjson= json_encode($y);
@@ -2054,7 +2054,7 @@
   case 'load_code2': // (name)
 //                                         debug($x,'load_code2');
 //    try {
-      global $ezer_path_serv,$ezer_path_appl, $ezer_path_code, $ezer_root, $code, $errors, $err;
+      global $ezer_version, $ezer_path_serv,$ezer_path_appl, $ezer_path_code, $ezer_root, $code, $errors, $err;
       require_once("$ezer_path_serv/comp2.php");
       require_once("$ezer_path_serv/comp2def.php");
       $y->error= '';
@@ -2066,7 +2066,7 @@
         $part= array_pop($parts);
         list($app,$fname)= explode('/',$part->file);
         // pokud je $app jádrem (začíná $app=ezer) zaměníme $all za aktuální verzi Ezer
-        $app= substr($app,0,4)=='ezer' ? $EZER->version : $app;
+        $app= substr($app,0,4)=='ezer' ? $ezer_version : $app;
         $ename= "$ezer_path_root/$app/$fname.ezer";
         $cname= "$ezer_path_root/$app/code/$fname.json";
         $xname= "$ezer_path_serv/comp2.php";

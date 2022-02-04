@@ -59,7 +59,7 @@ function root_php3($app,$app_name,$welcome,$skin,$options,$js,$css,$pars=null,$c
     fce_error("inconsistent server setting (3)");
   $is_local= is_null($ezer_local) ? !$ezer_server : $ezer_local;
 
-  global $EZER, $app_root, $ezer_root, $ezer_path_serv, $ezer_path_docs, $gc_maxlifetime, $http;
+  global $EZER, $ezer_version, $app_root, $ezer_root, $ezer_path_serv, $ezer_path_docs, $gc_maxlifetime, $http;
   // převzetí url-parametrů
   $menu=    isset($_GET['menu']) ? $_GET['menu'] : '';
   $xtrace=  isset($_GET['trace']) ? $_GET['trace'] : '';
@@ -154,15 +154,8 @@ __EOD;
     isset($_SESSION[$ezer_root]['sess_state']) && $_SESSION[$ezer_root]['sess_state']=='on'
     ? 'true' : 'false');
   if ( $is_local && isset($_GET['skin']) ) {
-//    $_SESSION['skin']= $skin;
     $title.= "/$skin";
   }
-//                                                                                 ZRUŠENO 31.1.2015
-//   // zjištění a zapamatování svn-verze (jen na serveru, kam je ukládáno pomocí svn.update)
-//   $verze= root_svn("{$EZER->version},$ezer_root");
-//   if ( $verze ) {
-//     $_SESSION[$ezer_root]['svn_version']= $verze;
-//   }
    // zjištění a zapamatování git-verze (jen na serveru, kam je ukládáno pomocí git pull)
    $_SESSION[$ezer_root]['git_ezer']= root_git(0);
    $_SESSION[$ezer_root]['git_app']=  root_git(1);
@@ -541,7 +534,7 @@ __EOD;
     Ezer.obj= {}; 
     Ezer.root= '$app';
     Ezer.app_root= '$app_root';
-    Ezer.version= '{$EZER->version}';
+    Ezer.version= '$ezer_version';
     Ezer.server= '$ezer_server';
     Ezer.options= { $options_txt
     };
@@ -563,7 +556,7 @@ __EOD;
 </html>
 __EOD;
   // definice možných HTML template stránky
-  $version= "title='jádro {$EZER->version}'";
+  $version= "title='jádro $ezer_version'";
   switch ($ezer_template) {
   case 'IE':
 # ------------------------------------------------------------------------------- HTML IE
@@ -784,7 +777,7 @@ __EOD;
 function root_inc3($db,$dbs,$tracking,$tracked) { //,$path_root=null,$path_pspad=null) {
 
   global // import
-    $ezer_root, $EZER, $ezer_local, $ezer_server;
+    $ezer_root, $EZER, $ezer_local, $ezer_server, $ezer_version;
   // platí buďto isset($ezer_local) nebo isset($ezer_server)
   if ( is_null($ezer_local) && is_null($ezer_server) ) 
     fce_error("inconsistent server setting (4)");
@@ -824,7 +817,7 @@ function root_inc3($db,$dbs,$tracking,$tracked) { //,$path_root=null,$path_pspad
   $ezer_path_libr= "$ezer_path_root/$ezer_root";
   $ezer_path_docs= "$ezer_path_root/docs";
   $ezer_path_code= "$ezer_path_appl/code";
-  $ezer_path_serv= "$ezer_path_root/{$EZER->version}/server";
+  $ezer_path_serv= "$ezer_path_root/$ezer_version/server";
   $ezer_path_svn= null;
   $ezer_path_todo= "$ezer_path_root/wiki";
 //  $ezer_path_pspad= $path_pspad ? $path_pspad[$sada] : null;
@@ -839,6 +832,6 @@ function root_inc3($db,$dbs,$tracking,$tracked) { //,$path_root=null,$path_pspad
   $EZER->activity->touch_limit= 50; // počet dotyků (ae_hits) po kterých je uskutečněn zápis do _touch
   $EZER->activity->colors= "80:#f0d7e4,40:#e0d7e4,20:#dce7f4,0:#e7e7e7";  // viz system.php::sys_table
   // knihovní moduly
-  require_once("$ezer_path_root/ezer3.1/ezer2_fce.php");
+  require_once("$ezer_path_root/$ezer_version/ezer2_fce.php");
 }
 

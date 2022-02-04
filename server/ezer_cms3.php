@@ -464,9 +464,9 @@ function cms_mail_valid($email,&$reason) {
  * @return object {ok:0/1,msg:''/popis chyby}
  */
 function cms_mail_send($address,$subject,$body,$reply='') { 
-  global $EZER;
+  global $EZER, $ezer_version;
   $ret= (object)array('ok'=>1,'msg'=>'');
-  require 'ezer3.1/server/vendor/autoload.php';
+  require "$ezer_version/server/vendor/autoload.php";
   // nastavení phpMail
   $mail= new PHPMailer(true);
   try {

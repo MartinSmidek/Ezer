@@ -232,9 +232,9 @@ function sys_user_skilled($skill) {
 # proveden kontrolu konzistence oprávnění, pokud je zadáno jméno souboru
 # vygeneruje přehlednou tabulku oprávnění pro Excel
 function sys_user_skills($file='') {
-  global $ezer_system;
+  global $ezer_system, $ezer_version;
   if (!function_exists('Excel5_n2col')) {
-   require_once 'ezer3.1/server/vendor/autoload.php';
+   require_once "$ezer_version/server/vendor/autoload.php";
   }
   $result= '';
   $cells= $clmns= $rows= array();

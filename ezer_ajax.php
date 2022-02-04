@@ -8,9 +8,7 @@
  * $tracked
 */
  
-  const EZER_version= 3.1;
-
-  global $ezer_root;
+  global $ezer_root, $ezer_version;
   
   // platí buďto isnull($ezer_local) nebo isnull($ezer_server)
   global $ezer_local;
@@ -46,9 +44,9 @@
 
   chdir($abs_root);//("../..");
 
-  require_once("$abs_root/ezer".EZER_version."/server/ezer_pdo.php");
-  require_once("$abs_root/ezer".EZER_version."/server/ae_slib.php");
-  require_once("$abs_root/ezer".EZER_version."/server/ezer_lib3.php");
+  require_once("$abs_root/$ezer_version/server/ezer_pdo.php");
+  require_once("$abs_root/$ezer_version/server/ae_slib.php");
+  require_once("$abs_root/$ezer_version/server/ezer_lib3.php");
 
 //  $path_root=  array($abs_root,$abs_root);
 //  $path_pspad= null;
@@ -69,14 +67,13 @@
   $ezer_ezer= array();
   
   // standardní moduly v PHP obsažené v $ezer_path_root/ezer2 - vynechané v dokumentaci
-//  $server= "$abs_root/{$EZER->version}/server";
-  $server= "../{$EZER->version}/server";
+  $server= "../$ezer_version/server";
   $ezer_php_libr= array(
     "$server/ezer_pdo.php",
     "$server/ae_slib.php",
     "$server/ezer_lib3.php",
     "$server/reference.php",
-    "../{$EZER->version}/ezer2_fce.php",
+    "../$ezer_version/ezer2_fce.php",
     "$server/sys_doc.php",
     "$server/ezer2.php",
 //    "$server/vendor/autoload.php"
@@ -85,7 +82,7 @@
   // uživatelské i knihovní moduly v PHP obsažené v $ezer_path_root
   $ezer_php= array_merge(
     $app_php
-//    array("ezer3.1/ezer2_fce.php")
+//    array("ezer3.x/ezer2_fce.php")
   );
 
   // vložení modulů

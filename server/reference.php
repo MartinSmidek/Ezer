@@ -10,7 +10,7 @@ function i_doc($typ,$fnames='') {   trace();
   global $i_doc_info, $i_doc_class, $i_doc_id, $i_doc_t, $i_doc_ref, $i_doc_err, $i_doc_n, $i_doc_file;
   $i_doc_info= array(); $i_doc_class= $i_doc_id= $i_doc_ref= $i_doc_err= ''; $i_doc_n= 0;
 //                                                 display("i_doc($typ,$fnames)");
-  global $EZER, $mysql_db;
+  global $ezer_version, $mysql_db;
   ezer_connect($mysql_db);
   $text= '';
   switch ( $typ ) {
@@ -34,7 +34,7 @@ function i_doc($typ,$fnames='') {   trace();
     // vytvoření seznamu jmen i s cestami
     $fdescs= array();
     foreach ( explode(',', $ezer_comp_ezer) as $fname ) {
-        $fdescs[] = (object) ['path' => "$ezer_path_root/{$EZER->version}/client/$fname.js", 
+        $fdescs[] = (object) ['path' => "$ezer_path_root/$ezer_version/client/$fname.js", 
             'name' => $fname];
       }
       if ( $ezer_comp_root )

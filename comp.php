@@ -1,6 +1,7 @@
 <?php # (c) 2008-2019 Martin Smidek <martin@smidek.eu>
   
-const EZER_version= 3.1;
+  // verze použitého jádra Ezeru
+  $ezer_version= "ezer3.2"; 
 
 # screen=1 zobrazí rozměr klientské části
 
@@ -69,10 +70,10 @@ const EZER_version= 3.1;
   // seznam složky aplikace
   $ezer_root= $root;
   $state= '';
-  $ezer_path_root= str_replace("/ezer3.1/comp.php","",$_SERVER['SCRIPT_FILENAME']);
+  $ezer_path_root= str_replace("/$ezer_version/comp.php","",$_SERVER['SCRIPT_FILENAME']);
   $ezer_path_appl= "$ezer_path_root/$root";
   $ezer_path_code= "$ezer_path_root/$root/code";
-  $ezer_path_serv= "$ezer_path_root/ezer3.1/server";
+  $ezer_path_serv= "$ezer_path_root/$ezer_version/server";
   require_once("server/comp2.php");
   require_once("server/comp2def.php");
   $files= array();
@@ -135,9 +136,9 @@ const EZER_version= 3.1;
       unset($ezer_local);
     }
     require_once("server/reference.php");
-    if ( $root=='ezer3.1' ) {
+    if ( $root==$ezer_version ) {
       global $EZER;
-      $EZER= (object)array('version'=>'ezer3.1');
+      $EZER= (object)array('version'=>$ezer_version);
       $ezer_comp_ezer= "app,area,ezer,ezer_report,ezer_fdom1,ezer_fdom2";
       $ezer_comp_root= "";
       $root_inc= file_exists("$ezer_path_root/$root.inc.php") ? "$root.inc.php" : "$root.inc";

@@ -1,7 +1,7 @@
 <?php # (c) 2007-2018 Martin Smidek (martin@smidek.eu)
 
 /** 
- * upgrade do verze Ezer3.1
+ * upgrade do verze Ezer3.x
  * ------------------------
  * - substituce mysql_* na pdo_*
  * - založení ezer_pdo.php pro funkce: ezer_connect, pdo_*
@@ -14,7 +14,7 @@
 # zjistí git-verzi běžící aplikace pro $app=1 nebo jádra pro $app=0
 #   verzí se rozumí datum posledního update souboru .git/refs/heads/master
 function root_git($app=0) {
-  global $EZER, $ezer_root;
+  global $ezer_root, $ezer_version;
   $tstamp= 0;
   $git_path= ".git/refs/heads/master";
   if ( $app ) {
@@ -30,7 +30,7 @@ function root_git($app=0) {
     }
   }
   else {
-    $path= "{$EZER->version}/$git_path" ;
+    $path= "$ezer_version/$git_path" ;
     if ( file_exists($path) ) {
       $tstamp= filemtime($path);
     }    
@@ -41,11 +41,11 @@ function root_git($app=0) {
 # ----------------------------------------------------------------------------------------- root svn
 # zjistí svn-verzi běžící aplikace pro $app=1 nebo jádra pro $app=0
 function root_svn($app=0) {
-  global $EZER, $ezer_root, $ezer_path_root;
+  global $ezer_version, $ezer_root, $ezer_path_root;
   $verze= "?";
   if ( defined("SQLITE3_ASSOC") ) {
     $sub_root= $_SESSION[$ezer_root]['app_root'] ? "/$ezer_root": '';
-    $sub= $app ? ($sub_root ?: '') : "/$EZER->version";
+    $sub= $app ? ($sub_root ?: '') : "/$ezer_version";
     $db_file= "$ezer_path_root$sub/.svn/wc.db";
     if ( file_exists($db_file) ) {
       $db=@ new SQLite3($db_file);
@@ -1569,7 +1569,6 @@ function uw($x) {
 # -------------------------------------------------------------------------------------- Excel5 date
 # Excel5_date převede timestamp na excelovské datum
 function Excel5_date($tm) {  #trace();
-//  require_once 'ezer3.1/server/vendor/autoload.php';
   return PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel($tm);
 }
 # ------------------------------------------------------------------------------------------- Excel5
@@ -1609,7 +1608,6 @@ function Excel2007($desc) {
 function Excel5($desc,$gen=1,&$wb=null,$dir='',$excel='xls') {  #trace();
   global $ezer_path_root;
   // natáhneme knihovny
-//  require_once 'ezer3.1/server/vendor/autoload.php';
   // pro testování a vývoj
   $list= false;
   if (!$desc || $desc=='0') {

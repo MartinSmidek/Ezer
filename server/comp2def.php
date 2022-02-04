@@ -1,7 +1,7 @@
 <?php # (c) 2007-2009 Martin Smidek <martin@smidek.eu>
 # ================================================================================================== DEFINICE
 function compiler_init () {
-global $wiki;
+global $wiki, $ezer_version;
 global $blocs, $specs, $attribs, $uni_attribs, $blocs_help, $attribs_type, $tab_symb_obj;
 global $tab_id_symb, $cmd_ajax, $cmd_gen, $cmd_lib, $gen_prefix, $use_list, $js1, $js2, $js3, $js3_ic;
 global $id_anonymous, $first_panel, $attribs1, $attribs2, $keywords, $dels, $tok2lex;
@@ -10,7 +10,7 @@ global $blocs2, $blocs3,$block_get, $ezer_path_code, $ezer_path_root, $names;
 if ( file_exists("$ezer_path_code/comp2tab.php") )
   require_once("$ezer_path_code/comp2tab.php");
 else
-  require_once("$ezer_path_root/ezer3.1/code/comp2tab.php");
+  require_once("$ezer_path_root/$ezer_version/code/comp2tab.php");
 // doplnění interních jmen
 $names['apply']= (object)array('op'=>'ff');
 # možné události

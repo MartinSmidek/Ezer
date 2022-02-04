@@ -1,12 +1,12 @@
 /* části app.js a ezer_dom1.js portované z mootools do jQuery */
-/* Ezer3.1                             (C) 2017 Martin Šmídek */
-/* Ezer3.1        (C) 2009 Martin Šmídek */
+/* Ezer3.x                             (C) 2017 Martin Šmídek */
+/* Ezer3.x        (C) 2009 Martin Šmídek */
 /* global Object, Ezer, Browser, gapi, Cookie, Function, args, Block, ListRow, Form, List, Browse, self, Menu, Panel, CKEDITOR, PanelPopup, Var */
 
 "use strict";
 // <editor-fold defaultstate="collapsed" desc="++++++++++++++++++++++++++ EZER inicializace">
 //Ezer.root                     je definován v hlavním programu aplikace
-//Ezer.version                  dtto - default=ezer3.1
+//Ezer.version                  dtto - default=ezer3.x
 //Ezer.browser                  CH|FF|OP|IE
 Ezer.options= Ezer.options || {};
 Ezer.options.clock_off= Ezer.options.clock_off||0;    // vypnout hodiny tj. chat se serverem
