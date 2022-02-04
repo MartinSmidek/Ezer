@@ -9864,6 +9864,12 @@ class Browse extends Block {
         br._row_move(br.r-ewh,0,1);
         return false;
       });
+      
+      var hammertime= new Hammer(this.DOM_tbody[0]);
+      hammertime.on('panleft panright tap press', function(ev) {
+          Ezer.trace('u',ev.type +" gesture detected.");
+      });
+      
 //      if ( jQuery.fn.swipe ) {
 //        jQuery(this.DOM_tbody).swipe({
 //          swipe: function(e, direction, distance, duration, fingerCount, fingerData) {
