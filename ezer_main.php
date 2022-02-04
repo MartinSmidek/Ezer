@@ -141,7 +141,8 @@
     // jQuery
     array("$licensed/jquery-$jQuery.min.js","$licensed/jquery-noconflict.js","$client/licensed/jquery-ui.min.js"),
     // podpora dotykového ovládání
-    array($touch ? "$licensed/jquery.touchSwipe.min.js" : ''),
+//    array($touch ? "$licensed/jquery.touchSwipe.min.js" : ''),
+    array($touch ? "$licensed/hammer.js" : ''),  // https://hammerjs.github.io/
     // jádro Ezer
     array(
       "$client/ezer_app3.js$v_sys","$client/ezer3.js$v_sys","$client/ezer_area3.js$v_sys",

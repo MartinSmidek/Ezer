@@ -9864,28 +9864,28 @@ class Browse extends Block {
         br._row_move(br.r-ewh,0,1);
         return false;
       });
-      if ( jQuery.fn.swipe ) {
-        jQuery(this.DOM_tbody).swipe({
-          swipe: function(e, direction, distance, duration, fingerCount, fingerData) {
-            e.preventDefault();
-            if(direction=="up") br._row_move(br.r+br.options.wheel);
-            if(direction=="down") br._row_move(br.r-br.options.wheel);
-            if(direction=="right") br.DOM_riseEvent('keydown_insert');
-          },
-          doubleTap: function(e, target) {
-              Ezer.fce.touch('block',br,'dblclick');     // informace do _touch na server
-              var tr= e.target.tagName=='TD' ? e.target.parentNode : e.target;
-              var i= jQuery(tr).data('i');
-              if ( i && i <= this.tlen ) {
-                // dblclick na datovém řádku
-                br.tact= i;
-                br.DOM_focus();
-                br.DOM_hi_row(br.t+i-1,1);
-                br.fire('onsubmit',[br.keys[br.t+i-1-br.b],e.ctrlKey?1:0]);
-              }
-          }
-        })
-      }
+//      if ( jQuery.fn.swipe ) {
+//        jQuery(this.DOM_tbody).swipe({
+//          swipe: function(e, direction, distance, duration, fingerCount, fingerData) {
+//            e.preventDefault();
+//            if(direction=="up") br._row_move(br.r+br.options.wheel);
+//            if(direction=="down") br._row_move(br.r-br.options.wheel);
+//            if(direction=="right") br.DOM_riseEvent('keydown_insert');
+//          },
+//          doubleTap: function(e, target) {
+//              Ezer.fce.touch('block',br,'dblclick');     // informace do _touch na server
+//              var tr= e.target.tagName=='TD' ? e.target.parentNode : e.target;
+//              var i= jQuery(tr).data('i');
+//              if ( i && i <= this.tlen ) {
+//                // dblclick na datovém řádku
+//                br.tact= i;
+//                br.DOM_focus();
+//                br.DOM_hi_row(br.t+i-1,1);
+//                br.fire('onsubmit',[br.keys[br.t+i-1-br.b],e.ctrlKey?1:0]);
+//              }
+//          }
+//        })
+//      }
     }
     else {
       // pouze úprava pro data_only => vrácení posuvníku pokud qry_row=0
