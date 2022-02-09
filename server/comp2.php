@@ -615,13 +615,14 @@ function link_code(&$c,$name,$isroot,$block) {
       }
     }
   }
-  else if ( $c->type=='var' && $c->_of=='form' && $c->_init) {
+//  else if ( $c->type=='var' && $c->_of=='form' && $c->_init) {
+  else if ( $c->type=='use' && $c->_of=='form' && $c->_init) {
     $form= find_part_abs($c->_init,$fullname,$c->_of);
     if ( $form && $form->type=='form' ) {
       $c->_init= $fullname;
     }
     else {
-      comp_error("CODE: '{$c->_init}' není jménem {$c->_of} (2)",0);
+      comp_error("CODE: '{$c->_init}' není jménem form (2)",0);
     }
   }
   else if ( $c->type=='var' && $c->_of=='area' && $c->_init) {
@@ -1679,7 +1680,7 @@ function name_split($name,$pars,$vars,$call=false,$lc='') {
     $s->bas->nam= $full;
     $s->bas->_of= 'e';
     $_of= 'e';
-    if ( $obj && $obj->type=='var' ) {
+    if ( $obj && $obj->type=='use' ) {
       // nejprve zjistíme, zda není v rozšíření form
       if ( $obj->_init && in_array($obj->_of,array('form','area') ) ) {
         if ( $ids ) {
@@ -1713,6 +1714,11 @@ function name_split($name,$pars,$vars,$call=false,$lc='') {
             if ( $obj->type=='var' && in_array($obj->_of,array('object','ezer','number','text','array') ) ) {
               $_of= $obj->_of;
               $_of= $_of=='ezer' ? 'e' : ($_of=='object' ? 'o' : 's');
+            }
+            elseif ( $obj->type=='use' && in_array($obj->_of,array('form','area') ) 
+                && $obj->_init && $ids && !isset($obj->part->$id0) ) {
+              $obj= find_obj($obj->_init);
+              $full.= ".$id";
             }
             elseif ( $obj->type=='var' && in_array($obj->_of,array('form','area') ) 
                 && $obj->_init && $ids && !isset($obj->part->$id0) ) {
@@ -2917,6 +2923,7 @@ function get_if_block ($root,&$block,&$id) {
           if ( ($fg=='form' || $fg=='area') && $copy[0]=='$' ) {
             // inline form je definována přímo v use - nejedná se o rozšíření pojmenované form
             $block->type= 'var';
+            $block->type= 'use';
             $block->_of= $fg;
             $block->_init= $copy;
             get_if_coord($block);
@@ -2963,6 +2970,7 @@ function get_if_block ($root,&$block,&$id) {
           elseif ( $fg=='form' || ($pragma_group && $fg=='group') ) {
             $block->type= 'var';
             $block->_of= 'form';
+            $block->type= 'use';
             $block->_init= $copy;
           }
           elseif ( $fg=='area' ) {

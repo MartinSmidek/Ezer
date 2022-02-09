@@ -1105,7 +1105,8 @@ class Application {
         this.loginDomClose();
 //         Cookie.dispose(Ezer.root+'_logoff')
         Ezer.fce.set_cookie(Ezer.root+'_logoff');
-        this.bar_clock(false);
+//        this.bar_clock(false);
+        this.bar_clock(true);         // verze3.2 dočasně
         // obnov stav trasování a zaveď kód
         if ( Ezer.sys.user.state && this.options.to_trace ) {
           this.options.to_trace= Ezer.sys.user.state[0]==='+' ? 1 : 0;
@@ -3435,11 +3436,15 @@ Ezer.fce.object= function () {
 Ezer.fce.copy_by_name= function (x,y,delimiters,par4) {
   if ( x.type=='var' ) x= x.value;
   if ( y.type=='var' ) y= y.value;
+  
   var key= y instanceof Form ? y._key : 0;
+  
   var typ_x= x instanceof Browse ? 'b' : x instanceof Form ? 'f' : x instanceof List ? 'l' :
     typeof(x)=='string' ? 's' : typeof(x)=='object' ? 'o' : '?';
+  
   var typ_y= y instanceof Browse ? 'b' : y instanceof Form ? 'f' : y instanceof List ? 'l' :
     typeof(y)=='string' ? 's' : typeof(y)=='object' ? 'o' : '?';
+  
   if ( typ_x=='s' && typ_y=='f' ) {             // string --> form
     if ( x ) {
       var del1= '|', del2= ':';

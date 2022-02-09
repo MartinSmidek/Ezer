@@ -958,6 +958,17 @@ class Block {
               case 'tabs':          part= new Tabs(this,desc,DOM,id,skill); break;
 //               case 'tabs.logoff':   part= new Ezer.Tabs(this,desc,DOM,id,skill); break;
               case 'tabs.logoff':   part= new Tabs(this,desc,DOM,id,skill); break;
+              
+              // use --- má složitější zpracování - vytváří objekt typu Form obohacený o složky use
+              case 'use':           
+                let name= desc._init,
+                    ctx= Ezer.code_name(name,null,this);
+                Ezer.assert(ctx,name+' je neznámé jméno - očekává se jméno form');
+                Ezer.assert(ctx[0].type=='form',name+' není jméno form');
+                part= new Form(this,ctx[0],DOM,this.options,ctx[0].id);
+                // vložení případných podčástí (např. přepisu těl procedur)
+                part.subBlocks(desc,this.DOM_Block,null,true);
+                break;
               // s potenciální vizualizací
 //               case 'var':           part= new Ezer.Var(this,desc,DOM,id); break;
               case 'var':           part= new Var(this,desc,DOM,id); break;
@@ -2835,8 +2846,10 @@ class Var extends Block {
         Ezer.assert(ctx,name+' je neznámé jméno - očekává se jméno form');
         Ezer.assert(ctx[0].type=='form',name+' není jméno form');
         var form= new Form(this,ctx[0],DOM,this.options,ctx[0].id);
-        this.set(form);
-        this.value.id= id;
+        // od verze 3.2.0 se form nevkládá jako value ale jako part
+        //this.set(form);
+        //this.value.id= id;
+        this.part= form.part;
         this.DOM_Block= form.DOM_Block;
       }
       else if ( desc._of=='area' && typeof Area==="function" ) {
@@ -9424,7 +9437,7 @@ class Browse extends Block {
     for (let ic in this.part) { // načti jen zobrazené sloupce použité v browse, vybírej použitá view
       let field= this.part[ic];
       if ( field._load && (field.data || field.options.expr) && field.skill && !ignore.includes(ic) ) {
-        this.owner._fillx(field,x,to_map);
+        this._fillx(field,x,to_map); // ??? this.owner._fillx(field,x,to_map);
       }
     }
     this._fillx2(x.cond+x.order,x); // s možnou explicitní definicí x.key_id
@@ -9698,6 +9711,21 @@ class Browse extends Block {
   DOM_addEvents () {
     // přidání událostí myši
     for (var i= 1; i<=this.tmax; i++) {
+      this.DOM_row[i][0].addEventListener('touchend',function(el){
+        el.preventDefault();
+        var tr= el.target.tagName=='TD' ? el.target.parentNode : el.target;
+        var i= jQuery(tr).data('i');
+        if ( i && i <= this.tlen ) {
+          Ezer.trace('u',1);
+          this.DOM_focus();
+          this.DOM_hi_row(this.t+i-1,0,0,0);
+          document.activeElement.blur();
+        }
+        else {
+          Ezer.trace('u',2);
+          this.DOM_focus();
+        }
+      }.bind(this));
       this.DOM_row[i]
         .click( el => {
           if ( el.shiftKey ) return dbg_onshiftclick(this); /* browse */
@@ -9865,11 +9893,22 @@ class Browse extends Block {
         return false;
       });
       
-      var hammertime= new Hammer(this.DOM_tbody[0]);
-      hammertime.on('panleft panright tap press', function(ev) {
-          Ezer.trace('u',ev.type +" gesture detected.");
+      var mc= new Hammer(this.DOM_tbody[0]);
+      mc.get('swipe').set({ direction: Hammer.DIRECTION_ALL });
+      // listen to events...
+      mc.on("swipeup swipedown", function(ev) {
+        Ezer.trace('u',ev.type +" gesture detected.");
+        switch (ev.type) {
+          case 'swipeup': br._row_move(br.r+br.options.wheel); break;
+          case 'swipedown': br._row_move(br.r-br.options.wheel); break;
+//          case 'swipeup': br.DOM_riseEvent('keydown_page_down'); break;
+//          case 'swipedown': br.DOM_riseEvent('keydown_page_up'); break;
+//          case 'panup': br.DOM_riseEvent('keydown_page_up'); break;
+//          case 'pandown': br.DOM_riseEvent('keydown_page_down'); break;
+//          case 'panright': br.DOM_riseEvent('keydown_insert'); break;
+//          case 'tap': break;
+        }
       });
-      
 //      if ( jQuery.fn.swipe ) {
 //        jQuery(this.DOM_tbody).swipe({
 //          swipe: function(e, direction, distance, duration, fingerCount, fingerData) {

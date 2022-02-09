@@ -42,7 +42,7 @@ $blocs2 = array (                                    // překládají se na AE_<
   'panel.free'  =>  explode(",",'use,proc,var,form'),
   'panel.plain' =>  explode(",",'use,proc,var,form,panel'),
   'panel.right' =>  explode(",",'use,proc,var,form,menu.left,panel'),
-  'use'         =>  explode(",",'form,group'),
+//  'use'         =>  explode(",",'form,group'),
 #  map
   'map'         =>  explode(",",'proc'),
 #  table
@@ -64,8 +64,7 @@ $blocs2 = array (                                    // překládají se na AE_<
                                .'field,field.date,field.list,menu,chat,check,list'
                                .($pragma_attrs?',select':'')),
   'view'        =>  explode(",",''),
-//  'var'         =>  explode(",",'button,button.html,select,select.map,label,label.drop,label.map,edit,field,field.date,check,browse'), //??????????
-  'var'         =>  explode(",",'view,var,proc,browse,browse.smart,radio,label,label.drop,label.map,edit,edit.html,edit.auto,'
+  'use'         =>  explode(",",'view,var,proc,browse,browse.smart,radio,label,label.drop,label.map,edit,edit.html,edit.auto,'
                                .'button,button.html,button.submit,button.reset,button.upload,'
                                .'select,select.multi,select.auto,select.map,select.map+,select.map0,'
                                .'field,field.date,field.list,menu,chat,check,list'),
