@@ -106,7 +106,7 @@ jQuery(document)
       if ( Ezer.app.options.ondomready ) ondomready();
       if ( Ezer && Ezer.sys && Ezer.sys.dbg && Ezer.sys.dbg.win_ezer ) 
         Ezer.sys.dbg.win_ezer.close();
-    });
+  });
 jQuery(window).on({
   beforeunload: () => {
     if ( Ezer && Ezer.sys && Ezer.sys.dbg && Ezer.sys.dbg.win_ezer ) 
