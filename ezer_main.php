@@ -1,4 +1,4 @@
-<?php // ezer 3.1
+<?php // ezer 3.2
 /**
  * $app_name      - zobrazený název aplikace
  * $app_login     - username/password (pouze pro automatické přihlášení)
@@ -11,9 +11,8 @@
  * $rel_roots     - [server,local]
  * $add_pars      - (array) doplní resp. přepíše obsah $pars
  */
-//  echo("ezer_main.php start, ezer_server=$ezer_server");
 
-  global $app_root, $ezer_root, $api_key, $ezer_version;
+  global $app_root, $ezer_root, $api_key, $ezer_version; //==3.2 z aplikace
   $ezer_root= $app_root;
   
   // platí buďto isnull($ezer_local) nebo isnull($ezer_server)
@@ -38,9 +37,6 @@
   
   // verze 5 awesome fontu?
   $awe= isset($_GET['awe']) && $_GET['awe']==5 ? 5 : 4;
-
-  // styly pro mobilní zařízení
-  $ipad= isset($_GET['mobil']) && $_GET['mobil']==1;
 
   // parametry aplikace
   $app= $app_root;
@@ -81,8 +77,8 @@
     $_SESSION[$app]['pdo']= 1;
   }
 
-//  // doplnění jména aplikace o verzi ezer a pdo
-//  $app_name.=  " 3.1.".EZER_PDO_PORT;
+  // doplnění jména aplikace o verzi ezer a pdo
+  $app_name.= '<sub><small> '.substr($ezer_version,4).($touch?' touch':'').'</small></sub>';
 
   // nastavení cest
   $abs_root= isset($ezer_server) ? $abs_roots[$ezer_server] : $abs_roots[$ezer_local];
@@ -158,7 +154,7 @@
         return "$http_rel_root/$x$v_app";
       },$app_js)
   );
-  if ($ipad) $app_css[]= "$ezer_version/client/ipad.css";
+  if ($touch) $app_css[]= "$ezer_version/client/ipad.css";
   $app_css= array_values(array_filter($app_css)); // vynechání všech false
   $css= array_merge(
     array("$client/ezer3.css$v_sys","$client/ezer3.css.php=skin",  

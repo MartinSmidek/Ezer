@@ -3092,6 +3092,10 @@ Ezer.run_name= function (name,run_context,ctx,ids0) {
       // nebo jméno bratra přes proměnnou
       context= context.value.part[ids[0]];
     }
+    else if ( context.type=='use' ) {
+      // nebo jméno bratra přes proměnnou
+      context= context.part[ids[0]];
+    }
     else if ( context.type=='view' && context.value && context.value.part && context.value.part[ids[0]] ) {
       // nebo jméno bratra přes proměnnou
       context= context.value.part[ids[0]];
@@ -3136,6 +3140,9 @@ Ezer.run_name= function (name,run_context,ctx,ids0) {
           }
           // rozbor významu
           if ( context.part && context.part[ids[i]] ) {
+            ctx[++c]= context= context.part[ids[i]];
+          }
+          else if ( context.type=='use' ) {
             ctx[++c]= context= context.part[ids[i]];
           }
           else if ( context.type=='var' && context.value && context.value.part && context.value.part[ids[i]]) {

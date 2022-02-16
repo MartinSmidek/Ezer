@@ -125,20 +125,37 @@ panel cis [,,,*] {type:'right', title:'Číselníky', _sys:'cis', skill:'m|m'
     edit barva [205,192,190,74] { data:k.barva, title:'^hodnota 3 (barva)'  }
     edit popis [4,285,392,77] { data:k.popis, title:'^popis (do dokumentace)' }
     # procedury
-    proc key_novy () {
+    func key_novy () {
       var count: number
-      count.set(klice.lst.browse_count);
-      form.init;
-      mklice.lst.browse_count;
-      kdruh.set(mklice.lst.zkratka.get); cis_id.set(mklice.lst.id.get);
-      kdruh.change;
+      count= klice.lst.browse_count();
+      form.init();
+      mklice.lst.browse_count();
+      kdruh= mklice.lst.zkratka; cis_id= mklice.lst.id;
+      kdruh.change();
       // návrh klíče
-      { eq(kdruh.get,'_meta_'); id.set(sum(1,ask('select','max(id_cis)','_cis')))
-      | id.set(sum(count.get,multiply(modulo(cis_id.get,100),100),1)); id.change
-      };
-      poradi.set(sum(count.get,1)); poradi.change;
-      kdata.set(poradi.get); kdata.change;
+      if (kdruh=='_meta_') 
+        id= 1+php.select('max(id_cis)','_cis');
+      else { 
+        id= count+modulo(cis_id,100)*100+1; 
+        id.change() 
+      }
+      poradi= count+1; poradi.change();
+      kdata= poradi; kdata.change();
     }
+//    proc key_novy () {
+//      var count: number
+//      count.set(klice.lst.browse_count);
+//      form.init;
+//      mklice.lst.browse_count;
+//      kdruh.set(mklice.lst.zkratka.get); cis_id.set(mklice.lst.id.get);
+//      kdruh.change;
+//      // návrh klíče
+//      { eq(kdruh.get,'_meta_'); id.set(sum(1,ask('select','max(id_cis)','_cis')))
+//      | id.set(sum(count.get,multiply(modulo(cis_id.get,100),100),1)); id.change
+//      };
+//      poradi.set(sum(count.get,1)); poradi.change;
+//      kdata.set(poradi.get); kdata.change;
+//    }
     proc key_load () {
       form.load(/*id_self.get.get*/klice.lst.id.get)
     }
@@ -541,7 +558,7 @@ panel needs [,,770,] {type:'right', title:'Požadavky', _sys:'poz', skill:'sp'
     u.kdo_zadal.enable(has_skill('spk'));       // oprávnění změnit zadavatele (pochopitelně se souhlasem)
     u.kdo_kontrola.enable(has_skill('spk'));    // oprávnění zadat kontrolujícícho (třeba potvrzení mailem)
     do_notify.set(not(eq(sys('ezer','todo','notify'),'none')));
-    u.get.display(do_notify.get,'notify')       // povol/potlač notifikační maily
+    u.display(do_notify.get,'notify')       // povol/potlač notifikační maily
   }
   proc onfirstfocus() { left.over.news.click }
   menu left { type:'left'

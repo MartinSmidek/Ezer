@@ -58,7 +58,7 @@ $blocs2 = array (                                    // překládají se na AE_<
 #  area
   'area'        =>  explode(",",'var,proc,panel.popup'),
 #  form
-  'form'        =>  explode(",",'view,var,proc,browse,browse.smart,radio,label,label.drop,label.map,edit,edit.html,edit.auto,'
+  'form'        =>  explode(",",'view,var,use,proc,browse,browse.smart,radio,label,label.drop,label.map,edit,edit.html,edit.auto,'
                                .'button,button.html,button.submit,button.reset,button.upload,'
                                .'select,select.multi,select.auto,select.map,select.map+,select.map0,'
                                .'field,field.date,field.list,menu,chat,check,list'

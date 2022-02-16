@@ -233,7 +233,7 @@ class Block {
   self () {
     var id= '';
     for (var o= this; o.owner; o= o.owner) {
-      if ( o.type!='form' )
+//      if ( o.type!='form' )
         id= o.id+(id ? '.'+id : '');
     }
     return '$.'+id;
@@ -961,11 +961,32 @@ class Block {
               
               // use --- má složitější zpracování - vytváří objekt typu Form obohacený o složky use
               case 'use':           
-                let name= desc._init,
-                    ctx= Ezer.code_name(name,null,this);
-                Ezer.assert(ctx,name+' je neznámé jméno - očekává se jméno form');
-                Ezer.assert(ctx[0].type=='form',name+' není jméno form');
-                part= new Form(this,ctx[0],DOM,this.options,ctx[0].id);
+                if ( desc._of=='form' ) {
+                  let name= desc._init,
+                      ctx= Ezer.code_name(name,null,this);
+                  Ezer.assert(ctx,name+' je neznámé jméno - očekává se jméno form');
+                  Ezer.assert(ctx[0].type=='form',name+' není jméno form');
+                  part= new Form(this,ctx[0],DOM,desc.options,ctx[0].id);
+                }
+                else if ( desc._of=='area' && typeof Area==="function" ) {
+                  let name= desc._init,
+                      ctx= Ezer.code_name(name,null,this);
+                  Ezer.assert(ctx,name+' je neznámé jméno - očekává se jméno area');
+                  Ezer.assert(ctx[0].type=='area',name+' není jméno area');
+                  // nalezneme panel
+                  let panel= null;
+                  for (var o= this; o; o= o.owner) {
+                    if ( o.type.substr(0,5)=='panel' ) {
+                      panel= o;
+                      break;
+                    }
+                  }
+                  if ( panel && panel.DOM_Block ) {
+                    // vyvoření area bez události area_oncreate
+                    part= new Area(panel,ctx[0],panel.DOM_Block,desc.options,ctx[0].id,[],true);
+                  }
+                  else Ezer.error("area není vnořena do panelu");
+                }
                 // vložení případných podčástí (např. přepisu těl procedur)
                 part.subBlocks(desc,this.DOM_Block,null,true);
                 break;
@@ -1584,9 +1605,9 @@ class Menu extends Block {
     this.subBlocks(desc,this.DOM);                      // vytvoří (příp. vloží) části
     if ( this.DOM_add2 ) this.DOM_add2();               // specificky doplní menu
   }
-  start (codes,oneval) {
-    super.start(codes,oneval);
-  }
+//  start (codes,oneval) {
+//    super.start(codes,oneval);
+//  }
 }
 
 // ======================================================================================> Menu Main
@@ -2839,52 +2860,52 @@ class Var extends Block {
       // proměnná má počáteční hodnotu
       this.value= this.options.value;
     }
-    else if ( desc._init ) {
-      if ( desc._of=='form' ) {
-        let name= desc._init,
-            ctx= Ezer.code_name(name,null,this);
-        Ezer.assert(ctx,name+' je neznámé jméno - očekává se jméno form');
-        Ezer.assert(ctx[0].type=='form',name+' není jméno form');
-        var form= new Form(this,ctx[0],DOM,this.options,ctx[0].id);
-        // od verze 3.2.0 se form nevkládá jako value ale jako part
-        //this.set(form);
-        //this.value.id= id;
-        this.part= form.part;
-        this.DOM_Block= form.DOM_Block;
-      }
-      else if ( desc._of=='area' && typeof Area==="function" ) {
-        let name= desc._init,
-            ctx= Ezer.code_name(name,null,this);
-        Ezer.assert(ctx,name+' je neznámé jméno - očekává se jméno area');
-        Ezer.assert(ctx[0].type=='area',name+' není jméno area');
-        // nalezneme panel
-        var panel= null;
-        for (var o= this.owner; o; o= o.owner) {
-          if ( o.type.substr(0,5)=='panel' ) {
-            panel= o;
-            break;
-          }
-        }
-        if ( panel && panel.DOM_Block ) {
-          // vyvoření area bez události area_oncreate
-          var area= new Area(panel,ctx[0],panel.DOM_Block,this.options,ctx[0].id,[],true);
-          this.set(area);
-          this.value.id= id;
-        }
-        else Ezer.error("area není vnořena do panelu");
-      }
-    }
-    // vložení případných podčástí (např. přepisu těl procedur)
-    this.subBlocks(desc,this.DOM_Block);
+//    else if ( desc._init ) {
+//      if ( desc._of=='form' ) {
+//        let name= desc._init,
+//            ctx= Ezer.code_name(name,null,this);
+//        Ezer.assert(ctx,name+' je neznámé jméno - očekává se jméno form');
+//        Ezer.assert(ctx[0].type=='form',name+' není jméno form');
+//        var form= new Form(this,ctx[0],DOM,this.options,ctx[0].id);
+//        // od verze 3.2.0 se form nevkládá jako value ale jako part
+//        //this.set(form);
+//        //this.value.id= id;
+//        this.part= form.part;
+//        this.DOM_Block= form.DOM_Block;
+//      }
+//      else if ( desc._of=='area' && typeof Area==="function" ) {
+//        let name= desc._init,
+//            ctx= Ezer.code_name(name,null,this);
+//        Ezer.assert(ctx,name+' je neznámé jméno - očekává se jméno area');
+//        Ezer.assert(ctx[0].type=='area',name+' není jméno area');
+//        // nalezneme panel
+//        var panel= null;
+//        for (var o= this.owner; o; o= o.owner) {
+//          if ( o.type.substr(0,5)=='panel' ) {
+//            panel= o;
+//            break;
+//          }
+//        }
+//        if ( panel && panel.DOM_Block ) {
+//          // vyvoření area bez události area_oncreate
+//          var area= new Area(panel,ctx[0],panel.DOM_Block,this.options,ctx[0].id,[],true);
+//          this.set(area);
+//          this.value.id= id;
+//        }
+//        else Ezer.error("area není vnořena do panelu");
+//      }
+//    }
+//    // vložení případných podčástí (např. přepisu těl procedur)
+//    this.subBlocks(desc,this.DOM_Block);
   }
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  start
-//f: Var.start (code,oneval)
-  start (codes,oneval) {
-    super.start(codes,oneval);
-    if ( this._of=='form' && this.value ) {
-      this.value.start(codes,oneval);
-    }
-  }
+//// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  start
+////f: Var.start (code,oneval)
+//  start (codes,oneval) {
+//    super.start(codes,oneval);
+//    if ( this._of=='form' && this.value ) {
+//      this.value.start(codes,oneval);
+//    }
+//  }
 // ------------------------------------------------------------------------------------ set
 //fm: Var.set (val[,part])
 //      nastaví hodnotu proměnné, pokud je typu object pak part určuje podsložku
@@ -3414,6 +3435,8 @@ class Form extends Block {
     this.subBlocks(desc,this.DOM_Block);
     this.DOM_add2();
   }
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  OBSOLETE
+  get () { return this; }
 // ------------------------------------------------------------------------------------ tagged
 //fm: Form.tagged (tags[,inlist=0])
 //      vrátí pole elementů vyhovujících podmínce tags, pole lze zpracovávat například příkazem
@@ -9437,7 +9460,7 @@ class Browse extends Block {
     for (let ic in this.part) { // načti jen zobrazené sloupce použité v browse, vybírej použitá view
       let field= this.part[ic];
       if ( field._load && (field.data || field.options.expr) && field.skill && !ignore.includes(ic) ) {
-        this._fillx(field,x,to_map); // ??? this.owner._fillx(field,x,to_map);
+        this.owner._fillx(field,x,to_map);
       }
     }
     this._fillx2(x.cond+x.order,x); // s možnou explicitní definicí x.key_id
@@ -9893,10 +9916,11 @@ class Browse extends Block {
         return false;
       });
       
-      var mc= new Hammer(this.DOM_tbody[0]);
-      mc.get('swipe').set({ direction: Hammer.DIRECTION_ALL });
-      // listen to events...
-      mc.on("swipeup swipedown", function(ev) {
+      if (window.Hammer!==undefined) {
+        var mc= new Hammer(this.DOM_tbody[0]);
+        mc.get('swipe').set({ direction: Hammer.DIRECTION_ALL });
+        // listen to events...
+        mc.on("swipeup swipedown", function(ev) {
         Ezer.trace('u',ev.type +" gesture detected.");
         switch (ev.type) {
           case 'swipeup': br._row_move(br.r+br.options.wheel); break;
@@ -9907,8 +9931,8 @@ class Browse extends Block {
 //          case 'pandown': br.DOM_riseEvent('keydown_page_down'); break;
 //          case 'panright': br.DOM_riseEvent('keydown_insert'); break;
 //          case 'tap': break;
-        }
-      });
+          }
+        });
 //      if ( jQuery.fn.swipe ) {
 //        jQuery(this.DOM_tbody).swipe({
 //          swipe: function(e, direction, distance, duration, fingerCount, fingerData) {
@@ -9931,6 +9955,7 @@ class Browse extends Block {
 //          }
 //        })
 //      }
+      }
     }
     else {
       // pouze úprava pro data_only => vrácení posuvníku pokud qry_row=0

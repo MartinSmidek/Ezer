@@ -625,7 +625,8 @@ function link_code(&$c,$name,$isroot,$block) {
       comp_error("CODE: '{$c->_init}' není jménem form (2)",0);
     }
   }
-  else if ( $c->type=='var' && $c->_of=='area' && $c->_init) {
+//  else if ( $c->type=='var' && $c->_of=='area' && $c->_init) {
+  else if ( $c->type=='use' && $c->_of=='area' && $c->_init) {
     $area= find_part_abs($c->_init,$fullname,$c->_of);
     if ( $area && $area->type=='area' ) {
       $c->_init= $fullname;
@@ -1666,7 +1667,7 @@ function name_split($name,$pars,$vars,$call=false,$lc='') {
         $full.= '.';
       }
       if ( $context[$i]->ctx->type=='form'
-        || $context[$i]->ctx->type=='var'
+        || $context[$i]->ctx->type=='use'
       ) {
         $in_form= true;
       }
@@ -1680,7 +1681,7 @@ function name_split($name,$pars,$vars,$call=false,$lc='') {
     $s->bas->nam= $full;
     $s->bas->_of= 'e';
     $_of= 'e';
-    if ( $obj && $obj->type=='use' ) {
+    if ( $obj && ($obj->type=='use' || $obj->type=='var')) {
       // nejprve zjistíme, zda není v rozšíření form
       if ( $obj->_init && in_array($obj->_of,array('form','area') ) ) {
         if ( $ids ) {
@@ -1720,11 +1721,11 @@ function name_split($name,$pars,$vars,$call=false,$lc='') {
               $obj= find_obj($obj->_init);
               $full.= ".$id";
             }
-            elseif ( $obj->type=='var' && in_array($obj->_of,array('form','area') ) 
-                && $obj->_init && $ids && !isset($obj->part->$id0) ) {
-              $obj= find_obj($obj->_init);
-              $full.= ".$id";
-            }
+//            elseif ( $obj->type=='var' && in_array($obj->_of,array('form','area') ) 
+//                && $obj->_init && $ids && !isset($obj->part->$id0) ) {
+//              $obj= find_obj($obj->_init);
+//              $full.= ".$id";
+//            }
             elseif ( $obj->type=='proc' && $s->bas->typ=='T') {
               // func volaná přes form
               $full.= "$id";
@@ -2272,7 +2273,7 @@ function gen_name($name,$pars,$vars,&$obj,$first,$c=null,$nargs=null,$lc='') {  
     $code[0]= (object)array('o'=>'t','i'=>'a');
     for ($i= $end_cx; $i>=0; $i--) {
       if ( $context[$i]->ctx->type=='area'
-        || $context[$i]->ctx->type=='var' && $context[$i]->ctx->_of=='area' ) {
+        || $context[$i]->ctx->type=='use' && $context[$i]->ctx->_of=='area' ) {
         $obj= $context[$i]->ctx;
         if ( count($ids)>1 && $ids[1]=='desc' ) {
           $is_desc= true;
@@ -2287,7 +2288,7 @@ function gen_name($name,$pars,$vars,&$obj,$first,$c=null,$nargs=null,$lc='') {  
     $code[0]= (object)array('o'=>'t','i'=>'f');
     for ($i= $end_cx; $i>=0; $i--) {
       if ( $context[$i]->ctx->type=='form'
-        || $context[$i]->ctx->type=='var' && $context[$i]->ctx->_of=='form' ) {
+        || $context[$i]->ctx->type=='use' && $context[$i]->ctx->_of=='form' ) {
         $obj= $context[$i]->ctx;
         if ( count($ids)>1 && $ids[1]=='desc' ) {
           $is_desc= true;
@@ -2353,7 +2354,7 @@ function gen_name($name,$pars,$vars,&$obj,$first,$c=null,$nargs=null,$lc='') {  
       }
 //                                                                                         $note.= "({$context[$i]->ctx->type})";
       if ( $context[$i]->ctx->type=='form'
-        || $context[$i]->ctx->type=='var'
+        || $context[$i]->ctx->type=='use'
       ) {  //????????????????????????????????????????????????????????????????????????????????
         $in_form= true;
       }
@@ -2419,7 +2420,7 @@ function gen_name($name,$pars,$vars,&$obj,$first,$c=null,$nargs=null,$lc='') {  
       }
     }
     else {
-      if ( $obj->type=='var' ) {
+      if ( $obj->type=='var' || $obj->type=='use' ) {
         if ( $obj->_init && in_array($obj->_of,array('table','form','area') ) ) {
           $obj= find_obj($obj->_init);
         }
@@ -2968,13 +2969,12 @@ function get_if_block ($root,&$block,&$id) {
             else comp_error("chybí jméno form", $lc);
           }
           elseif ( $fg=='form' || ($pragma_group && $fg=='group') ) {
-            $block->type= 'var';
             $block->_of= 'form';
             $block->type= 'use';
             $block->_init= $copy;
           }
           elseif ( $fg=='area' ) {
-            $block->type= 'var';
+            $block->type= 'use';
             $block->_of= 'area';
             $block->_init= $copy;
           }

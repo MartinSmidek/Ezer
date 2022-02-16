@@ -54,6 +54,7 @@
   $checks.= "<input type='text' title='výběr trasované procedury regulárním výrazem' value='$option_list' size=7 onchange='set_option_list(this)'/>";
   $checks.= "<br>\n<input type='submit' value='celou aplikaci' onclick='go_all(\"yes\");' />";
   $checks.= "<br>\n<input type='submit' value='... včetně err' onclick='go_all(\"err\");' />";
+  $checks.= "<br>\n<input type='submit' value='... včetně ok' onclick='go_all(\"any\");' />";
   $checks.= "<br>\n<input type='submit' value='obnova tabulek' onclick='go_tables();' />";
   $checks.= "<br>\n<input type='submit' value='PHPinfo' onclick='go_phpinfo();' />";
   $ip= "<br>remote:{$_SERVER["REMOTE_ADDR"]}<br>forwarded:{$_SERVER["HTTP_X_FORWARDED_FOR"]}";
@@ -164,6 +165,11 @@
     $lst= comp_application($ezer_root,$state);
     $compiled= '';
   }
+  else if ( $_GET['all']=='any' ) {
+    // kompilace neaktuálních modulů celé aplikace
+    $lst= comp_application($ezer_root,$state,true,true);
+    $compiled= '';
+  }
   else if ( $_GET['all']=='err' ) {
     // kompilace neaktuálních modulů celé aplikace včetně chyb
     $lst= comp_application($ezer_root,$state,true);
@@ -190,8 +196,8 @@
   }
 
   $h1= $compiled
-    ? "<h1>Ezer2 / kompilace modulu '$compiled'</h1>"
-    : "<h1>Ezer2 / kompilace aplikace '$root'</h1>";
+    ? "<h1>$ezer_version / kompilace modulu '$compiled'</h1>"
+    : "<h1>$ezer_version / kompilace aplikace '$root'</h1>";
   // ------------------------------------------------------------------------------------ menu
   $menu= "<table>";
   foreach($files as $name=>$status) {
@@ -345,12 +351,13 @@ function comp_module($name,$root='',&$state) {
   return $txt;
 }
 
-// kompilace neaktuální modulů aplikace
-function comp_application($root='',&$state,$errs=false) {
+// kompilace modulů aplikace 
+//   err= i s chybou; yes= neaktuální; any= úplně všechny
+function comp_application($root='',&$state,$errs=false,$all=false) {
   global $files, $display, $trace, $err, $errors;
   $txt= '';
   foreach($files as $name=>$status) {
-    if ( $status=='old' || ($errs && $status=='err') ) {
+    if ( $all || $status=='old' || ($errs && $status=='err') ) {
       $trace= '';
       $state= comp_file($name,$root,'',true).'<hr />';
       display($state);

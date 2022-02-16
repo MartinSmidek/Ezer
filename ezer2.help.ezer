@@ -633,7 +633,7 @@ group kernel {
 panel meta [0,0,300,300] {type:'popup', _sys:'', title:'Struktura aplikace - menu a panely'
   var name=''
   proc app() { panel.popup }
-  proc onfirstfocus() { t.a.app }
+  func onfirstfocus() { t.a.app() }
   use t: form [0,0,300,300] {
     button [-10,0,,] { type:'html', title:"[fa-refresh]", style:"margin-top:-29px"
       proc onclick() { a.app }}
