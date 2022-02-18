@@ -5276,7 +5276,7 @@ class LabelMap extends Label {
           let coords= this.poly.getCoords();
 //          let start= function(e) {
 //            let node= e.target.getContainer();
-//            node[SMap.LAYER_MARKER].style.cursor= "url(ezer3.1/client/img/cursor_marker.png), auto"; //"grabbing";
+//            node[SMap.LAYER_MARKER].style.cursor= "url(ezer3.2/client/img/cursor_marker.png), auto"; //"grabbing";
 //          }.bind(this);
           let stop= function(e) {
             let mark= e.target, coords= this.poly.getCoords();
@@ -5306,7 +5306,7 @@ class LabelMap extends Label {
           for (let i in coords) {
             let ll= SMap.Coords.fromWGS84(coords[i].x,coords[i].y),
                 mark= new SMap.Marker(ll,i,
-                  {url:'./ezer3.1/client/img/circle_red_11x11.png',anchor:{left:5,top:6},title:i});
+                  {url:'./ezer3.2/client/img/circle_red_11x11.png',anchor:{left:5,top:6},title:i});
             mark.decorate(SMap.Marker.Feature.Draggable);
             this.layer_poly_mark.addMarker(mark);
           }

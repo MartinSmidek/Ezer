@@ -1106,7 +1106,7 @@ class Application {
 //         Cookie.dispose(Ezer.root+'_logoff')
         Ezer.fce.set_cookie(Ezer.root+'_logoff');
 //        this.bar_clock(false);
-        this.bar_clock(true);         // verze3.2 dočasně
+        this.bar_clock(true);         // TODO: vrátit! verze3.2 dočasně
         // obnov stav trasování a zaveď kód
         if ( Ezer.sys.user.state && this.options.to_trace ) {
           this.options.to_trace= Ezer.sys.user.state[0]==='+' ? 1 : 0;

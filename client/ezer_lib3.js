@@ -61,7 +61,7 @@ function dbg_onshiftclick(block) {
           l= x[0], t= x[1], w= x[2]-16, h= x[3]-67;
       var position= `left=${l},top=${t},width=${w},height=${h}`;
       Ezer.sys.dbg.win_ezer= window.open(
-        `./ezer3.1/dbg3.php?err=1&app=${Ezer.root}&src=${fname}&file=${pos.file}&pick=${line}`,'dbg',
+        `./ezer3.2/dbg3.php?err=1&app=${Ezer.root}&src=${fname}&file=${pos.file}&pick=${line}`,'dbg',
         position+',resizable=1,titlebar=0,menubar=0');
       if ( Ezer.sys.dbg.win_ezer ) {
 //        dbg_reload(pos.file);
