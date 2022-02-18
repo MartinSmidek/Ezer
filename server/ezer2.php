@@ -1564,7 +1564,7 @@
   case 'load': // (id)
     $fname= "$ezer_path_gen/{$x->id}.json";
     $y->exists= file_exists($fname);
-    $text= @file_get_contents($fname);
+    $text= $y->exists ? file_get_contents($fname) : '';
 //    $y->app= $json->decode($text);
     $y->app= json_decode($text);
     break;
@@ -2103,6 +2103,12 @@
         }
         # ------------------------------------------------------------------------------------------
         # v $load je přečtený kód, který je třeba vložit do $part->block
+        # zkontrolujeme ale verzi jádra
+        $ev= isset($loads->info->ezer_version) ? $loads->info->ezer_version : 'neznámá';
+        if ($ev!=$ezer_version) {
+          $y->error= "INCLUDE - soubor $app/$ename je pro verzi $ev - je třeba jej přeložit externě";  
+          break;
+        }
 //                                                 display("module $fname into {$part->block}");
         if ( !$y->app ) {
           // iniciace

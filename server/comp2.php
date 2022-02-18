@@ -49,7 +49,7 @@ function comp_ezer_list() { trace();
 # $comp_php znamená volání z comp.php
 # pokud je v SESSION snímek call grafu, zruší jej
 function comp_file ($name,$root='',$_list_only='',$_comp_php=false) {  #trace();
-  global $ezer, $ezer_path_root, $err, $comp_php,$list_only,
+  global $ezer, $ezer_version, $ezer_path_root, $err, $comp_php,$list_only,
     $code, $module, $procs, $context, $ezer_name, $ezer_app, $errors, $includes, $onloads;
   global $pragma_library, $pragma_syntax, $pragma_attrs, $pragma_names, $pragma_get, $pragma_prefix,
     $pragma_group, $pragma_box, $pragma_if, $pragma_switch;
@@ -268,7 +268,7 @@ function comp_file ($name,$root='',$_list_only='',$_comp_php=false) {  #trace();
     $loads->code= $code;
                                                         if ($_GET['trace']==4) debug($loads,"kód");
     // informace o kódu pro informaci o struktuře aplikace
-    $loads->info= (object)array('php'=>$call_php,'ezer'=>$call_ezer);
+    $loads->info= (object)array('php'=>$call_php,'ezer'=>$call_ezer,'ezer_version'=>$ezer_version);
     $loads->info->elem= $call_elem;
 //                                                        debug($call_elem,'call elem');
     $json_loads= json_encode($loads,JSON_HEX_AMP);
