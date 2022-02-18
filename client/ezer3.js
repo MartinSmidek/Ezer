@@ -39,7 +39,10 @@ class Block {
     if ( id && owner && owner.part ) owner.part[id]= this;
     this.type= desc.type;
     this.desc= desc;
-    if ( desc.options!==undefined ) this.options= desc.options;
+    if ( desc.options!==undefined ) {
+      jQuery.extend(this.options,desc.options);
+//      this.options= desc.options;
+    }
     if ( owner ) this._coord();
     this._check();
   }
@@ -779,6 +782,8 @@ class Block {
 //s: system
   subBlocks (desc0,DOM,wrap_fce,extend) {
     // vložení případných vnořených částí, pokud na to je dostatečné oprávnění
+//    let desc0= {};
+//    jQuery.extend(desc0,desc00);
     var us= Ezer.sys.user ? Ezer.sys.user.skills : '';
     if ( Ezer.options.autoskill )
       us+= ' '+Ezer.options.autoskill;
@@ -966,7 +971,7 @@ class Block {
                       ctx= Ezer.code_name(name,null,this);
                   Ezer.assert(ctx,name+' je neznámé jméno - očekává se jméno form');
                   Ezer.assert(ctx[0].type=='form',name+' není jméno form');
-                  part= new Form(this,ctx[0],DOM,desc.options,ctx[0].id);
+                  part= new Form(this,ctx[0],DOM,desc.options,id);
                 }
                 else if ( desc._of=='area' && typeof Area==="function" ) {
                   let name= desc._init,
@@ -983,7 +988,7 @@ class Block {
                   }
                   if ( panel && panel.DOM_Block ) {
                     // vyvoření area bez události area_oncreate
-                    part= new Area(panel,ctx[0],panel.DOM_Block,desc.options,ctx[0].id,[],true);
+                    part= new Area(panel,ctx[0],panel.DOM_Block,desc.options,id,[],true);
                   }
                   else Ezer.error("area není vnořena do panelu");
                 }
@@ -8295,11 +8300,11 @@ class Browse extends Block {
     // stavové informace pro další funkce
     this.get_query_pipe='';                    // případné modifikátory pro formát q@
   }
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  start
-  start (codes,oneval) {
-    super.start(codes,oneval);
-//     this.parent(codes,oneval);
-  }
+//// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  start
+//  start (codes,oneval) {
+//    super.start(codes,oneval);
+////     this.parent(codes,oneval);
+//  }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  browse_snap+
 //fm: Browse.browse_snap ([data=1])
 //      snapshot do trace, pokud data=0 bude vynechán výpis obsahu keys a buf
