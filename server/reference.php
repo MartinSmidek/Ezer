@@ -4,7 +4,8 @@
 // pokud je zapotřebí doplnit typy funkcí nebo atributů, je třeba doplnit funkci i_doc_line
 # -------------------------------------------------------------------------------------------- i_doc
 # probere zdrojový text
-#a:     typ - (show=ukázat | ezerscript=generovat popis jazyka | ezerscript=generovat třídy js | application=popis aplikace)
+#a:     typ - (show=ukázat | ezerscript=generovat popis jazyka | ezerscript=generovat třídy js 
+#             | application=popis aplikace)
 #       fnames - seznam jmen zdrojových textů v adresáři podle typu
 function i_doc($typ,$fnames='') {   trace();
   global $i_doc_info, $i_doc_class, $i_doc_id, $i_doc_t, $i_doc_ref, $i_doc_err, $i_doc_n, $i_doc_file;
@@ -16,7 +17,7 @@ function i_doc($typ,$fnames='') {   trace();
   switch ( $typ ) {
   case 'show':
     $text= '';
-    $qry= "SELECT * FROM ezer_doc2 WHERE 1";
+    $qry= "SELECT * FROM _doc WHERE 1";
 //                                                 display("mysql_qry($qry)");
     $res= mysql_qry($qry);
     while ( $res && ($row= pdo_fetch_assoc($res)) ) {
@@ -55,20 +56,20 @@ function i_doc($typ,$fnames='') {   trace();
         i_doc_final($i_doc_class,$i_doc_id,$i_doc_info["$i_doc_class.$i_doc_id"],$i_doc_t);
       $text.= nl2br($i_doc_err);
       // doplnění sekce elementům ne-třídám, které ji nemají definovanou, ale jejich třída má
-      $qry= "SELECT class FROM ezer_doc2
+      $qry= "SELECT class FROM _doc
              WHERE chapter='reference' AND section='' GROUP BY class";
       $res= mysql_qry($qry);
       while ( $res && ($row= pdo_fetch_assoc($res)) ) {
         $class= $row['class'];
         // projdi elementy s chybějící sekcí se stejnou třídou
-        $qry2= "SELECT section FROM ezer_doc2
+        $qry2= "SELECT section FROM _doc
                 WHERE chapter='reference' AND elem='class' AND class='$class' AND section!='' ";
         $res2= mysql_qry($qry2);
         // zjisti sekci té třídy, jde-li to
         if ( $res2 && ($row2= pdo_fetch_assoc($res2)) ) {
           $section= $row2['section'];
           // a doplň ji, kde chybí
-          $qry3= "UPDATE ezer_doc2 SET section='$section'
+          $qry3= "UPDATE _doc SET section='$section'
                   WHERE chapter='reference' AND section='' AND class='$class'";
           $res3= mysql_qry($qry3);
         }
@@ -78,7 +79,7 @@ function i_doc($typ,$fnames='') {   trace();
     $text.= "<br><h3>Generování tabulky jmen pro kompilátor</h3>";
     $comp2= '$names= array(';
     $parts= array();
-    $qry= "SELECT part,comp FROM ezer_doc2 WHERE char_length(comp)=2 ORDER BY part";
+    $qry= "SELECT part,comp FROM _doc WHERE char_length(comp)=2 ORDER BY part";
     $res= mysql_qry($qry);
     while ( $res && ($o= pdo_fetch_object($res)) ) {
       list($ps,$pi)= explode('/',$o->part);
@@ -112,7 +113,7 @@ function i_doc($typ,$fnames='') {   trace();
     $text.= $app_text ? $app_text : "";
     break;
   case 'survay':
-    $qry= "SELECT chapter,COUNT(*) AS _pocet FROM ezer_doc2 GROUP BY chapter";
+    $qry= "SELECT chapter,COUNT(*) AS _pocet FROM _doc GROUP BY chapter";
     $res= mysql_qry($qry);
     while ( $res && ($o= pdo_fetch_object($res)) ) {
       $text.= "{$o->chapter} má {$o->_pocet} záznamů<br>";
@@ -126,7 +127,7 @@ function i_doc($typ,$fnames='') {   trace();
 //   debug($i_doc_info);
   return $text;
 }
-# -------------------------------------------------------------------------------------------------- i_doc_wiky
+# --------------------------------------------------------------------------------------- i_doc_wiky
 # vytvoří automatickou wiki-dokumentaci ze zdrojového textu (pokud existuje)
 function i_doc_wiky ($fname) { #trace();
   global $ezer_path_serv,$x, $y, $ezer, $trace, $display, $head, $lex, $typ, $tree, $first_panel,
@@ -145,7 +146,7 @@ function i_doc_wiky ($fname) { #trace();
   }
   return $text;
 }
-# -------------------------------------------------------------------------------------------------- i_doc_file
+# --------------------------------------------------------------------------------------- i_doc_file
 # funkce vrátí zpracovaný text souboru zadaného jména
 function i_doc_file($filename) {
   global $i_doc_text;
@@ -153,7 +154,7 @@ function i_doc_file($filename) {
 //                                                         display($i_doc_text);
   return $i_doc_text;
 }
-# -------------------------------------------------------------------------------------------------- i_doc_file
+# --------------------------------------------------------------------------------------- i_doc_file
 # funkce vygeneruje pro daný projekt ini soubor
 function i_doc_ini($ini_filename,$proj) {
   if (OS == "Win") {
@@ -204,12 +205,12 @@ function i_doc_ini($ini_filename,$proj) {
     }
   }
 }
-# -------------------------------------------------------------------------------------------------- i_glob
+# ------------------------------------------------------------------------------------------- i_glob
 # vybere do pole soubory podle masky
 # maska: složka/regexpr
 function i_glob($mask) {
   $dirname = preg_replace('~[^/]*$~', '', $mask);
-  $dir = opendir(strlen($dirname) ? $dirname : ".");
+  $dir = @opendir(strlen($dirname) ? $dirname : ".");
   $return = array();
   if ($dir) {
     $pattern = "~^$mask\$~";
@@ -224,7 +225,7 @@ function i_glob($mask) {
   }
   return $return;
 }
-# -------------------------------------------------------------------------------------------------- wiki2html
+# ---------------------------------------------------------------------------------------- wiki2html
 # převod z formátu wiki, používaného pro dokumentaci do html kódu
 function wiki2html ($wiki) {
   global $ezer_path_serv;
@@ -253,7 +254,7 @@ function wiki2html ($wiki) {
   $html= strtr($html,$css);
   return $html;
 }
-# -------------------------------------------------------------------------------------------------- i_doc_app
+# ---------------------------------------------------------------------------------------- i_doc_app
 # $fnamestmnts je maska souborů s dokumentací aplikace ve wiki formátu
 # tyto soubory jsou uloženy vzhledem k cestě $ezer_path_root
 # soubor todo.wiki přitom přeskakuje - ten se zobrazuje zpravidla v sekci Novinky
@@ -411,7 +412,7 @@ function i_doc_app($fnamestmnts,$chapter,$to_save=true) { trace();
           $class= "{$fname}_".str_pad((($i-1)/2),2,'0',STR_PAD_LEFT);
           $set= "elem='modul',class='$class',part='',file='$fname',chapter='$chapter',"
             . "section='$modul',title='$title',sorting=$sort,text=\"$esc_text\"";
-          $qry= "REPLACE ezer_doc2 SET $set ";
+          $qry= "REPLACE _doc SET $set ";
           $res= mysql_qry($qry);
         }
         else
@@ -499,7 +500,7 @@ function i_doc_line($ln) {
 //                                         if ( $t[0]=='i' ) debug($i_doc_info["$i_doc_class.$i_doc_id"],"$i_doc_class.$i_doc_id as $i_doc_ref");
   }
 }
-# -------------------------------------------------------------------------------------------------- i_doc_final
+# -------------------------------------------------------------------------------------- i_doc_final
 # kompletuje informaci o přečteném elementu
 function i_doc_final($class,$id,$info,$t) { #if ($t=='i') trace();
   global $i_doc_info, $i_doc_class, $i_doc_id, $i_doc_ref, $i_doc_err, $i_doc_n, $i_doc_file;
@@ -676,13 +677,13 @@ function i_doc_final($class,$id,$info,$t) { #if ($t=='i') trace();
   }
   $extd= pdo_real_escape_string($extd);
   $set.= "class='$class',extends='$extd',part='$id',file='$i_doc_file',chapter='reference',sorting=99";
-  $qry= "REPLACE ezer_doc2 SET $set ";
+  $qry= "REPLACE _doc SET $set ";
   $res= mysql_qry($qry);
   // inicializace proměnných
   $i_doc_class= $i_doc_id= $i_doc_ref= '';
   return $msg;
 }
-# -------------------------------------------------------------------------------------------------- i_doc_subs_attribs
+# ------------------------------------------------------------------------------- i_doc_subs_attribs
 # vrátí popis dovolených podbloků, podatributů
 function i_doc_subs_attribs ($blok,$to_show_sub=1) {
   global $blocs, $specs, $attribs, $blocs_help, $attribs_type, $attribs_help;
@@ -750,7 +751,7 @@ function i_doc_lang() { //trace();
   $parser->image_uri = './';
   $parser->ignore_images = false;
   // zrušení staré verze popisu jazyka
-  $qry= "DELETE FROM ezer_doc2 WHERE chapter='reference' AND section='ezerscript' ";
+  $qry= "DELETE FROM _doc WHERE chapter='reference' AND section='ezerscript' ";
   $res= mysql_qry($qry);
   // seznam bloků jazyka
   $text.= "<div class='CSection CTopic'>";
@@ -783,40 +784,40 @@ function i_doc_lang() { //trace();
     $text.= "</div>";
   }
   $esc_text= pdo_real_escape_string($text);
-  $qry= "REPLACE ezer_doc2 (chapter,section,elem,class,sorting,title,text)
+  $qry= "REPLACE _doc (chapter,section,elem,class,sorting,title,text)
          VALUES ('reference','ezerscript','text','language',1,'popis jazyka',\"$esc_text\") ";
   $res= mysql_qry($qry);
-  $qry= "REPLACE ezer_doc2 (chapter,section,elem,class,sorting,title,text)
+  $qry= "REPLACE _doc (chapter,section,elem,class,sorting,title,text)
          VALUES ('reference','ezerscript','text','library',2,'knihovna funkcí',\"$esc_text\") ";
   $res= mysql_qry($qry);
-  $qry= "REPLACE ezer_doc2 (chapter,section,elem,class,sorting,title,text)
+  $qry= "REPLACE _doc (chapter,section,elem,class,sorting,title,text)
          VALUES ('reference','ezerscript','text','attribs',3,'seznam atributů',\"$esc_text\") ";
   $res= mysql_qry($qry);
-  $qry= "REPLACE ezer_doc2 (chapter,section,elem,class,sorting,title,text)
+  $qry= "REPLACE _doc (chapter,section,elem,class,sorting,title,text)
          VALUES ('reference','ezerscript','text','events',4,'seznam událostí',\"$esc_text\") ";
   $res= mysql_qry($qry);
   return "ezerscript - generated";
 }
-# -------------------------------------------------------------------------------------------------- i_doc_reset
+# -------------------------------------------------------------------------------------- i_doc_reset
 # inicializuje generovanou část dokumentace
 function i_doc_reset($chapter=null) {
   global $mysql_db; 
   ezer_connect($mysql_db);
   if ( $chapter )
-    $qry= "DELETE FROM ezer_doc2 WHERE chapter='$chapter'";
+    $qry= "DELETE FROM _doc WHERE chapter='$chapter'";
   else
-    $qry= "TRUNCATE TABLE ezer_doc2";
+    $qry= "TRUNCATE TABLE _doc";
   $res= mysql_qry($qry);
   return "Nápověda ".($chapter ? "pro $chapter" : "")." byla resetována";
 }
-# -------------------------------------------------------------------------------------------------- i_doc_show_chapter
+# ------------------------------------------------------------------------------- i_doc_show_chapter
 # vrátí vygenerovaný text dokumentace ezerscriptu
 function i_doc_show_chapter($chapter,$section,$class) {
 //                                                 display("i_doc_show_chapter($chapter,$section,$class)");
   $text= '';
   global $mysql_db; 
   ezer_connect($mysql_db);
-  $qry= "SELECT class,part,elem,text FROM ezer_doc2
+  $qry= "SELECT class,part,elem,text FROM _doc
          WHERE chapter='$chapter' AND section='$section' AND class='$class' ";
   $res= mysql_qry($qry);
   while ( $res && ($row= pdo_fetch_assoc($res)) ) {
@@ -824,7 +825,7 @@ function i_doc_show_chapter($chapter,$section,$class) {
   }
   return $text;
 }
-# -------------------------------------------------------------------------------------------------- i_doc_show_lang
+# ---------------------------------------------------------------------------------- i_doc_show_lang
 # vrátí vygenerovaný text dokumentace ezerscriptu
 function i_doc_show_lang($chapter,$section,$class) {
 //                                                 display("i_doc_show_lang($chapter,$section,$class)");
@@ -834,7 +835,7 @@ function i_doc_show_lang($chapter,$section,$class) {
   switch ($class) {
   case 'language':
     // text
-    $qry= "SELECT class,part,elem,text FROM ezer_doc2
+    $qry= "SELECT class,part,elem,text FROM _doc
            WHERE chapter='$chapter' AND section='$section' AND class='$class' ";
     $res= mysql_qry($qry);
     while ( $res && ($row= pdo_fetch_assoc($res)) ) {
@@ -847,7 +848,7 @@ function i_doc_show_lang($chapter,$section,$class) {
     $text.= "<h2 class='CTitle'>Funkce použitelné v procedurách EzerScriptu</h2>";
     // seznam všech funkcí
     $text.= "<table border='0' cellspacing='0' cellpadding='0' class='STable'>";
-    $qry= "SELECT * FROM ezer_doc2
+    $qry= "SELECT * FROM _doc
            WHERE chapter='reference' AND char_length(comp)=2 AND elem='function'
            ORDER BY part";
     $res= mysql_qry($qry);
@@ -870,7 +871,7 @@ function i_doc_show_lang($chapter,$section,$class) {
     $text.= "<h2 class='CTitle'>Události vznikající v blocích EzerScriptu</h2>";
     // seznam všech funkcí
     $text.= "<table border='0' cellspacing='0' cellpadding='0' class='STable'>";
-    $qry= "SELECT * FROM ezer_doc2
+    $qry= "SELECT * FROM _doc
            WHERE chapter='reference' AND elem='fire'
            ORDER BY part";
     $res= mysql_qry($qry);
@@ -893,7 +894,7 @@ function i_doc_show_lang($chapter,$section,$class) {
     $text.= "<h2 class='CTitle'>Atributy použitelné v blocích EzerScriptu</h2>";
     // seznam všech funkcí
     $text.= "<table border='0' cellspacing='0' cellpadding='0' class='STable'>";
-    $qry= "SELECT * FROM ezer_doc2
+    $qry= "SELECT * FROM _doc
            WHERE chapter='reference' AND char_length(comp)=2 AND elem='options'
            ORDER BY part";
     $res= mysql_qry($qry);
@@ -913,7 +914,7 @@ function i_doc_show_lang($chapter,$section,$class) {
   }
   return $text;
 }
-# -------------------------------------------------------------------------------------------------- i_doc_show
+# --------------------------------------------------------------------------------------- i_doc_show
 # vrátí vygenerovaný text dané části dokumentace
 function i_doc_show($chapter,$section,$class) {
 //                                                 display("i_doc_show($chapter,$section,$class)");
@@ -935,7 +936,7 @@ function i_doc_show($chapter,$section,$class) {
     else {
       $part= '';
       // hlavička
-      $qry= "SELECT class,part,elem,text,file FROM ezer_doc2
+      $qry= "SELECT class,part,elem,text,file FROM _doc
              WHERE chapter='$chapter' AND section='$section' AND class='$class'
              AND ( elem='class' OR file!='' )";
       $res= mysql_qry($qry);
@@ -961,7 +962,7 @@ function i_doc_show($chapter,$section,$class) {
         $attrs.= "</div>";
       }
       // zjištění Extends (t:)
-      $qry= "SELECT extends FROM ezer_doc2
+      $qry= "SELECT extends FROM _doc
              WHERE chapter='$chapter' AND section='$section' AND elem='class' AND class='$class' ";
       $res= mysql_qry($qry);
       if ( !$res )   return "<div id='Content'>Chybný formát ezer_doc pro $chapter.$section.$class</div>";
@@ -969,7 +970,7 @@ function i_doc_show($chapter,$section,$class) {
       $extends= $row['extends'];
       $cond= $extends ? "(class='$class' OR FIND_IN_SET(class,'$extends'))" : "class='$class'";
       // přehled atributů se zohledněním Extends (t:)
-      $qry= "SELECT * FROM ezer_doc2
+      $qry= "SELECT * FROM _doc
              WHERE chapter='$chapter' AND section='$section' AND elem='options' AND $cond
              ORDER BY part";
       $res= mysql_qry($qry);
@@ -997,7 +998,7 @@ function i_doc_show($chapter,$section,$class) {
       if ( $n > 1 ) $text.= $sum;
 
       // přehled událostí se zohledněním Extends (t:)
-      $qry= "SELECT * FROM ezer_doc2
+      $qry= "SELECT * FROM _doc
              WHERE chapter='$chapter' AND section='$section' AND elem='fire' AND $cond
              ORDER BY part";
       $res= mysql_qry($qry);
@@ -1025,7 +1026,7 @@ function i_doc_show($chapter,$section,$class) {
       if ( $n > 1 ) $text.= $sum;
 
       // přehled metod se zohledněním Extends (t:)
-      $qry= "SELECT * FROM ezer_doc2
+      $qry= "SELECT * FROM _doc
              WHERE chapter='$chapter' AND section='$section' AND elem='function' AND $cond
              ORDER BY part";
       $res= mysql_qry($qry);
@@ -1060,7 +1061,7 @@ function i_doc_show($chapter,$section,$class) {
   }
   return $text;
 }
-# -------------------------------------------------------------------------------------------------- i_doc_menu
+# --------------------------------------------------------------------------------------- i_doc_menu
 # vygeneruje menu pro danou kapitolu ve formátu pro menu_fill
 # values:[{group:id,entries:[{entry:id,keys:[k1,...]}, ...]}, ...]
 # $chapters (seznam jmen),
@@ -1070,7 +1071,7 @@ function i_doc_menu($chapters,$section0,$class0) {
   $mn= (object)array('type'=>'menu.left'
       ,'options'=>(object)array(),'part'=>(object)array());
   ezer_connect($mysql_db);
-  $qry= "SELECT DISTINCT section FROM ezer_doc2
+  $qry= "SELECT DISTINCT section FROM _doc
          WHERE FIND_IN_SET(chapter,'$chapters') GROUP BY sorting,section ";
   $res= mysql_qry($qry);
   while ( $res && ($row= pdo_fetch_assoc($res)) ) {
@@ -1079,7 +1080,7 @@ function i_doc_menu($chapters,$section0,$class0) {
     $gr= (object)array('type'=>'menu.group'
       ,'options'=>(object)array('title'=>$section),'part'=>(object)array());
     $mn->part->$id= $gr;
-    $qry2= "SELECT class, title FROM ezer_doc2
+    $qry2= "SELECT class, title FROM _doc
             WHERE FIND_IN_SET(chapter,'$chapters') AND section='$section'
             GROUP BY class ORDER BY sorting, class";
     $res2= mysql_qry($qry2);
@@ -1097,7 +1098,7 @@ function i_doc_menu($chapters,$section0,$class0) {
 //                                                 debug($mn);
   return $mn;
 }
-# -------------------------------------------------------------------------------------------------- i_doc_table_struct
+# ------------------------------------------------------------------------------- i_doc_table_struct
 # ASK - zobrazení struktury tabulky, předpokládá strukturované okomentování řádků tabulek
 # #cis   - cis je jméno číselníku - expanduje se současná hodnota položek tohoto číselníku
 # ##cis  - cis je jméno číselníku v ezer_group

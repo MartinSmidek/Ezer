@@ -61,7 +61,7 @@ panel str [,,770,] {type:'right', title:'Struktura', _sys:'*', skill:'m'
       }
     }
   }
-  use u: form f [0,0,,]
+  use u: form f
   func str_click(id) { echo(id); cg.show(id) }
 # ---------------------------------------------------- Call graf
   panel cg [0,0,300,300] { type:'popup' title:'call graf'
@@ -106,7 +106,7 @@ panel gen [,,770,] {type:'right', title:'Generování', _sys:'*', skill:'m'
   menu m {type:'left', active:*
     menu stav {title:'stav',type:'group'
       item {title:'přehled' proc onclick () {
-        u.fill("<h1>Přehled systémové dokumentace</h1>");
+        u.tit("Přehled systémové dokumentace");
         u.append(ask('i_doc','survay'))
       } }
 #       item {title:'tabulka funkcí' proc onclick () { u.fill(ask('i_doc','funcs')) } }
@@ -132,7 +132,7 @@ panel gen [,,770,] {type:'right', title:'Generování', _sys:'*', skill:'m'
         proc onclick () {
           var txt: text
           var patt: text
-          u.fill("<h1>Reset aplikační dokumentace</h1>");
+          u.tit("Reset aplikační dokumentace");
           patt.set(conc('wiki/(',sys('root'),'|ezer)_.*\.wiki'));
           u.append(ask('i_doc_reset','application'));
           txt.set(ask('i_doc','application',patt));
@@ -154,10 +154,10 @@ panel gen [,,770,] {type:'right', title:'Generování', _sys:'*', skill:'m'
     }
     proc onclick(x) { echo('menu',x._id) }
   }
-  use u: form f [0,0,,]
+  use u: form f
 }
 # ===========================================================================================> ZMĚNY
-panel nov [,,770,] {type:'right', title:'Přehled změn', _sys:'*'
+panel nov [,,770,] {type:'right', title:'Přehled změn', _sys:'*',
   use msg_a: form _msg_a [12,35,,] { tag:'ma', format:'n' }
   use msg_g: form _msg_g [12,35,,] { tag:'mg', format:'n' }
   use msg_k: form _msg_k [12,35,,] { tag:'mk', format:'n' }
@@ -237,7 +237,8 @@ panel nov [,,770,] {type:'right', title:'Přehled změn', _sys:'*'
                             Uživatel kliknutím na <b>[Beru na vědomí]</b> přidá svou zkratku
                             do seznamu (a zamezí dalšímu zobrazení)). 
                             Tlačítko <b>[test zobrazení]</b> je na kontrolní 
-                            zobrazení textu zprávy (ostrá má žluté záhlaví)." }
+                            zobrazení textu zprávy (ostrá má žluté záhlaví)." 
+    }
 
     // nová zpráva
     field kind { data:h.kind, value:'m' }
@@ -596,12 +597,12 @@ panel faq [,,770,] {type:'right', title:'Tvorba nápovědy', _sys:'*', skill:'ah
 }
 # ------------------------------------------------------------------------------------------------ f
 # formuláře pro levostranné menu
-form f {
+form f [4,10,*,50] {
   proc fill(txt) { hresult.set(conc("<div id='Content'>",txt,"</div>")); }
   proc fill2(txt) { hresult.set(txt); }
   proc tit(h) { [ h; hresult.set(replace_fa(conc("<div class='karta'>",h,"</div>"))) ]; }
   proc append(txt) { hresult.set(conc(hresult.get,"<div id='Content'>",txt,"</div>")); }
-  label hresult [0,0,*,] { title:'--' }
+  label hresult [10,0,*,] { title:'--' }
 }
 # ------------------------------------------------------------------------ _tit
 form _tit [,,*,30] {

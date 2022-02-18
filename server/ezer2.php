@@ -2888,7 +2888,7 @@ function item_help($typ,$item,$sys_php='') {
     $ezer_db= @mysql_connect('localhost','gandi','');
     $res= @mysql_select_db('ezer_kernel',$ezer_db);
     @pdo_query("SET NAMES 'utf8'");
-    $rt= pdo_query("SELECT * FROM ezer_kernel.ezer_doc2 WHERE '$item' IN (class,part)");
+    $rt= pdo_query("SELECT * FROM ezer_kernel._doc WHERE '$item' IN (class,part)");
     if ( $rt && $t= pdo_fetch_object($rt) ) {
       $ret->html= $t->text;
     }
