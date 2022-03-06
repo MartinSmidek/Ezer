@@ -2063,6 +2063,12 @@
         }
         # ------------------------------------------------------------------------------------------
         # v $load je přečtený kód, který je třeba vložit do $part->block
+        # zkontrolujeme ale verzi jádra
+        $ev= isset($loads->info->ezer_version) ? $loads->info->ezer_version : 'neznámá';
+        if ($ev!='ezer3.1') {
+          $y->error= "INCLUDE - soubor $app/$ename je pro verzi $ev - je třeba jej přeložit externě";  
+          break;
+        }
 //                                                 display("module $fname into {$part->block}");
         if ( !$y->app ) {
           // iniciace

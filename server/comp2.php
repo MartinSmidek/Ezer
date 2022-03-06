@@ -268,7 +268,7 @@ function comp_file ($name,$root='',$_list_only='',$_comp_php=false) {  #trace();
     $loads->code= $code;
                                                         if ($_GET['trace']==4) debug($loads,"kód");
     // informace o kódu pro informaci o struktuře aplikace
-    $loads->info= (object)array('php'=>$call_php,'ezer'=>$call_ezer);
+    $loads->info= (object)array('php'=>$call_php,'ezer'=>$call_ezer,'ezer_version'=>'ezer3.1');
     $loads->info->elem= $call_elem;
 //                                                        debug($call_elem,'call elem');
     $json_loads= json_encode($loads,JSON_HEX_AMP);

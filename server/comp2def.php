@@ -226,7 +226,7 @@ $attribs = array (
   'ezer'   =>  explode(",",'active:i,units:s'),
   'module' =>  explode(",",'active:i,units:s,title:s,help:s,skill:s'),
   'panel'  =>  explode(",",'title:s,type:s,under:i,style:s,css:s,skill:s,include:s,value:s,par:o,format:s'),
-  'use'    =>  explode(",",'tabindex:n,skill:s,format:s,par:o'),
+  'use'    =>  explode(",",'tabindex:n,skill:s,format:s,par:o,style:s'),
 #  map
   'map'    =>  explode(",",'db:s,where:s,order:s,key_id:s'),
 #  table

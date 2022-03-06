@@ -1,4 +1,4 @@
-<?php # (c) 2008-2019 Martin Smidek <martin@smidek.eu>
+<?php # (c) 2008-2022 Martin Smidek <martin@smidek.eu>
   
 const EZER_version= 3.1;
 
