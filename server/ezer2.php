@@ -57,7 +57,8 @@
   # při zjištění staré verze jádra v SESSION je vynucen restart 
   elseif ( isset($_SESSION[$ezer_root]['ezer']) && $_SESSION[$ezer_root]['ezer']!='3.2' ) {
     header('Content-type: application/json; charset=UTF-8');
-    $y= (object)array('session_none'=>1,'error'=>'nepovolený souběh se starou verzí jádra');
+    $y= (object)array('session_none'=>1,
+        'error'=>"nepovolený souběh se starou verzí {$_SESSION[$ezer_root]['ezer']}");
     $yjson= json_encode($y);
     echo $yjson;
     exit;

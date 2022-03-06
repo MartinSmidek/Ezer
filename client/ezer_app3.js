@@ -3756,10 +3756,12 @@ Ezer.fce.contains= function (x,list,sep) {
 //s: funkce
 //h: array,string
 Ezer.fce.erase= function (x,list,sep) {
-  var list_type= typeof(list);
+  let list_type= typeof(list), i;
   sep= sep||',';
   if ( list_type=='string' ) list= list.split(sep);
-  list= list.erase(x);
+  while ((i= list.indexOf(x))>=0) {
+    list.splice(i,1);
+  }
   if ( list_type=='string' ) list= list.join(sep);
   return list;
 };

@@ -52,7 +52,7 @@ function comp_file ($name,$root='',$_list_only='',$_comp_php=false) {  #trace();
   global $ezer, $ezer_version, $ezer_path_root, $err, $comp_php,$list_only,
     $code, $module, $procs, $context, $ezer_name, $ezer_app, $errors, $includes, $onloads;
   global $pragma_library, $pragma_syntax, $pragma_attrs, $pragma_names, $pragma_get, $pragma_prefix,
-    $pragma_group, $pragma_box, $pragma_if, $pragma_switch;
+    $pragma_group, $pragma_box, $pragma_if, $pragma_switch, $pragma_nogen, $pragma_attrib;
   global $call_php, $call_ezer, $call_elem;
   global $doxygen;    // $doxygen=1 pokud se má do složky data generovat *.cpp pro doxygen
   global $app_ezers, $file_;
@@ -77,10 +77,11 @@ function comp_file ($name,$root='',$_list_only='',$_comp_php=false) {  #trace();
     // oddělení případného #pragma names,syntax,prefix
     // (musí být na začátku souboru)
     $pragma_library= $pragma_syntax= $pragma_attrs= $pragma_names= $pragma_get= $pragma_prefix=
-    $pragma_group= $pragma_box= $pragma_if= $pragma_switch= false;
+    $pragma_group= $pragma_box= $pragma_if= $pragma_switch= $pragma_nogen= $pragma_attrib= false;
+    $pragma_attrib= true;
     if ( substr($ezer,0,7)=='#pragma' ) {
       $pragma= explode(',',trim(substr($ezer,8,strpos($ezer,"\n")-8)));
-//                                                             debug($pragma,"pragma");
+                                                             debug($pragma,"pragma");
       if ( in_array('library',$pragma)) $pragma_library= true;
       if ( in_array('names',$pragma) )  $pragma_names= array('');
       if ( in_array('syntax',$pragma) ) $pragma_syntax= true;
@@ -91,6 +92,8 @@ function comp_file ($name,$root='',$_list_only='',$_comp_php=false) {  #trace();
       if ( in_array('test',$pragma) )   $pragma_if= $pragma_switch= true;
       if ( in_array('if',$pragma) )     $pragma_if= true;
       if ( in_array('switch',$pragma) ) $pragma_switch= true;
+      if ( in_array('nogen',$pragma) )  $pragma_nogen= true;
+      if ( in_array('attrib',$pragma) ) $pragma_attrib= true;
 //       if ( in_array('using',$pragma) ) {
 //         $i= array_search('using',$pragma);
 //         $pragma_using= $pragma[$i+1];
@@ -225,19 +228,20 @@ function comp_file ($name,$root='',$_list_only='',$_comp_php=false) {  #trace();
       if ($start->part) foreach ($start->part as $id=>$spart) {
         link_code($spart,"\$.$id",true,"$id");
       }
+                                                        if ($_GET['trace']==4 && $pragma_attrib) debug($start,"před PROC");
       if ($start->part) foreach ($start->part as $id=>$spart) {
-        proc($spart,'');
+        proc($spart,"\$.$id",$id); // bylo proc($spart,"",$id);
       }
     }
     else {
       $myname= $is_library?'#':"\$.$name";
-      if ( $start->part ) {
+      if ( $start->part && !$pragma_nogen ) {
         foreach ($start->part as $id=>$spart) {
           link_code($spart,"$top.$id",false,$id);
         }
-//                                                              debug($start,"PO link_code");
+                                                        if ($_GET['trace']==4 && $pragma_attrib) debug($start,"před PROC");
         foreach ($start->part as $id=>$spart) {
-          proc($spart,"$top.$id");
+          proc($spart,"$top.$id",$id);
         }
       }
     }
@@ -339,7 +343,7 @@ function xcode($x,$ind=0) {
     $sc= str_pad($ic,2,'0',STR_PAD_LEFT);
     $o= $cc->o;
     $tr.= "\n$sp$sc: $o";
-    if ($cc) foreach ($cc as $i => $cci) {
+    if ($cc && is_array($cc)) foreach ($cc as $i => $cci) {
       if ( $i=='iff' || $i=='ift' || $i=='jmp' || $i=='go' ) {
         $cci= str_pad($ic+$cci,2,'0',STR_PAD_LEFT);
         $tr.= " $i=$cci";
@@ -595,7 +599,7 @@ function pragma_attrs($c) {
 # $context= [id=>objekt,...]
 # a naváže includované části
 function link_code(&$c,$name,$isroot,$block) {
-  global $context, $error_code_lc, $call_php;
+  global $context, $error_code_lc, $call_php, $pragma_attrib;
   $c->_abs= $name;
   if ( $c->type=='view' ) {
     $error_code_lc= $c->_lc;
@@ -658,8 +662,56 @@ function link_code(&$c,$name,$isroot,$block) {
     }
     array_pop($context);
   }
-  // procházení options
-  if ( $c->options ) {
+  // verze 3.2 procházení options pro coord, include, sql_pipe
+  if ( $c->options && $pragma_attrib ) {
+    foreach ($c->options as $id=>$desc) {
+      // řešení symbolicky zadaných rozměrů - nahrazuje jména konstant jejich hodnotou
+      if ( in_array($id,array('_l','_t','_w','_h')) ) {
+        if ( is_array($desc) ) {
+          foreach($desc as $p=>$part) {
+            if ( $part[0]=='k' ) {
+              $const= find_part_rel($part[1],$fullname);
+//                                                                 debug($const,$fullname);
+              if ( $const && $const->type=='const' ) {
+                $c->options->{$id}[$p][0]= 'k';
+                $c->options->{$id}[$p][1]= $const->options->value;
+                $c->options->{$id}[$p][2]= $part[1];
+                if ( isset($part[2]) && $part[2]=='-' ) $c->options->{$id}[$p][3]= '-';
+              }
+              else comp_error("CODE: '{$part[1]}' není jménem konstanty",0);
+            }
+          }
+          // pokud prvek není BOX a rozměr je dán jedním číslem, odstraň pole
+          if ( $c->type!='box' && count($c->options->{$id})==1 && $c->options->{$id}[0][0]=='n') {
+            $c->options->{$id}= $c->options->{$id}[0][1];
+          }
+        }
+      }
+//      // sběr include:onload
+//      else if ( $id=='include' ) {
+//        list($typ,$iname)= explode(',',$desc);
+//          // jména z include:onload dávej do pole $onloads
+//          global $onloads, $ezer_app;
+//          if ( $iname ) {
+//            $ids= explode('.',$iname);
+//            $inc= (object)array('file'=>"{$ids[0]}/$iname",'block'=>$block,'include'=>$typ);
+//          }
+//          else {
+////             $iname= $isroot ? substr($name,2) : $ezer_app.substr($name,1);
+//            $iname= substr($name,2);
+//            $inc= (object)array('file'=>"$ezer_app/$iname",'block'=>$block,'include'=>$typ);
+//          }
+//          array_push($onloads,$inc); 
+//      }
+//      else if ( $id=='sql_pipe' ) {
+//        list($fce)= explode(':',$desc);
+//        if ( !in_array($fce,$call_php) )
+//          $call_php[]= $fce;
+//      }
+    }
+  }
+  // verze 3.1 procházení options pro coord, include, sql_pipe
+  if ( $c->options && !$pragma_attrib ) {
     foreach ($c->options as $id=>$desc) {
       // řešení symbolicky zadaných rozměrů - nahrazuje jména konstant jejich hodnotou
       if ( in_array($id,array('_l','_t','_w','_h')) ) {
@@ -686,7 +738,6 @@ function link_code(&$c,$name,$isroot,$block) {
       // sběr include:onload
       else if ( $id=='include' ) {
         list($typ,$iname)= explode(',',$desc);
-//        if ( $typ=='onload' ) {
           // jména z include:onload dávej do pole $onloads
           global $onloads, $ezer_app;
           if ( $iname ) {
@@ -699,7 +750,6 @@ function link_code(&$c,$name,$isroot,$block) {
             $inc= (object)array('file'=>"$ezer_app/$iname",'block'=>$block,'include'=>$typ);
           }
           array_push($onloads,$inc); 
-//        }
       }
       else if ( $id=='sql_pipe' ) {
         list($fce)= explode(':',$desc);
@@ -712,8 +762,8 @@ function link_code(&$c,$name,$isroot,$block) {
 # --------------------------------------------------------------------------------------------- proc
 # volá kompilátor procedur a převádí relativní na absolutní cesty pro table, map, report
 # $context= [id=>objekt,...]
-function proc(&$c,$name) { #trace();
-  global $trace_me;
+function proc(&$c,$name,$block) { #trace();
+  global $trace_me, $pragma_attrib;
   global $context, $procs, $error_code_lc, $names, $full, $call_elem, $call_ezer;
 //                                                 if ( $name='dbg' || $name=='$.test.fce.dbg._d.test' ) debug($context,"proc($name)",(object)array('depth'=>3));
   if ( $c->type=='proc' ) {
@@ -762,14 +812,15 @@ function proc(&$c,$name) { #trace();
   else if ( $c->part ) {
     array_push($context,(object)array('id'=>$c->id,'ctx'=>$c));
     foreach ($c->part as $id=>$cpart) {
-      proc($cpart,"$name.$id");
+      proc($cpart,"$name.$id","$block.$id");
     }
     array_pop($context);
   }
   // vyřešení atributů typu ai .. relativní cesta pro view a absolutní pro table a map a report
-  if ( $c->options )
-  foreach ($c->options as $id=>$name) {
-    if ( $id=='rows' && !is_numeric($c->options->rows) ) {
+  // řešení verze 3.1
+  if ( $c->options && !$pragma_attrib) 
+    foreach ($c->options as $id=>$name) {   
+      if ( $id=='rows' && !is_numeric($c->options->rows) ) {
       $error_code_lc= $c->_lc;
       $full= '';
       $obj= find_part_abs($c->options->rows,$full,'const');
@@ -828,6 +879,268 @@ function proc(&$c,$name) { #trace();
       }
     }
   }
+  // vyřešení atributů typu ai .. relativní cesta pro view a absolutní pro table a map a report
+  // řešení verze 3.2
+  if ( $c->options && $pragma_attrib) foreach ($c->options as $id=>$desc) {
+    $error_code_lc= $c->_lc;
+    // nejprve vyřešíme hodnoty atributů, ale vynecháme konstanty kvůli typu object                 TODO
+    if (in_array($c->type,array('proc'))) continue;
+//    if (in_array($c->type,array('const','var','proc'))) continue;
+//    debug($c,"$block/$id");
+    $val= $typ= $const= null; 
+    eval_expr($desc,$val,$typ,$const);
+    if ($c->type=='const') {
+      $c->_of= $typ;
+      if ($const) {
+        $c->options->value= gettype($val)=='object' ? $val->object : $val;
+        unset($c->options->expr);
+      }
+      else {
+        $c->options->expr= $val;
+      }
+    }
+    elseif ($c->type=='var') {
+      $c->_of= $typ;
+      if ($const) {
+        $c->options->value= gettype($val)=='object' ? $val->object : $val;
+//        unset($c->options->expr);
+      }
+      else comp_error("CODE počáteční hodnota proměnné musí být určitelná během kompilace ");
+    }
+    else {
+      $c->options->$id= $val;
+    }
+//    $c->options->$id= $const ? (object)array('value'=>$val->expr) : $val;
+    // pokud jde o atribut include
+    if ( $id=='include' ) {
+      list($typ,$iname)= explode(',',$val);
+        // jména z include:onload dávej do pole $onloads
+        global $onloads, $ezer_app;
+        if ( $iname ) {
+          $ids= explode('.',$iname);
+          $inc= (object)array('file'=>"{$ids[0]}/$iname",'block'=>$block,'include'=>$typ);
+        }
+        else {
+          $iname= substr($name,2);
+          $inc= (object)array('file'=>"$ezer_app/$iname",'block'=>$block,'include'=>$typ);
+        }
+        array_push($onloads,$inc); 
+    }
+  }
+}
+# ---------------------------------------------------------------------------------------- eval expr
+# vyčíslí hodnotu, pokud je to v době kompilace možné tzn,. pokud je const=true
+# jinak vrací výraz r_expr pro vyhodnocení na začátku run-time před prvním onstart
+#   r_expr = hodnota
+#          | { const: absolutní odkaz na konstantu }
+#          | { op: funkce, [ r_expr, ...] }
+#   funkce = iff | minus | sum | multiply | conc | index
+function eval_expr ($c,&$val,&$typ,&$const) { //trace();
+  global $error_code_lc;
+  $c_type= gettype($c);
+  if ($c_type=='object') {
+    if (isset($c->lc)) $error_code_lc= $c->lc;
+//                                if ($_GET['trace']==4) debug($c,"eval_expr: $c_type/$c->expr");
+    switch ( $c->expr ) {
+      
+    // -------------------------------------- id '[' expr ']'
+    case 'index':
+      $index= $tp= $ci= $cp= null; 
+      eval_expr($c->index,$index,$tp,$ci);
+      eval_expr((object)array('expr'=>'name','name'=>$c->name),$array,$tp,$ca);
+      $const= $ci && $ca;
+      if ($const) {
+        if (gettype($array)=='array' && gettype($index)=='integer' 
+            && $index>=0 && $index<count($array) ) {
+          $val= $array[$index];
+        }
+        else comp_error("CODE indexaci pole nelze bezpečně vyhodnotit ");
+      }
+      else {
+        $val= (object)array('op'=>'index','par'=>[$array,$index]);
+      }
+      break;
+
+    // -------------------------------------- e ? e : e
+    case 'tern':
+      $test= $typ= $const= null; 
+      eval_expr($c->par[0],$test,$typ,$const);
+      if ($const) {
+        if ($test) 
+          eval_expr($c->par[1],$val,$typ,$cp);
+        else
+          eval_expr($c->par[2],$val,$typ,$cp);
+      }
+      else {
+        $then= $else= $tp= $cp= null;
+        eval_expr($c->par[1],$then,$tp,$cp);
+        eval_expr($c->par[2],$else,$tp,$cp);
+        $val= (object)array('op'=>'iff','par'=>[$test,$then,$else]);
+      }
+      break;
+
+    // -------------------------------------- ` string ${expr} string ... `
+    case 'templ':
+      $const= true;
+      $arg= array();
+      foreach($c->par as $p) {
+        $vp= $tp= $cp= null; 
+        eval_expr($p,$vp,$tp,$cp);
+        $const&= $cp;
+        $arg[]= $vp;
+      }
+      if ($const) { // spojit do hodnoty
+        $val= '';
+        foreach ($arg as $v) {
+          $val.= $v;
+        }
+      }
+      else { // zavolat op=conc
+        $val= (object)array('op'=>'conc','par'=>$arg);
+      }
+      $typ= 'n';
+      break;
+
+    // -------------------------------------- id ( expr1, ... ) ? value
+    case 'call':
+      $const= true;
+      $arg= array();
+      foreach ($c->par as $id=>$p) {
+        $vp= $tp= $cp= null; 
+        eval_expr($p,$vp,$tp,$cp);
+        $const&= $cp;
+        $arg[]= $vp;
+      }
+      if ($const) {
+        switch ($c->op) {
+          case 'minus':
+            $val= -$arg[0];
+            $typ= 'n';
+            break;
+          case 'sum':
+            $val= 0;
+            foreach ($arg as $v) {
+              $val+= $v;
+            }
+            $typ= 'n';
+            break;
+          case 'multiply':
+            $val= 1;
+            foreach ($arg as $v) {
+              $val*= $v;
+            }
+            $typ= 'n';
+            break;
+          default:
+            comp_error("CODE funkci '$c->op' nelze použít pro výpočet konstantního výrazu");
+        }
+      }
+      else {
+        $val= (object)array('op'=>$c->op,'par'=>$arg);
+      }
+      break;
+
+    // -------------------------------------- value
+    case 'value':
+      $typ= $c->type;
+      $val= $c->value;
+      $const= true;
+      break;
+    // -------------------------------------- id ( '.' id )* | '&' id // může být jen jako argument
+    case 'name':
+      $name= $c->name;
+      if ( $name=='*' || $name=='no') {
+        $val= '*';
+        $typ= 'i';        
+        $const= true;
+        break;
+      }
+      $full= null; 
+      $elem= find_part_abs($name,$full);
+//      debug($elem,"find_part_abs=$full");
+//      $elem= find_part_rel($name,$full);
+//      debug($elem,"find_part_rel=$full");
+        
+      // jméno musí označovat viditelný element
+      if (!$elem) comp_error("CODE hodnotu '$name' nelze získat během kompilace (1)");
+      switch ($elem->type) {
+        // konstanta
+        case 'const':
+          $const= isset($elem->options->value);
+          if ($const) 
+            $val= $elem->options->value;
+          else 
+            $val= (object)array('const'=>$full);
+//          $typ= $elem->options->type;
+          $typ= $elem->_of;
+          if (!$typ) {
+            $typ= gettype($val);
+            $typ= strtr($typ,array('string'=>'s','integer'=>'n','object'=>'o','array'=>'a'));
+          }
+          break;
+        // odkaz na pole ve tvaru: tabulky nebo view
+        case 'text': case 'date': 
+          $val= $full;
+          $typ= 's';
+          $const= true;
+          break;
+        case 'number': 
+          $val= $full;
+          $typ= 'n';
+          $const= true;
+          break;
+        case 'view':
+          $val= $full;
+          $const= true;
+          break;
+        case 'map':
+          $val= $full;
+          $const= true;
+          break;
+        default:
+          $val= $full;
+          $const= true;
+          $typ= 'o';
+      }
+      break;
+
+    // -------------------------------------- { id:expr1, ... }
+    case 'object':
+      $val= (object)array();
+      $typ= 'o';
+      $const= true;
+      foreach ($c->par as $id=>$p) {
+        $vp= $tp= $cp= null; 
+        eval_expr($p,$vp,$tp,$cp);
+        $const&= $cp;
+        $val->$id= $vp;
+      }
+      break;
+
+    // -------------------------------------- [ expr1, ... ]
+    case 'array':
+      $val= array();
+      $typ= 'a';
+      $const= true;
+      foreach ($c->par as $id=>$p) {
+        $vp= $tp= $cp= null; 
+        eval_expr($p,$vp,$tp,$cp);
+        $const&= $cp;
+        $val[]= $vp;
+      }
+      break;
+
+    default:
+      comp_error("CODE hodnotu '$c->expr' nelze získat během kompilace (3)");
+    }
+  }
+  else {
+    $val= $c;
+    $typ= gettype($val);
+    $typ= strtr($typ,array('string'=>'s','integer'=>'n','object'=>'o','array'=>'a'));
+    $const= true;
+  }
+//  display("eval_expr> (..,..,$typ,$const)");
 }
 # ------------------------------------------------------------------------------------------- export
 # kopíruje pouze informace pro interpreta
@@ -935,7 +1248,7 @@ function find_obj($full) {
 # context :: [ id:part, ... ]
 # obor hledání lze zúžit zadáním požadovaného typu
 function find_part_abs($name,&$full,$type='') {
-  global $context;
+  global $context, $pragma_attrib;
 //                                                 debug($context,"find_part_abs: $name - $full - $type",
 //                                                   (object)array('depth'=>5));
 //                                                 display("find_part_abs: $name - $full - $type");
@@ -969,7 +1282,26 @@ function find_part_abs($name,&$full,$type='') {
   // pokračování může jen upřesňovat objekt
   for ($k= 1; $k<=$end_id; $k++) {
     $id= $ids[$k];
-    if ( ($obj= $obj->part->$id) ) {
+    if ( $pragma_attrib && $obj->type=='map' ) { 
+      if (isset($obj->options->text)) {
+        $full.= ".$id";                   // TODO zkontrolovat správnost $id nebo přepracovat map/text
+      }
+      else {
+        $full2= null;
+        $table= find_part_abs($obj->_init,$full2);
+        if ($obj->_init!=$full2) comp_error("CODE: chybná inicializace map '$obj->id' ");
+        if (!isset($table->part->$id)) comp_error("CODE: '$id' není položka tabulky '$table->id' v map '$obj->id' ");
+        $full= "$obj->id.$id";
+      }
+    }
+    elseif ( $pragma_attrib && $obj->type=='view' ) { 
+      $full2= null;
+      $table= find_part_abs($obj->_init,$full2);
+      if ($obj->_init!=$full2) comp_error("CODE: chybná inicializace view '$obj->id' ");
+      if (!isset($table->part->$id)) comp_error("CODE: '$id' není položka tabulky '$table->id' ve view '$obj->id' ");
+      $full= "$obj->id.$id";
+    }
+    elseif ( ($obj= $obj->part->$id) ) {
       $full.= ".$id";
     }
     else comp_error("CODE: chybné jméno '$id' ve jménu '$name'");
@@ -983,7 +1315,7 @@ function find_part_abs($name,&$full,$type='') {
 # obor hledání lze zúžit zadáním požadovaného typu
 #   to se týká první složky jména - neúspěch se pak nehlásí jako chyba, vrátí se null
 function find_part_rel($name,&$full,$type='') { #trace();
-  global $context;
+  global $context, $pragma_attrib;
   $obj= null;
   $ids= explode('.',$name);
   $id= $ids[0];
@@ -1020,6 +1352,18 @@ function find_part_rel($name,&$full,$type='') { #trace();
     // pokud je to proměnná  - přidej k ní případné pokračování
     if ( $obj->type=='var' ) {
       for ($k= 1; $k<=$end_id; $k++) {
+        $full.= ".{$ids[$k]}";
+      }
+    }
+    // pokud je to view - přidej následující jméno položky
+    elseif ( $pragma_attrib && $obj->type=='view' ) {
+      for ($k= 1; $k<=$end_id; $k++) {                      // TODO ověřit jméno proti jménu tabulky
+        $full.= ".{$ids[$k]}";
+      }
+    }
+    // pokud je to map - přidej následující jméno položky
+    elseif ( $pragma_attrib && $obj->type=='map' ) {
+      for ($k= 1; $k<=$end_id; $k++) {                      // TODO ověřit jméno proti jménu tabulky
         $full.= ".{$ids[$k]}";
       }
     }
@@ -2801,8 +3145,8 @@ function gen($pars,$vars,$c,$icall,&$struct) { #trace();
 # top2 - pro běžný překlad null pro debugger objekt pro vložení procedury resp. funkce _dbg_
 # dbg = false|'proc'|func' - specifikace zda jde o proceduru nebo funkci
 function get_ezer (&$top,&$top2,$dbg=false) {
-  global $lex, $head, $attribs1, $attribs2, $keywords, $errors, $const_list, $debugger;
-  $const_list= array();
+  global $lex, $head, $attribs1, $attribs2, $keywords, $errors, $debugger; //, $const_list;
+//  $const_list= array();
   get_ezer_keys($keywords,$attribs1,$attribs2);
   note_time('tables');
   $debugger= $dbg;
@@ -2881,7 +3225,7 @@ function get_if_block ($root,&$block,&$id) {
 //                                                 debug($root,"get_if_block",(object)array('depth'=>2));
   global $doxygen, $pos, $head;
   global $blocs2, $blocs3, $specs, $last_lc;
-  global $pragma_syntax, $pragma_group, $pragma_box, $call_php;
+  global $pragma_syntax, $pragma_group, $pragma_box, $pragma_attrib, $call_php;
   global $errors; if ( $errors ) return false;
   global $file_;
   $TEST_NEW_VAR= 1;  // ------------------------------------------------- testování var 
@@ -2900,7 +3244,7 @@ function get_if_block ($root,&$block,&$id) {
         $block->type= 'proc';
       }
       if ( isset($specs[$key]) ) {
-        $copy= $fg= $typ= $pars= $type= $code= $vars= $prior= $args= $value= $is_expr= null;
+        $copy= $fg= $typ= $pars= $type= $code= $vars= $prior= $args= $value= $is_expr= $indx= null;
         if ( in_array('map_table' ,$specs[$key]) ) {
           if ( get_if_delimiter('=') ) {
             get_value($value,$typ);
@@ -3015,11 +3359,10 @@ function get_if_block ($root,&$block,&$id) {
         if ( in_array('arg'  ,$specs[$key]) && get_if_args($args)  ) $block->arg= $args;
         if ( in_array('coord',$specs[$key]) && get_if_coord($block) )  $skip= 0;
         if ( in_array('coor+',$specs[$key]) && get_if_coorp($block) )  $skip= 0;
-        if ( in_array('const',$specs[$key]) && get_def($id,$value,$is_expr) ) {
-          if ( $is_expr )
-            $block->options->_expr= $value;
-          else
-            $block->options->value= $value;
+        if ( $pragma_attrib && in_array('const',$specs[$key]) && get_def3($id,$value,$type,$indx) ) {
+          if ( $indx )
+            $block->options->$indx= $value;
+          $block->_of= $type;
           if ( !isset($root->part) ) $root->part= (object)array();
           $root->part->$id= $block;
           $cid= null;
@@ -3027,7 +3370,35 @@ function get_if_block ($root,&$block,&$id) {
           // další konstanty
           while ( $ok ) {
             if ( !$cid ) get_id($cid);
-            get_def($cid,$value,$is_expr);
+            get_def3($cid,$value,$type,$indx);
+            $cblock= new stdClass;
+            $cblock->type= 'const';
+            if ( !isset($cblock->options) ) $cblock->options= (object)array();
+            if ( $indx )
+              $cblock->options->$indx= $value;
+            $cblock->_of= $type;
+            $cblock->_lc= $last_lc;
+            $cblock->id= $id;
+            $root->part->$cid= $cblock;
+            $cid= null;
+            $ok= get_if_delimiter(';') || get_if_comma_id($cid);
+          }
+          $ok= true;
+        }
+        if ( !$pragma_attrib && in_array('const',$specs[$key]) && get_def($id,$value,$type,$is_expr) ) {
+          if ( $is_expr )
+            $block->options->_expr= $value;
+          else
+            $block->options->value= $value;
+          $block->_of= $type;
+          if ( !isset($root->part) ) $root->part= (object)array();
+          $root->part->$id= $block;
+          $cid= null;
+          $ok= get_if_delimiter(';') || get_if_comma_id($cid);
+          // další konstanty
+          while ( $ok ) {
+            if ( !$cid ) get_id($cid);
+            get_def($cid,$value,$type,$is_expr);
             $cblock= new stdClass;
             $cblock->type= 'const';
             if ( !isset($cblock->options) ) $cblock->options= (object)array();
@@ -3035,6 +3406,7 @@ function get_if_block ($root,&$block,&$id) {
               $cblock->options->_expr= $value;
             else
               $cblock->options->value= $value;
+            $cblock->_of= $type;
             $cblock->_lc= $last_lc;
             $cblock->id= $id;
             $root->part->$cid= $cblock;
@@ -3137,9 +3509,10 @@ function get_if_block ($root,&$block,&$id) {
 # ------------------------------------------------------------------------------------------- attrib
 # $root je nadřazený blok
 # attr :: id [':' val | ':' id]         -- id musí být jméno konstanty, typ atributu musí mít c
+# attr :: id [':' val | ':' id] 
 # defaultní val=1
 function get_if_attrib ($root,&$id,&$val) {
-  global $attribs1, $attribs2, $pragma_box, $errors;
+  global $attribs1, $attribs2, $pragma_box, $errors, $pragma_attrib;
   if ( $errors ) return false;
   $val= 1;
   $ok= get_if_id_not_keyword($id);
@@ -3151,29 +3524,55 @@ function get_if_attrib ($root,&$id,&$val) {
       }
     }
     if ( isset($attribs1[$root]) && (false!==($i= array_search($id,$attribs1[$root]))) ) {
-      $typ= $attribs2[$root][$i];
-      if ( $typ!='b' ) {
-        $cid= $typval= null;
+//                                                display("pragma: attrib = $pragma_attrib");
+      if ($pragma_attrib) {
+        // předpokládejme libovolný výraz
         get_delimiter(':');
-        if ( $typ=='i' || $typ=='m' ) {
-          // jméno položky tabulky nebo mapy
-          get_id($val);
-        }
-        else if ( strpos($typ,'c') && get_if_id($cid) ) {
-          // jméno konstanty
-          $val= $cid;
+        // atribut type musí být konstantní
+        if ($id=='type') {
+          $t= null; get_value($val,$t);
+          if ($t!='s') comp_error("SYNTAX hodnota atributu type musí být string");
         }
         else {
-//                                                 display("atribut $id");
-          if ( look_value() ) {
-            // literál
-            get_value($val,$typval);
-            if ( strpos($typ,$typval)===false ) {
-              comp_error("SYNTAX hodnota atributu $id smí mít typy $typ");
-              return false;
-            }
+          get_expr4(null,$val);
+        }
+        
+//         pokud lze okamžitě spočítat hodnotu, zapíšeme ji místo výrazu
+//        $typ= $attribs2[$root][$i];
+//        $v= $t= null; eval_expr($val,$v,$t);
+//        if ($t==$typ || $t=='i' && $typ=='m') {
+//          $val= $v;
+//        }
+//        else {
+//          $types= array('n'=>'number','s'=>'text','o'=>'object','a'=>'array','i'=>'ezer');
+//          comp_error("SYNTAX hodnota atributu $id, která má mít typ $types[$typ] má typ $types[$t]");
+//        }
+      }
+      else {
+        $typ= $attribs2[$root][$i];
+        if ( $typ!='b' ) {
+          $cid= $typval= null;
+          get_delimiter(':');
+          if ( $typ=='i' || $typ=='m' ) {
+            // jméno položky tabulky nebo mapy
+            get_id($val);
           }
-          else comp_error("SYNTAX po jménu hodnotového atributu $id nenásleduje konstanta");
+          else if ( strpos($typ,'c') && get_if_id($cid) ) {
+            // jméno konstanty
+            $val= $cid;
+          }
+          else {
+  //                                                 display("atribut $id");
+            if ( look_value() ) {
+              // literál
+              get_value($val,$typval);
+              if ( strpos($typ,$typval)===false ) {
+                comp_error("SYNTAX hodnota atributu $id smí mít typy $typ");
+                return false;
+              }
+            }
+            else comp_error("SYNTAX po jménu hodnotového atributu $id nenásleduje konstanta");
+          }
         }
       }
     }
@@ -3254,7 +3653,7 @@ function get_if_args (&$args) {
 # numvalue :: [-]num | constant_name   --> $value
 # vrací 1.písmeno typu
 function get_numvalue (&$val,&$id) {
-  global $head, $lex, $typ, $const_list;
+  global $head, $lex, $typ; //, $const_list;
   $ok= false;
   $val= $lex[$head];
   if ( $typ[$head]=='del' && $val=='-' ) {
@@ -3271,19 +3670,19 @@ function get_numvalue (&$val,&$id) {
     $val= 0+$val;
     $head++;
   }
-  else if ( $typ[$head]=='id' ) {     // jméno konstanty
-    $id= $val;
-    $ok= true;
-    $head++;
-    $val= $const_list[$id]['value'];
-  }
+//  else if ( $typ[$head]=='id' ) {     // jméno konstanty
+//    $id= $val;
+//    $ok= true;
+//    $head++;
+//    $val= $const_list[$id]['value'];
+//  }
   if ( !$ok ) comp_error("SYNTAX: bylo očekávána číslo nebo konstanta místo {$typ[$head]} $val");
   return true;
 }
 # --------------------------------------------------------------------------------------------- vars
 # vars    :: 'var' varlist
 # varlist :: vardef | vardef ',' varlist
-# vardef  :: id ':' type | id '=' value
+# vardef  :: id ':' type | id '=' expr4
 function get_vars (&$root,$id,$lc) {
   // připojí proměnné do bloku, id je identifikátor první proměnné
   global $last_lc;
@@ -3296,11 +3695,15 @@ function get_vars (&$root,$id,$lc) {
     $block->id= $id;
     // proměnná s inicializací, určující její typ
     if ( get_if_delimiter('=') ) {
-      $val= $typval= null;
-      get_value($val,$typval);
+      $val= null;
+      get_expr4(null,$val);
       $block->options= (object)array();
       $block->options->value= $val;
-      $block->_of= $types[$typval];
+//      $val= $typval= null;
+//      get_value($val,$typval);
+//      $block->options= (object)array();
+//      $block->options->value= $val;
+//      $block->_of= $types[$typval];
     }
     // proměnná bez inicializace a s typem
     else {
@@ -3321,51 +3724,78 @@ function get_vars (&$root,$id,$lc) {
   return true;
 }
 # -------------------------------------------------------------------------------------------- const
-# (a) const :: 'const' id '=' cvalue            -- začátek
-# (b) const :: (';'|',') id '=' cvalue          -- pokračování
+# consts      :: 'const' constlist
+# constlist   :: constdef | constdef ',' constlist
+# constdef    :: id ':' type | id '=' expr4
+function get_def3 ($id,&$value,&$type,&$indx) {
+//  global $const_list;
+  $value= null; //$type= 'global';
+  $ok= get_if_delimiter('=');
+  if ( $ok ) {
+    get_expr4(null,$value); // literál vrátit jako {value:lit} výraz jako {expr:---}
+    $indx= 'expr';
+  }
+  else {
+    get_delimiter(':');
+    get_type($type);
+    $indx= '';
+  }
+  return true;
+}
+# -------------------------------------------------------------------------------------------- const
+# consts      :: 'const' constlist
+# constlist   :: constdef | constdef ',' constlist
+# constdef    :: id ':' type | id '=' const_value
+# const_value :: 
+//# (a) const :: 'const' id '=' cvalue            -- začátek
+//# (b) const :: (';'|',') id '=' cvalue          -- pokračování
 #     cvalue :: const | nvalue
 #     nvalue :: number | nid | nvalue [ ('+'|'-') nvalue ] -- kde nid je jméno kontrolované za běhu
-function get_def ($id,&$value,&$is_expr) {
-  global $const_list;
-  $value= null; $type= 'global';
+function get_def ($id,&$value,&$type,&$is_expr) {
+//  global $const_list;
+  $value= null; //$type= 'global';
   $id1= null;
   $ok= get_if_delimiter('=');
   if ( $ok ) {
     $ok= get_if_id_not_keyword($id1);
     if ( $ok ) {
-      $value= $const_list[$id1]['value'];
-      $type= $const_list[$id1]['type'];
+//      $value= $const_list[$id1]['value'];
+//      $type= $const_list[$id1]['type'];
     }
     else {
-      get_value($value,$type);
+      get_value($value,$type,true);
       $ok= true;
     }
-  }
-  // případné rozšíření?
-  $op= get_if_delimiter('+') ? '+' : (get_if_delimiter('-') ? '-' : false);
-  if ( $op ) {
-    $is_expr= true;
-    $value= array($id1 ? array('k',$value,$id1) : array('n',$value));
-    while ( $op ) {
-      // další sčítanec
-      $value2= $id2= null;
-      get_numvalue ($value2,$id2);
-      $expr= $id2
-        ? ($op==='-' ? array('k',$value2,$id2,'-') : array('k',$value2,$id2))
-        : ($op==='-' ? array('n',-$value2) : array('n',$value2));
-      $value[]= $expr;
-      $const_list[$id]= array('_expr'=>$value,'type'=>$type);
-      $op= get_if_delimiter('+') ? '+' : (get_if_delimiter('-') ? '-' : false);
+    // případné rozšíření?
+    $op= get_if_delimiter('+') ? '+' : (get_if_delimiter('-') ? '-' : false);
+    if ( $op ) {
+      $is_expr= true;
+      $value= array($id1 ? array('k',$value,$id1) : array('n',$value));
+      while ( $op ) {
+        // další sčítanec
+        $value2= $id2= null;
+        get_numvalue ($value2,$id2);
+        $expr= $id2
+          ? ($op==='-' ? array('k',$value2,$id2,'-') : array('k',$value2,$id2))
+          : ($op==='-' ? array('n',-$value2) : array('n',$value2));
+        $value[]= $expr;
+  //      $const_list[$id]= array('_expr'=>$value,'type'=>$type);
+        $op= get_if_delimiter('+') ? '+' : (get_if_delimiter('-') ? '-' : false);
+      }
     }
   }
-  // přidání do seznamu konstant (povoluje se přepsání stejnou hodnotou)
-  elseif ( !isset($const_list[$id])
-    || $const_list[$id]['value']==$value && $const_list[$id]['type']==$type ) {
-    $const_list[$id]= array('value'=>$value,'type'=>$type);
-    $is_expr= false;
+  else {
+    get_delimiter(':');
+    get_type($type);
   }
-  else
-    comp_error("SYNTAX: konstanta $id má duplicitní definici ($id={$const_list[$id]['value']})");
+//  // přidání do seznamu konstant (povoluje se přepsání stejnou hodnotou)
+//  elseif ( !isset($const_list[$id])
+//    || $const_list[$id]['value']==$value && $const_list[$id]['type']==$type ) {
+//    $const_list[$id]= array('value'=>$value,'type'=>$type);
+//    $is_expr= false;
+//  }
+//  else
+//    comp_error("SYNTAX: konstanta $id má duplicitní definici ($id={$const_list[$id]['value']})");
   return true;
 }
 # ------------------------------------------------------------------------------------------- coord+
@@ -3657,11 +4087,12 @@ function get_if_id_or_keyword (&$id) {
   return $ok;
 }
 # --------------------------------------------------------------------------------------------------
-# jen identifikátor, který není klíčovým slovem
+# jen identifikátor, který není klíčovým slovem nebo je klíčovým slovem následovaným dvojtečkou
 function get_if_id_not_keyword (&$id) {
   global $head, $lex, $typ, $pos, $last_lc;
-  $ok= $typ[$head]=='id';
-  if ( $ok ) {
+  $ok= false;
+  if ( $typ[$head]=='id' || $typ[$head]=='key' && $lex[$head+1]==':') {
+    $ok= true;
     $id= $lex[$head];
     $last_lc= $pos[$head];
     $head++;
@@ -3693,10 +4124,10 @@ function get_id_or_key (&$id) {
   return true;
 }
 # -------------------------------------------------------------------------------------------- value
-# value :: [-]num | str | object | array | constant_name   --> $value
-# vrací 1.písmeno typu
-function get_value (&$val,&$type,$may_fail=false) {
-  global $head, $lex, $typ, $const_list;
+# value :: [-]num | str | object | array    --> $value
+# vrací 1.písmeno typu nebo celý typ
+function get_value (&$val,&$type,$full_type=false,$may_fail=false) {
+  global $head, $lex, $typ; //, $const_list;
   $ok= false;
   $val= $lex[$head];
   if ( $typ[$head]=='del' && $val=='-' ) {
@@ -3715,9 +4146,10 @@ function get_value (&$val,&$type,$may_fail=false) {
     $val= $type=='s'
         ? substr(substr($val,1),0,-1)
         : 0+$val;
+    if ($full_type) $type= $type=='s' ? 'text' : 'number';
     $head++;
   }
-  else if ( $val=='°' ) {         // objektová konstanta
+  else if ( $val=='°' ) {         // objektová konstanta --- zpětná kompatibilita
     $ok= true;
     $head++;
     if ( $typ[$head]=='del' && $lex[$head]=='{' )
@@ -3730,22 +4162,24 @@ function get_value (&$val,&$type,$may_fail=false) {
   elseif ( $val=='{' ) {         // objektová konstanta bez °
     $ok= true;
     get_object($val,$type);
+    if ($full_type) $type= 'object';
   }
   elseif ( $val=='[' ) {         // konstanta pole bez °
     $ok= true;
     get_array($val,$type);
+    if ($full_type) $type= 'array';
   }
   else if ( $typ[$head]=='key' && ($val=='this' || $val=='panel' || $val=='area') ) {
     $ok= true;
     $head++;
-    $type= 'this';
+    $type= 'ezer';
   }
-  else if ( $typ[$head]=='id' && isset($const_list[$id= $val]) ) {     // jméno konstanty
-    $ok= true;
-    $head++;
-    $val= $const_list[$id]['value'];
-    $type= $const_list[$id]['type'];
-  }
+//  else if ( $typ[$head]=='id' && isset($const_list[$id= $val]) ) {     // jméno konstanty
+//    $ok= true;
+//    $head++;
+//    $val= $const_list[$id]['value'];
+//    $type= $const_list[$id]['type'];
+//  }
   if ( !$ok && !$may_fail )     
     comp_error("SYNTAX: byla očekávána hodnota místo {$typ[$head]} $val");
   return $ok;
@@ -4254,6 +4688,7 @@ function get_primary($context,&$expr) {
   global $last_lc, $typ, $lex, $head;
   $id= '';
   $ok= true;
+  get_if_delimiter('°'); // zpětná kompatibilita zápisu objektu a pole
   if ( get_if_id($id) ) {
     if ( get_if_delimiter('(') ) {
       # call2 --> G(call2)
@@ -4284,7 +4719,7 @@ function get_primary($context,&$expr) {
     if ( !get_if_delimiter('}') ) {
       $arg= null;
       while ( $ok ) {
-        get_id($id);
+        get_id_or_key($id);
         get_delimiter(':');
         get_expr4($context,$arg);
         $expr->par[$id]= $arg;
@@ -4342,7 +4777,7 @@ function get_primary($context,&$expr) {
   else {
     # value --> {expr:value,value:v,type:t}
     $expr= (object)array('expr'=>'value','lc'=>$last_lc);
-    $ok= get_value($expr->value,$expr->type,true);
+    $ok= get_value($expr->value,$expr->type,false,true);
 //    $ok= true;
   }
   return $ok;

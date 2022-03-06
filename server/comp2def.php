@@ -257,7 +257,7 @@ $attribs = array (
   'menu'   =>  explode(",",'type:s,skill:s,title:s,par:o,active:i,format:s,join:i'),
   'item'   =>  explode(",",'type:s,title:s,skill:s,par:o,format:s,help:s,active:i'),
 #  browse
-  'browse' =>  explode(",",'key_id:s,type:s,buf_rows:n,qry_rows:n,wheel:n,css_rows:s,rows:nc,group_by:s,optimize:o,format:s'),
+  'browse' =>  explode(",",'key_id:s,type:s,buf_rows:n,qry_rows:n,wheel:n,css_rows:s,rows:n,group_by:s,optimize:o,format:s'),
   'show'   =>  explode(",",'order:s,title:s,css_cell:s,data:i,expr:s,map_pipe:m,bgcolor:m,js_pipe:s,sql_pipe:s,format:s,help:s,skill:s'),
 #  radio
   'radio'  =>  explode(",",'data:i,expr:s,style:s,css:s,help:s,title:s,value:s,format:s'),

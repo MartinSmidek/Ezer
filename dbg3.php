@@ -62,7 +62,7 @@ __EOD;
     <link rel="shortcut icon" href="client/img/dbg.ico" />
     <title>$src</title>
     $scripts
-    <script src="client/licensed/jquery-3.2.1.min.js" type="text/javascript" charset="utf-8"></script>
+    <script src="client/licensed/jquery-3.3.1.min.js" type="text/javascript" charset="utf-8"></script>
     <script src="client/licensed/jquery-noconflict.js" type="text/javascript" charset="utf-8"></script>
     <script src="client/licensed/jquery-ui.min.js" type="text/javascript" charset="utf-8"></script>
     <script type="text/javascript">

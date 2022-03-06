@@ -1498,7 +1498,7 @@ function dbg_ask(x,then,arg) {
   x.root= doc.Ezer.root;                  // název/složka aplikace
   x.app_root= doc.Ezer.app_root;          // {root].inc.php je ve složce aplikace
   jQuery.ajax({
-    url: '../ezer3.1/dbg3.php',
+    url: '../ezer3.2/dbg3.php',
 //    url: 'dbg3.php',
     method: 'POST',
     data: x

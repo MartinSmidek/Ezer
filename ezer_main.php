@@ -12,7 +12,7 @@
  * $add_pars      - (array) doplní resp. přepíše obsah $pars
  */
 
-  global $app_root, $ezer_root, $api_key, $ezer_version; //==3.2 z aplikace
+  global $app_root, $ezer_root, $api_key, $const, $ezer_version; //==3.2 z aplikace
   $ezer_root= $app_root;
   
   // platí buďto isnull($ezer_local) nebo isnull($ezer_server)
@@ -231,5 +231,5 @@
     $options->must_log_in= 1;
   }
 //  echo("ezer_main.php end<br>");
-  root_php3($app,$app_name,'chngs',$skin,$options,$js,$css,$pars);
+  root_php3($app,$app_name,'chngs',$skin,$options,$js,$css,$pars,$const);
 ?>

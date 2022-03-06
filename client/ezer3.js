@@ -140,8 +140,14 @@ class Block {
             Ezer.assert(b= this.owner.part[xi[1]],'chybný odkaz '+s,this);
             this[x]+= b._t+b._h;
             break;
-          case '*':
-            this[x]= '100%';
+          // pro width odečteme left, pro height odečteme top - pokud jsou definovány číslem
+          case '*': 
+            if (x=='_w' && Number.isInteger(this['_l'])) 
+              this[x]= `calc(100% - ${this['_l']}px)`;
+            else if (x=='_h' && Number.isInteger(this['_t'])) 
+              this[x]= `calc(100% - ${this['_t']}px)`;
+            else
+              this[x]= '100%';
             break;
           }
         }
@@ -1057,6 +1063,7 @@ class Block {
 //  6. případnou metodu this[method]
   include2 (method) {
     // zjisti jméno modulu podle formátu zápisu include:onload[ ',' app ':' file]
+    // nebo include:{path:
     var format= this.options.include.split(',');
     this.parm= {own:true, app:'', name:''};
     if ( format.length==1 ) {
@@ -2384,7 +2391,7 @@ class Tabs extends Block {
   }
 // ------------------------------------------------------------------------------------ _show
   _show () {
-    if ( this.options.include && this.options.include.substr(0,7)=='onclick' ) {
+    if ( this.options.include && this.options.include.substr(0,7)=='onclick' ) { // || is_object
       this.include2('_show');
     }
     else {
@@ -2404,7 +2411,7 @@ class Tabs extends Block {
     if ( this.options.where ) {
       location.replace(this.options.where);
     }
-    if ( this.options.include && this.options.include.substr(0,7)=='onclick' ) {
+    if ( this.options.include && this.options.include.substr(0,7)=='onclick' ) { // || is_object
       this.include2('_focus');
     }
     else {
@@ -2567,7 +2574,7 @@ class Panel extends Block {
   }
 // ------------------------------------------------------------------- _focus
   _focus (noevent) {
-    if ( this.options.include && this.options.include.substr(0,7)=='onclick' ) {
+    if ( this.options.include && this.options.include.substr(0,7)=='onclick' ) { // || is_object
       this.include2('_focus');
     }
     else {

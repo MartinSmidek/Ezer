@@ -19,7 +19,7 @@ function dbg_onshiftclick(block) {
   if ( !Ezer.sys.dbg ) fce_error("DBG3 structure missing");
   var pos= block.app_file(),
       state0= {stops:[],stop:0,traces:[],pick:0}; // stopadresy - stop, trasování, aktuální ř.
-  if ( pos.file ) {
+  if ( pos.file && block.desc._lc ) {
     var lc= block.desc._lc;
     lc= lc.split(',');
     let ln= lc[0];
