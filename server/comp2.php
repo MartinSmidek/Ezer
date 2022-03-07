@@ -933,8 +933,9 @@ function proc(&$c,$name,$block) { #trace();
 # jinak vrací výraz r_expr pro vyhodnocení na začátku run-time před prvním onstart
 #   r_expr = hodnota
 #          | { const: absolutní odkaz na konstantu }
-#          | { op: funkce, [ r_expr, ...] }
+#          | { op: funkce, par: [ r_expr, ...] }
 #   funkce = iff | minus | sum | multiply | conc | index
+# Poznamka: při úpravě je zapotřebí také změnit interpretační část funkce run_value a popis r_expr tam
 function eval_expr ($c,&$val,&$typ,&$const) { //trace();
   global $error_code_lc;
   $c_type= gettype($c);
@@ -945,7 +946,7 @@ function eval_expr ($c,&$val,&$typ,&$const) { //trace();
       
     // -------------------------------------- id '[' expr ']'
     case 'index':
-      $index= $tp= $ci= $cp= null; 
+      $index= $array= $tp= $ci= $ca= null; 
       eval_expr($c->index,$index,$tp,$ci);
       eval_expr((object)array('expr'=>'name','name'=>$c->name),$array,$tp,$ca);
       $const= $ci && $ca;
@@ -963,7 +964,7 @@ function eval_expr ($c,&$val,&$typ,&$const) { //trace();
 
     // -------------------------------------- e ? e : e
     case 'tern':
-      $test= $typ= $const= null; 
+      $test= $typ= $const= $cp= null; 
       eval_expr($c->par[0],$test,$typ,$const);
       if ($const) {
         if ($test) 

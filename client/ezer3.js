@@ -41,7 +41,13 @@ class Block {
     this.desc= desc;
     if ( desc.options!==undefined ) {
       jQuery.extend(this.options,desc.options);
-//      this.options= desc.options;
+      // zjistíme dynamicky definované atributy
+      for (let attr in this.options) {
+        let val= this.options[attr];
+        if (typeof(val)!='object') continue;
+        // je to rexpr
+        this.options[this.type=='const' ? 'value' : attr]= run_value(val,[this,`atributu ${attr}`]);
+      }
     }
     if ( owner ) this._coord();
     this._check();
@@ -2991,7 +2997,13 @@ class Var extends Block {
 class Const extends Block {
   constructor (owner,desc,DOM,id,skill) {
     super(owner,desc,DOM,id,skill);
-    if ( this.options._expr ) {
+    if ( this.options.value!==undefined ) {
+      this.value= this.options.value;
+    }
+    else if ( this.options.expr ) {
+      this.options.value= run_value(this.options.expr,`konstanty ${id}`);
+    }
+    else if ( this.options._expr ) {
       // compiling of constant defined by expression
       this.value= 0;
       for (let i in this.options._expr) {
@@ -3007,7 +3019,9 @@ class Const extends Block {
       }
     }
     else {
-      this.value= Ezer.const_value(id,this.options.value);
+//      Ezer.error(`nelze získat hodnotu konstanty ${id}`,'S',this);
+//      this.value= Ezer.const_value(id,this.options.value);
+      this.value= run_value({const:this.self()});
     }
   }
   get() {

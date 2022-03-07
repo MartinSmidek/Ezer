@@ -2,6 +2,70 @@
 
 // ===========================================================================================> LIB3
 "use strict";
+// ====================================================================> run-time konstanty a r_expr
+// dynamické konstanty jsou obsaženy v Ezer.konst kam se zkopírují z <root>.php proměnné $const
+// $const[absolutní jméno proměnné]= hodnota
+//   r_expr = hodnota
+//          | { const: absolutní odkaz na konstantu }
+//          | { op: funkce, par: [ r_expr, ...] }
+//   funkce = iff | minus | sum | multiply | conc | index
+// context = [this,text pro error]
+// --------------------------------------------------------------------------------------- run_value
+function run_value(rexpr,context) {
+  let val;
+  if (typeof(rexpr)!='object') {
+    val= rexpr;
+  }
+  else if (rexpr.const) {
+    if (Ezer.konst[rexpr.const]) {
+      val= Ezer.konst[rexpr.const];
+    }
+    else {
+      let ctx= [];
+      if (Ezer.run_name(rexpr.const,null,ctx)) {
+        val= ctx[0].value;
+      }
+    }
+  }
+  else if (rexpr.op) {
+    switch (rexpr.op) {
+      case 'iff':
+        val= run_value(rexpr.ref[0],context)
+            ? run_value(rexpr.ref[1],context)
+            : run_value(rexpr.ref[2],context);
+        break;
+      case 'minus':
+        val= -run_value(rexpr.ref[0],context);
+        break;
+      case 'sum':
+        val= 0;
+        for (const arg of rexpr.par) {
+          val+= run_value(arg,context);
+        }
+        break;
+      case 'multiply':
+        val= 1;
+        for (const arg of rexpr.par) {
+          val*= run_value(arg,context);
+        }
+        break;
+      case 'conc':
+        val= '';
+        for (const arg of rexpr.par) {
+          val+= run_value(arg,context);
+        }
+        break;
+      case 'index':
+        val= run_value(rexpr.ref[0],context);       // array
+        val= val[run_value(rexpr.ref[1],context)];  // index
+        break;
+    }
+  }
+  if (val===undefined) {
+    Ezer.error(`run-time hodnotu ${context[1]} nelze vyhodnotit`,'S',context[0]);
+  }
+  return val;
+}
 // =================================================================================> DEBUGGER LOCAL
 // funkce debuggeru - volané z aplikace
 // --------------------------------

@@ -236,7 +236,7 @@ __EOD;
   $const_txt= ''; $del= '';
   if ( $const ) {
     foreach ($const as $id => $val) {
-      $const_txt.= "$del\n      $id: $val";
+      $const_txt.= "$del\n      '$id': $val";
       $del= ',';
     }
   }
