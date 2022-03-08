@@ -5,7 +5,7 @@
 // ====================================================================> run-time konstanty a r_expr
 // dynamické konstanty jsou obsaženy v Ezer.konst kam se zkopírují z <root>.php proměnné $const
 // $const[absolutní jméno proměnné]= hodnota
-//   r_expr = hodnota
+//   r_expr = hodnota | { *: hodnota }
 //          | { const: absolutní odkaz na konstantu }
 //          | { op: funkce, par: [ r_expr, ...] }
 //   funkce = iff | minus | sum | multiply | conc | index
@@ -15,6 +15,9 @@ function run_value(rexpr,context) {
   let val;
   if (typeof(rexpr)!='object') {
     val= rexpr;
+  }
+  else if (rexpr['*']!==undefined) {
+    val= rexpr['*'];
   }
   else if (rexpr.const) {
     if (Ezer.konst[rexpr.const]) {

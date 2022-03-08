@@ -44,7 +44,7 @@ class Block {
       // zjistíme dynamicky definované atributy
       for (let attr in this.options) {
         let val= this.options[attr];
-        if (typeof(val)!='object') continue;
+        if (!val || typeof(val)!='object' || val.constructor===Array) continue;
         // je to rexpr
         this.options[this.type=='const' ? 'value' : attr]= run_value(val,[this,`atributu ${attr}`]);
       }

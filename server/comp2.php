@@ -892,7 +892,7 @@ function proc(&$c,$name,$block) { #trace();
     if ($c->type=='const') {
       $c->_of= $typ;
       if ($const) {
-        $c->options->value= gettype($val)=='object' ? $val->object : $val;
+        $c->options->value= /*gettype($val)=='object' ? $val->object :*/ $val;
         unset($c->options->expr);
       }
       else {
@@ -931,12 +931,12 @@ function proc(&$c,$name,$block) { #trace();
 # ---------------------------------------------------------------------------------------- eval expr
 # vyčíslí hodnotu, pokud je to v době kompilace možné tzn,. pokud je const=true
 # jinak vrací výraz r_expr pro vyhodnocení na začátku run-time před prvním onstart
-#   r_expr = hodnota
+#   r_expr = hodnota | { *: hodnota }
 #          | { const: absolutní odkaz na konstantu }
 #          | { op: funkce, par: [ r_expr, ...] }
 #   funkce = iff | minus | sum | multiply | conc | index
 # Poznamka: při úpravě je zapotřebí také změnit interpretační část funkce run_value a popis r_expr tam
-function eval_expr ($c,&$val,&$typ,&$const) { //trace();
+function eval_expr ($c,&$val,&$typ,&$const,$depth=0) { //trace();
   global $error_code_lc;
   $c_type= gettype($c);
   if ($c_type=='object') {
@@ -947,8 +947,8 @@ function eval_expr ($c,&$val,&$typ,&$const) { //trace();
     // -------------------------------------- id '[' expr ']'
     case 'index':
       $index= $array= $tp= $ci= $ca= null; 
-      eval_expr($c->index,$index,$tp,$ci);
-      eval_expr((object)array('expr'=>'name','name'=>$c->name),$array,$tp,$ca);
+      eval_expr($c->index,$index,$tp,$ci,$depth+1);
+      eval_expr((object)array('expr'=>'name','name'=>$c->name),$array,$tp,$ca,$depth+1);
       $const= $ci && $ca;
       if ($const) {
         if (gettype($array)=='array' && gettype($index)=='integer' 
@@ -965,17 +965,17 @@ function eval_expr ($c,&$val,&$typ,&$const) { //trace();
     // -------------------------------------- e ? e : e
     case 'tern':
       $test= $typ= $const= $cp= null; 
-      eval_expr($c->par[0],$test,$typ,$const);
+      eval_expr($c->par[0],$test,$typ,$const,$depth+1);
       if ($const) {
         if ($test) 
-          eval_expr($c->par[1],$val,$typ,$cp);
+          eval_expr($c->par[1],$val,$typ,$cp,$depth+1);
         else
-          eval_expr($c->par[2],$val,$typ,$cp);
+          eval_expr($c->par[2],$val,$typ,$cp,$depth+1);
       }
       else {
         $then= $else= $tp= $cp= null;
-        eval_expr($c->par[1],$then,$tp,$cp);
-        eval_expr($c->par[2],$else,$tp,$cp);
+        eval_expr($c->par[1],$then,$tp,$cp,$depth+1);
+        eval_expr($c->par[2],$else,$tp,$cp,$depth+1);
         $val= (object)array('op'=>'iff','par'=>[$test,$then,$else]);
       }
       break;
@@ -986,7 +986,7 @@ function eval_expr ($c,&$val,&$typ,&$const) { //trace();
       $arg= array();
       foreach($c->par as $p) {
         $vp= $tp= $cp= null; 
-        eval_expr($p,$vp,$tp,$cp);
+        eval_expr($p,$vp,$tp,$cp,$depth+1);
         $const&= $cp;
         $arg[]= $vp;
       }
@@ -1008,7 +1008,7 @@ function eval_expr ($c,&$val,&$typ,&$const) { //trace();
       $arg= array();
       foreach ($c->par as $id=>$p) {
         $vp= $tp= $cp= null; 
-        eval_expr($p,$vp,$tp,$cp);
+        eval_expr($p,$vp,$tp,$cp,$depth+1);
         $const&= $cp;
         $arg[]= $vp;
       }
@@ -1112,10 +1112,12 @@ function eval_expr ($c,&$val,&$typ,&$const) { //trace();
       $const= true;
       foreach ($c->par as $id=>$p) {
         $vp= $tp= $cp= null; 
-        eval_expr($p,$vp,$tp,$cp);
+        eval_expr($p,$vp,$tp,$cp,$depth+1);
         $const&= $cp;
         $val->$id= $vp;
       }
+      if ($depth==0) 
+        $val= (object)array('*'=>$val); // jinak se nedá odlišit objektový literál od r-expr
       break;
 
     // -------------------------------------- [ expr1, ... ]
@@ -1125,7 +1127,7 @@ function eval_expr ($c,&$val,&$typ,&$const) { //trace();
       $const= true;
       foreach ($c->par as $id=>$p) {
         $vp= $tp= $cp= null; 
-        eval_expr($p,$vp,$tp,$cp);
+        eval_expr($p,$vp,$tp,$cp,$depth+1);
         $const&= $cp;
         $val[]= $vp;
       }
@@ -5009,8 +5011,9 @@ function get_expr($context,&$expr) {
 # ------------------------------------------------------------------------------------ lex_analysis2
 # $dbg = false nebo pro debugger proc|func
 function lex_analysis2 ($dbg=false) {
-  global $tok2lex, $ezer, $keywords, $specs, $lex, $typ, $pos, $not, $gen_source, $debugger, $head;
+  global $tok2lex, $ezer, $keywords, $specs, $lex, $typ, $pos, $not, $gen_source, $debugger, $head, $define;
 
+  $skip= 0; $skip_tag= '';
   // rozbor na tokeny podle PHP
   $tok= token_get_all( $dbg
     ? ("<"."?php\n $dbg _dbg_() ".'{'."$ezer \n} ?".">")
@@ -5055,18 +5058,45 @@ function lex_analysis2 ($dbg=false) {
     }
     switch ( $tp ) {
     case 'blank':
+      if ($skip) continue;
       if ( $inside_template ) {
         $typ[$k]= 'str'; $lex[$k]= $t[1]; $pos[$k]= "{$t[2]},{$t[3]}"; $k++;
       }
       break;
     case 'cmnt':
-      if ( $gen_source ) {
-        if ( substr($t[1],0,2)=='#$' ) break;
+      $m= null;
+      if ( preg_match("~^#(if|else|endif)\s*(\w*)\s*(==|!=|<=|>=|<|>|)([\.\w]*)(.*)$~",$t[1],$m)) {
+//        debug($m);
+        $head= $t[2]-1; $pos[$head]= "{$head},{$t[3]}"; 
+        lex_assert(trim($m[5])=='',"chybná syntax");
+        switch ($m[1]) {
+          case 'if':    lex_assert(!$skip_tag,'vnořené #if'); 
+                        $skip_tag= $m[2]; lex_assert(isset($define[$skip_tag]),"neznámá konstanta '$skip_tag'");
+                        $tg= $define[$skip_tag]; lex_assert($tg!=='',"chybějící hodnota '$skip_tag'");
+                        $op= $m[3]; lex_assert($op,"nepovolená relace");
+                        $val= $m[4]; lex_assert($val!=='','chybějící hodnota');
+                        $cmp= strnatcmp($tg,$val);
+//                                            display("$tg $op $val ... $cmp");
+                        $r= $op=='==' ? $cmp==0 : (
+                            $op=='!=' ? $cmp!=0 : (
+                            $op=='>'  ? $cmp>0 : (
+                            $op=='>=' ? $cmp>=0 : (
+                            $op=='<=' ? $cmp<=0 : (
+                            $op=='<'  ? $cmp<0 : -1)))));
+                        $skip= $r ? 0 : 1; 
+                        break;
+          case 'else':  $skip= 1-$skip; break;
+          case 'endif': $skip= 0; $skip_tag= ''; break;
+        }
+      }
+      elseif ( $gen_source ) {
+//        if ( substr($t[1],0,2)=='#$' ) break;
         if ( substr($t[1],0,1)=='#' ) $notes.= $t[1];
         elseif ( substr($t[1],0,2)=='//' ) $not[$cmnt].= $t[1];
       }
       break;
     case 'id':
+      if ($skip) continue;
       $ident= $t[1];
       if ( $ident=='°' ) {              // příznak objektové konstanty
         $tp= 'del';
@@ -5092,18 +5122,22 @@ function lex_analysis2 ($dbg=false) {
       $typ[$k]= $tp; $lex[$k]= $ident; $pos[$k]= "{$t[2]},{$t[3]}"; $k++;
       break;
     case 'del':
+      if ($skip) continue;
       if ( $t[1]=='`' ) {
         $inside_template= !$inside_template;
       }
     case 'num':
+      if ($skip) continue;
       $typ[$k]= $tp; $lex[$k]= $t[1]; $pos[$k]= "{$t[2]},{$t[3]}"; $k++;
       break;
     case 'str':
+      if ($skip) continue;
       $lex[$k]= $t[1];
       $typ[$k]= $inside_template && preg_match('/^\w+$/',$t[1]) ? 'id' : $tp;
       $pos[$k]= "{$t[2]},{$t[3]}"; $k++;
       break;
     default:
+      if ($skip) continue;
       $head= $t[2]; $pos[$t[2]]= "{$t[2]},{$t[3]}";
       comp_error("LEXICAL '{$t[1]}' je nedovolený znak");
       break;
@@ -5114,7 +5148,11 @@ function lex_analysis2 ($dbg=false) {
 //                                                             debug($typ,'typ');
 //                                                             debug($pos,'pos');
 //                                                             debug($not,'not');
+//  if (count($define)) debug($define,"#define proměnné ");
   return true;
+}
+function lex_assert($bool,$msg) { 
+  if (!$bool) comp_error("LEXICAL chyba direktiv podmíněného překladu - $msg");
 }
 # ------------------------------------------------------------------------------------ tok_positions
 function tok_positions(&$tok) {

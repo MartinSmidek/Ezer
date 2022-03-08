@@ -1,8 +1,5 @@
-<?php # (c) 2008-2019 Martin Smidek <martin@smidek.eu>
+<?php # (c) 2008-2022 Martin Smidek <martin@smidek.eu>
   
-  // verze použitého jádra Ezeru
-  $ezer_version= "ezer3.2"; 
-
 # screen=1 zobrazí rozměr klientské části
 
   error_reporting(E_ALL ^ E_NOTICE);
@@ -26,6 +23,17 @@
   $option_list= $_GET['list'];
   $option_source= $_GET['source'];
   $option_cpp= $_GET['cpp'];
+
+  // verze použitého jádra Ezeru
+  $ezer_version= "ezer3.2"; 
+  $define= array(
+      'version_ezer'=>'3.2',
+      'variant_appl'=> 
+        isset($_GET['variant_appl']) ? $_GET['variant_appl'] : (
+        isset($_SESSION[$root]['variant_appl']) ? $_SESSION[$root]['variant_appl'] 
+        : '0')
+    ); 
+  
   global $display, $trace, $json, $ezer_path_serv, $ezer_path_appl, $ezer_path_code, $ezer_root;
 
   list($url)= explode('?',$_SERVER['HTTP_REFERER']);
@@ -55,6 +63,10 @@
   $checks.= "<br>\n<input type='submit' value='celou aplikaci' onclick='go_all(\"yes\");' />";
   $checks.= "<br>\n<input type='submit' value='... včetně err' onclick='go_all(\"err\");' />";
   $checks.= "<br>\n<input type='submit' value='... včetně ok' onclick='go_all(\"any\");' />";
+  $checks.= "<br>\nproměnné pro #if-#else-#endif";
+  foreach ($define as $s=>$v) {
+    $checks.= "<br>\n$s=$v";
+  }
   $checks.= "<br>\n<input type='submit' value='obnova tabulek' onclick='go_tables();' />";
   $checks.= "<br>\n<input type='submit' value='PHPinfo' onclick='go_phpinfo();' />";
   $ip= "<br>remote:{$_SERVER["REMOTE_ADDR"]}<br>forwarded:{$_SERVER["HTTP_X_FORWARDED_FOR"]}";
@@ -339,7 +351,8 @@ function comp_module($name,$root='',&$state) {
       $ch= $src[$i];
       if ( $ch=='#' ) $note= true;
       if ( $ch=='<' ) $note= false;
-      if ( !$note ) $txt.= $ch;
+//      if ( !$note ) 
+        $txt.= $ch;
     }
   }
   if ( $option_cpp ) {
