@@ -12,7 +12,7 @@
  * $add_pars      - (array) doplní resp. přepíše obsah $pars
  */
 
-  global $app_root, $ezer_root, $api_key, $const, $ezer_version; //==3.2 z aplikace
+  global $app_root, $ezer_root, $api_key, $const, $appl_version, $ezer_version; //==3.2 z aplikace
   $ezer_root= $app_root;
   
   // platí buďto isnull($ezer_local) nebo isnull($ezer_server)
@@ -66,6 +66,7 @@
   $_SESSION[$app]['POST']= $_POST;
   $_SESSION[$app]['ezer']= $ezer_version;
   $_SESSION[$app]['ezer_server']= $ezer_server;
+  $_SESSION[$app]['appl_version']= $appl_version;
 
   // přepínač pro fáze migrace pod PDO - const EZER_PDO_PORT=1|2|3
   if ( isset($_GET['pdo']) && $_GET['pdo']==2 ) {

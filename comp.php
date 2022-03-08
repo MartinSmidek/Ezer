@@ -27,10 +27,10 @@
   // verze použitého jádra Ezeru
   $ezer_version= "3.2"; 
   $define= array(
-      'version_ezer'=>'3.2',
-      'variant_appl'=> 
-        isset($_GET['variant_appl']) ? $_GET['variant_appl'] : (
-        isset($_SESSION[$root]['variant_appl']) ? $_SESSION[$root]['variant_appl'] 
+      'ezer_version'=>$ezer_version,
+      'appl_version'=> 
+        isset($_GET['appl_version']) ? $_GET['appl_version'] : (
+        isset($_SESSION[$root]['appl_version']) ? $_SESSION[$root]['appl_version'] 
         : '0')
     ); 
   
