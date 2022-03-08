@@ -556,7 +556,7 @@ __EOD;
 </html>
 __EOD;
   // definice možných HTML template stránky
-  $version= "title='jádro $ezer_version'";
+  $version= "title='jádro Ezer $ezer_version'";
   switch ($ezer_template) {
   case 'IE':
 # ------------------------------------------------------------------------------- HTML IE
@@ -817,7 +817,7 @@ function root_inc3($db,$dbs,$tracking,$tracked) { //,$path_root=null,$path_pspad
   $ezer_path_libr= "$ezer_path_root/$ezer_root";
   $ezer_path_docs= "$ezer_path_root/docs";
   $ezer_path_code= "$ezer_path_appl/code";
-  $ezer_path_serv= "$ezer_path_root/$ezer_version/server";
+  $ezer_path_serv= "$ezer_path_root/ezer$ezer_version/server";
   $ezer_path_svn= null;
   $ezer_path_todo= "$ezer_path_root/wiki";
 //  $ezer_path_pspad= $path_pspad ? $path_pspad[$sada] : null;
@@ -832,6 +832,6 @@ function root_inc3($db,$dbs,$tracking,$tracked) { //,$path_root=null,$path_pspad
   $EZER->activity->touch_limit= 50; // počet dotyků (ae_hits) po kterých je uskutečněn zápis do _touch
   $EZER->activity->colors= "80:#f0d7e4,40:#e0d7e4,20:#dce7f4,0:#e7e7e7";  // viz system.php::sys_table
   // knihovní moduly
-  require_once("$ezer_path_root/$ezer_version/ezer2_fce.php");
+  require_once("$ezer_path_root/ezer$ezer_version/ezer2_fce.php");
 }
 

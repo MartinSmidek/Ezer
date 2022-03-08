@@ -30,7 +30,7 @@ function root_git($app=0) {
     }
   }
   else {
-    $path= "$ezer_version/$git_path" ;
+    $path= "ezer$ezer_version/$git_path" ;
     if ( file_exists($path) ) {
       $tstamp= filemtime($path);
     }    
@@ -45,7 +45,7 @@ function root_svn($app=0) {
   $verze= "?";
   if ( defined("SQLITE3_ASSOC") ) {
     $sub_root= $_SESSION[$ezer_root]['app_root'] ? "/$ezer_root": '';
-    $sub= $app ? ($sub_root ?: '') : "/$ezer_version";
+    $sub= $app ? ($sub_root ?: '') : "/ezer$ezer_version";
     $db_file= "$ezer_path_root$sub/.svn/wc.db";
     if ( file_exists($db_file) ) {
       $db=@ new SQLite3($db_file);

@@ -10715,7 +10715,7 @@ class Show extends Elem {
       this.owner.DOM_head.append(
         this.DOM_th= jQuery(`
           <td class="th" title="${this.help}" style="width:${w}px">
-            <img class="resize" src="${Ezer.version+'/client/img/browse_resize.png'}">
+            <img class="resize" src="ezer${Ezer.version+'/client/img/browse_resize.png'}">
             <span>${title}</span>
         `)
       );

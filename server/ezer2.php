@@ -2067,7 +2067,7 @@
         $part= array_pop($parts);
         list($app,$fname)= explode('/',$part->file);
         // pokud je $app jádrem (začíná $app=ezer) zaměníme $all za aktuální verzi Ezer
-        $app= substr($app,0,4)=='ezer' ? $ezer_version : $app;
+        $app= substr($app,0,4)=='ezer' ? "ezer$ezer_version" : $app;
         $ename= "$ezer_path_root/$app/$fname.ezer";
         $cname= "$ezer_path_root/$app/code/$fname.json";
         $xname= "$ezer_path_serv/comp2.php";
@@ -2107,7 +2107,7 @@
         # zkontrolujeme ale verzi jádra
         $ev= isset($loads->info->ezer_version) ? $loads->info->ezer_version : 'neznámá';
         if ($ev!=$ezer_version) {
-          $y->error= "INCLUDE - soubor $app/$ename je pro verzi $ev - je třeba jej přeložit externě";  
+          $y->error= "INCLUDE - soubor $app/$ename je pro verzi ezer $ev - je třeba jej přeložit externě";  
           break;
         }
 //                                                 display("module $fname into {$part->block}");

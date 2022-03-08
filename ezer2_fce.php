@@ -234,7 +234,7 @@ function sys_user_skilled($skill) {
 function sys_user_skills($file='') {
   global $ezer_system, $ezer_version;
   if (!function_exists('Excel5_n2col')) {
-   require_once "$ezer_version/server/vendor/autoload.php";
+   require_once "ezer$ezer_version/server/vendor/autoload.php";
   }
   $result= '';
   $cells= $clmns= $rows= array();

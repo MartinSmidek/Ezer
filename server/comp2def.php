@@ -10,7 +10,7 @@ global $blocs2, $blocs3,$block_get, $ezer_path_code, $ezer_path_root, $names;
 if ( file_exists("$ezer_path_code/comp2tab.php") )
   require_once("$ezer_path_code/comp2tab.php");
 else
-  require_once("$ezer_path_root/$ezer_version/code/comp2tab.php");
+  require_once("$ezer_path_root/ezer$ezer_version/code/comp2tab.php");
 // doplnění interních jmen
 $names['apply']= (object)array('op'=>'ff');
 # možné události

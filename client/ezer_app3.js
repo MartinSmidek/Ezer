@@ -28,7 +28,7 @@ Ezer.continuation= null;        // pokračování po stop-adrese
 Ezer.modal_fce= [];             // zásobník pro operaci 'j'
 Ezer.DOM= null;                 // uživatelská plocha
 Ezer.paths= Ezer.paths || {};   // parametry z nadřazené aplikace
-Ezer.paths.images_lib= './'+Ezer.version+'/client/img/';
+Ezer.paths.images_lib= './ezer'+Ezer.version+'/client/img/';
 Ezer.paths.images_cc= (!Ezer.options.skin || Ezer.options.skin==='default'
   ? './'+Ezer.version+'/client/skins/default' : './skins/'+Ezer.options.skin)+'/clientcide';
 Ezer.used= [];                  // seznam vyžádaných zdrojů ???

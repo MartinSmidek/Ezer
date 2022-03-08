@@ -335,14 +335,14 @@ function doc_php_cg ($app_php='*',$sys_php0='',$restore=false) { trace();
   // jinak vypočteme a uložíme do SESSION
                           display('přepočet CG');
   if (stripos($sys_php0,'comp2.php')) {
-    require "$ezer_path_root/$ezer_version/server/comp2.php";
+    require "$ezer_path_root/ezer$ezer_version/server/comp2.php";
   }
   if ($sys_php0=='*')
     $sys_php= implode(',',$ezer_php_libr);
   else
     $sys_php= $sys_php0;
   $html= "";
-  $ezer_path= "$ezer_path_root/$ezer_version";
+  $ezer_path= "$ezer_path_root/ezer$ezer_version";
   $fnames= array();
   if ($app_php) {
     $fnames= $app_php=='*' ? $ezer_php : explode(",",$app_php);
@@ -354,7 +354,7 @@ function doc_php_cg ($app_php='*',$sys_php0='',$restore=false) { trace();
     foreach ($php_sys as $i=>$fname) { 
       $fpath= "$ezer_path_root/$fname"; 
       $fpath= $fname; 
-      $fpath= str_replace("$ezer_version/../$ezer_version",$ezer_version,$fpath);
+      $fpath= str_replace("ezer$ezer_version/../ezer$ezer_version","ezer$ezer_version",$fpath);
       if (!in_array($fpath,$fnames))
         $fnames[]= $fpath; 
     }
@@ -959,7 +959,7 @@ function map_user() {
 # vygeneruje přehled aktivit podle menu
 function doc_todo1($item,$source='app',$nic="<dl class='todo'><dt>V tomto období nebyly změny</dt></dl>") {
   global $ezer_path_todo, $ezer_version, $ezer_path_root;
-  $ezer_path= "$ezer_path_root/$ezer_version";
+  $ezer_path= "$ezer_path_root/ezer$ezer_version";
   $html= "<div class='CSection CMenu'>";
   $path= $source=='app' ? $ezer_path_todo : "$ezer_path/wiki/";
   $nove= 12;

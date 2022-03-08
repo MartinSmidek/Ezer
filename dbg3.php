@@ -36,20 +36,20 @@
   $app= $_GET['app'];
   $rel_root= isset($_SERVER['HTTPS']) && $_SERVER['HTTPS']=='on' ? 'https://' : 'http://';
   $rel_root.= $_SESSION[$app]['rel_root'];
-  $ezer_version= 'ezer'.$_SESSION[$app]['ezer'];
+  $ezer_version= $_SESSION[$app]['ezer'];
   
   $html= "";
   $background= 'oldlace';
   $scripts= '';
   if ($CodeMirror) {
     $scripts= <<<__EOD
-    <script src="$rel_root/$ezer_version/client/licensed/codemirror/lib/codemirror.js"></script>
-    <link rel="stylesheet" href="$rel_root/$ezer_version/client/licensed/codemirror/lib/codemirror.css">
-    <script src="$rel_root/$ezer_version/client/licensed/codemirror/mode/clike/clike.js"></script>
-    <script src="$rel_root/$ezer_version/client/licensed/codemirror/mode/php/php.js"></script>
-    <script src="$rel_root/$ezer_version/client/licensed/codemirror/addon/edit/matchbrackets.js"></script>
-    <script src="$rel_root/$ezer_version/client/licensed/codemirror/addon/edit/closebrackets.js"></script>
-    <script src="$rel_root/$ezer_version/client/licensed/codemirror/addon/selection/active-line.js"></script>
+    <script src="$rel_root/ezer$ezer_version/client/licensed/codemirror/lib/codemirror.js"></script>
+    <link rel="stylesheet" href="$rel_root/ezer$ezer_version/client/licensed/codemirror/lib/codemirror.css">
+    <script src="$rel_root/ezer$ezer_version/client/licensed/codemirror/mode/clike/clike.js"></script>
+    <script src="$rel_root/ezer$ezer_version/client/licensed/codemirror/mode/php/php.js"></script>
+    <script src="$rel_root/ezer$ezer_version/client/licensed/codemirror/addon/edit/matchbrackets.js"></script>
+    <script src="$rel_root/ezer$ezer_version/client/licensed/codemirror/addon/edit/closebrackets.js"></script>
+    <script src="$rel_root/ezer$ezer_version/client/licensed/codemirror/addon/selection/active-line.js"></script>
 __EOD;
   }
   if (1)
@@ -492,7 +492,7 @@ function dbg_server($x) {
     }
     break;
   case 'source': // ------------------------------------ get Ezer + CG
-    $roots= isset($dbg_info) ? $dbg_info->src_path : array($x->app,'$ezer_version');
+    $roots= isset($dbg_info) ? $dbg_info->src_path : array($x->app,"ezer$ezer_version");
     foreach ($roots as $root) {
       $file= "{$x->file}.ezer";
       $name= "$root/$file";
@@ -523,7 +523,7 @@ function dbg_server($x) {
     // předáme CG
     $y->cg= $cg;
     // předáme seznam všech ezer modulů kvůli odkazům mezi nimi
-    require_once("$ezer_version/server/sys_doc.php");
+    require_once("ezer$ezer_version/server/sys_doc.php");
     $cg_list= doc_php_cg();
     $y->app_ezer=  $cg_list->app_ezer;
     break;
@@ -546,14 +546,14 @@ function dbg_server($x) {
             // potom uložíme změněný stav
             file_put_contents($path,$x->value);
             // a zkompilujeme 
-            require_once("$ezer_version/server/ae_slib.php");
-            require_once("$ezer_version/server/comp2.php");
+            require_once("ezer$ezer_version/server/ae_slib.php");
+            require_once("ezer$ezer_version/server/comp2.php");
             $state= comp_file($x->file,$root);
             $ok= substr($state,0,2);
             $y->msg= "'$name' uložen, kompilace $ok";
             break;
           case 'php': // výměna těla funkce v PHP
-            require_once("$ezer_version/server/ae_slib.php");
+            require_once("ezer$ezer_version/server/ae_slib.php");
             $file= file($path,FILE_IGNORE_NEW_LINES);
             $new_fce= explode("\n",$y->value);
 //            debug($new_fce,"$y->fce");
@@ -567,7 +567,7 @@ function dbg_server($x) {
         }
         if ($ok=='ok') {
           // restaurace CG
-          require_once("$ezer_version/server/sys_doc.php");
+          require_once("ezer$ezer_version/server/sys_doc.php");
           doc_php_cg('*','*',1); // vždy přepočítat, nebrat ze SESSION
 //          doc_php_cg('*','server/ae_slib.php',1); // vždy přepočítat, nebrat ze SESSION
           $cg_ok= isset($_SESSION[$root]['CG']) ? 'ok' : 'ko';
@@ -586,7 +586,7 @@ function dbg_server($x) {
     break;
   case 'reload_cg': // ---------------------------------- přepočítat CG pro: item, file
     // restaurace CG
-    require_once("$ezer_version/server/sys_doc.php");
+    require_once("ezer$ezer_version/server/sys_doc.php");
     if ($x->sys_fce) {
       $y->cg= doc_php_tree($x->item,'*','*',$x->inverzni,true);
     }

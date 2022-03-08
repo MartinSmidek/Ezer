@@ -35,7 +35,7 @@ function i_doc($typ,$fnames='') {   trace();
     // vytvoření seznamu jmen i s cestami
     $fdescs= array();
     foreach ( explode(',', $ezer_comp_ezer) as $fname ) {
-        $fdescs[] = (object) ['path' => "$ezer_path_root/$ezer_version/client/$fname.js", 
+        $fdescs[] = (object) ['path' => "$ezer_path_root/ezer$ezer_version/client/$fname.js", 
             'name' => $fname];
       }
       if ( $ezer_comp_root )

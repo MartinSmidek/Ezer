@@ -64,7 +64,7 @@
   }
   $_SESSION[$app]['GET']= $_GET;
   $_SESSION[$app]['POST']= $_POST;
-  $_SESSION[$app]['ezer']= substr($ezer_version,4);
+  $_SESSION[$app]['ezer']= $ezer_version;
   $_SESSION[$app]['ezer_server']= $ezer_server;
 
   // přepínač pro fáze migrace pod PDO - const EZER_PDO_PORT=1|2|3
@@ -78,7 +78,7 @@
   }
 
   // doplnění jména aplikace o verzi ezer a pdo
-  $app_name.= '<sub><small> '.substr($ezer_version,4).($touch?' touch':'').'</small></sub>';
+  $app_name.= '<sub><small> '.$ezer_version.($touch?' touch':'').'</small></sub>';
 
   // nastavení cest
   $abs_root= isset($ezer_server) ? $abs_roots[$ezer_server] : $abs_roots[$ezer_local];
@@ -98,24 +98,24 @@
   set_include_path(get_include_path().PATH_SEPARATOR.$abs_root);
   $_POST['root']= $ezer_root;
 
-  require_once("$abs_root/$ezer_version/server/ezer_pdo.php");
+  require_once("$abs_root/ezer$ezer_version/server/ezer_pdo.php");
   require_once("$app.inc.php");
   
   $cms= "$http://$rel_root/$ezer_root";
-  $ezer3= "$http://$rel_root/$ezer_version";
-  $client= "$http://$rel_root/$ezer_version/client";
+  $ezer3= "$http://$rel_root/ezer$ezer_version";
+  $client= "$http://$rel_root/ezer$ezer_version/client";
   $licensed= "$client/licensed";
 
   // klíče, pokud jsou dostupné
-  $deep_root= "../files/$ezer_version";
+  $deep_root= "../files/ezer$ezer_version";
   if ( @file_exists("$deep_root/ezer.keys.php"))
     require_once("$deep_root/ezer.keys.php");
   
   // pokud existují soubory $app/version.php (resp. $app_version_in/version.php) a $ezer3/version.php 
   // použij proměnnou $version pro výběr aktuální verze *.js
   $v_sys= '';
-  if (file_exists("$abs_root/$ezer_version/version.php")) {
-    require "$abs_root/$ezer_version/version.php";
+  if (file_exists("$abs_root/ezer$ezer_version/version.php")) {
+    require "$abs_root/ezer$ezer_version/version.php";
     $v_sys= "?v=$version";
   }
   $v_app= '';
@@ -154,7 +154,7 @@
         return "$http_rel_root/$x$v_app";
       },$app_js)
   );
-  if ($touch) $app_css[]= "$ezer_version/client/ipad.css";
+  if ($touch) $app_css[]= "ezer$ezer_version/client/ipad.css";
   $app_css= array_values(array_filter($app_css)); // vynechání všech false
   $css= array_merge(
     array("$client/ezer3.css$v_sys","$client/ezer3.css.php=skin",  

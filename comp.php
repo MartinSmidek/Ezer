@@ -25,7 +25,7 @@
   $option_cpp= $_GET['cpp'];
 
   // verze použitého jádra Ezeru
-  $ezer_version= "ezer3.2"; 
+  $ezer_version= "3.2"; 
   $define= array(
       'version_ezer'=>'3.2',
       'variant_appl'=> 
@@ -83,10 +83,10 @@
   // seznam složky aplikace
   $ezer_root= $root;
   $state= '';
-  $ezer_path_root= str_replace("/$ezer_version/comp.php","",$_SERVER['SCRIPT_FILENAME']);
+  $ezer_path_root= str_replace("/ezer$ezer_version/comp.php","",$_SERVER['SCRIPT_FILENAME']);
   $ezer_path_appl= "$ezer_path_root/$root";
   $ezer_path_code= "$ezer_path_root/$root/code";
-  $ezer_path_serv= "$ezer_path_root/$ezer_version/server";
+  $ezer_path_serv= "$ezer_path_root/ezer$ezer_version/server";
   require_once("server/comp2.php");
   require_once("server/comp2def.php");
   $files= array();
@@ -149,7 +149,7 @@
       unset($ezer_local);
     }
     require_once("server/reference.php");
-    if ( $root==$ezer_version ) {
+    if ( $root=="ezer$ezer_version ") {
       global $EZER;
       $EZER= (object)array('version'=>$ezer_version);
       $ezer_comp_ezer= "app,area,ezer,ezer_report,ezer_fdom1,ezer_fdom2";
@@ -208,8 +208,8 @@
   }
 
   $h1= $compiled
-    ? "<h1>$ezer_version / kompilace modulu '$compiled'</h1>"
-    : "<h1>$ezer_version / kompilace aplikace '$root'</h1>";
+    ? "<h1>Ezer $ezer_version / kompilace modulu '$compiled'</h1>"
+    : "<h1>Ezer $ezer_version / kompilace aplikace '$root'</h1>";
   // ------------------------------------------------------------------------------------ menu
   $menu= "<table>";
   foreach($files as $name=>$status) {
