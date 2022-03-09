@@ -41,7 +41,19 @@ function comp_ezer_list() { trace();
 //                                                         debug($files,'ezer files');
 //  return $files;
 }
-# ---------------------------------------------------------------------------------------- comp_file
+# ---------------------------------------------------------------------------------------comp define
+# definuje $define podle GET a SESSION
+function comp_define ($root) {
+  global $ezer_version, $define;
+  $define= array(
+      'ezer_version'=>$ezer_version,
+      'appl_version'=> 
+        isset($_GET['appl_version']) ? $_GET['appl_version'] : (
+        isset($_SESSION[$root]['appl_version']) ? $_SESSION[$root]['appl_version'] 
+        : '0')
+    ); 
+}
+# ---------------------------------------------------------------------------------------- comp file
 # přeloží $aname do $cname pokud je překlad bez chyby
 # v případě chyby nechá $cname beze změny
 # $root je jméno hlavního objektu aplikace a může být uvedeno jen pro $name='$'
@@ -55,7 +67,7 @@ function comp_file ($name,$root='',$_list_only='',$_comp_php=false) {  #trace();
     $pragma_group, $pragma_box, $pragma_if, $pragma_switch, $pragma_nogen, $pragma_attrib;
   global $call_php, $call_ezer, $call_elem;
   global $doxygen;    // $doxygen=1 pokud se má do složky data generovat *.cpp pro doxygen
-  global $app_ezers, $file_;
+  global $app_ezers, $file_, $define;
   
   comp_ezer_list(); // naplní $app_ezers
   $file_= array_search($name,$app_ezers);
@@ -272,7 +284,8 @@ function comp_file ($name,$root='',$_list_only='',$_comp_php=false) {  #trace();
     $loads->code= $code;
                                                         if ($_GET['trace']==4) debug($loads,"kód");
     // informace o kódu pro informaci o struktuře aplikace
-    $loads->info= (object)array('php'=>$call_php,'ezer'=>$call_ezer,'ezer_version'=>$ezer_version);
+    $loads->info= (object)array('php'=>$call_php,'ezer'=>$call_ezer,'ezer_version'=>$ezer_version,
+        'appl_version'=>isset($define['appl_version'])?$define['appl_version']:'');
     $loads->info->elem= $call_elem;
 //                                                        debug($call_elem,'call elem');
     $json_loads= json_encode($loads,JSON_HEX_AMP);

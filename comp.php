@@ -26,22 +26,23 @@
 
   // verze použitého jádra Ezeru
   $ezer_version= "3.2"; 
-  $define= array(
-      'ezer_version'=>$ezer_version,
-      'appl_version'=> 
-        isset($_GET['appl_version']) ? $_GET['appl_version'] : (
-        isset($_SESSION[$root]['appl_version']) ? $_SESSION[$root]['appl_version'] 
-        : '0')
-    ); 
   
   global $display, $trace, $json, $ezer_path_serv, $ezer_path_appl, $ezer_path_code, $ezer_root;
 
   list($url)= explode('?',$_SERVER['HTTP_REFERER']);
 
   require_once("server/ae_slib.php");
-//  require_once("server/licensed/JSON_Ezer.php");
+  // seznam složky aplikace
+  $ezer_root= $root;
+  $state= '';
+  $ezer_path_root= str_replace("/ezer$ezer_version/comp.php","",$_SERVER['SCRIPT_FILENAME']);
+  $ezer_path_appl= "$ezer_path_root/$root";
+  $ezer_path_code= "$ezer_path_root/$root/code";
+  $ezer_path_serv= "$ezer_path_root/ezer$ezer_version/server";
+  require_once("server/comp2.php");
+  require_once("server/comp2def.php");
+  comp_define($root); // nastaví $define
 
-//  $json= new Services_JSON_Ezer();
   // verze kompilátoru
   clearstatcache();
   $xname= "server/comp2.php";
@@ -80,15 +81,6 @@
   $ip.= "<br>sun: " . date_sunrise(time(),SUNFUNCS_RET_STRING,$lat,$lon,90,1)
     . ' - ' . date_sunset(time(),SUNFUNCS_RET_STRING,$lat,$lon,90,1);
   $checks.= "\n$ip";
-  // seznam složky aplikace
-  $ezer_root= $root;
-  $state= '';
-  $ezer_path_root= str_replace("/ezer$ezer_version/comp.php","",$_SERVER['SCRIPT_FILENAME']);
-  $ezer_path_appl= "$ezer_path_root/$root";
-  $ezer_path_code= "$ezer_path_root/$root/code";
-  $ezer_path_serv= "$ezer_path_root/ezer$ezer_version/server";
-  require_once("server/comp2.php");
-  require_once("server/comp2def.php");
   $files= array();
   if (($dh= opendir($ezer_path_appl))) {
     while (($file= readdir($dh)) !== false) {
