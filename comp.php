@@ -1,8 +1,6 @@
 <?php # (c) 2008-2022 Martin Smidek <martin@smidek.eu>
   
-const EZER_version= 3.1;
-
-# screen=1 zobrazí rozměr klientské části
+  # screen=1 zobrazí rozměr klientské části
 
   error_reporting(E_ALL ^ E_NOTICE);
   $pwd= getcwd();
@@ -25,14 +23,27 @@ const EZER_version= 3.1;
   $option_list= $_GET['list'];
   $option_source= $_GET['source'];
   $option_cpp= $_GET['cpp'];
+
+  // verze použitého jádra Ezeru
+  const EZER_version= 3.1;
+  $ezer_version= "3.1"; 
+  
   global $display, $trace, $json, $ezer_path_serv, $ezer_path_appl, $ezer_path_code, $ezer_root;
 
   list($url)= explode('?',$_SERVER['HTTP_REFERER']);
 
   require_once("server/ae_slib.php");
-//  require_once("server/licensed/JSON_Ezer.php");
+  // seznam složky aplikace
+  $ezer_root= $root;
+  $state= '';
+  $ezer_path_root= str_replace("/ezer$ezer_version/comp.php","",$_SERVER['SCRIPT_FILENAME']);
+  $ezer_path_appl= "$ezer_path_root/$root";
+  $ezer_path_code= "$ezer_path_root/$root/code";
+  $ezer_path_serv= "$ezer_path_root/ezer$ezer_version/server";
+  require_once("server/comp2.php");
+  require_once("server/comp2def.php");
+  comp_define($root); // nastaví $define
 
-//  $json= new Services_JSON_Ezer();
   // verze kompilátoru
   clearstatcache();
   $xname= "server/comp2.php";
@@ -54,6 +65,10 @@ const EZER_version= 3.1;
   $checks.= "<br>\n<input type='submit' value='celou aplikaci' onclick='go_all(\"yes\");' />";
   $checks.= "<br>\n<input type='submit' value='... včetně err' onclick='go_all(\"err\");' />";
   $checks.= "<br>\n<input type='submit' value='... včetně ok' onclick='go_all(\"any\");' />";
+  $checks.= "<br>\nproměnné pro #if-#else-#endif";
+  foreach ($define as $s=>$v) {
+    $checks.= "<br>\n$s=$v";
+  }
   $checks.= "<br>\n<input type='submit' value='obnova tabulek' onclick='go_tables();' />";
   $checks.= "<br>\n<input type='submit' value='PHPinfo' onclick='go_phpinfo();' />";
   $ip= "<br>remote:{$_SERVER["REMOTE_ADDR"]}<br>forwarded:{$_SERVER["HTTP_X_FORWARDED_FOR"]}";
@@ -67,15 +82,6 @@ const EZER_version= 3.1;
   $ip.= "<br>sun: " . date_sunrise(time(),SUNFUNCS_RET_STRING,$lat,$lon,90,1)
     . ' - ' . date_sunset(time(),SUNFUNCS_RET_STRING,$lat,$lon,90,1);
   $checks.= "\n$ip";
-  // seznam složky aplikace
-  $ezer_root= $root;
-  $state= '';
-  $ezer_path_root= str_replace("/ezer3.1/comp.php","",$_SERVER['SCRIPT_FILENAME']);
-  $ezer_path_appl= "$ezer_path_root/$root";
-  $ezer_path_code= "$ezer_path_root/$root/code";
-  $ezer_path_serv= "$ezer_path_root/ezer3.1/server";
-  require_once("server/comp2.php");
-  require_once("server/comp2def.php");
   $files= array();
   if (($dh= opendir($ezer_path_appl))) {
     while (($file= readdir($dh)) !== false) {
@@ -338,7 +344,8 @@ function comp_module($name,$root='',&$state) {
       $ch= $src[$i];
       if ( $ch=='#' ) $note= true;
       if ( $ch=='<' ) $note= false;
-      if ( !$note ) $txt.= $ch;
+//      if ( !$note ) 
+        $txt.= $ch;
     }
   }
   if ( $option_cpp ) {

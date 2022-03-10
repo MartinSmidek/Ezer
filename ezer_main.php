@@ -13,7 +13,7 @@
  */
 //  echo("ezer_main.php start, ezer_server=$ezer_server");
 
-  global $app_root, $ezer_root, $api_key;
+  global $app_root, $ezer_root, $api_key, $appl_version;
   $ezer_root= $app_root;
   
   // platí buďto isnull($ezer_local) nebo isnull($ezer_server)
@@ -66,6 +66,7 @@
   $_SESSION[$app]['GET']= $_GET;
   $_SESSION[$app]['ezer']= '3.1';
   $_SESSION[$app]['ezer_server']= $ezer_server;
+  $_SESSION[$app]['appl_version']= $appl_version;
 
   // přepínač pro fáze migrace pod PDO - const EZER_PDO_PORT=1|2|3
   if ( isset($_GET['pdo']) && $_GET['pdo']==2 ) {

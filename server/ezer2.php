@@ -2030,22 +2030,32 @@
         $ename= "$ezer_path_root/$app/$fname.ezer";
         $cname= "$ezer_path_root/$app/code/$fname.json";
         $xname= "$ezer_path_serv/comp2.php";
+        // definujeme $define
+        global $define;
+        comp_define($app); // nastaví $define
         // zdroj musí existovat
         clearstatcache();
         $etime= file_exists($ename) ? filemtime($ename) : 0;
         $ctime= 0;
-        if ( file_exists($cname) ) // json nemusí
+        if ( file_exists($cname) ) { // json nemusí
           $ctime= filemtime($cname); 
+          $loads= json_decode($str= file_get_contents($cname));
+          # zkontrolujeme verzi aplikace - pokud se liší, vynutíme překlad
+          $ea= isset($loads->info->appl_version) ? $loads->info->appl_version : '';
+          if ($ea && $ea!=$define['appl_version']) 
+            $ctime= 0;
+        }
         $xtime= filemtime($xname);
         $state= 'load';
-        $loads= 'error';
         if ( !$etime ) {
+          $loads= 'error';
           $y->error= "INCLUDE - soubor $app/$ename neexistuje";  // zdroj musí existovat
 //           display("INCLUDE - soubor $app/$ename neexistuje");  // zdroj musí existovat
           break;
         }
         else if ( !$ctime || $ctime<$etime                  // a pokud je mladší než přeložený kód
           || $ctime<$xtime ) {                              // nebo starší než kompilátor, tak jej překompiluj
+          $loads= 'error';
           $state= 'compile '.comp_file($fname,$app);
           if ( $errors ) {
             $y->error= $err;
@@ -2059,7 +2069,6 @@
         }
         else {
           $y->msg.= " $cname";
-          $loads= json_decode($str= file_get_contents($cname));
         }
         # ------------------------------------------------------------------------------------------
         # v $load je přečtený kód, který je třeba vložit do $part->block

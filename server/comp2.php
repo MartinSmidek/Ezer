@@ -41,6 +41,19 @@ function comp_ezer_list() { trace();
 //                                                         debug($files,'ezer files');
 //  return $files;
 }
+# ---------------------------------------------------------------------------------------comp define
+# definuje $define podle GET a SESSION
+function comp_define ($root) {
+  global $ezer_version, $define, $define_used;
+  $define= array(
+      'ezer_version'=>$ezer_version,
+      'appl_version'=> 
+        isset($_GET['appl_version']) ? $_GET['appl_version'] : (
+        isset($_SESSION[$root]['appl_version']) ? $_SESSION[$root]['appl_version'] 
+        : '0')
+    ); 
+  $define_used= array();
+}
 # ---------------------------------------------------------------------------------------- comp_file
 # přeloží $aname do $cname pokud je překlad bez chyby
 # v případě chyby nechá $cname beze změny
@@ -55,8 +68,9 @@ function comp_file ($name,$root='',$_list_only='',$_comp_php=false) {  #trace();
     $pragma_group, $pragma_box, $pragma_if, $pragma_switch;
   global $call_php, $call_ezer, $call_elem;
   global $doxygen;    // $doxygen=1 pokud se má do složky data generovat *.cpp pro doxygen
-  global $app_ezers, $file_;
+  global $app_ezers, $file_, $define, $define_used;
   
+  $define_used= array();
   comp_ezer_list(); // naplní $app_ezers
   $file_= array_search($name,$app_ezers);
   $list_only= $_list_only;
@@ -268,7 +282,9 @@ function comp_file ($name,$root='',$_list_only='',$_comp_php=false) {  #trace();
     $loads->code= $code;
                                                         if ($_GET['trace']==4) debug($loads,"kód");
     // informace o kódu pro informaci o struktuře aplikace
-    $loads->info= (object)array('php'=>$call_php,'ezer'=>$call_ezer,'ezer_version'=>'ezer3.1');
+    $loads->info= (object)array('php'=>$call_php,'ezer'=>$call_ezer,'ezer_version'=>'ezer3.1',
+        // hodnotu appl_version vložíme jen pokud bylo použito
+        'appl_version'=>isset($define_used['appl_version'])?$define['appl_version']:'');
     $loads->info->elem= $call_elem;
 //                                                        debug($call_elem,'call elem');
     $json_loads= json_encode($loads,JSON_HEX_AMP);
@@ -4565,8 +4581,10 @@ function get_expr($context,&$expr) {
 # ------------------------------------------------------------------------------------ lex_analysis2
 # $dbg = false nebo pro debugger proc|func
 function lex_analysis2 ($dbg=false) {
-  global $tok2lex, $ezer, $keywords, $specs, $lex, $typ, $pos, $not, $gen_source, $debugger, $head;
+  global $tok2lex, $ezer, $keywords, $specs, $lex, $typ, $pos, $not, $gen_source, $debugger, $head, 
+      $define, $define_used;
 
+  $skip= 0; $skip_tag= '';
   // rozbor na tokeny podle PHP
   $tok= token_get_all( $dbg
     ? ("<"."?php\n $dbg _dbg_() ".'{'."$ezer \n} ?".">")
@@ -4611,18 +4629,46 @@ function lex_analysis2 ($dbg=false) {
     }
     switch ( $tp ) {
     case 'blank':
+      if ($skip) continue;
       if ( $inside_template ) {
         $typ[$k]= 'str'; $lex[$k]= $t[1]; $pos[$k]= "{$t[2]},{$t[3]}"; $k++;
       }
       break;
     case 'cmnt':
-      if ( $gen_source ) {
+      $m= null;
+      if ( preg_match("~^#(if|else|endif)\s*(\w*)\s*(==|!=|<=|>=|<|>|)([\.\w]*)(.*)$~",$t[1],$m)) {
+//        debug($m);
+        $head= $t[2]-1; $pos[$head]= "{$head},{$t[3]}"; 
+        lex_assert(trim($m[5])=='',"chybná syntax");
+        switch ($m[1]) {
+          case 'if':    lex_assert(!$skip_tag,'vnořené #if'); 
+                        $skip_tag= $m[2]; lex_assert(isset($define[$skip_tag]),"neznámá konstanta '$skip_tag'");
+                        $define_used[$skip_tag]= 1;
+                        $tg= $define[$skip_tag]; lex_assert($tg!=='',"chybějící hodnota '$skip_tag'");
+                        $op= $m[3]; lex_assert($op,"nepovolená relace");
+                        $val= $m[4]; lex_assert($val!=='','chybějící hodnota');
+                        $cmp= strnatcmp($tg,$val);
+//                                            display("$tg $op $val ... $cmp");
+                        $r= $op=='==' ? $cmp==0 : (
+                            $op=='!=' ? $cmp!=0 : (
+                            $op=='>'  ? $cmp>0 : (
+                            $op=='>=' ? $cmp>=0 : (
+                            $op=='<=' ? $cmp<=0 : (
+                            $op=='<'  ? $cmp<0 : -1)))));
+                        $skip= $r ? 0 : 1; 
+                        break;
+          case 'else':  $skip= 1-$skip; break;
+          case 'endif': $skip= 0; $skip_tag= ''; break;
+        }
+      }
+      elseif ( $gen_source ) {
         if ( substr($t[1],0,2)=='#$' ) break;
         if ( substr($t[1],0,1)=='#' ) $notes.= $t[1];
         elseif ( substr($t[1],0,2)=='//' ) $not[$cmnt].= $t[1];
       }
       break;
     case 'id':
+      if ($skip) continue;
       $ident= $t[1];
       if ( $ident=='°' ) {              // příznak objektové konstanty
         $tp= 'del';
@@ -4648,18 +4694,22 @@ function lex_analysis2 ($dbg=false) {
       $typ[$k]= $tp; $lex[$k]= $ident; $pos[$k]= "{$t[2]},{$t[3]}"; $k++;
       break;
     case 'del':
+      if ($skip) continue;
       if ( $t[1]=='`' ) {
         $inside_template= !$inside_template;
       }
     case 'num':
+      if ($skip) continue;
       $typ[$k]= $tp; $lex[$k]= $t[1]; $pos[$k]= "{$t[2]},{$t[3]}"; $k++;
       break;
     case 'str':
+      if ($skip) continue;
       $lex[$k]= $t[1];
       $typ[$k]= $inside_template && preg_match('/^\w+$/',$t[1]) ? 'id' : $tp;
       $pos[$k]= "{$t[2]},{$t[3]}"; $k++;
       break;
     default:
+      if ($skip) continue;
       $head= $t[2]; $pos[$t[2]]= "{$t[2]},{$t[3]}";
       comp_error("LEXICAL '{$t[1]}' je nedovolený znak");
       break;
@@ -4670,7 +4720,13 @@ function lex_analysis2 ($dbg=false) {
 //                                                             debug($typ,'typ');
 //                                                             debug($pos,'pos');
 //                                                             debug($not,'not');
+//                                                             debug($define_used,'define_used');
+  if (count($define_used)) debug($define_used,'použité #define proměnné');
+//  if (count($define)) debug($define,"#define proměnné ");
   return true;
+}
+function lex_assert($bool,$msg) { 
+  if (!$bool) comp_error("LEXICAL chyba direktiv podmíněného překladu - $msg");
 }
 # ------------------------------------------------------------------------------------ tok_positions
 function tok_positions(&$tok) {
