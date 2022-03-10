@@ -65,7 +65,10 @@ function run_value(rexpr,context) {
     }
   }
   if (val===undefined) {
-    Ezer.error(`run-time hodnotu ${context[1]} nelze vyhodnotit`,'S',context[0]);
+    let elem= context[0].self(),
+        type= context[0].type;
+    Ezer.error(`run-time hodnotu ${context[1]} bloku ${elem} typu ${type} nelze vyhodnotit`,
+        'S',context[0]);
   }
   return val;
 }

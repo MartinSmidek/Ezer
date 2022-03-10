@@ -2523,7 +2523,7 @@ class Panel extends Block {
     this.DOM= this.DOM_Block= jQuery('<div>')
       .addClass('Panel3')
       .css({width:this._w,height:this._h})     //  min..,max.. je kvůli flex
-      .data('Ezer',this)
+      .data('ezer',this)
       .appendTo(this.owner.DOM_Block)
       .hide();
 
@@ -2608,7 +2608,7 @@ class PanelMain extends Panel {
     this.DOM_Block= jQuery('<div>')
       .addClass('Panel3')
       .css({display:'block'})
-      .data('Ezer',this)
+      .data('ezer',this)
       .appendTo(jQuery('#work'))
   }
 }
@@ -2633,7 +2633,7 @@ class PanelPlain extends Panel {
     this.DOM_Block= jQuery('<div>')
       .addClass('Panel3')
       .css({minWidth:this._w,maxHeight:this._h})     //  min..,max.. je kvůli flex
-      .data('Ezer',this)
+      .data('ezer',this)
       .appendTo(this.DOM)
       ;
   }
@@ -2677,7 +2677,7 @@ class PanelRight extends Panel {
     this.DOM_Block= jQuery('<div>')
       .addClass('PanelRight3')
       .css({minWidth:this._w,maxHeight:this._h})     //  min..,max.. je kvůli flex
-      .data('Ezer',this)
+      .data('ezer',this)
       .appendTo(this.DOM)
       ;
   }
@@ -2753,7 +2753,7 @@ class PanelPopup extends Panel {
           <div class="pop_body"></div>
         </div>`)
       .css({width:this._w,height:this._h})
-      .data('Ezer',this)
+      .data('ezer',this)
       .appendTo(this.owner.DOM||'#work')
       .drags({handle:'div.pop_head',top:min_top})
       .hide();
@@ -10787,7 +10787,7 @@ class Show extends Elem {
             this.owner.DOM_qry_row[i].append(td= jQuery(`<td class="BrowseQry">`));
             // vytvoření procedury onchange
             var code= [{o:'t'},{o:'m',i:'_owner'},{o:'m',i:'_owner'},{o:'x',i:'browse_load'}];
-            var sel_desc= {type:'select.map0',options:{_w:this._w,par:{noimg:1,subtype:'browse'},
+            var sel_desc= {type:'select.map0',options:{_w:this._w,par:{'*':{noimg:1,subtype:'browse'}},
                 format:'wt',map_pipe:this.options.map_pipe,options:this.options.map_pipe,
                 help:'výběr z číselníkových hodnot'},
               part:{onchanged:{type:'proc',par:{},code:code}}};

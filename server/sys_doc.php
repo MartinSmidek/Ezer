@@ -294,10 +294,10 @@ function doc_ezer_list() { trace();
 # ----------------------------------------------------------------------------------- doc ezer_state
 # zjištění stavu souboru
 function doc_ezer_state ($fname,&$files) { trace();
-  global $ezer_path_root;
+  global $ezer_path_root, $ezer_version;
   list($appl,$name)= explode('/',$fname);
   $etime= @filemtime("$ezer_path_root/$appl/$name.ezer");
-  $ctime= @filemtime($cname= "$ezer_path_root/$appl/code/$name.json");
+  $ctime= @filemtime($cname= "$ezer_path_root/$appl/code$ezer_version/$name.json");
   $files[$name]= (object)array();
   if ( !$ctime)
     $files[$name]->state= 'err';

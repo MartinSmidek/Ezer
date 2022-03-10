@@ -22,7 +22,7 @@
   $option_state= $_GET['trace'];
   $option_list= $_GET['list'];
   $option_source= $_GET['source'];
-  $option_cpp= $_GET['cpp'];
+//  $option_cpp= $_GET['cpp']; // OBSOLETE
 
   // verze použitého jádra Ezeru
   $ezer_version= "3.2"; 
@@ -37,7 +37,7 @@
   $state= '';
   $ezer_path_root= str_replace("/ezer$ezer_version/comp.php","",$_SERVER['SCRIPT_FILENAME']);
   $ezer_path_appl= "$ezer_path_root/$root";
-  $ezer_path_code= "$ezer_path_root/$root/code";
+  $ezer_path_code= "$ezer_path_root/$root/code$ezer_version";
   $ezer_path_serv= "$ezer_path_root/ezer$ezer_version/server";
   require_once("server/comp2.php");
   require_once("server/comp2def.php");
@@ -56,8 +56,8 @@
   $checked= $option_source==1 ? 'checked' : '';
   $checks.= "\n<input type='checkbox' $checked  onchange='set_option_source(this.checked,1)'/> zdroj";
   $checked= $option_cpp==1 ? 'checked' : '';
-  $checks.= "\n&nbsp; &nbsp; &nbsp; &nbsp; "
-      . "<input type='checkbox' $checked  onchange='set_option_cpp(this.checked,1)'/> C++";
+//  $checks.= "\n&nbsp; &nbsp; &nbsp; &nbsp; "
+//      . "<input type='checkbox' $checked  onchange='set_option_cpp(this.checked,1)'/> C++";
   $checked= $option_state==7 ? 'checked' : '';
   $checks.= "<br>\n<input type='checkbox' $checked  onchange='set_option_trace(this.checked,7)'/> list proc";
   $checks.= "<input type='text' title='výběr trasované procedury regulárním výrazem' value='$option_list' size=7 onchange='set_option_list(this)'/>";
@@ -277,21 +277,21 @@ echo <<<__EOF
       var url= "$url"+"?root="+appl+(file?"&file="+file:'')
        +(option_list?'&list='+option_list:'')
        +(option_state?'&trace='+option_state:'')
-       +(option_cpp?'&cpp=1':'')
+       //+(option_cpp?'&cpp=1':'')
        +(option_source?'&source=1':'');
       location.href= url;
     }
     function go_all(mode) {
       var url= "$url"+"?root=$root"+"&all="+mode
        +(option_state?'&trace='+option_state:'')
-       +(option_cpp?'&cpp=1':'')
+       //+(option_cpp?'&cpp=1':'')
        +(option_source?'&source=1':'');
       location.href= url;
     }
     function go_tables() {
       var url= "$url"+"?root=$root"+"&refresh=tables"
        +(option_state?'&trace='+option_state:'')
-       +(option_cpp?'&cpp=1':'')
+       //+(option_cpp?'&cpp=1':'')
        +(option_source?'&source=1':'');
       location.href= url;
     }
@@ -347,10 +347,10 @@ function comp_module($name,$root='',&$state) {
         $txt.= $ch;
     }
   }
-  if ( $option_cpp ) {
-    $src= file_get_contents("$ezer_path_appl/code/$name.cpp");
-    $lst.= nl2br($src).'<hr>';
-  }
+//  if ( $option_cpp ) { // OBSOLETE
+//    $src= file_get_contents("$ezer_path_code/$name.cpp");
+//    $lst.= nl2br($src).'<hr>';
+//  }
 //   debug($code,"COMPILED $name");
   display($state);
   return $txt;

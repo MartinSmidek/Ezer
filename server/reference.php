@@ -261,7 +261,7 @@ function wiki2html ($wiki) {
 function i_doc_app($fnamestmnts,$chapter,$to_save=true) { trace();
 //                                                 display("i_doc_app($fnamestmnts,$chapter,$to_save)");
   global $i_doc_info, $i_doc_class, $i_doc_id, $i_doc_ref, $i_doc_err, $i_doc_n, $i_doc_file;
-  global $i_doc_text, $form, $map, $ezer_path_root,$ezer_path_serv;
+  global $i_doc_text, $form, $map, $ezer_path_root, $ezer_path_serv, $ezer_version;
   require_once("$ezer_path_serv/licensed/ezer_wiki.php");
   global $mysql_db; 
   ezer_connect($mysql_db);
@@ -368,7 +368,7 @@ function i_doc_app($fnamestmnts,$chapter,$to_save=true) { trace();
         // informace o čísle verze pomocí TortoiseSVN (je-li zájem a SubWCRev)
         // pokud není dostupná TortoiseSVN, použije se poslední vygenerované
         // WCVERSION a KWCVERSION je přidána jako jméno koncové podsložky z [K]WCURL = číslo verze
-        $path_ini= "../../code";
+        $path_ini= "../../code$ezer_version";
         if ( preg_match("/WCREV|WCDATE|WCRANGE|WCURL|WCNOW/",$wiki) ) {
           i_doc_ini("$path_ini/version.ini","./");
           $WC_subst0= parse_ini_file("$path_ini/version.ini");
@@ -1298,7 +1298,7 @@ function sys_db_info($par,$panel_self) { //debug($par);
   foreach ($sys_db_info->infos as $item) {
     $itms[]= (object)array('type'=>'item','options'=>(object)array(
         'title'=>$item->title,
-        'par'=>(object)array('info'=>$item->html)
+        'par'=>(object)array('*'=>(object)array('info'=>$item->html))
       ));
   }
   // doplnění leftmenu o itemy pro jednotlivé tabulky
@@ -1307,7 +1307,7 @@ function sys_db_info($par,$panel_self) { //debug($par);
     $title= $title ?: wu("tabulka ").strtoupper($name);
     $itms[]= (object)array('type'=>'item','options'=>(object)array(
         'title'=>"[fa-database] $title",
-        'par'=>(object)array('tab'=>$name)
+        'par'=>(object)array('*'=>(object)array('tab'=>$name))
       ));
   }
   $ret->group= (object)array('type'=>'menu.group','options'=>(object)array(),'part'=>$itms);

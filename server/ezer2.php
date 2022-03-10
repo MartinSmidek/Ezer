@@ -2069,7 +2069,7 @@
         // pokud je $app jádrem (začíná $app=ezer) zaměníme $all za aktuální verzi Ezer
         $app= substr($app,0,4)=='ezer' ? "ezer$ezer_version" : $app;
         $ename= "$ezer_path_root/$app/$fname.ezer";
-        $cname= "$ezer_path_root/$app/code/$fname.json";
+        $cname= "$ezer_path_root/$app/code$ezer_version/$fname.json";
         $xname= "$ezer_path_serv/comp2.php";
         // definujeme $define
         global $define;

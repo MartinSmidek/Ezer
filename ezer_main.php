@@ -15,6 +15,9 @@
   global $app_root, $ezer_root, $api_key, $const, $appl_version, $ezer_version; //==3.2 z aplikace
   $ezer_root= $app_root;
   
+  // ověření korektnosti předaných hodnot
+  if ($ezer_version!='3.2') die('konflikt verzí');
+  
   // platí buďto isnull($ezer_local) nebo isnull($ezer_server)
   global $ezer_local, $ezer_server;
   if ( is_null($ezer_local) && is_null($ezer_server) ) 

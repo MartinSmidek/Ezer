@@ -44,7 +44,7 @@ function comp_ezer_list() { trace();
 # ---------------------------------------------------------------------------------------comp define
 # definuje $define podle GET a SESSION
 function comp_define ($root) {
-  global $ezer_version, $define;
+  global $ezer_version, $define, $define_used;
   $define= array(
       'ezer_version'=>$ezer_version,
       'appl_version'=> 
@@ -52,6 +52,7 @@ function comp_define ($root) {
         isset($_SESSION[$root]['appl_version']) ? $_SESSION[$root]['appl_version'] 
         : '0')
     ); 
+  $define_used= array();
 }
 # ---------------------------------------------------------------------------------------- comp file
 # přeloží $aname do $cname pokud je překlad bez chyby
@@ -61,19 +62,21 @@ function comp_define ($root) {
 # $comp_php znamená volání z comp.php
 # pokud je v SESSION snímek call grafu, zruší jej
 function comp_file ($name,$root='',$_list_only='',$_comp_php=false) {  #trace();
-  global $ezer, $ezer_version, $ezer_path_root, $err, $comp_php,$list_only,
+  global $ezer, $ezer_version, $ezer_path_root, $ezer_path_code, $err, $comp_php,$list_only,
     $code, $module, $procs, $context, $ezer_name, $ezer_app, $errors, $includes, $onloads;
   global $pragma_library, $pragma_syntax, $pragma_attrs, $pragma_names, $pragma_get, $pragma_prefix,
     $pragma_group, $pragma_box, $pragma_if, $pragma_switch, $pragma_nogen, $pragma_attrib;
   global $call_php, $call_ezer, $call_elem;
   global $doxygen;    // $doxygen=1 pokud se má do složky data generovat *.cpp pro doxygen
-  global $app_ezers, $file_, $define;
+  global $app_ezers, $file_, $define, $define_used;
   
+  $define_used= array();
+  $ezer_path_code= "$ezer_path_root/$root/code$ezer_version";
   comp_ezer_list(); // naplní $app_ezers
   $file_= array_search($name,$app_ezers);
   $list_only= $_list_only;
   $comp_php= $_comp_php;
-  $doxygen= 1;
+  $doxygen= 0; // OBSOLETE ve verzi 3.2 - nepoužilo se
   $errors= 0;
   try {
     $call_php= $call_ezer= $call_elem= $includes= $including= $onloads= array();
@@ -93,7 +96,7 @@ function comp_file ($name,$root='',$_list_only='',$_comp_php=false) {  #trace();
     $pragma_attrib= true;
     if ( substr($ezer,0,7)=='#pragma' ) {
       $pragma= explode(',',trim(substr($ezer,8,strpos($ezer,"\n")-8)));
-                                                             debug($pragma,"pragma");
+//                                                             debug($pragma,"pragma");
       if ( in_array('library',$pragma)) $pragma_library= true;
       if ( in_array('names',$pragma) )  $pragma_names= array('');
       if ( in_array('syntax',$pragma) ) $pragma_syntax= true;
@@ -149,7 +152,7 @@ function comp_file ($name,$root='',$_list_only='',$_comp_php=false) {  #trace();
       $k= $kend= $n-1;
       while ( $k>=0 ) {
         $try= $k>0 ? implode('.',array_slice($ids,0,$k)) : '$';
-        $cname= "$ezer_path_root/$root/code/$try.json";
+        $cname= "$ezer_path_code/$try.json";
         if ( file_exists($cname) ) {
           $cntx= file_get_contents($cname);
           $load= json_decode($cntx);
@@ -262,17 +265,17 @@ function comp_file ($name,$root='',$_list_only='',$_comp_php=false) {  #trace();
       global $doxy_cpp, $doxy_ln;
       $doxy_cpp= ''; $doxy_ln= 1;
       doxygen($start);
-      $xname= "$ezer_path_root/$root/code/$name.cpp";
+      $xname= "$ezer_path_code/$name.cpp";
       file_put_contents($xname,$doxy_cpp);
     }
     $code= export($start,'$');
     if ( $pragma_library ) {             // doplnění o informaci, že se jedná o knihovnu
       $code->library= 1;
     }
-    if ( !file_exists("$ezer_path_root/$root/code") ) {
-      mkdir("$ezer_path_root/$root/code");
+    if ( !file_exists("$ezer_path_code") ) {
+      mkdir("$ezer_path_code");
     }
-    $cname= "$ezer_path_root/$root/code/$name.json";
+    $cname= "$ezer_path_code/$name.json";
 //     file_put_contents($cname,$json->encode($code));
     $used= explode('.',$myname);
     $id= array_pop($used);
@@ -285,7 +288,8 @@ function comp_file ($name,$root='',$_list_only='',$_comp_php=false) {  #trace();
                                                         if ($_GET['trace']==4) debug($loads,"kód");
     // informace o kódu pro informaci o struktuře aplikace
     $loads->info= (object)array('php'=>$call_php,'ezer'=>$call_ezer,'ezer_version'=>$ezer_version,
-        'appl_version'=>isset($define['appl_version'])?$define['appl_version']:'');
+        // hodnotu appl_version vložíme jen pokud bylo použito
+        'appl_version'=>isset($define_used['appl_version'])?$define['appl_version']:'');
     $loads->info->elem= $call_elem;
 //                                                        debug($call_elem,'call elem');
     $json_loads= json_encode($loads,JSON_HEX_AMP);
@@ -297,7 +301,7 @@ function comp_file ($name,$root='',$_list_only='',$_comp_php=false) {  #trace();
     $ok= 'ko';
     $errors++;
     $err= $e->getMessage().' in '.$e->getFile().';'.$e->getLine();
-    $cname= "$ezer_path_root/$root/code/$name.json";
+    $cname= "$ezer_path_code/$name.json";
     if ( file_exists($cname) )
       unlink($cname);
     if ( !$comp_php ) goto end;
@@ -406,7 +410,7 @@ function list_parts($x) {
 function dbg_context_load ($ctx) {  #trace();
   $log= "";
   // části funkce comp2:comp_file
-  global $ezer_version, $ezer_path_root, $including, $code, $context, $errors, $includes;
+  global $ezer_version, $ezer_path_root, $ezer_path_code, $including, $code, $context, $errors, $includes;
   global $call_php, $call_ezer;
   require_once("ezer$ezer_version/server/comp2.php");
   $call_php= $call_ezer= array();
@@ -421,7 +425,7 @@ function dbg_context_load ($ctx) {  #trace();
     $ids= explode('.',$name);
     $n= count($ids);
     $k= $kend= $n;
-    $prefix= "$ezer_path_root/$root/code";
+    $prefix= $ezer_path_code;
     while ( $k>=0 ) {
       // postupně zkracujeme složené jméno
       $try= $k>0 ? implode('.',array_slice($ids,0,$k)) : '$';
@@ -5024,7 +5028,8 @@ function get_expr($context,&$expr) {
 # ------------------------------------------------------------------------------------ lex_analysis2
 # $dbg = false nebo pro debugger proc|func
 function lex_analysis2 ($dbg=false) {
-  global $tok2lex, $ezer, $keywords, $specs, $lex, $typ, $pos, $not, $gen_source, $debugger, $head, $define;
+  global $tok2lex, $ezer, $keywords, $specs, $lex, $typ, $pos, $not, $gen_source, $debugger, $head, 
+      $define, $define_used;
 
   $skip= 0; $skip_tag= '';
   // rozbor na tokeny podle PHP
@@ -5085,6 +5090,7 @@ function lex_analysis2 ($dbg=false) {
         switch ($m[1]) {
           case 'if':    lex_assert(!$skip_tag,'vnořené #if'); 
                         $skip_tag= $m[2]; lex_assert(isset($define[$skip_tag]),"neznámá konstanta '$skip_tag'");
+                        $define_used[$skip_tag]= 1;
                         $tg= $define[$skip_tag]; lex_assert($tg!=='',"chybějící hodnota '$skip_tag'");
                         $op= $m[3]; lex_assert($op,"nepovolená relace");
                         $val= $m[4]; lex_assert($val!=='','chybějící hodnota');
@@ -5161,6 +5167,7 @@ function lex_analysis2 ($dbg=false) {
 //                                                             debug($typ,'typ');
 //                                                             debug($pos,'pos');
 //                                                             debug($not,'not');
+  if (count($define_used)) debug($define_used,'použité #define proměnné');
 //  if (count($define)) debug($define,"#define proměnné ");
   return true;
 }

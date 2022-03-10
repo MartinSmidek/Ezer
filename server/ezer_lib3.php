@@ -285,7 +285,7 @@ __EOD;
       $abs_root= $_SESSION[$ezer_root]['abs_root'];
       chdir($abs_root);
       $deep_root= "../files/$ezer_root";
-      $path= file_exists($deep_root) ? $deep_root : "$ezer_root/code";
+      $path= file_exists($deep_root) ? $deep_root : "$ezer_root/code$ezer_version";
       $watch_lock= @file_get_contents("$path/$ezer_root.key");
       $ip_ok= $watch_lock==$watch_key;
       $key_msg= !$watch_key || $ip_ok ? '' : '<i><b>správného</b></i>';
@@ -816,7 +816,7 @@ function root_inc3($db,$dbs,$tracking,$tracked) { //,$path_root=null,$path_pspad
   $ezer_path_appl= "$ezer_path_root/$ezer_root";
   $ezer_path_libr= "$ezer_path_root/$ezer_root";
   $ezer_path_docs= "$ezer_path_root/docs";
-  $ezer_path_code= "$ezer_path_appl/code";
+  $ezer_path_code= "$ezer_path_appl/code$ezer_version";
   $ezer_path_serv= "$ezer_path_root/ezer$ezer_version/server";
   $ezer_path_svn= null;
   $ezer_path_todo= "$ezer_path_root/wiki";

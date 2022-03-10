@@ -4,7 +4,7 @@
 // (c) 2021 Martin Šmídek <martin@smidek.eu>
 
 # ===================================================================================== DATABÁZE
-func onstart() { var db_info:object
+func onfirstfocus() { var db_info:object
   db_info= php.sys_db_info(this.par,this.self()); 
   mdb.str.attach_code(db_info.group);
 }
