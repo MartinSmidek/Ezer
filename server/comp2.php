@@ -4641,7 +4641,7 @@ function lex_analysis2 ($dbg=false) {
         $head= $t[2]-1; $pos[$head]= "{$head},{$t[3]}"; 
         lex_assert(trim($m[5])=='',"chybná syntax");
         switch ($m[1]) {
-          case 'if':    lex_assert(!$skip_tag,'vnořené #if'); 
+          case 'if':    lex_assert(!$skip_tag,'#if nelze vnořovat'); 
                         $skip_tag= $m[2]; lex_assert(isset($define[$skip_tag]),"neznámá konstanta '$skip_tag'");
                         $define_used[$skip_tag]= 1;
                         $tg= $define[$skip_tag]; lex_assert($tg!=='',"chybějící hodnota '$skip_tag'");
@@ -4657,8 +4657,8 @@ function lex_analysis2 ($dbg=false) {
                             $op=='<'  ? $cmp<0 : -1)))));
                         $skip= $r ? 0 : 1; 
                         break;
-          case 'else':  $skip= 1-$skip; break;
-          case 'endif': $skip= 0; $skip_tag= ''; break;
+          case 'else':  lex_assert($skip_tag,'#else bez #if'); $skip= 1-$skip; break;
+          case 'endif': lex_assert($skip_tag,'#endif bez #if'); $skip= 0; $skip_tag= ''; break;
         }
       }
       elseif ( $gen_source ) {
@@ -4715,6 +4715,7 @@ function lex_analysis2 ($dbg=false) {
       break;
     }
   }
+  lex_assert(!$skip_tag,'chybí #endif'); 
 //                                                             debug($lex,'lex');
 //                                                             debug($str,'str');
 //                                                             debug($typ,'typ');
