@@ -6396,7 +6396,8 @@ class EditHtml extends Elem {
         .data('ezer',this)
         .css(this.coord());
       this.DOM_Input= this.DOM_Block.find("textarea");
-      if ( strnatcmp(window.CKEDITOR.version,'4.5')>=0 ) {
+      // vyžadujeme aspoň verzi 4.5
+      if ( strnatcmp(window.CKEDITOR.version.localeCompare("4.5",undefined,{numeric: true}))<=0 ) {
       // ---------------------------------------------- verze 4.5 a vyšší s widgetem 'ezer' v lib.js
         options= {
           height:this._h-60, entities:false, entities_latin:false, language:'cs', contentsLanguage:'cs'
@@ -6414,37 +6415,6 @@ class EditHtml extends Elem {
       }
       else 
         OBSOLETE("CKEditor version < 4.5");
-//      else {
-//        // --------------------------------- ošetření rozdílu mezi staršími verzemi před startem
-//        if ( Ezer.options.CKEditor.version[0]=='4' ) {
-//          // základní nastavení editoru verze 4.0.1
-//          options= {
-//            width:this._w, height:this._h-60, resize_enabled:false,
-//            entities:false, entities_latin:false, language:'cs', contentsLanguage:'cs',
-//            skin:'kama'
-//          };
-//        }
-//        else {
-//          // základní nastavení editoru verze do 3.6.2
-//          options= {
-//            width:this._w, height:this._h-60, resize_enabled:false,
-//            entities:false, entities_latin:false, language:'cs', contentsLanguage:'cs',
-//            skin:'office2003'
-//          };
-//        }
-//        // ---------------------------------------------- společná část pro verze 3 i 4 do 4.5
-//        // úprava options z nastavení aplikace podle options.toolbar z Ezerscriptu
-//        Object.assign(options,this.options.par||{});
-//        Object.assign(options,options.toolbar && Ezer.options.CKEditor[options.toolbar]
-//          ? Ezer.options.CKEditor[options.toolbar]
-//          : {toolbar:[[ 'Find','Replace',    // nebo jednoduchý default
-//              '-','Bold','Italic','Subscript','Superscript',
-//              '-','JustifyLeft','JustifyCenter','JustifyRight','JustifyBlock',
-//              '-','Link','Unlink',
-//              '-','NumberedList', 'BulletedList',
-//              '-','Source','ShowBlocks','RemoveFormat' ]]});
-//        this.ckeditor= CKEDITOR.replace(this.DOM_Input[0],options);
-//      }
       // ----------------------------------------------- ošetření focus, blur, change
       if ( this.ckeditor ) this.ckeditor.on('focus', function(ev) {
         this._value= this.ckeditor.getData();
