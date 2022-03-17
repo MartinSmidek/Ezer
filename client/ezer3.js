@@ -6397,7 +6397,7 @@ class EditHtml extends Elem {
         .css(this.coord());
       this.DOM_Input= this.DOM_Block.find("textarea");
       // vyžadujeme aspoň verzi 4.5
-      if ( strnatcmp(window.CKEDITOR.version.localeCompare("4.5",undefined,{numeric: true}))<=0 ) {
+      if ( window.CKEDITOR.version.localeCompare("4.5",undefined,{numeric: true})<=0 ) {
       // ---------------------------------------------- verze 4.5 a vyšší s widgetem 'ezer' v lib.js
         options= {
           height:this._h-60, entities:false, entities_latin:false, language:'cs', contentsLanguage:'cs'
