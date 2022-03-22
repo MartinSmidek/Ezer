@@ -161,6 +161,15 @@ div.LabelDrop3 .ContextFocus3 {
 /* ---------------------------------------------------------------------------------==> FieldList */
 
 /* --------------------------------------------------------------------------------------==> Edit */
+.EditHtml3.inline {
+  overflow-y: auto; background-color: #fdfdfd; border: 1px solid #aaa;
+  background-image: url($path/pen-to-square-solid.svg);
+  background-size: 75% 75%; background-repeat: no-repeat; background-position: center;
+}
+.EditHtml3.inline .cke_textarea_inline {
+  background-color: rgba(255, 255, 255, 0.8);
+  border-top: 1px dotted gray; border-bottom: 1px dotted gray;
+}
 
 /* -------------------------------------------------------------------------------------==> Check */
 
