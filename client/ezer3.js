@@ -888,92 +888,49 @@ class Block {
             let part= null;
             switch (desc.type) { // ==> SWITCH
               // s vizualizací
-//               case 'browse':
-//               case 'browse.smart':  part= new Ezer.Browse(this,desc,DOM,id,skill); break;
               case 'browse':
               case 'browse.smart':  part= new Browse(this,desc,DOM,id,skill); break;
-//               case 'button':        part= Ezer.options.awesome & 2
-//                                         ? new Ezer.ButtonHtml(this,desc,DOM,id,skill)
-//                                         : new Ezer.Button(this,desc,DOM,id,skill); break;
               case 'button':        part= new Button(this,desc,DOM,id,skill); break;
               case 'button.html':   part= new Button(this,desc,DOM,id,skill); break;
-//               case 'button.html':   part= new Ezer.ButtonHtml(this,desc,DOM,id,skill); break;
               case 'button.submit': part= new Button(this,desc,DOM,id,skill); break;
-//               case 'button.submit': part= new Ezer.Button(this,desc,DOM,id,skill); break;
               case 'button.reset':  part= new Button(this,desc,DOM,id,skill); break;
-//               case 'button.reset':  part= new Ezer.Button(this,desc,DOM,id,skill); break;
-//               case 'button.upload': part= new Ezer.Button(this,desc,DOM,id,skill); break;
-//               case 'case':          part= new Ezer.Case(this,desc,DOM,id,skill); break;
               case 'case':          part= new Case(this,desc,DOM,id,skill); break;
-//               case 'chat':          part= new Ezer.Chat(this,desc,DOM,id,skill); break;
               case 'chat':          part= new Chat(this,desc,DOM,id,skill); break;
-//               case 'check':         part= new Ezer.Check(this,desc,DOM,id,skill); break;
               case 'check':         part= new Check(this,desc,DOM,id,skill); break;
-//               case 'edit':          part= new Ezer.Edit(this,desc,DOM,id,skill); break;
-//               case 'edit.html':     part= new Ezer.EditHtml(this,desc,DOM,id,skill); break;
               case 'edit':          part= new Edit(this,desc,DOM,id,skill); break;
               case 'edit.html':     part= new EditHtml(this,desc,DOM,id,skill); break;
               case 'edit.auto':     part= new EditAuto(this,desc,DOM,id,skill); break;
-//               case 'field':         part= new Ezer.Field(this,desc,DOM,id,skill); break;
               case 'field':         part= new Field(this,desc,DOM,id,skill); break;
-//               case 'field.date':    part= new Ezer.FieldDate(this,desc,DOM,id,skill); break;
               case 'field.date':    part= new FieldDate(this,desc,DOM,id,skill); break;
-//               case 'field.list':    part= new Ezer.FieldList(this,desc,DOM,id,skill); break;
               case 'field.list':    part= new FieldList(this,desc,DOM,id,skill); break;
-//               case 'item':          part= new Ezer.Item(this,desc,DOM,id,skill); break;
               case 'item':          part= new Item(this,desc,DOM,id,skill); break;
               case 'item.clipboard':part= new Item(this,desc,DOM,id,skill); break;
-//               case 'list':          part= new Ezer.List(this,desc,DOM,id,skill); break;
               case 'list':          part= new List(this,desc,DOM,id,skill); break;
-//               case 'label':         part= new Ezer.Label(this,desc,DOM,id,skill); break;
               case 'label':         part= new Label(this,desc,DOM,id,skill); break;
-//               case 'label.drop':    part= new Ezer.LabelDrop(this,desc,DOM,id,skill); break;
               case 'label.drop':    part= new LabelDrop(this,desc,DOM,id,skill); break;
-//               case 'label.map':     part= new Ezer.LabelMap(this,desc,DOM,id,skill); break;
               case 'label.map':     part= new LabelMap(this,desc,DOM,id,skill); break;
-//               case 'menu.main':     part= new Ezer.MenuMain(this,desc,DOM,id,skill); break;
               case 'menu.main':     part= new MenuMain(this,desc,DOM,id,skill); break;
-//               case 'menu.left':     part= new Ezer.MenuLeft(this,desc,DOM,id,skill); break;
               case 'menu.left':     part= new MenuLeft(this,desc,DOM,id,skill); break;
-//               case 'menu.group':    part= new Ezer.MenuGroup(this,desc,DOM,id,skill); break;
               case 'menu.group':    part= new MenuGroup(this,desc,DOM,id,skill); break;
-//               case 'menu.context':  part= new Ezer.MenuContext(this,desc,DOM,id,skill); break;
               case 'menu.context':  part= new MenuContext(this,desc,DOM,id,skill); break;
-//               case 'panel':         part= new Ezer.Panel(this,desc,DOM,id,skill); break;
+              case 'menu.ham':      part= new MenuHam(this,desc,DOM,id,skill); break;
               case 'panel':         part= new Panel(this,desc,DOM,id,skill); break;
-//               case 'panel.main':    part= new Ezer.PanelMain(this,desc,DOM,id,skill); break;
               case 'panel.main':    part= new PanelMain(this,desc,DOM,id,skill); break;
-//               case 'panel.plain':   part= new Ezer.PanelPlain(this,desc,DOM,id,skill); break;
               case 'panel.plain':   part= new PanelPlain(this,desc,DOM,id,skill); break;
-//               case 'panel.popup':   part= new Ezer.PanelPopup(this,desc,DOM,id,skill); break;
               case 'panel.popup':   part= new PanelPopup(this,desc,DOM,id,skill); break;
-//               case 'panel.free':    part= new Ezer.PanelFree(this,desc,DOM,id,skill); break;
               case 'panel.free':    part= new PanelFree(this,desc,DOM,id,skill); break;
-//               case 'panel.right':   part= new Ezer.PanelRight(this,desc,DOM,id,skill); break;
               case 'panel.right':   part= new PanelRight(this,desc,DOM,id,skill); break;
-//               case 'radio':         part= new Ezer.Radio(this,desc,DOM,id,skill); break;
               case 'radio':         part= new Radio(this,desc,DOM,id,skill); break;
-//               case 'select':        part= new Ezer.Select(this,desc,DOM,id,skill); break;
               case 'select':        part= new Select(this,desc,DOM,id,skill); break;
-//               case 'select.multi':  part= new Ezer.Select(this,desc,DOM,id,skill,true); break;
               case 'select.multi':  part= new Select(this,desc,DOM,id,skill,true); break;
-//               case 'select.auto':   part= new Ezer.SelectAuto(this,desc,DOM,id,skill); break;
               case 'select.auto':   part= new SelectAuto(this,desc,DOM,id,skill); break;
-//               case 'select.map':    part= new Ezer.SelectMap(this,desc,DOM,id,skill); break;
               case 'select.map':    part= new SelectMap(this,desc,DOM,id,skill); break;
-//               case 'select.map+':   part= new Ezer.SelectMap(this,desc,DOM,id,skill,true); break;
               case 'select.map+':   part= new SelectMap(this,desc,DOM,id,skill,true); break;
-//               case 'select.map0':   part= new Ezer.SelectMap0(this,desc,DOM,id,skill); break;
               case 'select.map0':   part= new SelectMap0(this,desc,DOM,id,skill); break;
-//               case 'select.map0+':  part= new Ezer.SelectMap0(this,desc,DOM,id,skill,true); break;
               case 'select.map0+':  part= new SelectMap0(this,desc,DOM,id,skill,true); break;
-//               case 'show':
-//               case 'show.smart':    part= new Ezer.Show(this,desc,DOM,id,skill); break;
               case 'show':
               case 'show.smart':    part= new Show(this,desc,DOM,id,skill); break;
-//               case 'tabs':          part= new Ezer.Tabs(this,desc,DOM,id,skill); break;
               case 'tabs':          part= new Tabs(this,desc,DOM,id,skill); break;
-//               case 'tabs.logoff':   part= new Ezer.Tabs(this,desc,DOM,id,skill); break;
               case 'tabs.logoff':   part= new Tabs(this,desc,DOM,id,skill); break;
               
               // use --- má složitější zpracování - vytváří objekt typu Form obohacený o složky use
@@ -1007,28 +964,22 @@ class Block {
                 // vložení případných podčástí (např. přepisu těl procedur)
                 part.subBlocks(desc,this.DOM_Block,null,true);
                 break;
-              // s potenciální vizualizací
-//               case 'var':           part= new Ezer.Var(this,desc,DOM,id); break;
+
+            // s potenciální vizualizací
               case 'var':           part= new Var(this,desc,DOM,id); break;
-              // objekt bez vizualizace (ale vložený jako part)
-//               case 'view':          part= new Ezer.View(this,desc,DOM,id); break;
+
+            // objekt bez vizualizace (ale vložený jako part)
               case 'view':          part= new View(this,desc,DOM,id); break;
-//               case 'group':         part= new Ezer.Group(this,desc,null,id); break;
               case 'group':         part= new Group(this,desc,null,id); break;
-//               case 'const':         part= new Ezer.Const(this,desc,null,id); break;
               case 'const':         part= new Const(this,desc,null,id); break;
-//               case 'report':        part= new Ezer.Report(this,desc,null,id); break;
               case 'report':        part= new Report(this,desc,null,id); break;
-//               case 'box':           part= new Ezer.Box(this,desc,null,id); break;
               case 'box':           part= new Box(this,desc,null,id); break;
-//               case 'table':         part= new Ezer.Table(this,desc,null,id); break;
               case 'table':         part= new Table(this,desc,null,id); break;
-//               case 'map':           part= new Ezer.Map(this,desc,null,id); break;
               case 'map':           part= new EzerMap(this,desc,null,id); break;
-//               case 'proc':          part= new Ezer.Proc(this,desc,this); break;
               case 'func': 
               case 'proc':          part= new Proc(this,desc,this); break;
-              // přeskakované (informace dostupné přes Ezer.code)
+
+            // přeskakované (informace dostupné přes Ezer.code)
               case 'area':          break;
               case 'form':          break;
               case 'number':        break;
@@ -2023,6 +1974,39 @@ class MenuContext extends Menu {
   }
 }
 
+// ===================================================================================> Menu Context
+//c: MenuHam ([options])
+//      obsahuje směs Item a MenuGroup. je vnořeno do PanelMain
+//t: Menu,Block
+//s: Block
+class MenuHam extends Menu {
+//  constructor (owner,desc,DOM,id,skill) {
+//    super(owner,desc,DOM,id,skill);
+//    this.DOM_add1();
+//    this.subBlocks(desc,DOM);
+//    this.DOM_add2();
+//  }
+  DOM_add1 () {
+    this.DOM= jQuery('<ul style="display:none">')
+      .appendTo(jQuery('body'))
+      .data('ezer',this)
+      .addClass('MenuHam MenuHam-Body'); 
+    this.icon= jQuery('<div>&equiv;</div>')
+      .appendTo(jQuery('body'))
+      .addClass('MenuHam MenuHam-Icon')
+      .click( e => {
+        this._show();
+        return false;
+      })
+  }
+  _show () {
+    this.DOM.show();
+  }
+  _hide () {
+    this.DOM.hide();
+  }
+}
+
 // ===========================================================================================> Item
 //c: Item ([options])
 //      Item je vnořitelný do Menu
@@ -2104,9 +2088,32 @@ class Item extends Block {
   }
 // ------------------------------------------------------------------------------------  DOM_add2
   DOM_add2 () {
-    switch (this.owner.type) {
+    let type= null;
+    for (let top_menu= this.owner; top_menu instanceof Menu; top_menu= top_menu.owner) {
+      type= top_menu.type;
+    }
+    switch (type) {
 
-    case 'menu.group': {
+    case 'menu.ham': {
+      this.DOM_Block= jQuery(`<li>${this.options.title||this.id}</li>`)
+        .appendTo(this.owner.DOM)
+        .data('ezer',this)
+        .addClass('MenuHam MenuHam-Item')
+        .click( el => {
+            if ( el.shiftKey ) return dbg_onshiftclick(this);  /* context.item */
+            if ( !jQuery(el.target).hasClass('disabled3') ) {
+              Ezer.fce.touch('block',this,'click');       // informace do _touch na server
+              this.fire('onclick',[],el);
+            }
+          }
+        );
+      if ( this._fc('d') ) {
+        this.DOM_Block.addClass('disabled3');
+      }
+      break;
+    }
+
+    case 'menu.left': {
       let href= make_url_menu([this.owner.owner.owner.owner.id,this.owner.owner.owner.id,
             this.owner.owner.id,this.owner.id,this.id]),
           title= ''+(this.options.title||this.id),
@@ -2162,7 +2169,7 @@ class Item extends Block {
       break;
     }
     default:
-      Ezer.error('chybné menu - item mimo group nebo context');
+      Ezer.error('chybné menu - osamocený item');
     }
   }
 // ------------------------------------------------------------------------------------ set attrib
@@ -2609,7 +2616,8 @@ class PanelMain extends Panel {
       .addClass('Panel3')
       .css({display:'block'})
       .data('ezer',this)
-      .appendTo(jQuery('#work'))
+      .appendTo(jQuery('#work'));
+    jQuery('#horni').css({display:'none'});
   }
 }
 // =====================================================================================> PanelPlain
@@ -6453,12 +6461,19 @@ class EditHtml extends Elem {
     if ( window.CKEDITOR ) {
       // v aplikaci je použit CKeditor
       var options;
-      this.DOM_outline= this.DOM_Block= jQuery(`<div class="EditHtml3"><textarea>`)
+      this.DOM_outline= this.DOM_Block= jQuery(`<div class="Element3"><div class="EditHtml3"><textarea>`)
         .appendTo(this.owner.DOM_Block ? this.owner.DOM_Block : this.owner.value.DOM_Block)
         .data('ezer',this)
         .css(this.coord());
       this.DOM_Input= this.DOM_Block.find("textarea");
-      if ( window.CKEDITOR.version.substr(0,3) >= "4.5" ) {
+      if ( this.options.title ) {
+        this.DOM_Label= jQuery(`<div class="Label3">${this.options.title}</div>`);
+        this.DOM_optStyle(this.DOM_Label,this.options.title);
+        this.DOM_Block.prepend(this.DOM_Label);
+      }
+
+      // vyžadujeme aspoň verzi 4.5
+      if ( window.CKEDITOR.version.localeCompare("4.5",undefined,{numeric: true})>=0 ) {
       // ---------------------------------------------- verze 4.5 a vyšší s widgetem 'ezer' v lib.js
         options= {
           height:this._h-60, entities:false, entities_latin:false, language:'cs', contentsLanguage:'cs'
@@ -6472,39 +6487,18 @@ class EditHtml extends Elem {
             '-','NumberedList','BulletedList',
             '-','Link','Unlink','Image',
             '-','Source']]});
-        this.ckeditor= CKEDITOR.replace(this.DOM_Input[0],options);
-      }
-      else {
-        // --------------------------------- ošetření rozdílu mezi staršími verzemi před startem
-        if ( Ezer.options.CKEditor.version[0]=='4' ) {
-          // základní nastavení editoru verze 4.0.1
-          options= {
-            width:this._w, height:this._h-60, resize_enabled:false,
-            entities:false, entities_latin:false, language:'cs', contentsLanguage:'cs',
-            skin:'kama'
-          };
-        }
+        let corr= {top:0,left:0};
+        if (this.options.par && this.options.par.inline && this.options.par.inline==='inline') {
+          this.DOM_Block.find("div.EditHtml3").addClass('inline').css(this.coord(corr));
+          this.ckeditor= CKEDITOR.inline(this.DOM_Input[0],options);
+        } 
         else {
-          // základní nastavení editoru verze do 3.6.2
-          options= {
-            width:this._w, height:this._h-60, resize_enabled:false,
-            entities:false, entities_latin:false, language:'cs', contentsLanguage:'cs',
-            skin:'office2003'
-          };
-        }
-        // ---------------------------------------------- společná část pro verze 3 i 4 do 4.5
-        // úprava options z nastavení aplikace podle options.toolbar z Ezerscriptu
-        Object.assign(options,this.options.par||{});
-        Object.assign(options,options.toolbar && Ezer.options.CKEditor[options.toolbar]
-          ? Ezer.options.CKEditor[options.toolbar]
-          : {toolbar:[[ 'Find','Replace',    // nebo jednoduchý default
-              '-','Bold','Italic','Subscript','Superscript',
-              '-','JustifyLeft','JustifyCenter','JustifyRight','JustifyBlock',
-              '-','Link','Unlink',
-              '-','NumberedList', 'BulletedList',
-              '-','Source','ShowBlocks','RemoveFormat' ]]});
+          this.DOM_Block.find("div.EditHtml3").css(this.coord(corr));
         this.ckeditor= CKEDITOR.replace(this.DOM_Input[0],options);
+        }
       }
+      else 
+        OBSOLETE("CKEditor version < 4.5");
       // ----------------------------------------------- ošetření focus, blur, change
       if ( this.ckeditor ) this.ckeditor.on('focus', function(ev) {
         this._value= this.ckeditor.getData();
@@ -6548,7 +6542,7 @@ class EditHtml extends Elem {
       }.bind(this));
       this._value= '';
       // oprava výšky DOM_Block podle prohlížeče
-      this.DOM_Block.css('height','');
+//      this.DOM_Block.css('height','');
     }
     else {
       // balík CKEditor není dostupný

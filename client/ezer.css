@@ -1,0 +1,16 @@
+.MenuHam {
+  position: absolute;
+  z-index: 999;
+  right: 0px;
+  top: 0px;
+}
+.MenuHam-Icon {
+  font-size: 20pt;
+  padding-right: 10px;
+  font-weight: bold;
+}
+.MenuHam-Body {
+  padding: 50px;
+  background-color: #aaa;
+}
+/*# sourceMappingURL=ezer.css.map */

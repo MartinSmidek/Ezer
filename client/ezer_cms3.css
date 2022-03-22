@@ -1,5 +1,5 @@
 .shadow-box {
-  box-shadow: -1px 1px 0px #567, 1px -1px 0px #567, -1px -1px 0px #567, 5px 5px 10px #567;
+  box-shadow: -1px 1px 0px #567, 1px -1px 0px #567, -1px -1px 0px #567, 5px 5px 10px #568;
 }
 .disabled3 {
   pointer-events: none;
@@ -17,8 +17,8 @@ div.cms_form {
   top: 50px;
   width: 490px;
   background: #fff9e0;
-  border-radius: .4em;
-  box-shadow: -1px 1px 0px #567, 1px -1px 0px #567, -1px -1px 0px #567, 5px 5px 10px #567;
+  border-radius: 0.4em;
+  box-shadow: -1px 1px 0px #567, 1px -1px 0px #567, -1px -1px 0px #567, 5px 5px 10px #568;
   display: none;
   z-index: 9999;
 }
@@ -29,13 +29,13 @@ div.cms_form > span {
   height: 20px;
   padding-top: 5px;
   background-color: #807340;
-  border-radius: .4em .4em 0 0;
+  border-radius: 0.4em 0.4em 0 0;
   color: #FFFFFF;
   font-weight: bold;
 }
 div.cms_form > span > div {
   float: right;
-  font-size: .7em;
+  font-size: 0.7em;
   margin-right: 1em;
   background: orange;
   color: black;
@@ -50,7 +50,7 @@ div.cms_form > div div label {
   position: relative;
   display: grid;
   float: left;
-  padding: .5em .5em 0 0;
+  padding: 0.5em 0.5em 0 0;
   color: #807340;
 }
 div.cms_form > div div button {

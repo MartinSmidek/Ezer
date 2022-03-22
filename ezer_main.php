@@ -16,7 +16,7 @@
   $ezer_root= $app_root;
   
   // ověření korektnosti předaných hodnot
-  if ($ezer_version!='3.2') die('konflikt verzí');
+  if ($ezer_version!='3.2') die("konflikt verzí jádra - požadováno $ezer_version, použito 3.2");
   
   // platí buďto isnull($ezer_local) nebo isnull($ezer_server)
   global $ezer_local, $ezer_server;
@@ -161,7 +161,7 @@
   if ($touch) $app_css[]= "ezer$ezer_version/client/ipad.css";
   $app_css= array_values(array_filter($app_css)); // vynechání všech false
   $css= array_merge(
-    array("$client/ezer3.css$v_sys","$client/ezer3.css.php=skin",  
+    array("$client/ezer.css$v_sys","$client/ezer3.css$v_sys","$client/ezer3.css.php=skin",  
     $awe==5
       ? "$client/licensed/font-awesome-5/css/all.min.css"
       : "$client/licensed/font-awesome/css/font-awesome.min.css",

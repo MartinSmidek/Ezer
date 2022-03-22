@@ -31,6 +31,7 @@ $blocs2 = array (                                    // překládají se na AE_<
   'group'       =>  explode(",",'proc,var'),
 #  menu
   'menu.main'   =>  explode(",",'proc,menu,item,tabs,tabs.logoff,use,map,table'),
+  'menu.ham'    =>  explode(",",'proc,menu.group,item'),
   'tabs'        =>  explode(",",'var,panel.plain,panel.right,form,module,table,report,map'),
   'menu.left'   =>  explode(",",'proc,menu.group'),
   'menu.group'  =>  explode(",",'proc,item,use'),
@@ -38,6 +39,7 @@ $blocs2 = array (                                    // překládají se na AE_<
   'item'        =>  explode(",",'proc'),
 #  top
   'panel'       =>  explode(",",'use,proc,func,var,form,panel.popup'),
+  'panel.main'  =>  explode(",",'use,proc,func,var,form,panel.popup,menu.ham'),
   'panel.popup' =>  explode(",",'use,proc,var,form,menu.left'),
   'panel.free'  =>  explode(",",'use,proc,var,form'),
   'panel.plain' =>  explode(",",'use,proc,var,form,panel'),

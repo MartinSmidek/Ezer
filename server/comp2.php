@@ -360,7 +360,7 @@ function xcode($x,$ind=0) {
     $sc= str_pad($ic,2,'0',STR_PAD_LEFT);
     $o= $cc->o;
     $tr.= "\n$sp$sc: $o";
-    if ($cc && is_array($cc)) foreach ($cc as $i => $cci) {
+    if ($cc && is_object($cc)) foreach ($cc as $i => $cci) {
       if ( $i=='iff' || $i=='ift' || $i=='jmp' || $i=='go' ) {
         $cci= str_pad($ic+$cci,2,'0',STR_PAD_LEFT);
         $tr.= " $i=$cci";
@@ -1311,7 +1311,8 @@ function find_part_abs($name,&$full,$type='') {
         $table= find_part_abs($obj->_init,$full2);
         if ($obj->_init!=$full2) comp_error("CODE: chybná inicializace map '$obj->id' ");
         if (!isset($table->part->$id)) comp_error("CODE: '$id' není položka tabulky '$table->id' v map '$obj->id' ");
-        $full= "$obj->id.$id";
+//        $full= "$obj->id.$id";
+        $full.= ".$id";
       }
     }
     elseif ( $pragma_attrib && $obj->type=='view' ) { 
@@ -2006,7 +2007,7 @@ function name_split($name,$pars,$vars,$call=false,$lc='') {
         // id je jméno nadřazeného bloku
         $full.= '';
         $obj= $context[$i]->ctx;
-        for ($k= $i; $k>=0; $k--) {
+        for ($k= $i-1; $k>=0; $k--) {
           $abs= $context[$k]->id.($abs ? '.'.$abs : '');
         }
         break;
@@ -2096,7 +2097,8 @@ function name_split($name,$pars,$vars,$call=false,$lc='') {
             }
             elseif ( $obj ) {
               // stále upřesňujeme první jméno
-              $full.= ".$id";
+//              $full.= ".$id";
+              $full.= substr($full,-1)=='.' ? $id : ".$id";
             }
           }
           elseif ( $obj->type!='var' ) 
