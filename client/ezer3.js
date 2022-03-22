@@ -6391,11 +6391,17 @@ class EditHtml extends Elem {
     if ( window.CKEDITOR ) {
       // v aplikaci je použit CKeditor
       var options;
-      this.DOM_outline= this.DOM_Block= jQuery(`<div class="EditHtml3"><textarea>`)
+      this.DOM_outline= this.DOM_Block= jQuery(`<div class="Element3"><div class="EditHtml3"><textarea>`)
         .appendTo(this.owner.DOM_Block ? this.owner.DOM_Block : this.owner.value.DOM_Block)
         .data('ezer',this)
         .css(this.coord());
       this.DOM_Input= this.DOM_Block.find("textarea");
+      if ( this.options.title ) {
+        this.DOM_Label= jQuery(`<div class="Label3">${this.options.title}</div>`);
+        this.DOM_optStyle(this.DOM_Label,this.options.title);
+        this.DOM_Block.prepend(this.DOM_Label);
+      }
+
       // vyžadujeme aspoň verzi 4.5
       if ( window.CKEDITOR.version.localeCompare("4.5",undefined,{numeric: true})>=0 ) {
       // ---------------------------------------------- verze 4.5 a vyšší s widgetem 'ezer' v lib.js
@@ -6411,7 +6417,15 @@ class EditHtml extends Elem {
             '-','NumberedList','BulletedList',
             '-','Link','Unlink','Image',
             '-','Source']]});
-        this.ckeditor= CKEDITOR.replace(this.DOM_Input[0],options);
+        let corr= {top:0,left:0};
+        if (this.options.par && this.options.par.inline && this.options.par.inline==='inline') {
+          this.DOM_Block.find("div.EditHtml3").addClass('inline').css(this.coord(corr));
+          this.ckeditor= CKEDITOR.inline(this.DOM_Input[0],options);
+        } 
+        else {
+          this.DOM_Block.find("div.EditHtml3").css(this.coord(corr));
+          this.ckeditor= CKEDITOR.replace(this.DOM_Input[0],options);
+        }
       }
       else 
         OBSOLETE("CKEditor version < 4.5");
@@ -6458,7 +6472,7 @@ class EditHtml extends Elem {
       }.bind(this));
       this._value= '';
       // oprava výšky DOM_Block podle prohlížeče
-      this.DOM_Block.css('height','');
+//      this.DOM_Block.css('height','');
     }
     else {
       // balík CKEditor není dostupný
