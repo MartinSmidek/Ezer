@@ -1656,7 +1656,7 @@ function name_split($name,$pars,$vars,$call=false,$lc='') {
         // id je jméno nadřazeného bloku
         $full.= '';
         $obj= $context[$i]->ctx;
-        for ($k= $i; $k>=0; $k--) {
+        for ($k= $i-1; $k>=0; $k--) {
           $abs= $context[$k]->id.($abs ? '.'.$abs : '');
         }
         break;
@@ -1741,7 +1741,8 @@ function name_split($name,$pars,$vars,$call=false,$lc='') {
             }
             elseif ( $obj ) {
               // stále upřesňujeme první jméno
-              $full.= ".$id";
+//              $full.= ".$id";
+              $full.= substr($full,-1)=='.' ? $id : ".$id";
             }
           }
           elseif ( $obj->type!='var' ) 
