@@ -1028,6 +1028,37 @@ function sql_date1 ($datum,$user2sql=0,$del='.') {
   }
   return $text;
 }
+# ------------------------------------------------------------------------------------ sql date_year
+// datum bez dne v týdnu s možností zápisu pouze roku
+// (MySQL podle manuálu umožňuje hodnoty typu YYYY-00-00)
+function sql_date_year ($datum,$user2sql=0,$del='.') {
+  if ( $user2sql ) {
+    // převeď uživatelskou podobu na sql tvar
+    $text= '0000-00-00';
+    if (strlen($datum)==4) {
+      $text= $datum.'-00-00';
+    }
+    elseif ( $datum ) {
+      $datum= str_replace(' ','',$datum);
+      list($d,$m,$y)= explode('.',$datum);
+      $text= $y.'-'.str_pad($m,2,'0',STR_PAD_LEFT).'-'.str_pad($d,2,'0',STR_PAD_LEFT);
+    }
+  }
+  else {
+    // převeď sql tvar na uživatelskou podobu (default)
+    $text= '';
+    if ( $datum && substr($datum,4,6)=='-00-00' ) {
+      $text= substr($datum,0,4);
+    }
+    elseif ( $datum && substr($datum,0,10)!='0000-00-00' ) {
+      $y=substr($datum,0,4);
+      $m=substr($datum,5,2);
+      $d=substr($datum,8,2);
+      $text.= date("j{$del}n{$del}Y",strtotime($datum));
+    }
+  }
+  return $text;
+}
 # ----------------------------------------------------------------------------------------- sql date
 // datum
 function sql_date ($datum,$user2sql=0) {

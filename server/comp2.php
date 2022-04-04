@@ -65,7 +65,7 @@ function comp_file ($name,$root='',$_list_only='',$_comp_php=false) {  #trace();
   global $ezer, $ezer_version, $ezer_path_root, $ezer_path_code, $err, $comp_php,$list_only,
     $code, $module, $procs, $context, $ezer_name, $ezer_app, $errors, $includes, $onloads;
   global $pragma_library, $pragma_syntax, $pragma_attrs, $pragma_names, $pragma_get, $pragma_prefix,
-    $pragma_group, $pragma_box, $pragma_if, $pragma_switch, $pragma_nogen, $pragma_attrib;
+    $pragma_group, $pragma_box, $pragma_if, $pragma_switch, $pragma_nogen;
   global $call_php, $call_ezer, $call_elem;
   global $doxygen;    // $doxygen=1 pokud se má do složky data generovat *.cpp pro doxygen
   global $app_ezers, $file_, $define, $define_used;
@@ -92,8 +92,7 @@ function comp_file ($name,$root='',$_list_only='',$_comp_php=false) {  #trace();
     // oddělení případného #pragma names,syntax,prefix
     // (musí být na začátku souboru)
     $pragma_library= $pragma_syntax= $pragma_attrs= $pragma_names= $pragma_get= $pragma_prefix=
-    $pragma_group= $pragma_box= $pragma_if= $pragma_switch= $pragma_nogen= $pragma_attrib= false;
-    $pragma_attrib= true;
+    $pragma_group= $pragma_box= $pragma_if= $pragma_switch= $pragma_nogen= false;
     if ( substr($ezer,0,7)=='#pragma' ) {
       $pragma= explode(',',trim(substr($ezer,8,strpos($ezer,"\n")-8)));
 //                                                             debug($pragma,"pragma");
@@ -108,11 +107,6 @@ function comp_file ($name,$root='',$_list_only='',$_comp_php=false) {  #trace();
       if ( in_array('if',$pragma) )     $pragma_if= true;
       if ( in_array('switch',$pragma) ) $pragma_switch= true;
       if ( in_array('nogen',$pragma) )  $pragma_nogen= true;
-      if ( in_array('attrib',$pragma) ) $pragma_attrib= true;
-//       if ( in_array('using',$pragma) ) {
-//         $i= array_search('using',$pragma);
-//         $pragma_using= $pragma[$i+1];
-//       }
       if ( in_array('group',$pragma) ) {
         $pragma_group= true;
         $ezer= strtr($ezer,array('group_add'=>'self'));
@@ -243,7 +237,7 @@ function comp_file ($name,$root='',$_list_only='',$_comp_php=false) {  #trace();
       if ($start->part) foreach ($start->part as $id=>$spart) {
         link_code($spart,"\$.$id",true,"$id");
       }
-                                                        if ($_GET['trace']==4 && $pragma_attrib) debug($start,"před PROC");
+                                                        if ($_GET['trace']==4) debug($start,"před PROC");
       if ($start->part) foreach ($start->part as $id=>$spart) {
         proc($spart,"\$.$id",$id); // bylo proc($spart,"",$id);
       }
@@ -254,7 +248,7 @@ function comp_file ($name,$root='',$_list_only='',$_comp_php=false) {  #trace();
         foreach ($start->part as $id=>$spart) {
           link_code($spart,"$top.$id",false,$id);
         }
-                                                        if ($_GET['trace']==4 && $pragma_attrib) debug($start,"před PROC");
+                                                        if ($_GET['trace']==4) debug($start,"před PROC");
         foreach ($start->part as $id=>$spart) {
           proc($spart,"$top.$id",$id);
         }
@@ -616,7 +610,7 @@ function pragma_attrs($c) {
 # $context= [id=>objekt,...]
 # a naváže includované části
 function link_code(&$c,$name,$isroot,$block) {
-  global $context, $error_code_lc, $call_php, $pragma_attrib;
+  global $context, $error_code_lc, $call_php;
   $c->_abs= $name;
   if ( $c->type=='view' ) {
     $error_code_lc= $c->_lc;
@@ -680,7 +674,7 @@ function link_code(&$c,$name,$isroot,$block) {
     array_pop($context);
   }
   // verze 3.2 procházení options pro coord, include, sql_pipe
-  if ( $c->options && $pragma_attrib ) {
+  if ( $c->options ) {
     foreach ($c->options as $id=>$desc) {
       // řešení symbolicky zadaných rozměrů - nahrazuje jména konstant jejich hodnotou
       if ( in_array($id,array('_l','_t','_w','_h')) ) {
@@ -690,10 +684,13 @@ function link_code(&$c,$name,$isroot,$block) {
               $const= find_part_rel($part[1],$fullname);
 //                                                                 debug($const,$fullname);
               if ( $const && $const->type=='const' ) {
-                $c->options->{$id}[$p][0]= 'k';
-                $c->options->{$id}[$p][1]= $const->options->value;
-                $c->options->{$id}[$p][2]= $part[1];
-                if ( isset($part[2]) && $part[2]=='-' ) $c->options->{$id}[$p][3]= '-';
+                if (isset($const->options->expr->value)) {
+                  $c->options->{$id}[$p][0]= 'k';
+                  $c->options->{$id}[$p][1]= $const->options->expr->value;
+                  $c->options->{$id}[$p][2]= $part[1];
+                  if ( isset($part[2]) && $part[2]=='-' ) $c->options->{$id}[$p][3]= '-';
+                }
+                else comp_error("CODE: hodnota konstanty '{$part[1]}' není známa",0);
               }
               else comp_error("CODE: '{$part[1]}' není jménem konstanty",0);
             }
@@ -703,75 +700,6 @@ function link_code(&$c,$name,$isroot,$block) {
             $c->options->{$id}= $c->options->{$id}[0][1];
           }
         }
-      }
-//      // sběr include:onload
-//      else if ( $id=='include' ) {
-//        list($typ,$iname)= explode(',',$desc);
-//          // jména z include:onload dávej do pole $onloads
-//          global $onloads, $ezer_app;
-//          if ( $iname ) {
-//            $ids= explode('.',$iname);
-//            $inc= (object)array('file'=>"{$ids[0]}/$iname",'block'=>$block,'include'=>$typ);
-//          }
-//          else {
-////             $iname= $isroot ? substr($name,2) : $ezer_app.substr($name,1);
-//            $iname= substr($name,2);
-//            $inc= (object)array('file'=>"$ezer_app/$iname",'block'=>$block,'include'=>$typ);
-//          }
-//          array_push($onloads,$inc); 
-//      }
-//      else if ( $id=='sql_pipe' ) {
-//        list($fce)= explode(':',$desc);
-//        if ( !in_array($fce,$call_php) )
-//          $call_php[]= $fce;
-//      }
-    }
-  }
-  // verze 3.1 procházení options pro coord, include, sql_pipe
-  if ( $c->options && !$pragma_attrib ) {
-    foreach ($c->options as $id=>$desc) {
-      // řešení symbolicky zadaných rozměrů - nahrazuje jména konstant jejich hodnotou
-      if ( in_array($id,array('_l','_t','_w','_h')) ) {
-        if ( is_array($desc) ) {
-          foreach($desc as $p=>$part) {
-            if ( $part[0]=='k' ) {
-              $const= find_part_rel($part[1],$fullname);
-//                                                                 debug($const,$fullname);
-              if ( $const && $const->type=='const' ) {
-                $c->options->{$id}[$p][0]= 'k';
-                $c->options->{$id}[$p][1]= $const->options->value;
-                $c->options->{$id}[$p][2]= $part[1];
-                if ( isset($part[2]) && $part[2]=='-' ) $c->options->{$id}[$p][3]= '-';
-              }
-              else comp_error("CODE: '{$part[1]}' není jménem konstanty",0);
-            }
-          }
-          // pokud prvek není BOX a rozměr je dán jedním číslem, odstraň pole
-          if ( $c->type!='box' && count($c->options->{$id})==1 && $c->options->{$id}[0][0]=='n') {
-            $c->options->{$id}= $c->options->{$id}[0][1];
-          }
-        }
-      }
-      // sběr include:onload
-      else if ( $id=='include' ) {
-        list($typ,$iname)= explode(',',$desc);
-          // jména z include:onload dávej do pole $onloads
-          global $onloads, $ezer_app;
-          if ( $iname ) {
-            $ids= explode('.',$iname);
-            $inc= (object)array('file'=>"{$ids[0]}/$iname",'block'=>$block,'include'=>$typ);
-          }
-          else {
-//             $iname= $isroot ? substr($name,2) : $ezer_app.substr($name,1);
-            $iname= substr($name,2);
-            $inc= (object)array('file'=>"$ezer_app/$iname",'block'=>$block,'include'=>$typ);
-          }
-          array_push($onloads,$inc); 
-      }
-      else if ( $id=='sql_pipe' ) {
-        list($fce)= explode(':',$desc);
-        if ( !in_array($fce,$call_php) )
-          $call_php[]= $fce;
       }
     }
   }
@@ -780,7 +708,7 @@ function link_code(&$c,$name,$isroot,$block) {
 # volá kompilátor procedur a převádí relativní na absolutní cesty pro table, map, report
 # $context= [id=>objekt,...]
 function proc(&$c,$name,$block) { #trace();
-  global $trace_me, $pragma_attrib;
+  global $trace_me;
   global $context, $procs, $error_code_lc, $names, $full, $call_elem, $call_ezer;
 //                                                 if ( $name='dbg' || $name=='$.test.fce.dbg._d.test' ) debug($context,"proc($name)",(object)array('depth'=>3));
   if ( $c->type=='proc' ) {
@@ -834,71 +762,7 @@ function proc(&$c,$name,$block) { #trace();
     array_pop($context);
   }
   // vyřešení atributů typu ai .. relativní cesta pro view a absolutní pro table a map a report
-  // řešení verze 3.1
-  if ( $c->options && !$pragma_attrib) 
-    foreach ($c->options as $id=>$name) {   
-      if ( $id=='rows' && !is_numeric($c->options->rows) ) {
-      $error_code_lc= $c->_lc;
-      $full= '';
-      $obj= find_part_abs($c->options->rows,$full,'const');
-      if ( $obj ) {
-        $c->options->$id= $full;
-      }
-      else comp_error("CODE: atribut $id má neznámou konstantu {$c->options->rows}");
-    }
-    if ( $names[$id]->op=='oi' ) {
-      if ( $name!='*' && $name!='no') {
-        $ids= explode('.',$name);
-        $error_code_lc= $c->_lc;
-        if ( $id=='data' ) {
-          // ids==x.položka kde x je buďto view tohoto formuláře nebo cesta k tabulce
-          if ( count($ids)==2 ) {
-            // může to být table
-            $full= '';
-            $obj= find_part_abs($ids[0],$full,'table');
-            if ( $obj ) {
-              // je to table
-              if ( isset($obj->part->{$ids[1]}) ) {
-                $full= "$full.{$ids[1]}";
-              }
-              else comp_error("CODE: tabulka $full nemá pole {$ids[1]}");
-            }
-            else {
-              // může to být view
-              $full= '';
-              $obj= find_part_rel($ids[0],$full,'view');
-              if ( $obj && $obj->_of=='table' ) {
-                // je to view
-                $full= "$full.{$ids[1]}";
-              }
-              else if ( $obj && $obj->_of=='expr' ) {
-                // je to view dané výrazem
-                $full= "$full.{$ids[1]}";
-              }
-            }
-          }
-          else {
-            // je to cesta k table - necháme to na interpretu
-            $full= $name;
-          }
-          $c->options->$id= $full;
-        }
-        else {
-          $obj= find_part_rel($ids[0],$full);
-          if ( $obj->type!='var' ) {
-            $obj= find_part_abs($ids[0],$full);
-          }
-          for ($k= 1; $k<count($ids); $k++) {
-            $full.= ".{$ids[$k]}";
-          }
-          $c->options->$id= $full;
-        }
-      }
-    }
-  }
-  // vyřešení atributů typu ai .. relativní cesta pro view a absolutní pro table a map a report
-  // řešení verze 3.2
-  if ( $c->options && $pragma_attrib) foreach ($c->options as $id=>$desc) {
+  if ( $c->options ) foreach ($c->options as $id=>$desc) {
     $error_code_lc= $c->_lc;
     // nejprve vyřešíme hodnoty atributů, ale vynecháme konstanty kvůli typu object                 TODO
     if (in_array($c->type,array('proc'))) continue;
@@ -1024,18 +888,28 @@ function eval_expr ($c,&$val,&$typ,&$const,$depth=0) { //trace();
       $const= true;
       $arg= array();
       foreach ($c->par as $id=>$p) {
-        $vp= $tp= $cp= null; 
+        $vp= $tp= $tp0= $cp= null; 
         eval_expr($p,$vp,$tp,$cp,$depth+1);
+        $tp0= !$tp0 ? $tp : $tp0;
         $const&= $cp;
         $arg[]= $vp;
       }
+      // pokud je to sčítání a první argument je string nebo text provedeme spojení řetězců
+      $c->op= $tp0=='s'||$tp0=='text' && $c->op=='sum' ? 'conc' : $c->op;
       if ($const) {
         switch ($c->op) {
           case 'minus':
             $val= -$arg[0];
             $typ= 'n';
             break;
-          case 'sum':
+          case 'conc': 
+            $val= '';
+            foreach ($arg as $v) {
+              $val.= $v;
+            }
+            $typ= 's';
+            break;
+          case 'sum': // resp. conc
             $val= 0;
             foreach ($arg as $v) {
               $val+= $v;
@@ -1266,9 +1140,9 @@ function find_obj($full) {
 # najde pojmenovaný objekt podle aktuálního kontextu a vrátí úplné bezkontextové jméno
 # tzn. začínající kořenem '$' nebo '#'
 # context :: [ id:part, ... ]
-# obor hledání lze zúžit zadáním požadovaného typu
+# obor hledání lze zúžit zadáním požadovaných typů
 function find_part_abs($name,&$full,$type='') {
-  global $context, $pragma_attrib;
+  global $context;
 //                                                 debug($context,"find_part_abs: $name - $full - $type",
 //                                                   (object)array('depth'=>5));
 //                                                 display("find_part_abs: $name - $full - $type");
@@ -1302,7 +1176,7 @@ function find_part_abs($name,&$full,$type='') {
   // pokračování může jen upřesňovat objekt
   for ($k= 1; $k<=$end_id; $k++) {
     $id= $ids[$k];
-    if ( $pragma_attrib && $obj->type=='map' ) { 
+    if ( $obj->type=='map' ) { 
       if (isset($obj->options->text)) {
         $full.= ".$id";                   // TODO zkontrolovat správnost $id nebo přepracovat map/text
       }
@@ -1315,7 +1189,7 @@ function find_part_abs($name,&$full,$type='') {
         $full.= ".$id";
       }
     }
-    elseif ( $pragma_attrib && $obj->type=='view' ) { 
+    elseif ( $obj->type=='view' ) { 
       $full2= null;
       $table= find_part_abs($obj->_init,$full2);
       if ($obj->_init!=$full2) comp_error("CODE: chybná inicializace view '$obj->id' ");
@@ -1336,7 +1210,7 @@ function find_part_abs($name,&$full,$type='') {
 # obor hledání lze zúžit zadáním požadovaného typu
 #   to se týká první složky jména - neúspěch se pak nehlásí jako chyba, vrátí se null
 function find_part_rel($name,&$full,$type='') { #trace();
-  global $context, $pragma_attrib;
+  global $context;
   $obj= null;
   $ids= explode('.',$name);
   $id= $ids[0];
@@ -1377,13 +1251,13 @@ function find_part_rel($name,&$full,$type='') { #trace();
       }
     }
     // pokud je to view - přidej následující jméno položky
-    elseif ( $pragma_attrib && $obj->type=='view' ) {
+    elseif ( $obj->type=='view' ) {
       for ($k= 1; $k<=$end_id; $k++) {                      // TODO ověřit jméno proti jménu tabulky
         $full.= ".{$ids[$k]}";
       }
     }
     // pokud je to map - přidej následující jméno položky
-    elseif ( $pragma_attrib && $obj->type=='map' ) {
+    elseif ( $obj->type=='map' ) {
       for ($k= 1; $k<=$end_id; $k++) {                      // TODO ověřit jméno proti jménu tabulky
         $full.= ".{$ids[$k]}";
       }
@@ -1624,6 +1498,10 @@ function gen2($pars,$vars,$c) {
       $args= array();
       for ($i= 0; $i<$npar; $i++) {
         $args[]= gen2($pars,$vars,$c->par[$i]);
+      }
+      // pokud je to sčítání a první argument je string nebo text provedeme místo sčítání spojení 
+      if ($op->fce=='sum' && $c->par[0]->type=='s') {
+        $op->call->i= 'conc';
       }
       $code= gen_caller($op,$args); 
     }
@@ -3247,7 +3125,7 @@ function get_if_block ($root,&$block,&$id) {
 //                                                 debug($root,"get_if_block",(object)array('depth'=>2));
   global $doxygen, $pos, $head;
   global $blocs2, $blocs3, $specs, $last_lc;
-  global $pragma_syntax, $pragma_group, $pragma_box, $pragma_attrib, $call_php;
+  global $pragma_syntax, $pragma_group, $pragma_box, $call_php;
   global $errors; if ( $errors ) return false;
   global $file_;
   $TEST_NEW_VAR= 1;  // ------------------------------------------------- testování var 
@@ -3381,7 +3259,7 @@ function get_if_block ($root,&$block,&$id) {
         if ( in_array('arg'  ,$specs[$key]) && get_if_args($args)  ) $block->arg= $args;
         if ( in_array('coord',$specs[$key]) && get_if_coord($block) )  $skip= 0;
         if ( in_array('coor+',$specs[$key]) && get_if_coorp($block) )  $skip= 0;
-        if ( $pragma_attrib && in_array('const',$specs[$key]) && get_def3($id,$value,$type,$indx) ) {
+        if ( in_array('const',$specs[$key]) && get_def3($id,$value,$type,$indx) ) {
           if ( $indx )
             $block->options->$indx= $value;
           $block->_of= $type;
@@ -3398,36 +3276,6 @@ function get_if_block ($root,&$block,&$id) {
             if ( !isset($cblock->options) ) $cblock->options= (object)array();
             if ( $indx )
               $cblock->options->$indx= $value;
-            $cblock->_of= $type;
-            $cblock->_lc= $last_lc;
-            $cblock->id= $id;
-            $root->part->$cid= $cblock;
-            $cid= null;
-            $ok= get_if_delimiter(';') || get_if_comma_id($cid);
-          }
-          $ok= true;
-        }
-        if ( !$pragma_attrib && in_array('const',$specs[$key]) && get_def($id,$value,$type,$is_expr) ) {
-          if ( $is_expr )
-            $block->options->_expr= $value;
-          else
-            $block->options->value= $value;
-          $block->_of= $type;
-          if ( !isset($root->part) ) $root->part= (object)array();
-          $root->part->$id= $block;
-          $cid= null;
-          $ok= get_if_delimiter(';') || get_if_comma_id($cid);
-          // další konstanty
-          while ( $ok ) {
-            if ( !$cid ) get_id($cid);
-            get_def($cid,$value,$type,$is_expr);
-            $cblock= new stdClass;
-            $cblock->type= 'const';
-            if ( !isset($cblock->options) ) $cblock->options= (object)array();
-            if ( $is_expr )
-              $cblock->options->_expr= $value;
-            else
-              $cblock->options->value= $value;
             $cblock->_of= $type;
             $cblock->_lc= $last_lc;
             $cblock->id= $id;
@@ -3534,22 +3382,14 @@ function get_if_block ($root,&$block,&$id) {
 # attr :: id [':' val | ':' id] 
 # defaultní val=1
 function get_if_attrib ($root,&$id,&$val) {
-  global $attribs1, $attribs2, $pragma_box, $errors, $pragma_attrib;
+  global $attribs1, $attribs2, $errors;
   if ( $errors ) return false;
   $val= 1;
   $ok= get_if_id_not_keyword($id);
   if ( $ok ) {
-    if ( $pragma_box && $root=='box' ) {
-      if ( $id=='active' ) {
-        $id= 'xactive';
-                                                display("pragma: box - xactive místo active");
-      }
-    }
     if ( isset($attribs1[$root]) && (false!==($i= array_search($id,$attribs1[$root]))) ) {
-//                                                display("pragma: attrib = $pragma_attrib");
-      if ($pragma_attrib) {
-        // předpokládejme libovolný výraz
         get_delimiter(':');
+        $val= null;
         // atribut type musí být konstantní
         if ($id=='type') {
           $t= null; get_value($val,$t);
@@ -3557,6 +3397,17 @@ function get_if_attrib ($root,&$id,&$val) {
         }
         else {
           get_expr4(null,$val);
+          // zkusíme jestli je atribut data dán staticty jako table.field
+          if ($id=='data' && isset($val->expr) && $val->expr=='name') {
+            $data= explode('.',$val->name);
+            $full= null;
+            $table= find_part_abs($data[0],$full);
+            // pokud je to tabulka ověř správnost položky
+            $fld= $data[1];
+            if ($table->type=='table' && isset($table->part->$fld)) {
+              $val= "$full.$fld"; 
+            }
+          }
         }
         
 //         pokud lze okamžitě spočítat hodnotu, zapíšeme ji místo výrazu
@@ -3569,34 +3420,34 @@ function get_if_attrib ($root,&$id,&$val) {
 //          $types= array('n'=>'number','s'=>'text','o'=>'object','a'=>'array','i'=>'ezer');
 //          comp_error("SYNTAX hodnota atributu $id, která má mít typ $types[$typ] má typ $types[$t]");
 //        }
-      }
-      else {
-        $typ= $attribs2[$root][$i];
-        if ( $typ!='b' ) {
-          $cid= $typval= null;
-          get_delimiter(':');
-          if ( $typ=='i' || $typ=='m' ) {
-            // jméno položky tabulky nebo mapy
-            get_id($val);
-          }
-          else if ( strpos($typ,'c') && get_if_id($cid) ) {
-            // jméno konstanty
-            $val= $cid;
-          }
-          else {
-  //                                                 display("atribut $id");
-            if ( look_value() ) {
-              // literál
-              get_value($val,$typval);
-              if ( strpos($typ,$typval)===false ) {
-                comp_error("SYNTAX hodnota atributu $id smí mít typy $typ");
-                return false;
-              }
-            }
-            else comp_error("SYNTAX po jménu hodnotového atributu $id nenásleduje konstanta");
-          }
-        }
-      }
+//      }
+//      else {
+//        $typ= $attribs2[$root][$i];
+////        if ( $typ!='b' ) { // boolean zrušeno
+//          $cid= $typval= null;
+//          get_delimiter(':');
+//          if ( $typ=='i' || $typ=='m' ) {
+//            // jméno položky tabulky nebo mapy
+//            get_id($val);
+//          }
+//          else if ( strpos($typ,'c') && get_if_id($cid) ) {
+//            // jméno konstanty
+//            $val= $cid;
+//          }
+//          else {
+//  //                                                 display("atribut $id");
+//            if ( look_value() ) {
+//              // literál
+//              get_value($val,$typval);
+//              if ( strpos($typ,$typval)===false ) {
+//                comp_error("SYNTAX hodnota atributu $id smí mít typy $typ");
+//                return false;
+//              }
+//            }
+//            else comp_error("SYNTAX po jménu hodnotového atributu $id nenásleduje konstanta");
+//          }
+////        }
+//      }
     }
     else { comp_error("SYNTAX atribut '$id' není povolený v bloku '$root' (2)"); return false; }
   }

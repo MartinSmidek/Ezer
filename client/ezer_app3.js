@@ -6,7 +6,7 @@
 "use strict";
 // <editor-fold defaultstate="collapsed" desc="++++++++++++++++++++++++++ EZER inicializace">
 //Ezer.root                     je definován v hlavním programu aplikace
-//Ezer.version                  dtto - default=ezer3.x
+//Ezer.version                  dtto - default=3.x
 //Ezer.browser                  CH|FF|OP|IE
 Ezer.options= Ezer.options || {};
 Ezer.options.clock_off= Ezer.options.clock_off||0;    // vypnout hodiny tj. chat se serverem
@@ -30,7 +30,7 @@ Ezer.DOM= null;                 // uživatelská plocha
 Ezer.paths= Ezer.paths || {};   // parametry z nadřazené aplikace
 Ezer.paths.images_lib= './ezer'+Ezer.version+'/client/img/';
 Ezer.paths.images_cc= (!Ezer.options.skin || Ezer.options.skin==='default'
-  ? './'+Ezer.version+'/client/skins/default' : './skins/'+Ezer.options.skin)+'/clientcide';
+  ? './ezer'+Ezer.version+'/client/skins/default' : './skins/'+Ezer.options.skin)+'/clientcide';
 Ezer.used= [];                  // seznam vyžádaných zdrojů ???
 Ezer.evals= 0;                  // počet aktivních objektů Eval (nuluje i DblClick na trace)
 Ezer.process= 0;                // jednoznačné číslo procesu
@@ -232,7 +232,7 @@ class Application {
     this.status= null;                            // loaded
     this.options= {
       user_record: true,                          // uživatelské údaje jsou v tabulce _user
-      server_url: 'http://'+Ezer.app_root+'/'+Ezer.version+'/server/ezer2.php',       // URL serveru
+      server_url: 'http://'+Ezer.app_root+'/ezer'+Ezer.version+'/server/ezer2.php',   // URL serveru
       login_interval: 60,                         // počet minut mezi obnovováním přihlášení - viz hits
       session_interval: 20,                       // počet minut mezi obnovou SESSION < login_interval
       must_log_in: true,
@@ -989,7 +989,7 @@ class Application {
   // vrátí cestu ke složce s background-image
   skin () {
     return !Ezer.options.skin || Ezer.options.skin==='default'
-      ? './'+Ezer.version+'/client/skins/default' : './skins/'+Ezer.options.skin;
+      ? './ezer'+Ezer.version+'/client/skins/default' : './skins/'+Ezer.options.skin;
   }
   // ------------------------------------------------------------------------------------- load
 //fx: Application.load ()

@@ -4677,7 +4677,7 @@ class LabelDrop extends Label {
       }
       else if ( this.part && (obj= this.part.onmenu) ) {
         title= f.title||f.name;
-        var ref= Ezer.version + "/server/file_send.php?name="
+        var ref= "ezer" + Ezer.version + "/server/file_send.php?name="
             + this.folder + (this.folder.substr(-1)=='/' ? '' : '/') + f.name
   //           + ( f.title ? "&title=" + f.title : '' )
             + "&title=" + title
@@ -4831,7 +4831,7 @@ class LabelDrop extends Label {
     // ==> . upload S:,H:
     var data= f.data.slice((n-1)*CHUNK,n*CHUNK);
     var xhr = new XMLHttpRequest();
-    xhr.open('POST', Ezer.version+'/server/file_send.php', true);
+    xhr.open('POST', 'ezer'+Ezer.version+'/server/file_send.php', true);
     xhr.setRequestHeader("EZER-FILE-NAME", encodeURIComponent(f.newname ? f.newname : f.name));
     xhr.setRequestHeader("EZER-FILE-CHUNK", n);
     xhr.setRequestHeader("EZER-FILE-CHUNKS", max);
@@ -6114,8 +6114,6 @@ class Field extends Elem {
 //os: FieldDate.format - poloha dialogu data
 //  ; 'R' : 'right' zobrazit zarovnaný na pravou hranu
 //  ; 'U' : 'upper' zobrazit nad hodnotou
-//  ;     : po dvojtečce
-//  ; 'y' : dialog nabídne výběr roku, který se vrací jako číslo
 class FieldDate extends Field {
 // ======================================================================================> FieldDate
 //**c: FieldDate-DOM ()
@@ -6161,12 +6159,13 @@ class FieldDate extends Field {
 // zobrazí vybírač data podle https://github.com/dbushell/Pikaday
   DOM_picker () {
     // nastavení
-    let options= {
+    let letos= new Date().getFullYear(),
+        options= {
       //ezer: true, // pokus s ul-li místo select-options
       field: this.DOM_Input[0], trigger:this.DOM_Button[0],
       firstDay: 1,
       showDaysInNextAndPreviousMonths: true,
-      yearRange: [1920,2021], // minDate: new Date(), maxDate: new Date(2020, 12, 31),
+      yearRange: [letos-12,letos+7], // minDate: new Date(), maxDate: new Date(2020, 12, 31),
       showTime: false,
       i18n: {
         previousMonth : 'předchozí měsíc',

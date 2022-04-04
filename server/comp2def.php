@@ -238,7 +238,7 @@ $attribs = array (
   'time'   =>  explode(",",'key:s,map_pipe:m,sql_pipe:s,help:s'),
 #  report
   'report' =>  explode(",",'format:s'),
-  'box'    =>  explode(",",'title:s,xactive:b,pagebreak:s,css:s,style:s'),
+  'box'    =>  explode(",",'title:s,xactive:n,pagebreak:s,css:s,style:s'),
 #  area
   'area'   =>  explode(",",'title:s,style:s,css:s'),
 #  form
@@ -268,7 +268,7 @@ $attribs = array (
   'list'   =>  explode(",",'rows:n'),
 );
 $attribs_type = array (
-  's' => 'string', 'n' => 'number', 'i' => 'name', 'm' => 'map name', 'b' => 'boolean', 'o' => 'object'
+  's' => 'string', 'n' => 'number', 'i' => 'name', 'm' => 'map name', 'o' => 'object'
 );
 # tabulky symbolů
 $tab_symb_obj= array();                   // zobrazení: symb => obj
