@@ -1171,7 +1171,7 @@ function dbg_show_line(ln,css='pick',el=undefined,clear=true) {
   }
 }
 //---------------------------------------------------------------------------------- dbg contextmenu
-//ff: fce.contextmenu (menu,el[,id,up=0])
+//ff: fce debug.dbg_contextmenu (menu,el[,id,up=0])
 //      zobrazení kontextového menu
 //a: menu - [[text_položky_menu,funkce],...]
 //   event - událost vyvolaná pravým tlačítkem myši

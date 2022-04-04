@@ -396,7 +396,7 @@ class Area extends Block {
 
 // ======================================================================================> STRUKTURY
 // --------------------------------------------------------------------------------------- new_area
-//fs: str.new_area (name,parent[,par])
+//fs: fce language.new_area (name,parent[,par])
 //      vytvoření instance area podle name, obsahujícím buďto string s úplným jménem area
 //      nebo Ezer objekt
 //      A) vnořené do parent zadaného jako ID (string) nebo jak Ezer objekt
@@ -463,7 +463,7 @@ Ezer.str.new_area= function() {
 
 // ============================================================================================> FCE
 // ---------------------------------------------------------------------------------------- url_get
-//ff: fce.url_get ([get])
+//ff: fce system.url_get ([get])
 //   vrátí aktuální url z window.history, pokud je definován parametr get
 //   vrátí se jen hodnota GET parametru jehož je jménem
 //s: funkce
@@ -471,7 +471,7 @@ Ezer.fce.url_get= function (get) {
   return get ? get_url_param(get) : location.href;
 };
 // --------------------------------------------------------------------------------------- url_push
-//ff: fce.url_push (url)
+//ff: fce system.url_push (url)
 //   vloží url do zásobníku window.history
 //s: funkce
 Ezer.fce.url_push= function (url) {
@@ -479,7 +479,7 @@ Ezer.fce.url_push= function (url) {
   return 1;
 };
 // ------------------------------------------------------------------------------------ json_decode
-//ff: fce.json_decode (string)
+//ff: fce object.json_decode (string)
 //   převede JSON zápis objektu na objekt
 //s: funkce
 Ezer.fce.json_decode= function (string) {
@@ -493,7 +493,7 @@ Ezer.fce.json_decode= function (string) {
   return obj;
 };
 // ------------------------------------------------------------------------------------ json_encode
-//ff: fce.json_encode (obj)
+//ff: fce object.json_encode (obj)
 //   převede objekt na jeho JSON zápis
 //s: funkce
 Ezer.fce.json_encode= function (obj) {

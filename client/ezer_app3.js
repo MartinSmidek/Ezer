@@ -1741,7 +1741,7 @@ class Application {
 //   no_trow - true pokud nemá být vyvolána vyjímka při chybě (jen volání Ezer.error)
 //   proc -
 //   calls - aktivační záznam (jen při volání ze struktur)
-//s: funkce
+//--s: funkce
 "use strict";
 Ezer.eval_jump= ' ';                    // pro trasování - značka přechodu podmíněnýcm skokem
 Ezer.calee= null;                       // pro hlášení chyb - procedura volající funkci či metodu
@@ -3242,11 +3242,11 @@ Ezer.obj_ref= function (name,obj) {
 // struktury dostávají jako argumenty ne hodnoty ale kód
 Ezer.str= {};
 // -------------------------------------------------------------------------------------- each
-//fs: str.each (obj,fce,a1,a2,..)
+//fs: fce language.each (obj,fce,a1,a2,..)
 //      zavolá funkci fce(xi,i,a1,a2,...) pro každou složku x objektu obj=[x0,x1,...]
 //      (pro objekty typu Ezer.List jsou procházeny vnořené Ezer.ListRow)
 //      POZOR: ve fce nesmí být volány asynchronní příkazy (ask ap.)
-//s: funkce
+//s: oldies
 Ezer.str.each= function () {
   var n= 0;
   var that= arguments[0];       // volající objekt Eval
@@ -3277,7 +3277,7 @@ Ezer.str.each= function () {
   that.eval();
 };
 // -------------------------------------------------------------------------------------- new_form
-//fs: str.new_form (form_name,left,top[,relative=0])
+//fs: fce language.new_form (form_name,left,top[,relative=0])
 //      vytvoření instance form - volá se výrazem new_form
 //s: funkce
 Ezer.str.new_form= function() {
@@ -3314,7 +3314,7 @@ Ezer.str.new_form= function() {
   that.eval();
 };
 // -------------------------------------------------------------------------------------- switch
-//fs: str.switch (test,case1,stmnt1,...)
+//fs: fce language.switch (test,case1,stmnt1,...)
 //   řídící struktura switch-case-...[default]
 //   pokud má sudý počet parametrů, použije se poslední jako defaultní
 //   pokud má lichý počet parametrů a žádná testovací hodnota nevyhovuje, ohlásí se chyba
@@ -3326,7 +3326,7 @@ Ezer.str.new_form= function() {
 //     'text',echo(x),
 //      echo('nic')
 //    );
-//s: funkce
+//s: oldies
 Ezer.str['switch']= function () {
   Ezer.assert(arguments.length>2,"EVAL: struktura 'switch' má málo argumentů");
   var that= arguments[0];       // volající objekt Eval
@@ -3357,13 +3357,13 @@ Ezer.str.switch_= function (that,value) {
   that.eval();
 };
 // -------------------------------------------------------------------------------------- if
-//fs: str.if (test,then_stmnt[,else_stmnt])
+//fs: fce language.if (test,then_stmnt[,else_stmnt])
 //   řídící struktura if-then-else resp. if-then
 //   UPOZORNĚNÍ: v test se nepředpokládá žádná asynchronní operace (modální dialog, dotaz na server)
 //   v then-příkaze i else-příkaze jsou asynchronní operace povoleny (další příkaz je interpretován
 //   až po jejich skončení)
 //x: if(gt(x,0),{echo('kladné')},{echo('záporné')})
-//s: funkce
+//s: oldies
 Ezer.str['if']= function () {
   var that= arguments[0];       // volající objekt Eval
   var args= arguments[1];       // hodnoty parametrů a proměnných volajícího objektu Eval
@@ -3395,7 +3395,7 @@ Ezer.str.if_= function (that,value) {
 // Ezer.fce= {};                                // přesunuto do hlavního programu
 // ========================================================================================> . array
 // ------------------------------------------------------------------------------------ array
-//ff: fce.array (value1,value2,...)
+//ff: fce object.array (value1,value2,...)
 //      zkonstruuje pole [value1,value2,...]
 //s: funkce
 Ezer.fce.array= function () {
@@ -3407,7 +3407,7 @@ Ezer.fce.array= function () {
   return o;
 };
 // ----------------------------------------------------------------------------- array_length
-//ff: fce.array_length (pole)
+//ff: fce object.array_length (pole)
 //      vrátí délku pole
 //s: funkce
 Ezer.fce.array_length= function (a) {
@@ -3415,7 +3415,7 @@ Ezer.fce.array_length= function (a) {
 };
 // ====================================================================================> . objektové
 // ------------------------------------------------------------------------------------ object
-//ff: fce.object (name1,value1,name2,value2,...)
+//ff: fce object.object (name1,value1,name2,value2,...)
 //      zkonstruuje objekt {name1:value1,name2:value2,...
 //s: funkce
 Ezer.fce.object= function () {
@@ -3427,7 +3427,7 @@ Ezer.fce.object= function () {
   return o;
 };
 // ------------------------------------------------------------------------------------ copy_by_name
-//ff: fce.copy_by_name (form|browse|list|object|string, form|browse|object[, delimiters='|:' [,set_original|only_changed]])
+//ff: fce object.copy_by_name (form|browse|list|object|string, form|browse|object[, delimiters='|:' [,set_original|only_changed]])
 //      zkopíruje zleva doprava stejně pojmenované hodnoty.
 //      Pokud se kopíruje do form, je třeba touto operací naplnit form.key (použije se při definici
 //      originality hodnoty, pokud to není žádoucí, je třeba form.key definovat jako 0)
@@ -3558,15 +3558,14 @@ Ezer.fce.copy_by_name= function (x,y,delimiters,par4) {
   else Ezer.error('copy_by_name nelze použít pro parametry typu '+typ_x+' a '+typ_y);
   return 1;
 };
-// ================================================================================================> . user
+// =========================================================================================> . user
 // -------------------------------------------------------------------------------------- sys
-//ff: fce.sys (id1,id2,...)
+//ff: fce system.sys (id1,id2,...)
 //   část hodnoty systémové proměnné Ezer.sys z PHP, totiž Ezer.sys.id1.id2....
 //   pokud id1=.. pak se následující selektory použijí pro Ezer
 //   např. sys('..','sys')==sys() 
 //a: idi - selektory objektu Ezer.sys resp. Ezer
 //s: funkce
-// Ezer.sys= {};
 Ezer.fce.sys= function () {
   let i,y;
   if ( arguments[0]=='..' ) {
@@ -3589,7 +3588,7 @@ Ezer.fce.sys= function () {
   return y;
 };
 // -------------------------------------------------------------------------------------- has_skill
-//ff: fce.has_skill (skills)
+//ff: fce system.has_skill (skills)
 //      zjistí zda přihlášený uživatel má aspoň jedno z daných oprávnění
 //a: skills - hodnoty oddělené středníkem
 //r: 1 - ano
@@ -3605,7 +3604,7 @@ Ezer.fce.has_skill= function (skills_query) {
   return ok;
 };
 //--------------------------------------------------------------------------------------- set_cookie
-//ff: fce.set_cookie (id,val,[form,refs])
+//ff: fce system.set_cookie (id,val,[form,refs])
 //      format1: zadaná hodnota je zapsána do COOKIES s trváním 100 dnů
 //      format2: pokud je definováné form a refs, pak musí obsahovat seznam jmen proměnných a
 //      elementů formuláře, cookie potom obsahuje n jejich hodnot oddělených čárkou (val je ignorováno)
@@ -3634,7 +3633,7 @@ Ezer.fce.set_cookie= function (id,val='',form=null,refs=null) {
   return 1;
 };
 //--------------------------------------------------------------------------------------- get_cookie
-//ff: fce.get_cookie (id,val,[form,refs])
+//ff: fce system.get_cookie (id,val,[form,refs])
 //      format1: reference COOKIES, pokud je definováno val, bude vráceno, pokud id id ještě není definováno
 //      format2: pokud je definováné refs, pak musí obsahovat seznam jmen proměnných a elementů formuláře,
 //      předpokládá se, že cookie obsahuje n hodnot oddělených čárkou resp. je, že má takový formát val
@@ -3659,13 +3658,12 @@ Ezer.fce.get_cookie= function (id,val,form,refs) {
   return ret;
 };
 //-------------------------------------------------------------------------------------- contextmenu
-//ff: fce.contextmenu (menu,el[,id,up=0,focus,focusClass])
+//ff: fce language.contextmenu (menu,el[,id,up=0,focus,focusClass])
 //      zobrazení kontextového menu
 //a: menu - [[text_položky_menu,funkce],...]
 //   event - událost vyvolaná pravým tlačítkem myši
 //   id - nepovinné id
 //s: funkce
-// Ezer.obj.contextmenu= {DOM:null,menu:null};
 Ezer.fce.contextmenu= function (menu,event,id,up,focus,focusClass) {
   event= event||window.event;
   if ( !focus && id ) {
@@ -3682,9 +3680,9 @@ Ezer.fce.contextmenu= function (menu,event,id,up,focus,focusClass) {
   jQuery(elem).contextPopup(options,event);
   return 1;
 };
-// ================================================================================================> . string
+// =======================================================================================> . string
 // -------------------------------------------------------------------------------------- decode
-//ff: fce.decode (data[,code='base64'])
+//ff: fce text.decode (data[,code='base64'])
 //      dekódování řetězce ze zadaného kódování
 //a: data - zakódovaný řetězec
 //   code - kód (zatím jen 'base64')
@@ -3694,7 +3692,7 @@ Ezer.fce.decode= function (data,code) {
   return decoded;
 };
 // -------------------------------------------------------------------------------------- match
-//ff: fce.match (regexp,str[,flags])
+//ff: fce text.match (regexp,str[,flags])
 //      porovnání řetezce s regulárním výrazem - vrací objekt jehož složky s0,s1,... obsahují
 //      v s0 nalezený vzor a v si i=tý podřetězec získaný pomocí operátorů ();
 //      pokud porovnání selže je vrácena 0
@@ -3715,7 +3713,7 @@ Ezer.fce.match= function (pattern,str,flags) {
   return ok;
 };
 // -------------------------------------------------------------------------------------- strip_tags
-//ff: fce.strip_tags (x[,allowed=''])
+//ff: fce text.strip_tags (x[,allowed=''])
 //  pokud není použito allowed použije se jQuery funkce text, jinak 
 //  se tagy odstraní z x podle http://phpjs.org/functions/strip_tags
 //s: funkce
@@ -3734,7 +3732,7 @@ Ezer.fce.strip_tags= function (input,allowed) {
   }
 };
 // -------------------------------------------------------------------------------------- contains
-//ff: fce.contains (x,list[,sep=','])
+//ff: fce text.contains (x,list[,sep=','])
 //    pokud je list string, tak
 //      zjistí zda x je obsaženo v seznamu hodnot, oddělovačem hodnot je čárka nebo 3. parametr;
 //    pokud je list pole, zjistí zda obsahuje x
@@ -3749,7 +3747,7 @@ Ezer.fce.contains= function (x,list,sep) {
   return ok;
 };
 // -------------------------------------------------------------------------------------- erase
-//ff: fce.erase (x,list[,sep=','])
+//ff: fce text.erase (x,list[,sep=','])
 //    odstraní z list všechny výskyty x a vrátí výsledek,
 //    list je pole nebo string (oddělovačem hodnot je čárka nebo 3. parametr)
 //r: string nebo pole, podle typu list
@@ -3766,7 +3764,7 @@ Ezer.fce.erase= function (x,list,sep) {
   return list;
 };
 // -------------------------------------------------------------------------------------- substr
-//ff: fce.substr (x,begin,length)
+//ff: fce text.substr (x,begin,length)
 //   funkce vrací podřetězec podle specifikace stejnojmenné funkce PHP
 //   Např:  substr('abcdef',0,-1) vrátí 'abcde' narozdíl od javascriptu který vrátí ''
 //s: funkce
@@ -3775,7 +3773,7 @@ Ezer.fce.substr= function (x,begin,length) {
     (length<0 ? x.substr(begin,x.length+length) : x.substr(begin))) : '';
 };
 // -------------------------------------------------------------------------------------- sort
-//ff: fce.sort (list[,del[,comp]])
+//ff: fce text.sort (list[,del[,comp]])
 //   funkce seřadí řetězec chápaný jako seznam hodnot oddělený čárkou nebo daným oddělovačem
 //a: list - seznam hodnot
 //   del - oddělovač (default je čárka)
@@ -3793,7 +3791,7 @@ Ezer.fce.sort= function (list,del,comp) {
   return arr.join(del);
 };
 // -------------------------------------------------------------------------------------- split
-//ff: fce.split (x,del[,i])
+//ff: fce text.split (x,del[,i])
 //      funkce rozdělí x podle del (stejnojmennou funkcí javascriptu) a vrátí podřetězec
 //      s indexem i (první má index 0)
 //   pokud není 'i' uvedeno, funkce vrátí pole
@@ -3816,7 +3814,7 @@ Ezer.fce.split= function (x,del,i) {
   return y;
 };
 // -------------------------------------------------------------------------------------- trim
-//ff: fce.trim (x)
+//ff: fce text.trim (x)
 //      funkce z řetězce x odstraní levostranné i pravostranné mezery
 //a: x - řetězec
 //s: funkce
@@ -3826,7 +3824,7 @@ Ezer.fce.trim= function (x) {
   return y;
 };
 // -------------------------------------------------------------------------------------- repeat
-//ff: fce.repeat (x,n)
+//ff: fce text.repeat (x,n)
 //      funkce vrátí zřetězení n kopií stringu s
 //a: x - řetězec
 //   n - počet opakování
@@ -3839,7 +3837,7 @@ Ezer.fce.repeat= function (x,n) {
   return s;
 };
 // -------------------------------------------------------------------------------------- replace
-//ff: fce.replace (x,a1,b1,a2,b2...)
+//ff: fce text.replace (x,a1,b1,a2,b2...)
 //      vrátí x ve kterém provede náhradu ai za bi
 //s: funkce
 Ezer.fce.replace= function () {
@@ -3856,7 +3854,7 @@ Ezer.fce.replace= function () {
   return x;
 };
 // ----------------------------------------------------------------------------------- replace_fa
-//ff: fce.replace_fa (x,delete=0)
+//ff: fce text.replace_fa (x,delete=0)
 //      vrátí x ve kterém provede náhradu podřetězců [fa-ikona] za html kód zobrazující ikony
 //      podle http://fortawesome.github.io/Font-Awesome/icons/
 //      pokud je delete=1 pak tyto podřetězce odstraní
@@ -3867,7 +3865,7 @@ Ezer.fce.replace_fa= function (x,del) {
   return x.replace(/\[fa-([^\]]+)\]/g,del ? "" : "<i class='fa fa-$1'></i>");
 };
 // -------------------------------------------------------------------------------------- conc
-//ff: fce.conc (s1,s2,...)
+//ff: fce text.conc (s1,s2,...)
 //   spojení stringů
 //a: si - textový řetězec
 //r: s1s2... - spojení řetězců
@@ -3878,7 +3876,7 @@ Ezer.fce.conc= function () {
   return y;
 };
 // -------------------------------------------------------------------------------------- cconc
-//ff: fce.cconc (a1,b1,a2,b2...[bn])
+//ff: fce text.cconc (a1,b1,a2,b2...[bn])
 //      podmíněné spojení stringů, pokud ai==true||1 pak je bi použito, jinak přeskočeno
 //      pokud má fce lichý počet argumentů a ani jedno ai není pravdivé, použije se poslední hodnota
 //s: funkce
@@ -3895,7 +3893,7 @@ Ezer.fce.cconc= function () {
   return x;
 };
 // -------------------------------------------------------------------------------------- cset
-//ff: fce.cset (x,r1,a1,r2,a2...)
+//ff: fce text.cset (x,r1,a1,r2,a2...)
 //      podmíněné nastavení elementů ai na 1, pokud je bi obsaženo v x, jinak na 0
 //s: funkce
 Ezer.fce.cset= function () {
@@ -3910,7 +3908,7 @@ Ezer.fce.cset= function () {
   return x;
 };
 // -------------------------------------------------------------------------------------- cset
-//ff: fce.chr (ascii)
+//ff: fce text.chr (ascii)
 //      vrátí jednoznakový řetězec se znakem odpovídajícím předanému ASCII kódu
 //s: funkce
 Ezer.fce.chr= function (ascii) {
@@ -3918,7 +3916,7 @@ Ezer.fce.chr= function (ascii) {
 };
 // ================================================================================================> . date+time
 // -------------------------------------------------------------------------------------- date2sql
-//ff: fce.date2sql (date[,wild=0])
+//ff: fce date.date2sql (date[,wild=0])
 //      převod českého formátu data na formát MySQL
 //a: [ab]d.m.yyyy[time]  - obecný tvar z dialogu pro zadání času a data (ukázka dlouhého popisu)
 //   wild - pokud je 1, pak lze místo čísel d,m,yyyy lze použít zástupný symbol *,
@@ -3962,7 +3960,7 @@ Ezer.fce.date2sql= function (dmy0,wild) {
   return s;
 };
 // -------------------------------------------------------------------------------------- sql2date
-//ff: fce.sql2date (sql_date[,del='. '])
+//ff: fce date.sql2date (sql_date[,del='. '])
 //      převod MySQL formátu data na český formát
 //a: yyyy-mm-dd - tvar pro SQL
 //r: d. m. yyyy  - český tvar data
@@ -3982,7 +3980,7 @@ Ezer.fce.sql2date= function (ymd,del) {
   return s;
 };
 // -------------------------------------------------------------------------------------- now
-//ff: fce.now (time_too)
+//ff: fce date.now (time_too)
 //   aktuální datum a čas (je-li time_too==1)
 //r:  dd.mm.yyyy - pro time_too==0
 //  dd.mm.yyyy hh:mm - pro time_too==1
@@ -3991,7 +3989,7 @@ Ezer.fce.now= function (time_too) {
   return ae_datum(time_too);
 };
 // -------------------------------------------------------------------------------------- now_sql
-//ff: fce.now_sql (time_too)
+//ff: fce date.now_sql (time_too)
 //   aktuální datum a čas (je-li time_too==1) ve formátu DATETIME
 //r:  yyy-mm-dd          - pro time_too==0
 //    yyy-mm-dd hh:mm:ss - pro time_too==1
@@ -4000,7 +3998,7 @@ Ezer.fce.now_sql= function (time_too) {
   return ae_datum(time_too,1);
 };
 // -------------------------------------------------------------------------------------- fdate
-//ff: fce.fdate (format[,datetime])
+//ff: fce date.fdate (format[,datetime])
 //      zjednodušená analogie PHP funkce date
 //a:    format - řetězec s řídícími písmeny, implementovány jsou: Y,m,n,d,j,w,W,t,H,i,s
 //      datetime - číslo s významem timestamp nebo textový formát data d.m.y
@@ -4042,7 +4040,7 @@ Ezer.fce.fdate= function (format,datetime) {
 };
 // ================================================================================================> . math
 // -------------------------------------------------------------------------------------- is_number
-//ff: fce.is_number (x)
+//ff: fce number.is_number (x)
 //   zjištění, zda x je číslo nebo string tvořící číslo
 //s: funkce
 //a: x - testovaná hodnota
@@ -4052,8 +4050,8 @@ Ezer.fce.is_number= function (x) {
   return (x?1:0) && (isNaN(x)?0:1);
 };
 // -------------------------------------------------------------------------------------- lt
-//ff: fce.lt (x,y)
-//   porovnání čísel: x<y
+//ff: fce number.lt (x,y)
+//   porovnání čísel: x&lt;y
 //s: funkce
 //a: x, y - testované hodnota
 //   yi - vzory
@@ -4065,7 +4063,7 @@ Ezer.fce.lt= function (x,y) {
   return x<y ? 1 : 0;
 };
 // -------------------------------------------------------------------------------------- le
-//ff: fce.le (x,y)
+//ff: fce number.le (x,y)
 //   porovnání čísel: x<=y
 //s: funkce
 //a: x, y - testované hodnota
@@ -4078,7 +4076,7 @@ Ezer.fce.le= function (x,y) {
   return x<=y ? 1 : 0;
 };
 // -------------------------------------------------------------------------------------- gt
-//ff: fce.gt (x,y)
+//ff: fce number.gt (x,y)
 //   porovnání čísel: x>y
 //s: funkce
 //a: x, y - testované hodnota
@@ -4091,7 +4089,7 @@ Ezer.fce.gt= function (x,y) {
   return x>y ? 1 : 0;
 };
 // -------------------------------------------------------------------------------------- ge
-//ff: fce.ge (x,y)
+//ff: fce number.ge (x,y)
 //   porovnání čísel: x>=y
 //s: funkce
 //a: x, y - testované hodnota
@@ -4104,7 +4102,7 @@ Ezer.fce.ge= function (x,y) {
   return x>=y ? 1 : 0;
 };
 // -------------------------------------------------------------------------------------- sum
-//ff: fce.sum (x1,x2,...)
+//ff: fce number.sum (x1,x2,...)
 //   součet hodnot x1, x2, ...
 //s: funkce
 //a: xi - sčítanec
@@ -4118,7 +4116,7 @@ Ezer.fce.sum= function () {
   return String(sum);
 };
 // -------------------------------------------------------------------------------------- minus
-//ff: fce.minus (x,s1,s2,...)
+//ff: fce number.minus (x,s1,s2,...)
 //   minus(x)=-x; minus(x,s1,s2,...)=x-s1-s2...
 //s: funkce
 //a: x,s1,s2,...
@@ -4137,7 +4135,7 @@ Ezer.fce.minus= function (x) {
   return String(y);
 };
 // -------------------------------------------------------------------------------------- min
-//ff: fce.min (x1,x2,...)
+//ff: fce number.min (x1,x2,...)
 //   minimum hodnot x1, x2, ...
 //s: funkce
 //a: xi - číslo
@@ -4150,7 +4148,7 @@ Ezer.fce.min= function () {
   return String(x);
 };
 // -------------------------------------------------------------------------------------- max
-//ff: fce.max (x1,x2,...)
+//ff: fce number.max (x1,x2,...)
 //   maximum hodnot x1, x2, ...
 //s: funkce
 //a: xi - číslo
@@ -4163,7 +4161,7 @@ Ezer.fce.max= function () {
   return String(x);
 };
 // -------------------------------------------------------------------------------------- multiply
-//ff: fce.multiply (x,y)
+//ff: fce number.multiply (x,y)
 //   x * y
 //s: funkce
 //a: x, y - multiplikanty
@@ -4174,7 +4172,7 @@ Ezer.fce.multiply= function (x,y) {
   return String(z);
 };
 // -------------------------------------------------------------------------------------- divide
-//ff: fce.divide (x,y)
+//ff: fce number.divide (x,y)
 //   x / y - celočíselné dělení (5/2=2)
 //s: funkce
 //a: x, y - dělenec, dělitel
@@ -4185,7 +4183,7 @@ Ezer.fce.divide= function (x,y) {
   return String(Math.floor(z));
 };
 // -------------------------------------------------------------------------------------- modulo
-//ff: fce.modulo (x,y)
+//ff: fce number.modulo (x,y)
 //   x % y
 //s: funkce
 //a: x, y - celá čísla
@@ -4196,7 +4194,7 @@ Ezer.fce.modulo= function (x,y) {
   return String(z);
 };
 // -------------------------------------------------------------------------------------- castka_slovy
-//ff: fce.castka_slovy (castka [,platidlo,platidla,platidel,drobnych])
+//ff: fce number.castka_slovy (castka [,platidlo,platidla,platidel,drobnych])
 //      vyjádří absolutní hodnotu peněžní částky x slovy
 //s: funkce
 //a: částka - částka
@@ -4249,9 +4247,9 @@ Ezer.fce.castka_slovy= function (castka,platidlo,platidla,platidel,drobnych) {
   }
   return text;
 };
-// ================================================================================================> . logical
+// ======================================================================================> . logical
 // -------------------------------------------------------------------------------------- eq
-//ff: fce.eq (x,y1,y2,...)
+//ff: fce number.eq (x,y1,y2,...)
 //   porovnání hodnoty s posloupností hodnot
 //a: x - testovaná hodnota
 //   yi - vzory
@@ -4274,7 +4272,7 @@ Ezer.fce.eq= function (x) {
   return ok;
 };
 // -------------------------------------------------------------------------------------- and
-//ff: fce.and (x1,x2,...)
+//ff: fce number.and (x1,x2,...)
 //   logické AND hodnot x1, x2, ...  (prázdný řetězec a '0' se bere jako 0)
 //s: funkce
 //a: xi - testovaná hodnota
@@ -4293,7 +4291,7 @@ Ezer.fce.and= function () {
   return ok;
 };
 // -------------------------------------------------------------------------------------- or
-//ff: fce.or (x1,x2,...)
+//ff: fce number.or (x1,x2,...)
 //   logické OR hodnot x1, x2, ...   (prázdný řetězec a '0' se bere jako 0)
 //s: funkce
 //a: xi - testovaná hodnota
@@ -4312,7 +4310,7 @@ Ezer.fce.or= function () {
   return ok;
 };
 // -------------------------------------------------------------------------------------- not
-//ff: fce.not (x)
+//ff: fce number.not (x)
 //   logické NOT (prázdný řetězec a '0' se bere jako 0)
 //s: funkce
 //a: x - testovaná hodnota
@@ -4324,36 +4322,15 @@ Ezer.fce.not= function (x) {
 };
 // ================================================================================================> . 1.3
 // -------------------------------------------------------------------------------------- stop
-//ff: fce.stop ()
+//ff: fce language.stop ()
 //      STARÉ: prázdná operace
 //s: oldies
 Ezer.fce.stop= function () {
   return 1;
 };
-// -------------------------------------------------------------------------------------- menu_fill2
-//fm: Label.menu_fill2 ()  OBSOLETE
-//s: oldies
-// Ezer.Label.prototype.menu_fill2= function () {
-// //      STARÉ: prázdná operace
-//   return 1;
-// };
-//// -------------------------------------------------------------------------------------- clipboard
-////ff: fce.clipboard (msg1,msg2,...)
-////    vložení textů do schránky Windows, části textu odděluje znakem \n;
-////a: msgi - části textu
-////s: oldies
-//Ezer.fce.clipboard= function () {
-//  var msg= '', del= '';
-//  for (var i= 0; i<arguments.length; i++) {
-//    msg+= del+arguments[i];
-//    del= '\n';
-//  }
-//  clipboard_set(msg);
-//  return 1;
-//};
-// ================================================================================================> . system
+// =======================================================================================> . system
 // ------------------------------------------------------------------------------------ logout
-//ff: fce.logout ()
+//ff: fce system.logout ()
 //      odhlásí uživatele stejně jako při použití menu odhlásit
 //s: funkce
 Ezer.fce.logout= function () {
@@ -4362,7 +4339,7 @@ Ezer.fce.logout= function () {
   return 1;
 };
 // ------------------------------------------------------------------------------------ href
-//ff: fce.href (path)
+//ff: fce system.href (path)
 //      přepne aplikaci podle path=m[.s[.l.g.i]][.p]  -- tabs, panel, menu.left, menu.group, menu.item
 //      poslední může být jméno procedury, následovat mohou parametry oddělené /
 //      další parametry mohou být dány jako druhý a další parametry href
@@ -4442,7 +4419,7 @@ Ezer.fce.href= function (path) {
   return false;
 };
 // ------------------------------------------------------------------------------------ download
-//ff: fce.download (file)
+//ff: fce system.download (file)
 //      nabídne stáhnutí souboru
 //s: funkce
 Ezer.fce.download= function (file) {
@@ -4450,7 +4427,7 @@ Ezer.fce.download= function (file) {
   return 1;
 };
 // ------------------------------------------------------------------------------------ prints
-//ff: fce.prints (width,height,css_file,element*)
+//ff: fce system.prints (width,height,css_file,element*)
 //      zobrazí v samostatném okně elementy a nabídne dialog tisku
 //s: funkce
 Ezer.fce.prints= function (width,height,css_file) {
@@ -4489,7 +4466,7 @@ Ezer.fce.prints= function (width,height,css_file) {
   return true;
 };
 // ------------------------------------------------------------------------------------ apply
-//ff: fce.apply (fce[,arg1,...])
+//ff: fce language.apply (fce[,arg1,...])
 //      zavolá funkce 'fce' zadanou stringem a vrátí její hodnotu
 //s: funkce
 Ezer.fce.apply= function(fce_name) {
@@ -4504,7 +4481,7 @@ Ezer.fce.apply= function(fce_name) {
   return value;
 };
 // -------------------------------------------------------------------------------------- javascript
-//ff: fce.javascript (code[,value])
+//ff: fce language.javascript (code[,value])
 //      pokud je specifikované value, stane se návratovou hodnotou, jinak se použije výsledek kódu
 //s: funkce
 Ezer.fce.javascript= function(code,value) {
@@ -4522,7 +4499,7 @@ Ezer.fce.javascript= function(code,value) {
   return value?value:x;
 };
 // ---------------------------------------------------------------------------------------- function
-//ff: fce.function (par1,...,parn,code,arg1,...,argn)
+//ff: fce language.function (par1,...,parn,code,arg1,...,argn)
 //      provede Function(par,code)(arg)
 //      Příklad: echo(function('a','a+1',2) zobrazí 3
 //s: funkce
@@ -4552,7 +4529,7 @@ Ezer.fce['function']= function() {
   return x;
 };
 // -------------------------------------------------------------------------------------- source
-//ff: fce.source (msg)
+//ff: fce system.source (msg)
 //s: funkce
 Ezer.fce.source= function(block) {
   return Ezer.App.source_text(block);
@@ -4566,7 +4543,7 @@ Ezer.fce.source_= function(text,file,app,l,c,reload,root) {
   }
 };
 // -------------------------------------------------------------------------------------- alert
-//fj: fce.alert (msg1,...)
+//fj: fce dialog.alert (msg1,...)
 //   zobrazí argumenty ve vyskakovacím okně - modální funkce
 //   dialog lze ukončit i stiskem Esc
 //s: funkce
@@ -4577,7 +4554,7 @@ Ezer.fce.alert= function (...args) {
   return 1;
 };
 // -------------------------------------------------------------------------------------- wait
-//fj: fce.wait (ms)
+//fj: fce dialog.wait (ms)
 //   pozdrží výpočet na ms milisekund
 //s: funkce
 Ezer.fce.wait= function (ms) {
@@ -4592,7 +4569,7 @@ Ezer.fce._wait= function () {
   return 1;
 };
 // -------------------------------------------------------------------------------------- exec
-//fj: fce.exec (proc,arg1,..)
+//fj: fce language.exec (proc,arg1,..)
 //   provede proceduru proc(arg1,...) a počká na ukončení (je-li volána z ezerscriptu)
 //   vaarianta _exec_ se stejnými argumenty je určena pro volání z javsriptu, na konec se nečeká
 //s: funkce
@@ -4623,7 +4600,7 @@ Ezer.fce._exec_= function (procname) {
  new Eval([{o:'c',i:procname,a:args.length}],Ezer.run.$,args,procname);
 };
 // -------------------------------------------------------------------------------------- choose
-//fj: fce.choose (query,buttons)
+//fj: fce dialog.choose (query,buttons)
 //   zobrazí variantní otázku ve vyskakovacím okně, spolu s tlačítky pro odpovědi - modální funkce;
 //   pokud je dialog ukončen Esc, vrací se hodnota posledního tlačítka
 //   buttons= řetězec název:hodnota,...
@@ -4642,7 +4619,7 @@ Ezer.fce.choose= function (query,buttons) {
   return ok;
 };
 // -------------------------------------------------------------------------------------- confirm
-//fj: fce.confirm (msg,...)
+//fj: fce dialog.confirm (msg,...)
 //      ve zvláštním okně položí otázku msg a dvě tlačítka Ano a Ne  - modální funkce
 //   pokud je dialog ukončen Esc, vrací se 0
 //r: 1 - pokud bylo stisknuto Ano
@@ -4665,7 +4642,7 @@ Ezer.fce._confirm= function (res) {
   return 1;
 };
 // -------------------------------------------------------------------------------------- prompt2
-//fj: fce.prompt2 (msg[,default=''])
+//fj: fce dialog.prompt2 (msg[,default=''])
 //      ve zvláštním okně položí otázku msg a přečte odpověď, kterou vrátí jako výsledek
 //r: zapsaný text - pokud bylo stisknuto Ok
 //   '' - pokud bylo stisknuto Zpět, Esc (nebo byl vrácen prázdný text)
@@ -4676,7 +4653,7 @@ Ezer.fce.prompt2= function (msg,deflt='') {
   return 1;
 };
 // -------------------------------------------------------------------------------------- prompt
-//ff: fce.prompt (msg[,default=''])
+//ff: fce dialog.prompt (msg[,default=''])
 //      ve zvláštním okně položí otázku msg a přečte odpověď, kterou vrátí jako výsledek
 //r: odpověď
 //a: msg - text otázky
@@ -4687,7 +4664,7 @@ Ezer.fce.prompt= function (msg,odpoved) {
   return prompt(msg,odpoved);
 };
 // -------------------------------------------------------------------------------------- clear
-//ff: fce.clear ()
+//ff: fce debug.clear ()
 // vymaže obsah trasovacího okna
 //s: funkce
 Ezer.fce.clear= function () {
@@ -4699,7 +4676,7 @@ Ezer.fce.clear= function () {
   return 1;
 };
 // -------------------------------------------------------------------------------------- echo
-//ff: fce.echo (a1,...)
+//ff: fce debug.echo (a1,...)
 //      vypíše argumenty do trasovací části aplikace
 //s: funkce
 Ezer.fce.echo= function () {
@@ -4709,7 +4686,7 @@ Ezer.fce.echo= function () {
   return str;
 };
 // -------------------------------------------------------------------------------------- help
-//ff: fce.popup_help (html,title[,ykey[,xkey[,seen,db]]])
+//ff: fce dialog.popup_help (html,title[,ykey[,xkey[,seen,db]]])
 //   zobrazí v systémovém popup menu předané html, pokud jsou předány i klíče, je možná editace
 //   ykey=klíč zobrazeného helpu, xkey=klíč z místa vyvolání (různý pokud nebyl přesný help)
 //   kde klíč je hodnota získaná funkcí self_sys. Poslední parametr se zobrazuje jako title
@@ -4720,7 +4697,7 @@ Ezer.fce.popup_help= function (html,title,ykey,xkey,seen,refs,db) {
   return 1;
 };
 // -------------------------------------------------------------------------------------- set_trace
-//ff: fce.set_trace (id,on) nebo fce.set_trace (on) nebo fce.set_trace(id,on,names)
+//ff: fce debug.set_trace (id,on) nebo fce.set_trace (on) nebo fce.set_trace(id,on,names)
 //    * změní chování systémového trasování podle parametrů, je-li použit jen jeden parametr
 //      umožňuje zobrazit nebo skrýt testovací okno
 //    * pokud jsou použity 3 parametry, zapíná/vypíná trasování typu id (pro id=E) jen pro jména
@@ -4768,7 +4745,7 @@ Ezer.fce.set_trace= function (id,on,names) {
   return 1;
 };
 // -------------------------------------------------------------------------------------- debug
-//ff: fce.debug (o[,label=''[,depth=5]])
+//ff: fce debug.debug (o[,label=''[,depth=5]])
 //      vrací html kód přehledně zobrazující strukturu objektu nebo pole;
 //      zobrazit lze například pomocí fce echo v trasovacím části
 //s: funkce
@@ -4780,7 +4757,7 @@ Ezer.fce.debug= function (o,label,depth) {
   return "<div class='dbg'>"+debug(o,label,depth)+"</div>";
 };
 // -------------------------------------------------------------------------------------- assert
-//ff: fce.assert (test,msg[,block])
+//ff: fce debug.assert (test,msg[,block])
 //   pokud test selže, vypíše argumenty do trasovací části aplikace a ukončí výpočet procedury
 //a: test - 0 | 1
 //   msg - zpráva vypsaná při selhání testu
@@ -4796,7 +4773,7 @@ Ezer.fce.assert= function(test,msg,block) {
   return 1;
 };
 // -------------------------------------------------------------------------------------- warning
-//ff: fce.warning (a1,...)
+//ff: fce dialog.warning (a1,...)
 //   vypíše argumenty do dočasné plochy, která vyjede ze spodní lišty
 //   a která po pokračování v práci zase zmizí. Zobrazuje jen poslední varování.
 //   Bezparametrická varianta zruší zobrazené varování.
@@ -4808,7 +4785,7 @@ Ezer.fce.warning= function () {
   return str || 1;
 };
 // -------------------------------------------------------------------------------------- error
-//ff: fce.error (msg[,level=user])
+//ff: fce dialog.error (msg[,level=user])
 //   vypíše argumenty do trasovací části aplikace a ukončí výpočet procedury
 //a: str - chybové hlášení
 //   level - 'user' (default) výpočet bude přerušen, 'msg' jen zobrazení zprávy
@@ -4919,7 +4896,7 @@ Ezer.fce.error_= function (info) {
   return 1;
 };
 // -------------------------------------------------------------------------------------- touch
-//ff: fce.touch (type,block|msg|fce[,args])
+//ff: fce system.touch (type,block|msg|fce[,args])
 //      funkce pošle na server informaci o práci s aplikací.
 //              pokud type=='error' pak předá text chyby
 //              pokud type=='logout' pak odhlásí uživatele
@@ -5050,7 +5027,7 @@ Ezer.fce.touch= function (type,block,args) {
   return true;
 };
 // --------------------------------------------------------------------------------------- trail
-//ff: fce.trail (op,...)
+//ff: fce system.trail (op,...)
 // funkce podle parametru op
 //    'show'     -- vrátí uživatelskou stopu
 //    'show_err' -- vrátí uživatelskou stopu ve formátu pro hlášení chyby
@@ -5097,7 +5074,7 @@ Ezer.fce.trail= function (op) {
   return ret;
 };
 // --------------------------------------------------------------------------------------- speed
-//ff: fce.speed (op,...)
+//ff: fce system.speed (op,...)
 // funkce pro zobrazení výsledku měření času a objemu dat;
 // čitače: on, sql,php,net,data,ezer;
 // funkce podle parametru op
@@ -5138,7 +5115,7 @@ Ezer.fce.speed= function (op) {
 };
 
 // -------------------------------------------------------------------------------------- clipboard
-//ff: fce.clipboard (msg1,msg2,...)
+//ff: fce system.clipboard (msg1,msg2,...)
 //      STARÉ: vložení textů do schránky Windows, části textu odděluje znakem \n;
 //      NOVĚ: lépe je použít item typu clipboard
 //a: msgi - části textu

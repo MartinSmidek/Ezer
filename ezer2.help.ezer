@@ -33,14 +33,25 @@ panel ref [,,770,] {type:'right', title:'Reference', _sys:'*', skill:'m'
   }
   use u: form f [0,0,,]
 //  proc onstart() { m.attach_code(ask('i_doc_menu','reference','','')) }
-  proc onfirstfocus() { set_apl_menu }  // nesmí být v onstart
-  proc set_apl_menu() {
-    var g: object
-    m.attach_code(ask('i_doc_menu','reference','',''));
-    g.set(m.part('menu.group',1));
-    g.get; g.part('item',1); g.part('item',1).click(1)
-  | u.fill("Reference není vygenerována")
+  func onfirstfocus() { set_apl_menu() }  // nesmí být v onstart
+  func set_apl_menu() {
+    var g: ezer, it:ezer
+    m.attach_code(php.i_doc_menu('reference','',''));
+    g= m.part('menu.group',1);
+    if (g) { 
+      it= g.part('item',1); 
+      it.click(1);
+    }
+    else 
+      u.fill("Reference není vygenerována")
   }
+//  proc set_apl_menu() {
+//    var g: object
+//    m.attach_code(ask('i_doc_menu','reference','',''));
+//    g.set(m.part('menu.group',1));
+//    g.get; g.part('item',1); g.part('item',1).click(1)
+//  | u.fill("Reference není vygenerována")
+//  }
 }
 # =======================================================================================> Struktura
 panel str [,,770,] {type:'right', title:'Struktura', _sys:'*', skill:'m'
@@ -124,7 +135,7 @@ panel gen [,,770,] {type:'right', title:'Generování', _sys:'*', skill:'m'
           u.append(ask('i_doc_reset','ezerscript'));
           u.append(ask('i_doc_reset','reference'));
           u.append(ask('i_doc','ezerscript'));
-          u.append(ask('i_doc','reference',conc(sys('version'),'/wiki/.*\.wiki')));
+          u.append(ask('i_doc','reference',conc('ezer',sys('version'),'/wiki/.*\.wiki')));
           u.append(ask('i_doc','javascript','app,ezer,ezer_report,ezer_fdom1,ezer_fdom2'));
           ref.m.attach_code(ask('i_doc_menu','reference','',''))
       }}
