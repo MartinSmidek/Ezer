@@ -977,7 +977,7 @@ class Block {
               case 'table':         part= new Table(this,desc,null,id); break;
               case 'map':           part= new EzerMap(this,desc,null,id); break;
               case 'func': 
-              case 'proc':          part= new Proc(this,desc,this); break;
+              case 'proc':          part= new Proc(this,desc,this,id); break;
 
             // přeskakované (informace dostupné přes Ezer.code)
               case 'area':          break;
@@ -1532,7 +1532,7 @@ class BlockMain extends Block {
         // objekt bez vizualizace (ale vložený jako part)
         case 'view':      part= new View(this,idesc,null,id);     break;
         case 'group':     part= new Group(this,idesc,null,id);    break;
-        case 'proc':      part= new Proc(this,desc,this);         break;
+        case 'proc':      part= new Proc(this,desc,this,id);         break;
         // přeskakované (informace dostupné přes Ezer.code)
         case 'form':      break;
         default:
@@ -3040,20 +3040,24 @@ class Const extends Block {
 // ===========================================================================================> Proc
 //c: Proc
 //      procedura, obsluha událostí (zatím onstart) může mít uvedenu prioritu
-//t: Block
 //s: Block
-class Proc extends Block {
+class Proc { //extends Block {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  initialize
 //oc: Proc.code - kód procedury
-//oc: Proc.prior - priorita procedury (jen pro onstart)
+////oc: Proc.prior - priorita procedury (jen pro onstart)
 //oc: Proc.context - kontext procedury (pro řešení významu jmen) tj. místo definice
-  constructor (owner,desc,context) {
-    super(owner,desc);
+  constructor (owner,desc,context,id) {
+    this.owner= owner;
+    if ( id ) this.id= this._id= id;
+    if ( id && owner && owner.part ) owner.part[id]= this;
+    this.type= desc.type;
+    this.desc= desc;
     this.code= desc.code;
-    this.prior= this.options && this.options.prior ? this.options.prior : 0;
+//    this.prior= this.options && this.options.prior ? this.options.prior : 0;
     this.context= context;
     this.stop= [];
     this.trace= 0;
+    this.options= {};
   }
   proc_stop (on,line) {
     if (on) {
@@ -3070,6 +3074,21 @@ class Proc extends Block {
   }
   reinitialize (desc) {
     this.code= desc.code;
+  }
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  app_file
+// zjistí {app:app,file:file,root:root} identifikaci zdrojového textu
+  app_file () {
+    var pos= {app:'',file:'',root:null};
+    for (var o= this; o; o= o.owner) {
+      if ( o.desc ) {
+        if ( (pos.file= o.desc._file) ) {
+          pos.app= o.desc._app||'';
+          pos.root= o;
+          break;
+        }
+      }
+    }
+    return pos;
   }
 }
 
