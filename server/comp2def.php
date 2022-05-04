@@ -93,6 +93,7 @@ $blocs2 = array (                                    // překládají se na AE_<
 #  proc
   'proc'        =>  explode(",",''),
   'func'        =>  explode(",",''),
+  'function'    =>  explode(",",''),
 );
 # definice povolených vnořených bloků
 $blocs = array (                                    // překládají se na AE_<part>
@@ -145,6 +146,7 @@ $blocs = array (                                    // překládají se na AE_<p
 #  proc
   'proc'   =>  explode(",",''),
   'func'   =>  explode(",",''),
+  'function'=>  explode(",",''),
 );
 # definice povolených speciálních bloků
 $specs = array (
@@ -198,7 +200,8 @@ $specs = array (
   'list'   =>  explode(",",'part,coor+,cmnt,proc'),
 #  proc
   'proc'   =>  explode(",",'par,code,note'),
-  'func'   =>  explode(",",'par2,code2,note')
+  'func'   =>  explode(",",'par2,code2,note'),
+  'function'=>  explode(",",'par2,code2,note')
 );
 # definice bloků s implementovanou metodou get
 $block_get= array(
@@ -391,6 +394,7 @@ jméno souboru ''prog_modul.wiki'' s dokumentací (''prog'' je jméno programu).
   'show'   =>  "Jeden řádek browse",
 #  proc
   'proc'   =>  "Procedura s kódem zapsaným jako logický výraz - středník je (c)and, svislítko je (c)or ...",
-  'func'   =>  "Funkce s kódem zapsaným v rozšířené podmnožině javascriptu"
+  'func'   =>  "Funkce s kódem zapsaným v rozšířené podmnožině javascriptu",
+  'function' =>  "Funkce s kódem zapsaným v rozšířené podmnožině javascriptu"
 );
 }

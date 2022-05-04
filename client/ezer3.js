@@ -275,10 +275,10 @@ class Block {
     o[ids[i]]= val;
     // promítni změnu do DOM pro: help
     if ( name=='help' && block.DOM_Block ) {
-      if ( block.DOM_Block instanceof jQuery )
-        block.DOM_Block.attr('title',val);
-      else
-        block.DOM_Block.set('title',val);
+      let dom= block.DOM_Block;
+      if ( !(dom instanceof jQuery) ) dom= jQuery(dom);
+      let input= dom.find('input');
+      if (input.length) input.attr('title',val);
     }
     // promítni změnu do DOM pro: popup.title (nesmí být prázdné)
     if ( name=='title' && block instanceof PanelPopup ) {
@@ -815,9 +815,9 @@ class Block {
             if ( part.reinitialize )
               part.reinitialize(desc);
           }
-          else if ( extend=='dom_only' ) { // využívá jen browse pro show
+          else if ( extend=='dom_only' && part instanceof Show ) { // využívá jen browse pro show
             part.subBlocks(desc,part.DOM,null,extend);
-            if ( part instanceof Show )
+//            if ( part instanceof Show )
               part.reinitialize();
           }
         }
@@ -3089,6 +3089,9 @@ class Proc { //extends Block {
       }
     }
     return pos;
+  }
+  subBlocks () {
+    return null;
   }
 }
 
@@ -8269,14 +8272,14 @@ class Browse extends Block {
 //os: Browse.key_id   - jméno sloupce s klíčem pro browse_load ap. (pokud není udáno, odvozuje se z použité tabulky)
 //-
     // Ezer.Block
-    this.DOM= DOM;
-    this.owner= owner;
-    this.skill= skill;
-    if ( id ) this.id= this._id= id;
-    if ( id && owner && owner.part ) owner.part[id]= this;
-    this.type= desc.type;
-    this.desc= desc;
-    Object.assign(this.options,desc.options);
+//    this.DOM= DOM;
+//    this.owner= owner;
+//    this.skill= skill;
+//    if ( id ) this.id= this._id= id;
+//    if ( id && owner && owner.part ) owner.part[id]= this;
+//    this.type= desc.type;
+//    this.desc= desc;
+//    Object.assign(this.options,desc.options);
     if ( isNaN(this.options.rows) ) {
       // rows je zadáno konstantou
       var m= [], x= Ezer.code_name(this.options.rows,m,this.owner);
@@ -8285,8 +8288,8 @@ class Browse extends Block {
       }
       else Ezer.error("ERROR RUN pro atribut rows nelze určit konstantu "+this.options.rows);
     }
-    this._coord();
-    this._check();
+//    this._coord();
+//    this._check();
     // pak bude parent(owner,desc,DOM,id,skill)
     this.options.wheel= this.options.wheel||Math.round(this.options.rows/2);
     this.bmax= Math.max(this.options.buf_rows||0,this.options.rows);

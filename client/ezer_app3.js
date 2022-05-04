@@ -1743,8 +1743,8 @@ class Application {
 //   calls - aktivační záznam (jen při volání ze struktur)
 //--s: funkce
 "use strict";
-Ezer.eval_jump= ' ';                    // pro trasování - značka přechodu podmíněnýcm skokem
-Ezer.calee= null;                       // pro hlášení chyb - procedura volající funkci či metodu
+Ezer.eval_jump= ' ';  // pro trasování - značka přechodu podmíněnýcm skokem
+Ezer.calee= null;     // pro hlášení chyb - Ezer.calee.proc je procedura volající funkci či metodu
 class Eval {
 //   code: {},
 //   context: null,
@@ -1914,6 +1914,10 @@ class Eval {
       del= ',';
     }
     tr+= ')';
+    // stopa volání
+    for (let i= this.calls.length-1; i>0; i--) {
+      tr+= ` << ${this.calls[i].proc.id}`;
+    }
     // pozice ve zdrojovém řádku
     if ( lc ) {
       var lcs= lc.split(',');
@@ -1970,7 +1974,7 @@ class Eval {
     Ezer.trace(typ.substr(0,1),tr,context,ms);
   }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  eval
-//f: Eval.eval (step,back)
+//ff: fce debug.byte_code_interpreta ()
 //      interpretuje seznam následujících kódů,
 //      step=ladění v krokovém režimu, back=návrat z přerušení
 //      každá procedura (ff,fm,...) vrací na zásobník hodnotu, která se použije
@@ -2013,6 +2017,7 @@ class Eval {
 //   + [go] - obsahuje offset pro posun čitače (bez změny a závislosti na zásobníku)
 //   + [s] - pozice ve zdrojovém textu ve tvaru  l,c
 //r: this.value - pokud bylo vytvořeno nové vlákno (volání serveru, modální dialog, ...) pak je this.simple==false a tato hodnota ještě není dokončená
+//s: funkce
   eval (step,back) {
     var eval_start= Ezer.options.to_speed ? new Date().valueOf() : 0;       // měření spotřebovaného času
     try {
@@ -2381,7 +2386,7 @@ class Eval {
               fce= Ezer.fce[cc.i];
               if ( typeof(fce)!='function' )
                 this.say_error('EVAL: '+cc.i+' není funkce','S',this.proc,last_lc);
-              Ezer.calee= this.proc;
+              Ezer.calee= this;
               val= fce.apply(this.context,args);
               Ezer.calee= null;
               if ( Ezer.to_trace && Ezer.is_trace.f ) this.trace_fce(cc.s,cc.i,this.context,args,'f',val);
@@ -2440,7 +2445,7 @@ class Eval {
                 if ( !obj || !obj._call )
                   this.say_error('EVAL: call nemá definovaný objekt','S',this.proc,last_lc);
                 fce= obj._call;
-                Ezer.calee= this.proc;
+                Ezer.calee= this;
                 args.unshift(cc.s);
                 val= fce.apply(obj,args);
               }
@@ -2453,7 +2458,7 @@ class Eval {
                     this.say_error('EVAL: '+cc.i+' není metoda '+obj.type,'S',this.proc,last_lc);
                   else
                     this.say_error('EVAL: '+cc.i+' není metoda','S',this.proc,last_lc);
-                Ezer.calee= this.proc;
+                Ezer.calee= this;
                 val= fce.apply(obj,args);
               }
               Ezer.calee= null;
@@ -2566,7 +2571,7 @@ class Eval {
             // S v - test pro switch/func; testuje vrchol zásobníku proti konstantě
             //                      při nerovnosti skočí
             case 'S': {
-              if ( cc.v ) {
+              if ( cc.v!==undefined ) {
                 val= this.stack[this.top];
                 if ( Ezer.fce.eq(cc.v,val) ) {            // při rovnosti
                   c-= cc.go-1;                            // eliminuj příkaz skoku
@@ -3389,7 +3394,7 @@ Ezer.str.if_= function (that,value) {
 // </editor-fold>
 
 // <editor-fold defaultstate="collapsed" desc="++++++++++++++++++++++++++ EZER funkce">
-// ================================================================================================> FUNKCE
+// =========================================================================================> FUNKCE
 // funkce dostávají jako argumenty hodnoty
 // Ezer.obj= {};                                   // případné hodnoty k funkcím se stavem (trail ap.)
 // Ezer.fce= {};                                // přesunuto do hlavního programu
@@ -3914,7 +3919,7 @@ Ezer.fce.cset= function () {
 Ezer.fce.chr= function (ascii) {
   return String.fromCharCode(ascii);
 };
-// ================================================================================================> . date+time
+// ====================================================================================> . date+time
 // -------------------------------------------------------------------------------------- date2sql
 //ff: fce date.date2sql (date[,wild=0])
 //      převod českého formátu data na formát MySQL
@@ -4038,7 +4043,7 @@ Ezer.fce.fdate= function (format,datetime) {
   }
   return result;
 };
-// ================================================================================================> . math
+// =========================================================================================> . math
 // -------------------------------------------------------------------------------------- is_number
 //ff: fce number.is_number (x)
 //   zjištění, zda x je číslo nebo string tvořící číslo
@@ -4663,6 +4668,28 @@ Ezer.fce.prompt= function (msg,odpoved) {
   odpoved= odpoved||'';
   return prompt(msg,odpoved);
 };
+// ----------------------------------------------------------------------------------- backtrace
+//ff: fce debug.backtrace ([depth=0])
+// vypíše trasovací informaci o vnoření volání, depth=0 zobrazí celý zásobník
+//s: funkce
+Ezer.fce.backtrace= function (n) {
+  let str= ''; 
+  n= n||999;
+  if (Ezer.calee) {
+    str+= `${Ezer.calee.proc.id}`;
+    for (let i= Ezer.calee.calls.length-1; i>0; i--) {
+      if (n>0)
+        str+= ` << ${Ezer.calee.calls[i].proc.id}`;
+      else {
+        str+= ' << ...';
+        break;
+      }
+      n--;
+    }
+  }
+  Ezer.trace('U',str);
+  return 1;
+};
 // -------------------------------------------------------------------------------------- clear
 //ff: fce debug.clear ()
 // vymaže obsah trasovacího okna
@@ -4766,7 +4793,7 @@ Ezer.fce.debug= function (o,label,depth) {
 Ezer.assert=
 Ezer.fce.assert= function(test,msg,block) {
   if ( !test ) {
-    block= block||Ezer.calee;
+    block= block||Ezer.calee.proc;
     Ezer.fce.error(msg+'<br/>',block?'S':'E',block);
     throw {level:block?'S':'E',msg:msg};
   }

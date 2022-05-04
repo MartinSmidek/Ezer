@@ -2003,7 +2003,7 @@
       $ok= get_ezer($top,$obj,$x->context->code);
       if ( $ok ) {
         $block= $obj->part->_dbg_;
-        proc($block,'_dbg_');
+        proc($block,'_dbg_','_dbg_');
       }
     }
     catch (Exception $e) {

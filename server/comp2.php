@@ -2739,7 +2739,7 @@ function gen($pars,$vars,$c,$icall,&$struct) { #trace();
   $obj= null;
   switch ( $c->expr ) {
   case 'value':
-    $code= $c->type=='this'
+    $code= $c->type=='ezer'
       ? (object)array('o'=>'t','i'=>$c->value[0])
       : (object)array('o'=>'v','v'=>$c->value);
     $code_top++;
@@ -3117,7 +3117,7 @@ function get_ezer_keys (&$keywords,&$attribs1,&$attribs2) {
 # block  :: vars 
 #         | 'use' id ':' 'form' _id [ form_enrichment ]
 #         | 'use' id ':' 'form' form
-#         | 'func' pars2 [ ':' type ] body2 
+#         | ('func'|'function') pars2 [ ':' type ] body2 
 #         | key [ id ] [':' key id] [pars|args] [coord] [code] [struct]
 # struct :: '{' part (',' part)* '}' ]
 # part   :: block | attr
@@ -3138,7 +3138,7 @@ function get_if_block ($root,&$block,&$id) {
     }
     else {
       $block= new stdClass;
-      $block->type= $key;
+      $block->type= $key=='function' ? 'func' : $key;
       $block->options= (object)array();
       if ( $block->type=='func' ) {
         $block->type= 'proc';
