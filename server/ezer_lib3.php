@@ -469,6 +469,7 @@ __EOD;
   $html_header= '';
 //   $html_header.= "\xEF\xBB\xBF";    // DOM pro UTF-8
   $app_name= strip_tags($app_name);
+  $ezer_version= substr($EZER->version,4);
   $html_header.= <<<__EOD
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="cs" dir="ltr">
@@ -487,7 +488,7 @@ __EOD;
     Ezer.obj= {}; 
     Ezer.root= '$app';
     Ezer.app_root= '$app_root';
-    Ezer.version= '{$EZER->version}';
+    Ezer.version= '$ezer_version';
     Ezer.server= '$ezer_server';
     Ezer.options= { $options_txt
     };

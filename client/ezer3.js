@@ -260,10 +260,10 @@ class Block {
     o[ids[i]]= val;
     // promítni změnu do DOM pro: help
     if ( name=='help' && block.DOM_Block ) {
-      if ( block.DOM_Block instanceof jQuery )
-        block.DOM_Block.attr('title',val);
-      else
-        block.DOM_Block.set('title',val);
+      let dom= block.DOM_Block;
+      if ( !(dom instanceof jQuery) ) dom= jQuery(dom);
+      let input= dom.find('input');
+      if (input.length) input.attr('title',val);
     }
     // promítni změnu do DOM pro: popup.title (nesmí být prázdné)
     if ( name=='title' && block instanceof PanelPopup ) {
@@ -4607,7 +4607,7 @@ class LabelDrop extends Label {
       }
       else if ( this.part && (obj= this.part.onmenu) ) {
         title= f.title||f.name;
-        var ref= Ezer.version + "/server/file_send.php?name="
+        var ref= 'ezer' + Ezer.version + "/server/file_send.php?name="
             + this.folder + (this.folder.substr(-1)=='/' ? '' : '/') + f.name
   //           + ( f.title ? "&title=" + f.title : '' )
             + "&title=" + title
@@ -4761,7 +4761,7 @@ class LabelDrop extends Label {
     // ==> . upload S:,H:
     var data= f.data.slice((n-1)*CHUNK,n*CHUNK);
     var xhr = new XMLHttpRequest();
-    xhr.open('POST', Ezer.version+'/server/file_send.php', true);
+    xhr.open('POST', 'ezer'+Ezer.version+'/server/file_send.php', true);
     xhr.setRequestHeader("EZER-FILE-NAME", encodeURIComponent(f.newname ? f.newname : f.name));
     xhr.setRequestHeader("EZER-FILE-CHUNK", n);
     xhr.setRequestHeader("EZER-FILE-CHUNKS", max);
@@ -10605,7 +10605,7 @@ class Show extends Elem {
       this.owner.DOM_head.append(
         this.DOM_th= jQuery(`
           <td class="th" title="${this.help}" style="width:${w}px">
-            <img class="resize" src="${Ezer.version+'/client/img/browse_resize.png'}">
+            <img class="resize" src="ezer${Ezer.version+'/client/img/browse_resize.png'}">
             <span>${title}</span>
         `)
       );
