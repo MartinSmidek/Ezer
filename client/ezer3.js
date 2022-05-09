@@ -278,7 +278,7 @@ class Block {
       let dom= block.DOM_Block;
       if ( !(dom instanceof jQuery) ) dom= jQuery(dom);
       let input= dom.find('input');
-      if (input.length) input.attr('title',val);
+      if (input.length) input.attr('title',val).attr('placeholder',val);
     }
     // promítni změnu do DOM pro: popup.title (nesmí být prázdné)
     if ( name=='title' && block instanceof PanelPopup ) {
