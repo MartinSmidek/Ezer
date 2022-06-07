@@ -4331,7 +4331,7 @@ function get_primary($context,&$expr) {
     if ( !get_if_delimiter('}') ) {
       $arg= null;
       while ( $ok ) {
-        get_id($id);
+        get_id_or_key($id);
         get_delimiter(':');
         get_expr4($context,$arg);
         $expr->par[$id]= $arg;
