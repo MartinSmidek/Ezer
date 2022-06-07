@@ -1640,7 +1640,7 @@ function Excel2007($desc) {
 function Excel5($desc,$gen=1,&$wb=null,$dir='',$excel='xls') {  #trace();
   global $ezer_path_root;
   // natáhneme knihovny
-//  require_once 'ezer3.1/server/vendor/autoload.php';
+  require_once 'ezer3.1/server/vendor/autoload.php';
   // pro testování a vývoj
   $list= false;
   if (!$desc || $desc=='0') {
