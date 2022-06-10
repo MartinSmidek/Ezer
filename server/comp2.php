@@ -67,7 +67,6 @@ function comp_file ($name,$root='',$_list_only='',$_comp_php=false) {  #trace();
   global $pragma_library, $pragma_syntax, $pragma_attrs, $pragma_names, $pragma_get, $pragma_prefix,
     $pragma_group, $pragma_box, $pragma_if, $pragma_switch, $pragma_nogen;
   global $call_php, $call_ezer, $call_elem;
-  global $doxygen;    // $doxygen=1 pokud se má do složky data generovat *.cpp pro doxygen
   global $app_ezers, $file_, $define, $define_used;
   
   $define_used= array();
@@ -76,7 +75,6 @@ function comp_file ($name,$root='',$_list_only='',$_comp_php=false) {  #trace();
   $file_= array_search($name,$app_ezers);
   $list_only= $_list_only;
   $comp_php= $_comp_php;
-  $doxygen= 0; // OBSOLETE ve verzi 3.2 - nepoužilo se
   $errors= 0;
   try {
     $call_php= $call_ezer= $call_elem= $includes= $including= $onloads= array();
@@ -253,14 +251,6 @@ function comp_file ($name,$root='',$_list_only='',$_comp_php=false) {  #trace();
           proc($spart,"$top.$id",$id);
         }
       }
-    }
-    // export pro doxygen
-    if ( $doxygen ) {
-      global $doxy_cpp, $doxy_ln;
-      $doxy_cpp= ''; $doxy_ln= 1;
-      doxygen($start);
-      $xname= "$ezer_path_code/$name.cpp";
-      file_put_contents($xname,$doxy_cpp);
     }
     $code= export($start,'$');
     if ( $pragma_library ) {             // doplnění o informaci, že se jedná o knihovnu
@@ -1470,7 +1460,7 @@ function gen2($pars,$vars,$c) {
     break;
 
   // -------------------------------------- id ( expr1, ... ) ? value
-  case 'call':
+  case 'call': 
     $code= array();
     $npar= count($c->par);
     if ( $c->op=='ask' ) {
@@ -1492,6 +1482,25 @@ function gen2($pars,$vars,$c) {
         $args[]= gen2($pars,$vars,$c->par[$i]);
       }
       $code= gen_caller($op,$args); 
+    }
+    elseif ( isset($c->pipe) ) {  // řetězení metod a atributů
+      $stack= '';
+      foreach ($c->pipe as $p) {
+        $func_expr= $p;
+        $op= name_split($stack.$p->op,$pars,$vars,true,$p->lc);
+        if (isset($p->par)) { // volání metody
+          $npar= count($p->par);
+          $args= array();
+          for ($i= 0; $i<$npar; $i++) {
+            $args[]= gen2($pars,$vars,$p->par[$i]);
+          }
+          $code[]= gen_caller($op,$args); // přidej test je-li to metoda
+        }
+        else { // vyzvednutí atributu
+          $code[]= gen_getter($op); // přidej test je-li to metoda
+        }
+        $stack= '*.';
+      }
     }
     else {
       $op= name_split($c->op,$pars,$vars,true,$c->lc);
@@ -1803,6 +1812,7 @@ end:
 # rozloží složené jméno na objekt {báze:{typ,jmeno,_of},atribut,selektor,relativní cesta}
 # kde báze je 
 #   L - lokální proměnná typu (e-ezer,o-object,s-scalar tj. number nebo text) 
+#   S - hodnota je na vrcholu zásobníku a je typu ezer
 #   T - E-ezer blok zadaný klíčovým slovem panel, area, form, this
 #   E - E-ezer blok zadaný složeným jménem v rámci kontextu, který není proměnnou
 #   V - - který je globální proměnnou typu e,o,s
@@ -1838,6 +1848,16 @@ function name_split($name,$pars,$vars,$call=false,$lc='') {
     $s->bas->nam= isset($vars->$id) ? $vars->$id : $pars->$id; // poloha v zásobníku
     $s->bas->_of= $_of;
   }
+  // ----------------------------------------------------------- * - na vrcholu zásobníku je objekt
+  elseif ( $id=='*' ) {
+    $type= $names[$ids[0]]->op;
+    $_of= 'e';
+    $s->bas->typ= 'S';
+    $s->bas->_of= $_of;
+    // další jméno musí být metoda nebo ukončující atribut
+    if (!preg_match("/fm|fx|o./",$names[$ids[0]]->op))
+      comp_error("CODE: řetězit lze jen metody a případně ukončit atributem, '$ids[0]' nevyhovuje",$func_expr->lc);
+  }
   // ----------------------------------------------------------- F - knihovní funkce nebo metoda
   elseif ( isset($names[$id]) ) { 
     $_of= '';
@@ -1846,7 +1866,7 @@ function name_split($name,$pars,$vars,$call=false,$lc='') {
     $s->bas->_of= $_of;
     $s->tras= 'F';
     $s->fce= $id;
-    if ( $ids || !$call )
+    if ( count($ids) || !$call )
       comp_error("CODE: chybné volání funkce '$id'",$func_expr->lc);
   }
   // ----------------------------------------------------------- T - panel, area, form, this
@@ -2012,7 +2032,7 @@ function name_split($name,$pars,$vars,$call=false,$lc='') {
       $del= '.';
     }
   }
-  if ( $ids )
+  if ( count($ids) )
     comp_error("CODE: nepochopená část '$ids[0]' v '$name'",$func_expr->lc);
   // definice tras - typ.rel.atr.sel
   $s->_of= $_of;
@@ -2061,6 +2081,8 @@ function gen_caller($s,$pars) {
     case 'L':
       $code[]= (object)array('o'=>'p','i'=>$s->bas->nam);
       break;
+    case 'S':
+      break;
     case 'T':
       $code[]= $s->bas->nam=='t' ? (object)array('o'=>'t') : (object)array('o'=>'t','i'=>$s->bas->nam); 
       break;
@@ -2093,6 +2115,8 @@ function gen_getter($s,$index=null,$ref=false) {
   switch ($s->bas->typ) {
   case 'L':
     $code[]= (object)array('o'=>'p','i'=>$s->bas->nam);
+    break;
+  case 'S':
     break;
   case 'T':
     $code[]= $s->bas->nam=='t' ? (object)array('o'=>'t') : (object)array('o'=>'t','i'=>$s->bas->nam); 
@@ -3123,7 +3147,7 @@ function get_ezer_keys (&$keywords,&$attribs1,&$attribs2) {
 # part   :: block | attr
 function get_if_block ($root,&$block,&$id) {
 //                                                 debug($root,"get_if_block",(object)array('depth'=>2));
-  global $doxygen, $pos, $head;
+  global $pos, $head;
   global $blocs2, $blocs3, $specs, $last_lc;
   global $pragma_syntax, $pragma_group, $pragma_box, $call_php;
   global $errors; if ( $errors ) return false;
@@ -3206,7 +3230,7 @@ function get_if_block ($root,&$block,&$id) {
                 }
                 get_if_delimiter(',');
               }
-              if ( $doxygen ) $lc_= $pos[$head];
+              $lc_= $pos[$head];
               get_delimiter('}');
             
             }
@@ -3242,7 +3266,7 @@ function get_if_block ($root,&$block,&$id) {
                                                                      $block->options->code= 'proc';
                                                                      $block->options->name= $id;
                                                                      $block->vars= $vars;
-                                                     if ( $doxygen ) $block->lc_= $lc_;
+                                                                     $block->lc_= $lc_;
                                                                      $block->file_= $file_;
                                                        if ( $prior ) $block->options->prior= $prior;
         }
@@ -3252,7 +3276,7 @@ function get_if_block ($root,&$block,&$id) {
                                                                      $block->options->type= $type;
                                                                      $block->options->name= $id;
                                                                      $block->vars= $vars;
-                                                     if ( $doxygen ) $block->lc_= $lc_;
+                                                                     $block->lc_= $lc_;
                                                                      $block->file_= $file_;
                                                        if ( $prior ) $block->options->prior= $prior;
         }
@@ -3344,13 +3368,13 @@ function get_if_block ($root,&$block,&$id) {
               }
               get_if_delimiter(',');
             }
-            if ( $doxygen ) $lc_= $pos[$head];
+            $lc_= $pos[$head];
             get_delimiter('}');
           }
           $ok= true;
         }
         $block->_lc= $lc;
-        if ( $doxygen && $lc_ ) $block->lc_= $lc_;
+        if ( $lc_ ) $block->lc_= $lc_;
         $block->id= $id;
         // analýza select.auto - přidání par.fce do seznamu volaných php-funkcí
         if ( $block->type=='select.auto' ) {
@@ -4656,43 +4680,76 @@ function get_primary($context,&$expr) {
   return $ok;
 }
 # -------------------------------------------------------------------------------------------- call2
-# call2   :: id  args                           --> {expr:call,op:id,par:G(args),value:$valued}
-#          | 'php' '.' id args                  --> {expr:call,op:ask,par:G("id")+G(args),value:$valued}
+# call2   :: 'php' '.' id args                  --> {expr:call,op:ask,par:G("id")+G(args),value:$valued}
 #          | 'js' '.' id args                   --> {expr:call,op:apply,par:G("id")+G(args),value:$valued}
+#          | id  args                           --> {expr:call,op:id,par:G(args),value:$valued}
+#          | id  args (('.' id args )+          --> {expr:call,pipe:[{op:id,par:G(args)],value:$valued}}
+#                      | '.' id )               --> {expr:call,pipe:[ ... {op:id],value:$valued}}
 #                                                   valued=0 => clear stack
 # args    :: '(' [ expr4 ( ',' expr4 )* ] ')'   --> [G(expr),...]
 function get_call2_id($context,&$expr,$id,$valued) {
   global $last_lc;
   // volání funkce $id s parametry
   # id '(' ')' | id '(' expr4 ( ',' expr4 )* ')' --> {expr:call,op:id,par:[G(expr4),...]}
-  $ok= true;
-  $expr= (object)array('expr'=>'call','op'=>$id,'lc'=>$last_lc,'par'=>array(),'value'=>$valued);
+  $expr= (object)array('expr'=>'call','value'=>$valued);
   $fce= explode('.',$id);
+  $par= array();
   if ( $fce[0]=='php' ) { // funkce na serveru
     if ( $fce[2] ) comp_error("SYNTAX: jméno funkce v PHP nesmí být složené ");
-    $expr->op= 'ask';
-    $expr->par[]= (object)array('expr'=>'value','value'=>$fce[1],'type'=>'s','lc'=>$last_lc);
+    $op= 'ask';
+    $par[]= (object)array('expr'=>'value','value'=>$fce[1],'type'=>'s','lc'=>$last_lc);
   }
   elseif ( $fce[0]=='js' ) { // funkce javascriptu
     if ( $fce[2] ) comp_error("SYNTAX: jméno funkce v javascriptu nesmí být složené ");
-    $expr->op= 'apply';
-    $expr->par[]= (object)array('expr'=>'value','value'=>$fce[1],'type'=>'s','lc'=>$last_lc);
+    $op= 'apply';
+    $par[]= (object)array('expr'=>'value','value'=>$fce[1],'type'=>'s','lc'=>$last_lc);
   }
   else {
-    $expr->op= $id; // normální volání funkce
+    $op= $id; // normální volání funkce
   }
   if ( !get_if_delimiter(')') ) {
+    $ok= true;
     while ( $ok ) {
       $arg= null;
       get_expr4($context,$arg);
-      $expr->par[]= $arg;
+      $par[]= $arg;
       $ok= get_if_delimiter(',');
     }
     get_delimiter(')');
   }
+  if ( look_delimiter('.')) {  // zřetězení metod
+    $call= (object)array('op'=>$op,'par'=>$par);
+    $expr->pipe= array($call);
+    while (get_if_delimiter('.')) {
+      get_id($op);
+      $par= array();
+      if ( get_if_delimiter('(') ) {
+        if ( !get_if_delimiter(')') ) {
+          $ok= true;
+          while ( $ok ) {
+            $arg= null;
+            get_expr4($context,$arg);
+            $par[]= $arg;
+            $ok= get_if_delimiter(',');
+          }
+          get_delimiter(')');
+        }
+      }
+      else {
+        $call= (object)array('op'=>$op); // atribut
+        $expr->pipe[]= $call;
+        break;
+      }
+      $call= (object)array('op'=>$op,'par'=>$par);
+      $expr->pipe[]= $call;
+    }
+  }
+  else {
+    $expr->op= $op;
+    $expr->par= $par;
+  }
   return true;
 }
-
 
 # ================================================================================================== PROC code
 # body  :: [ 'var' varlist ] code
