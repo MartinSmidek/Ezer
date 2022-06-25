@@ -583,6 +583,27 @@
     $y->key_id= $key_id= isset($as[1]) && $as[1] ? trim($as[1]).'.'.$x->key_id : $x->key_id;
 //     $cond= stripslashes(utf2win($x->cond));
     $cond= stripslashes($x->cond);
+    // seznam čtených polí
+    foreach ($x->fields as $desc) {
+      if ( isset($desc->expr) ) {
+        $f= $desc->id;
+        $fields.= "$del{$desc->expr} as {$desc->id}";
+      }
+      else {
+        $fld= isset($x->joins) && strpos($desc->field,'.')===false
+          ? "$del{$table}.{$desc->field}"
+          : "$del{$desc->field}";
+        if ( isset($desc->id) ) {
+          $f= $desc->id;
+          $fields.= "$fld as {$desc->id}";
+        }
+        else {
+          $f= $desc->field;
+          $fields.= $fld;
+        }
+      }
+      $del= ',';
+    }
     // konstrukce JOIN
     $joins= '';
     if ( isset($x->joins) ) {
@@ -604,7 +625,7 @@
         $joins.= " $join";
       }
     }
-    $qry= "SELECT $key_id AS _klice_ FROM $table $joins WHERE $cond ";
+    $qry= "SELECT $key_id AS _klice_,$fields FROM $table $joins WHERE $cond ";
     if ( isset($x->group)  && $x->group )  $qry.= " GROUP BY {$x->group}";
     if ( isset($x->having) && $x->having ) $qry.= " HAVING {$x->having}";
     if ( isset($x->order)  && $x->order )  $qry.= " ORDER BY {$x->order}";
