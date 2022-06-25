@@ -517,12 +517,13 @@ function dbg_oncontextmenu(line,op) {
 function dbg_find_block(name,l,c) {
   var find_block, find_elem, lc_code, // vnitřní funkce
       block_file, block= null, elem= null, 
-//      elems= [
+      elems= [
 //        'var','const','proc',
-//        'label','radio','check',
-//        'field','field.list','field.date',
-//        'select','select.map','select.map0','select.auto'
-//      ],
+        'button',
+        'label','radio','check',
+        'field','field.list','field.date',
+        'select','select.map','select.map0','select.auto'
+      ],
       msg= '';
   // -------------------------------- lc code
   lc_code= function(b_lc) { 
@@ -579,7 +580,7 @@ function dbg_find_block(name,l,c) {
             }
           }
         }
-        else if ( /*elems.includes(b.type) &&*/ lc_inside(b) ) {
+        else if ( elems.includes(b.type) && lc_inside(b) ) {
           // našli jsme element ... projdeme případné složky
           if ( b.part ) {
             for (let pi in b.part) {
