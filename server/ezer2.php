@@ -1568,6 +1568,7 @@
     $text= $y->exists ? file_get_contents($fname) : '';
 //    $y->app= $json->decode($text);
     $y->app= json_decode($text);
+    if (!$y->app) die("'$text' cannot be load");
     break;
   # ------------------------------------------------------------------------------------------------ source_line
   # vrátí zdrojový řádek souboru x.file x.lc
@@ -2114,6 +2115,10 @@
         # ------------------------------------------------------------------------------------------
         # v $load je přečtený kód, který je třeba vložit do $part->block
         # zkontrolujeme ale verzi jádra
+        if (!$loads) {
+          $y->error= "INCLUDE - soubor $app/$ename nelze načíst";  
+          break;
+        }
         $ev= isset($loads->info->ezer_version) ? $loads->info->ezer_version : 'neznámá';
         if ($ev!=$ezer_version) {
           $y->error= "INCLUDE - soubor $app/$ename je pro verzi ezer $ev - je třeba jej přeložit externě";  
