@@ -5533,10 +5533,10 @@ Ezer.fce.DOM.confirm= function (str,continuation,butts,options) {
       .click( e => 
           stop(options.input!==undefined ? (butt.val ? input[0].value : '') : butt.val) );
     if ( first_val===null ) {
-      first_val= options.input!==undefined ? '' : butt.val;
+      first_val= options.input==undefined ? '' : butt.val;
       first_but= but;
     }
-    last_val= options.input!==undefined ? '' : butt.val;
+    last_val= options.input==undefined ? '' : butt.val;
   }
   // ukaž dialog
   mask.fadeIn(Ezer.options.fade_speed);
@@ -5550,8 +5550,10 @@ Ezer.fce.DOM.confirm= function (str,continuation,butts,options) {
     .keyup( e => { 
       e.preventDefault();
       e.stopPropagation();
-      if (e.keyCode == 13) stop(first_val); 
-      else if (e.keyCode == 27) stop(last_val); 
+      if (e.keyCode == 13) 
+        stop(options.input!==undefined ? input[0].value : first_val); 
+      else if (e.keyCode == 27) 
+        stop(last_val); 
       return false;
     })
     ;
