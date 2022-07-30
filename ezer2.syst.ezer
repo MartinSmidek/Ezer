@@ -25,16 +25,26 @@ panel cis [,,,*] {type:'right', title:'Číselníky', _sys:'cis', skill:'m|m'
       item a {title:'[fa-question] číselník aplikace',                par:°{level:'a',db:''} }
       item g {title:'[fa-question-circle] číselník skupiny aplikací', par:°{level:'g',db:'ezer_group'} }
       item k {title:'[fa-cogs] číselník jádra Ezer',                  par:°{level:'k',db:'ezer_kernel'} }
-      proc onclick(i) {
-        u.fill(replace_fa(conc(i.owner.title,' - ',i.title)));
-        mklice.lst.browse_init; mklic.init;
-        klice.lst.browse_init; klic.init;
-        function('block','new_db',"return remap_fields_db(block,new_db);",mklice.lst,i.par.db);
-        function('block','new_db',"return remap_fields_db(block,new_db);",mklic,i.par.db);
-        function('block','new_db',"return remap_fields_db(block,new_db);",klice.lst,i.par.db);
-        function('block','new_db',"return remap_fields_db(block,new_db);",klic,i.par.db);
-        reload_meta;
+      func onclick(i:ezer) {
+        u.header(i);
+        mklice.lst.browse_init(); mklic.init();
+        klice.lst.browse_init(); klic.init();
+        js.remap_fields_db(mklice.lst,i.par.db);
+        js.remap_fields_db(mklic,i.par.db);
+        js.remap_fields_db(klice.lst,i.par.db);
+        js.remap_fields_db(klic,i.par.db);
+        reload_meta();
       }
+//      proc onclick(i) {
+//        u.fill(replace_fa(conc(i.owner.title,' - ',i.title)));
+//        mklice.lst.browse_init; mklic.init;
+//        klice.lst.browse_init; klic.init;
+//        function('block','new_db',"return remap_fields_db(block,new_db);",mklice.lst,i.par.db);
+//        function('block','new_db',"return remap_fields_db(block,new_db);",mklic,i.par.db);
+//        function('block','new_db',"return remap_fields_db(block,new_db);",klice.lst,i.par.db);
+//        function('block','new_db',"return remap_fields_db(block,new_db);",klic,i.par.db);
+//        reload_meta;
+//      }
     }
   }
   var druh_cond: text
@@ -179,7 +189,9 @@ panel cis [,,,*] {type:'right', title:'Číselníky', _sys:'cis', skill:'m|m'
   # ------------------------------------------------------------------------ _tit
   form _tit [,,*,30] {
     label head [0,0,*,31] { title:'' }
-    proc fill(h) { [ h; head.set(replace_fa(conc("<div class='karta'>",h,"</div>"))) ]; }
+    func header(i:ezer) { 
+      head= replace_fa(`<div class='karta'>${i.owner().title} - ${i.title}</div>`);
+    }
   }
 }
 # ========================================================================================> AKTIVITY
