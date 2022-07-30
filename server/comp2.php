@@ -760,6 +760,7 @@ function proc(&$c,$name,$block) { #trace();
 //    debug($c,"$block/$id");
     $val= $typ= $const= null; 
     eval_expr($desc,$val,$typ,$const);
+    $typ= strtr($typ,array('s'=>'text','n'=>'number','o'=>'object','a'=>'array'));
     if ($c->type=='const') {
       $c->_of= $typ;
       if ($const) {
@@ -773,7 +774,7 @@ function proc(&$c,$name,$block) { #trace();
     elseif ($c->type=='var') {
       $c->_of= $typ;
       if ($const) {
-        $c->options->value= gettype($val)=='object' ? $val->object : $val;
+        $c->options->value= /*gettype($val)=='object' ? $val->object :*/ $val;
 //        unset($c->options->expr);
       }
       else comp_error("CODE počáteční hodnota proměnné musí být určitelná během kompilace ");
