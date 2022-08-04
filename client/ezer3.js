@@ -7186,12 +7186,14 @@ class Select extends Elem {
 //   delimiters - řetězec definující 2 znaky použité jako oddělovače
 //   values - 1:funkce key,_save,_load bude vracet/číst místo klíče hodnotu
 //   order - 1: řazení podle list, 0: (default) podle klíče
+//r: první klíč z list
   selects(list,delimiters,values,order) {
     this._values= values?1:0;
     this.Items= {};
     this.data_order= [];
     this.Css= {};               // lastCss necháme kvůli jeho odstranění
-    var del1= ',', del2= ':';
+    var del1= ',', del2= ':',
+        first_key= 0;
     if ( delimiters ) {
       del1= delimiters[0]||',';
       del2= delimiters[1]||':';
@@ -7204,19 +7206,22 @@ class Select extends Elem {
         n++;
         this.data_order[n]= desc[1]||n;
       }
-      if ( desc.length==3 ) {
+      if ( desc.length==3 ) {             // desc = hodnota:klíč:css
         this.Items[desc[1]]= desc[0];
         this.Css[desc[1]]= desc[2];
+        if (!first_key) first_key= desc[1];
       }
-      else if ( desc.length==2 ) {
+      else if ( desc.length==2 ) {        // desc = hodnota:klíč
         this.Items[desc[1]]= desc[0];
+        if (!first_key) first_key= desc[1];
       }
-      else {
+      else {                              // desc = hodnota
         this.Items[i]= val;
+        if (!first_key) first_key= i;
       }
     }
     this.init(); // místo pouhého this.DOM_addItems();
-    return true;
+    return first_key;
   }
 // ------------------------------------------------------------------------------------ init
 //fm: Select.init ([init_values=0])
