@@ -1,5 +1,41 @@
 <?php # (c) 2007-2009 Martin Smidek <martin@smidek.eu>
 /** =====================================================================================> CALLGRAPH */
+# -------------------------------------------------------------------------------------- doc metrics
+# seznam Ezer modulů, vytvoří globální struktury pro debugger, pokud je $info_only nevrací text
+# $ezer_dbg_names= [ name: {typ:'php', php:file}, ... ];
+function doc_metrics($par) { trace();
+  global $ezer_root, $ezer_dbg_names;
+  $ezer_dbg_names= array();
+  $html= "<div class='karta'>Metriky Ezer modulů aplikace '$ezer_root'</div>";
+  $ezers= doc_ezer_list();
+  $html.= "<dl>";
+  $s_func= $s_proc= 0; 
+  $h= '';
+  foreach($ezers as $ezer=>$desc) {
+    $info= $desc->info;
+    if ($info) {
+      $s_func+= $func= $info->metrics->func; 
+      $s_proc+= $proc= $info->metrics->proc;
+      $pfunc= $func+$proc ? round(100*$func/($func+$proc)) : '-';
+      $color= $pfunc==100 ? 'green' : ($pfunc>50 ? 'blue' : 'red'); 
+      $h.= "<dt><b  style='color:$color'>$ezer.ezer</b></dt>";
+      $h.= "<dd>%func= $pfunc% (#func= $func, #proc= $proc)</dd>";
+    }
+    else {
+      $h.= "<dt><b  style='color:grey'>$ezer.ezer</b></dt>";
+      $h.= "<dd>... chybí překlad</dd>";
+    }
+  }
+  // celkem
+  $pfunc= $s_func+$s_proc ? round(100*$s_func/($s_func+$s_proc)) : '-';
+  $color= $pfunc==100 ? 'green' : ($pfunc>50 ? 'blue' : 'red'); 
+  $html.= "<dt><b  style='color:$color'>CELKOVĚ</b></dt>";
+  $html.= "<dd>%func= $pfunc% (#func= $s_func, #proc= $s_proc)</dd>";
+  $html.= "<hr>$h";
+  $html.= "</dl>";
+  $html.= "</div>";
+  return $html;
+}
 # ----------------------------------------------------------------------------------------- doc ezer
 # seznam Ezer modulů, vytvoří globální struktury pro debugger, pokud je $info_only nevrací text
 # $ezer_dbg_names= [ name: {typ:'php', php:file}, ... ];

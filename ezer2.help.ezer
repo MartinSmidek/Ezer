@@ -71,8 +71,15 @@ panel str [,,770,] {type:'right', title:'Struktura', _sys:'*', skill:'m'
         cg.Init();
       }
     }
+    menu obs {title:'Metriky kódu',type:'group'
+      item {title:'Ezer moduly'}
+      func onclick (i:ezer) { 
+        clear(); 
+        u.fill2(php.doc_metrics(i.par));  
+      }
+    }
   }
-  use u: form f
+  use u: form f [12,4,,]
   func str_click(id) { echo(id); cg.show(id) }
 # ---------------------------------------------------- Call graf
   panel cg [0,0,300,300] { type:'popup' title:'call graf'
@@ -608,7 +615,7 @@ panel faq [,,770,] {type:'right', title:'Tvorba nápovědy', _sys:'*', skill:'ah
 }
 # ------------------------------------------------------------------------------------------------ f
 # formuláře pro levostranné menu
-form f [4,10,*,50] {
+form f [,,*,50] {
   proc fill(txt) { hresult.set(conc("<div id='Content'>",txt,"</div>")); }
   proc fill2(txt) { hresult.set(txt); }
   proc tit(h) { [ h; hresult.set(replace_fa(conc("<div class='karta'>",h,"</div>"))) ]; }

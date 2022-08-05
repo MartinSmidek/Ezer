@@ -67,8 +67,9 @@ function comp_file ($name,$root='',$_list_only='',$_comp_php=false) {  #trace();
   global $pragma_library, $pragma_syntax, $pragma_attrs, $pragma_names, $pragma_get, $pragma_prefix,
     $pragma_group, $pragma_box, $pragma_if, $pragma_switch, $pragma_nogen;
   global $call_php, $call_ezer, $call_elem;
-  global $app_ezers, $file_, $define, $define_used;
+  global $app_ezers, $file_, $define, $define_used, $metrics;
   
+  $metrics= (object)array('func'=>0,'proc'=>0);
   $define_used= array();
   $ezer_path_code= "$ezer_path_root/$root/code$ezer_version";
   comp_ezer_list(); // naplní $app_ezers
@@ -271,9 +272,14 @@ function comp_file ($name,$root='',$_list_only='',$_comp_php=false) {  #trace();
     $loads->code= $code;
                                                         if ($_GET['trace']==4) debug($loads,"kód");
     // informace o kódu pro informaci o struktuře aplikace
-    $loads->info= (object)array('php'=>$call_php,'ezer'=>$call_ezer,'ezer_version'=>$ezer_version,
+    global $metrics;
+    $loads->info= (object)array(
+        'php'=>$call_php,'ezer'=>$call_ezer,
+        'ezer_version'=>$ezer_version,
         // hodnotu appl_version vložíme jen pokud bylo použito
-        'appl_version'=>isset($define_used['appl_version'])?$define['appl_version']:'');
+        'appl_version'=>isset($define_used['appl_version'])?$define['appl_version']:'',
+        'metrics'=>$metrics
+);
     $loads->info->elem= $call_elem;
 //                                                        debug($call_elem,'call elem');
     $json_loads= json_encode($loads,JSON_HEX_AMP);
@@ -698,7 +704,7 @@ function link_code(&$c,$name,$isroot,$block) {
 # volá kompilátor procedur a převádí relativní na absolutní cesty pro table, map, report
 # $context= [id=>objekt,...]
 function proc(&$c,$name,$block) { #trace();
-  global $trace_me;
+  global $trace_me, $metrics;
   global $context, $procs, $error_code_lc, $names, $full, $call_elem, $call_ezer;
 //                                                 if ( $name='dbg' || $name=='$.test.fce.dbg._d.test' ) debug($context,"proc($name)",(object)array('depth'=>3));
   if ( $c->type=='proc' ) {
@@ -709,10 +715,14 @@ function proc(&$c,$name,$block) { #trace();
     $procs[]= $desc;
     $PROC= strtoupper($c->options->code);
     try {
-      if ( $c->options->code=='proc')
+      if ( $c->options->code=='proc') {
         gen_proc($c,$desc,$name);
-      elseif ( $c->options->code=='func')
+        $metrics->proc++;
+      }
+      elseif ( $c->options->code=='func') {
         gen_func($c,$desc,$name);
+        $metrics->func++;
+      }
       else comp_error("CODE: '$name' nemá jasný typ kódu");
       $c->par= $desc->par;
       $c->npar= count((array)$c->par);
@@ -3091,6 +3101,7 @@ function get_ezer (&$top,&$top2,$dbg=false) {
           break;
         }
         else {
+          if ( !isset($top) ) comp_error("SYNTAX bad ");
           if ( !isset($top->part) ) $top->part= (object)array();
           if ( is_array($block) ) {
             foreach($block as $idx=>$blockx) {
@@ -3962,7 +3973,7 @@ function get_if_comma_id (&$id) {
 function get_if_id (&$id) {
   global $head, $lex, $typ, $pos, $last_lc;
   $ok= $typ[$head]=='id'
-    || ($typ[$head]=='key' && $lex[$head]=='form')
+    || ($typ[$head]=='key' && ($lex[$head]=='form' || $lex[$head]=='function'))
     || $typ[$head]=='del' && $lex[$head]=='*';
   if ( $ok ) {
     $id= $lex[$head];
@@ -4572,8 +4583,9 @@ function get_expr17($context,&$expr) {
 #          | value                              --> {expr:value,value:v,type:t}
 #          | '(' expr4 ')'                      --> G(expr4)
 #          | '&' id_this                        --> {expr:ref,ref:G(id_this)}
-#          | id '[' expr4 ']'                   --> {expr:index,name:id,index:G(expr4)}
 #          | id_this                            --> G(id_this)
+#          | '&' id '[' expr4 ']'               --> {expr:index,name:id,index:G(expr4)}
+#          | id '[' expr4 ']'                   --> {expr:index,name:id,index:G(expr4)}
 #          | json                               --> G(json)
 #          | array                              --> G(array)
 # id_this :: id | 'this'                        --> {expr:name,name:id} | {expr:name,name:this}
