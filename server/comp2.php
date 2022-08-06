@@ -943,7 +943,7 @@ function eval_expr ($c,&$val,&$typ,&$const,$depth=0) { //trace();
     case 'name':
       $name= $c->name;
       if ( $name=='*' || $name=='no') {
-        $val= '*';
+        $val= $name;
         $typ= 'i';        
         $const= true;
         break;
