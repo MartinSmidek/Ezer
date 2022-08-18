@@ -357,6 +357,8 @@ div.MenuGroup3 .disabled3 i.fa-darkviolet { color:grey
 .ContextMenu3 li.disabled3 { color:#ccc; font-style:italic; }
 .ContextMenu3 li.disabled3:hover { background-color:#eee; }
 .ContextMenu3 li span { float: right; font-style: italic; }
+.ContextMenu3 i.fa-red { color:red }
+.ContextMenu3 .disabled3 i.fa-red { color:grey }
 .ContextMenu3 .fa-fw { width: 17px; text-align: left; }
 .ContextFocus3 { background-color:#ffa !important;
 }
