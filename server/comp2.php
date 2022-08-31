@@ -4703,7 +4703,7 @@ function lex_analysis2 ($dbg=false) {
     }
     switch ( $tp ) {
     case 'blank':
-      if ($skip) continue;
+      if ($skip) continue 2;
       if ( $inside_template ) {
         $typ[$k]= 'str'; $lex[$k]= $t[1]; $pos[$k]= "{$t[2]},{$t[3]}"; $k++;
       }
@@ -4742,7 +4742,7 @@ function lex_analysis2 ($dbg=false) {
       }
       break;
     case 'id':
-      if ($skip) continue;
+      if ($skip) continue 2;
       $ident= $t[1];
       if ( $ident=='°' ) {              // příznak objektové konstanty
         $tp= 'del';
@@ -4768,22 +4768,22 @@ function lex_analysis2 ($dbg=false) {
       $typ[$k]= $tp; $lex[$k]= $ident; $pos[$k]= "{$t[2]},{$t[3]}"; $k++;
       break;
     case 'del':
-      if ($skip) continue;
+      if ($skip) continue 2;
       if ( $t[1]=='`' ) {
         $inside_template= !$inside_template;
       }
     case 'num':
-      if ($skip) continue;
+      if ($skip) continue 2;
       $typ[$k]= $tp; $lex[$k]= $t[1]; $pos[$k]= "{$t[2]},{$t[3]}"; $k++;
       break;
     case 'str':
-      if ($skip) continue;
+      if ($skip) continue 2;
       $lex[$k]= $t[1];
       $typ[$k]= $inside_template && preg_match('/^\w+$/',$t[1]) ? 'id' : $tp;
       $pos[$k]= "{$t[2]},{$t[3]}"; $k++;
       break;
     default:
-      if ($skip) continue;
+      if ($skip) continue 2;
       $head= $t[2]; $pos[$t[2]]= "{$t[2]},{$t[3]}";
       comp_error("LEXICAL '{$t[1]}' je nedovolený znak");
       break;
