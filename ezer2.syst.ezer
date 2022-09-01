@@ -13,6 +13,59 @@ proc reaccess() { #==> reaccess - změna
   users.refresh
 }
 
+# ===================================================================================== APLIKACE
+panel apl {type:'right', title:'[fa-download] Aplikace', _sys:'str', skill:'m'
+  menu m {type:'left', format:'f+'
+    menu { title:'GitHub',type:'group',skill:'m', active:no
+      item { title:'[fa-info] Aplikace: git status'     par:{folder:'.',op:'cmd',cmd:'status'}}
+      item { title:'[fa-file-text-o] Aplikace: git log' par:{folder:'.',op:'cmd',cmd:'log'}}
+      item { title:'[fa-gear] Aplikace: git pull'       par:{folder:'.',op:'cmd',cmd:'pull'}}
+      item { title:'[fa-gear] Aplikace: git fetch ...'    help:"po fetch>git reset --hard origin/master"
+                                                        par:{folder:'.',op:'cmd',cmd:'fetch'}}
+      // ezer
+      item { title:'[fa-info] Ezer: git status'     par:{folder:'ezer',op:'cmd',cmd:'status'}}
+      item { title:'[fa-file-text-o] Ezer: git log' par:{folder:'ezer',op:'cmd',cmd:'log'}}
+      item { title:'[fa-gears] Ezer: git pull'      par:{folder:'ezer',op:'cmd',cmd:'pull'}}
+      item { title:'[fa-gears] Ezer: git fetch ...'   help:"po fetch>git reset --hard origin/..."
+                                                    par:{folder:'ezer',op:'cmd',cmd:'fetch'}}
+      // skins
+      item { title:'[fa-info] Skins: git status'     par:{folder:'skins',op:'cmd',cmd:'status'}}
+      item { title:'[fa-file-text-o] Skins: git log' par:{folder:'skins',op:'cmd',cmd:'log'}}
+      item { title:'[fa-gears] Skins: git pull'      par:{folder:'skins',op:'cmd',cmd:'pull'}}
+      item { title:'[fa-gears] Skins: git fetch ...'   help:"po fetch>git reset --hard origin/master"
+                                                     par:{folder:'skins',op:'cmd',cmd:'fetch'}}
+      func onclick (i:ezer) {  
+        info.header(i); 
+        if (sys('ezer','server'))  // test na lokální běh na NTB
+          info.append(php.git_exec(i.par));
+        else
+          alert('nelze na vývojovém serveru')  
+      }
+    }
+  }
+  use info: form _right [12,4,,] 
+  # ----------------------------------------------------------------------------------------- _right
+  # formulář pro levostranné menu s postupným zápisem a spinnerem
+  form _right [,,*,50] {
+    label head [0,0,,50]  { title:' ', style:'width:calc(100% - 24px)' }
+    label note [0,36,,] { title:' ', style:'width:calc(100% - 24px)' }
+    func header(i:ezer) { var i_owner:ezer
+      clear(); i_owner= i.owner();
+      head= replace_fa(`<div class='karta'>${i_owner.title} - ${i.title}</div>`);
+      note= '';
+    }
+    func fill(x,y) {
+      if (x) head= `<div class='karta'>${replace_fa(x)}</div>`;
+      if (y) note= y
+    }
+    func append(y) {
+      if (y) note= conc(note,y)
+    }
+    label working [348,256,64,64] { title:"<img src='aby/img/spinner.gif'>",
+      style:'z-index:999', format:'n' }
+    func work(on) { working.display(on) }
+  }
+}
 # =======================================================================================> ČÍSELNÍKY
 panel cis [,,,*] {type:'right', title:'Číselníky', _sys:'cis', skill:'m|m'
   use u: form _tit [12,4,,]
@@ -590,7 +643,8 @@ panel needs [,,770,] {type:'right', title:'Požadavky', _sys:'poz', skill:'sp'
                                             WHEN typ=0 OR (cast=0 AND wiki=0) OR kdy_zadal='0000-00-00' THEN 999
                                             WHEN kdy_zacal!='0000-00-00' AND kdy_skoncil='0000-00-00' THEN 3
                                             WHEN kdy_skoncil!='0000-00-00' AND kdy_kontrola='0000-00-00' THEN 4
-                                            WHEN kdy_kontrola!='0000-00-00' THEN 5 ELSE 0 END" }
+                                            WHEN kdy_kontrola!='0000-00-00' THEN 5 ELSE 0 END" 
+      }
       show barva2   [0,0,10,]           { expr:"CASE WHEN je_diskuse THEN 1 WHEN diskuse='' THEN 0 ELSE 2 END"}
       show typ          [,,54,] { title:'typ', data:t.typ, map_pipe:cis_s_todo_typ.zkratka, format:'q#s' }
       show cast         [,,60,] { title:'část', data:t.cast, map_pipe:cis_s_todo_cast.zkratka, format:'q#s' }
