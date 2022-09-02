@@ -1137,6 +1137,7 @@ class Block {
         }
       }.bind(this),
       error: function(xhr) {
+        Ezer.trace('u',xhr.responseText);
         Ezer.error('SERVER failure (2)','C');
       }
     });

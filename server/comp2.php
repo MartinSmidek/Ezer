@@ -705,7 +705,7 @@ function link_code(&$c,$name,$isroot,$block) {
 # $context= [id=>objekt,...]
 function proc(&$c,$name,$block) { #trace();
   global $trace_me, $metrics;
-  global $context, $procs, $error_code_lc, $names, $full, $call_elem, $call_ezer;
+  global $context, $procs, $error_code_lc, $call_elem;
 //                                                 if ( $name='dbg' || $name=='$.test.fce.dbg._d.test' ) debug($context,"proc($name)",(object)array('depth'=>3));
   if ( $c->type=='proc' ) {
     $trace_me= $_GET['trace']==1; //&& $c->id=='xonclick';
@@ -717,11 +717,11 @@ function proc(&$c,$name,$block) { #trace();
     try {
       if ( $c->options->code=='proc') {
         gen_proc($c,$desc,$name);
-        $metrics->proc++;
+        if ($metrics) $metrics->proc++;
       }
       elseif ( $c->options->code=='func') {
         gen_func($c,$desc,$name);
-        $metrics->func++;
+        if ($metrics) $metrics->func++;
       }
       else comp_error("CODE: '$name' nemá jasný typ kódu");
       $c->par= $desc->par;
@@ -749,9 +749,6 @@ function proc(&$c,$name,$block) { #trace();
       if (!isset($call_elem[$func_name_lc]))
         $call_elem[$func_name_lc]= array();
       $call_elem[$func_name_lc][]= $elem_name_lc;
-//      // případně doplň call_ezer
-//      if (!isset($call_ezer[$func_name_lc]))
-//        $call_ezer[$func_name_lc]= array();
     }
   }
   else if ( $c->part ) {
@@ -766,8 +763,6 @@ function proc(&$c,$name,$block) { #trace();
     $error_code_lc= $c->_lc;
     // nejprve vyřešíme hodnoty atributů, ale vynecháme konstanty kvůli typu object                 TODO
     if (in_array($c->type,array('proc'))) continue;
-//    if (in_array($c->type,array('const','var','proc'))) continue;
-//    debug($c,"$block/$id");
     $val= $typ= $const= null; 
     eval_expr($desc,$val,$typ,$const);
     $typ= strtr($typ,array('s'=>'text','n'=>'number','o'=>'object','a'=>'array'));
@@ -784,15 +779,13 @@ function proc(&$c,$name,$block) { #trace();
     elseif ($c->type=='var') {
       $c->_of= $typ;
       if ($const) {
-        $c->options->value= /*gettype($val)=='object' ? $val->object :*/ $val;
-//        unset($c->options->expr);
+        $c->options->value= $val;
       }
       else comp_error("CODE počáteční hodnota proměnné musí být určitelná během kompilace ");
     }
     else {
       $c->options->$id= $val;
     }
-//    $c->options->$id= $const ? (object)array('value'=>$val->expr) : $val;
     // pokud jde o atribut include
     if ( $id=='include' ) {
       list($typ,$iname)= explode(',',$val);
