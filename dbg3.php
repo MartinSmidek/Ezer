@@ -422,7 +422,8 @@ __EOD;
 // AJAX volání z dbg3_ask
 // na vstupu je definováno: x.app
 function dbg_server($x) {
-  global $ezer_path_root, $ezer_root, $trace, $dbg_info, $ezer_php_libr, $ezer_php, $ezer_ezer;
+  global $ezer_path_root, $ezer_root, $trace, $dbg_info, $ezer_php_libr, $ezer_php, 
+      $ezer_ezer, $ezer_version;
   $trace= '';
   $ezer_path_root= $_SESSION[$x->app]['abs_root'];
   $ezer_root= $x->app;
@@ -511,7 +512,7 @@ function dbg_server($x) {
     }
     // získáme překlad a z něj CG
     $cg= null;
-    $cpath= "$ezer_path_root/$root/code/{$x->file}.json";
+    $cpath= "$ezer_path_root/$root/code$ezer_version/{$x->file}.json";
     if ( file_exists($cpath)) {
       $loads= json_decode(file_get_contents($cpath));
       $cg= $loads->info->ezer;

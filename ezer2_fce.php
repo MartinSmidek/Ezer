@@ -702,7 +702,7 @@ function sys_ids2skills($ids) {
 # ------------------------------------------------------------------------------------ sys_watch_key
 # vygeneruje přístupový klíč k aplikaci a vrátí odkaz na download
 function sys_watch_key() {
-  global $ezer_root;
+  global $ezer_root, $ezer_version;
   $key= '';
   for($i=0; $i<32; $i++) {
     $key.= chr(mt_rand(ord('A'),ord('Z')));
@@ -711,7 +711,7 @@ function sys_watch_key() {
   $deep_root= "../files/$ezer_root";
   $path= file_exists($deep_root) 
       ? "$deep_root/$ezer_root.key.php" 
-      : "$ezer_root/code/{$ezer_root}.key.php";
+      : "$ezer_root/code$ezer_version/{$ezer_root}.key.php";
   display("path=$path");
   
   $ok= @file_put_contents($path,$key);
