@@ -834,4 +834,106 @@ function root_inc3($db,$dbs,$tracking,$tracked) { //,$path_root=null,$path_pspad
   // knihovní moduly
   require_once("$ezer_path_root/ezer$ezer_version/ezer2_fce.php");
 }
+/** ==========================================================================================> TRACK */
+# metody pro práci s tabulkou _track
+# --------------------------------------------------------------------------------------- track_like
+# vrátí změny podobné předané (stejný uživatel, tabulka, čas +-10s)
+function track_like($id) {  trace();
+  $ret= (object)array('ok'=>1);
+  $ids= $id;
+  list($kdo,$kde,$kdy,$klic,$op)= select('kdo,kde,kdy,klic,op','_track',"id_track=$id");
+  if ( strpos("uU",$op)===false ) {
+    $ret->ok= 0;
+    $ret->msg= "Bohužel, vrácení úprav typu '$op' není podporováno";
+    goto end;
+  }
+  // nalezení podobných
+  $diff= "10 SECOND";
+  $xr= pdo_qry(
+    "SELECT COUNT(*) AS _pocet,GROUP_CONCAT(id_track) AS _ids
+     FROM _track
+     WHERE kdo='$kdo' AND kde='$kde' AND klic='$klic' AND op='$op'
+       AND kdy BETWEEN DATE_ADD('$kdy',INTERVAL -$diff) AND DATE_ADD('$kdy',INTERVAL $diff)");
+  $x= pdo_fetch_object($xr);
+  $ret->ids= $x->_ids;
+  if ( $x->_pocet > 10 ) {
+    $ret->msg= "pozor je příliš mnoho změn - {$x->_pocet}";
+    $ret->ok= 0;
+  }
+end:
+  return $ret;
+}
+# ------------------------------------------------------------------------------------- track_revert
+# pokusí se vrátit učiněné změny - $ids je seznam id_track
+function track_revert($ids) {  trace();
+  global $USER;
+  user_test();
+  $now= date("Y-m-d H:i:s");
+  $user= $USER->abbr;
+  $ret= (object)array('ok'=>1);
+  $xr= pdo_qry("SELECT * FROM _track WHERE id_track IN ($ids)");
+  while ( $xr && ($x= pdo_fetch_object($xr)) ) {
+    $table= $x->kde; $id= $x->klic; $op= $x->op; $fld= $x->fld;
+    $old= $x->old; $val= $x->val;
+    $ret->tab= $table;
+    $ret->klic= $id;
+    switch ($op ) {
+    case 'd': // ------------------------------- vrácení sjednocení
+      if ( $table=='osoba' || $table=='rodina' ) {
+        $chngs= explode(';',$old); // seznam změn k vrácení pro id_osoba=$val
+        foreach ($chngs as $chng) {
+          list($fld,$lst)= explode(':',$chng);
+          $_id= $fld=='pobyt' ? 'i0_rodina' : (
+                $fld=='mail'  ? 'id_clen'   :  "id_$table");
+          switch ($fld) {
+          case 'access': // -------------------- zápis o vrácení a obnově
+            // obnov smazanou osobu nebo rodinu
+            query("UPDATE $table SET deleted='' WHERE id_$table=$val");
+            query("INSERT INTO _track (kdy,kdo,kde,klic,fld,op,old,val)
+                   VALUES ('$now','$user','$table',$val,'','o','obnovená kopie','$id')");     // o=obnova
+            // zapiš info o vrácení jako V
+            query("UPDATE $table SET access=$lst WHERE id_$table=$id");
+            query("INSERT INTO _track (kdy,kdo,kde,klic,fld,op,old,val)
+                   VALUES ('$now','$user','$table',$id,'$table','V','vrácené sjednocení','$val')");  // V=vrácení
+            break;
+          case 'pobyt':
+          case 'mail':
+          case 'tvori':
+          case 'spolu':
+          case 'dar':
+//          case 'platba':
+            if ( $lst ) {
+              query("UPDATE $fld SET $_id=$val WHERE id_$fld IN ($lst)");
+            }
+            break;
+          case 'xtvori':
+            list($idr,$role)= explode('.',$lst);
+            query("INSERT INTO tvori (id_rodina,id_osoba,role) VALUES ($idr,$val,'$role')");
+            break;
+          default:
+            $ret->ok= 0;
+            $ret->msg= "Bohužel, vrácení úprav typu '$op/$fld' není podporováno";
+          }
+        }
+      }
+      else {
+        $ret->ok= 0;
+        $ret->msg= "Bohužel, toto sjednocení již nelze vrátit";
+      }
+      break;
+    case 'u': // ------------------------------- vrácení změny
+    case 'U':
+      $curr= select($fld,$table,"id_$table=$id");
+      if ( $curr==$val )
+        ezer_qry("UPDATE",$table,$id,array(
+          (object)array('fld'=>$fld, 'op'=>'u','val'=>$old,'old'=>$curr)
+        ));
+      break;
+    default:
+      $ret->ok= 0;
+      $ret->msg= "Vrácení úprav typu '$op' není podporováno";
+    }
+  }
+  return $ret;
+}
 

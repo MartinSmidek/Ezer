@@ -17,7 +17,7 @@ function doc_metrics($par) { trace();
       $s_func+= $func= $info->metrics->func; 
       $s_proc+= $proc= $info->metrics->proc;
       $pfunc= $func+$proc ? round(100*$func/($func+$proc)) : '-';
-      $color= $pfunc==100 ? 'green' : ($pfunc>50 ? 'blue' : 'red'); 
+      $color= $pfunc==100 || !($func+$proc) ? 'green' : ($pfunc>50 ? 'blue' : 'red'); 
       $h.= "<dt><b  style='color:$color'>$ezer.ezer</b></dt>";
       $h.= "<dd>%func= $pfunc% (#func= $func, #proc= $proc)</dd>";
     }
