@@ -606,7 +606,7 @@ function pragma_attrs($c) {
 # $context= [id=>objekt,...]
 # a naváže includované části
 function link_code(&$c,$name,$isroot,$block) {
-  global $context, $error_code_lc, $call_php;
+  global $context, $error_code_lc, $func_name_lc, $call_php;
   $c->_abs= $name;
   if ( $c->type=='view' ) {
     $error_code_lc= $c->_lc;
@@ -665,6 +665,10 @@ function link_code(&$c,$name,$isroot,$block) {
   if ( $c->part ) {
     array_push($context,(object)array('id'=>$c->id,'ctx'=>$c));
     foreach ($c->part as $id=>$cpart) {
+      if ($cpart->_lc) {
+        $_lc= explode(',',$cpart->_lc);
+        $func_name_lc= "$cpart->type $id.$_lc[0].$_lc[1]";
+      }
       link_code($cpart,"$name.$id",$isroot,"$block.$id");
     }
     array_pop($context);
@@ -696,6 +700,13 @@ function link_code(&$c,$name,$isroot,$block) {
             $c->options->{$id}= $c->options->{$id}[0][1];
           }
         }
+      }
+      if ($id=='sql_pipe') {
+        $ask= $desc->value;
+        $ask_lc= $desc->lc;
+        add_call_php($ask,$ask_lc);
+        if ( !in_array($ask,$call_php) )
+          $call_php[]= $ask;
       }
     }
   }
@@ -1469,14 +1480,15 @@ function gen2($pars,$vars,$c) {
     $npar= count($c->par);
     if ( $c->op=='ask' ) {
       $ask= $c->par[0]->value;
-      add_call_php($ask,$c->lc);
+      $ask_lc= $c->par[0]->lc;
+      add_call_php($ask,$ask_lc);
       if ( !in_array($ask,$call_php) )
         $call_php[]= $ask;
       for ($i= 1; $i<$npar; $i++) {
         $code[]= gen2($pars,$vars,$c->par[$i]);
       }
-      $call= (object)array('o'=>'e','i'=>$ask,'a'=>$npar-1);
-      if ( $c->lc ) $call->s= $c->lc;
+      $call= (object)array('o'=>'e','i'=>$ask,'a'=>$npar-1,'s'=>$ask_lc);
+//      if ( $c->lc ) $call->s= $c->lc;
       $code[]= $call;
     }
     elseif ( $c->op=='fork' ) {
