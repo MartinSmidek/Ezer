@@ -8,6 +8,10 @@
  * $tracked
 */
  
+  // redefine OBSOLETE
+  if (isset($dbs[$ezer_server])) $dbs= $dbs[$ezer_server];
+  if (isset($db[$ezer_server])) $db= $db[$ezer_server];
+
   global $ezer_root, $ezer_version;
   
   // platí buďto isnull($ezer_local) nebo isnull($ezer_server)

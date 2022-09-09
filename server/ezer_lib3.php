@@ -763,15 +763,12 @@ __EOD;
 }
 # ----------------------------------------------------------------------------------------- root_inc
 # skeleton hlavní konfigurace aplikace
-# parametry označené * jsou ve formátu pole - první hodnota je platná pro server, druhá pro local
-#  *$db                 -- jméno hlavní databáze aplikace s tabulkami: _cis, _todo, _touch, _track
-#  *$dbs                -- údaje pro přístup k databázím
+#   $db                 -- jméno hlavní databáze aplikace s tabulkami: _cis, _todo, _touch, _track
+#   $dbs                -- údaje pro přístup k databázím
 #                          databáze => (,server,username,userpass,kódování,[jméno databáze])
 #                          musí být obsažena databáze ezer_system s tabulkou _user
 #   $tracking           -- tabulka pro logování změn
 #   $tracked            -- tabulky s logovanými změnami (seznam zacina a konci carkou)
-#  *$path_root          -- kořen ve filesystemu
-#  *$path_pspad         -- cesta k editoru PSPad
 # vstup/výstupní globální proměnné
 #   $ezer_system        -- jméno databáze s tabulkou _user
 function root_inc3($db,$dbs,$tracking,$tracked) { //,$path_root=null,$path_pspad=null) {
@@ -789,14 +786,20 @@ function root_inc3($db,$dbs,$tracking,$tracked) { //,$path_root=null,$path_pspad
     $ezer_mysql_cp,$ezer_html_cp,$ezer_sylk_cp,
     $mysql_db_track,$mysql_tracked;
 
-  // nastavení databází
-  $sada= is_null($ezer_local) ? $ezer_server : ($ezer_local ? 1 : 0);
-  $mysql_dbi= $db[$sada];
-  $mysql_db= /*isset($dbs[$sada][$db[$sada]][5]) ? $dbs[$sada][$db[$sada]][5] :*/ $db[$sada];
-  $ezer_db= $dbs[$sada];
-  $ezer_sdb= $dbs[$sada];
+  // nastavení databází OBSOLETE
+//  $sada= is_null($ezer_local) ? $ezer_server : ($ezer_local ? 1 : 0);
+//  $mysql_dbi= $db[$sada];
+//  $mysql_db= /*isset($dbs[$sada][$db[$sada]][5]) ? $dbs[$sada][$db[$sada]][5] :*/ $db[$sada];
+//  $ezer_db= $dbs[$sada];
+//  $ezer_sdb= $dbs[$sada];
+//  $ezer_system= $ezer_system ? $ezer_system : 'ezer_system';
+//  $ezer_system= isset($dbs[$sada][$ezer_system][5]) ? $dbs[$sada][$ezer_system][5] : $ezer_system;
+  // nastavení databází 
+  $mysql_dbi= $mysql_db= $db;
+  $ezer_db= $ezer_sdb= $dbs;
   $ezer_system= $ezer_system ? $ezer_system : 'ezer_system';
-  $ezer_system= isset($dbs[$sada][$ezer_system][5]) ? $dbs[$sada][$ezer_system][5] : $ezer_system;
+  $ezer_system= isset($dbs[$ezer_system][5]) ? $dbs[$ezer_system][5] : $ezer_system;
+
   $mysql_db_track= $tracking;
   $mysql_tracked= $tracked;  // seznam začíná a končí čárkou
   // nastavení kódování

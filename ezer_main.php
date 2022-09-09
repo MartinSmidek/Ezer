@@ -6,11 +6,17 @@
  * $kontakt       - kontakt zobrazený na přihlašovací stránce
  * $app_js        - seznam *.js umístěných v $ezer_root
  * $app_css       - seznam *.css umístěných v $ezer_root
- * $skin=default  - počáteční skin aplikace 
- * $abs_roots     - [server,local]
- * $rel_roots     - [server,local]
+ * $skin=default  - počáteční skin aplikace
+ * $abs_root      - kořen aplikace
+ * $rel_root      - url kořenu aplikace
  * $add_pars      - (array) doplní resp. přepíše obsah $pars
+ * $abs_roots     - [server,local] OBSOLETE
+ * $rel_roots     - [server,local] OBSOLETE
  */
+
+  // redefine OBSOLETE
+  if (isset($abs_roots)) $abs_root= $abs_roots[$ezer_server];
+  if (isset($rel_roots)) $rel_root= $rel_roots[$ezer_server];
 
   global $app_root, $ezer_root, $api_key, $const, $appl_version, $ezer_version; //==3.2 z aplikace
   $ezer_root= $app_root;
@@ -85,10 +91,10 @@
   $app_name.= '<sub><small> '.$ezer_version.($touch?' touch':'').'</small></sub>';
 
   // nastavení cest
-  $abs_root= isset($ezer_server) ? $abs_roots[$ezer_server] : $abs_roots[$ezer_local];
+//  $abs_root= isset($ezer_server) ? $abs_roots[$ezer_server] : $abs_roots[$ezer_local];
   $_SESSION[$app]['abs_root']= $abs_root;
 
-  $http_rel_root= isset($ezer_server) ? $rel_roots[$ezer_server] : $rel_roots[$ezer_local];
+  $http_rel_root= $rel_root; //isset($ezer_server) ? $rel_roots[$ezer_server] : $rel_roots[$ezer_local];
   list($http,$rel_root)= explode('://',$http_rel_root);
   $_SESSION[$app]['rel_root']= $rel_root;
   
