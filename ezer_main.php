@@ -55,7 +55,7 @@
   $gapi=     isset($_GET['gapi'])    ? $_GET['gapi']    : 0; //!($ezer_local || $ezer_ksweb);
   $gmap=     isset($_GET['gmap'])    ? $_GET['gmap']    : (isset($_COOKIE['gmap']) ? $_COOKIE['gmap']  : ($is_local?0:1));
   $smap=     isset($_GET['smap'])    ? $_GET['smap']    : (isset($_COOKIE['smap']) ? $_COOKIE['smap']  : ($is_local?0:1));
-  $touch=    isset($_GET['touch'])   ? $_GET['touch']   : 1;
+  $touch=    isset($_GET['touch'])   ? $_GET['touch']   : (isset($_COOKIE['touch']) ? $_COOKIE['touch']  : 1);
 
   // inicializace SESSION
   if ( !isset($_SESSION) ) {
