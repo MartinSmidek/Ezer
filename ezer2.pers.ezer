@@ -81,27 +81,27 @@ form _chng [,,700,120] { style:'z-index:2'
   proc _form_state(on,off) { form.enable(1,on); form.enable(0,off); }
   proc _form_show(on,off) { form.display(1,on); form.display(0,off); }
   proc _init() { _form_state('bn','bc'); new.init }
-  func _load(i:ezer,par:object) {
-    the_itm= i; _init();
-    the_par= par;
-    switch (par.typ) {
-      case 'fld': _form_show('o','p|f'); old= php.sys_user_get(the_user,par.typ,par.fld); break; 
-      case 'opt': _form_show('o','p|f'); old= php.sys_user_get(the_user,par.typ,par.fld); break;
-      case 'oop': _form_show('o','p|f'); old= php.sys_user_get(the_user,par.typ,par.fld); break;
-      case 'txt': _form_show('f','p|o'); fo1= php.sys_user_get(the_user,par.typ,par.fld); fo2= fo1; break;
-      case 'pas': _form_show('p','o|f'); break;
-    }
-  }
-//  proc _load(i,par) {
-//    the_itm.set(i); _init;
-//    the_par.set(par);
-//    switch(par.typ,
-//    'fld',{ _form_show('o','p|f'); old.set(ask('sys_user_get',the_user.get,par.typ,par.fld)) },
-//    'opt',{ _form_show('o','p|f'); old.set(ask('sys_user_get',the_user.get,par.typ,par.fld)) },
-//    'oop',{ _form_show('o','p|f'); old.set(ask('sys_user_get',the_user.get,par.typ,par.fld)) },
-//    'txt',{ _form_show('f','p|o'); fo1.set(ask('sys_user_get',the_user.get,par.typ,par.fld)); fo2.set(fo1.get) },
-//    'pas',{ _form_show('p','o|f') },
-//    {stop}) }
+//  func _load(i:ezer,par:object) {
+//    the_itm= i; _init();
+//    the_par= par;
+//    switch (par.typ) {
+//      case 'fld': _form_show('o','p|f'); old= php.sys_user_get(the_user,par.typ,par.fld); break; 
+//      case 'opt': _form_show('o','p|f'); old= php.sys_user_get(the_user,par.typ,par.fld); break;
+//      case 'oop': _form_show('o','p|f'); old= php.sys_user_get(the_user,par.typ,par.fld); break;
+//      case 'txt': _form_show('f','p|o'); fo1= php.sys_user_get(the_user,par.typ,par.fld); fo2= fo1; break;
+//      case 'pas': _form_show('p','o|f'); break;
+//    }
+//  }
+  proc _load(i,par) {
+    the_itm.set(i); _init;
+    the_par.set(par);
+    switch(par.typ,
+    'fld',{ _form_show('o','p|f'); old.set(ask('sys_user_get',the_user.get,par.typ,par.fld)) },
+    'opt',{ _form_show('o','p|f'); old.set(ask('sys_user_get',the_user.get,par.typ,par.fld)) },
+    'oop',{ _form_show('o','p|f'); old.set(ask('sys_user_get',the_user.get,par.typ,par.fld)) },
+    'txt',{ _form_show('f','p|o'); fo1.set(ask('sys_user_get',the_user.get,par.typ,par.fld)); fo2.set(fo1.get) },
+    'pas',{ _form_show('p','o|f') },
+    {stop}) }
   # tlačítka
   proc _init() { _form_state('bn','bc'); form.init }
   button    [20,70,,]  { tag:'bc', title:'Uložit změnu',
