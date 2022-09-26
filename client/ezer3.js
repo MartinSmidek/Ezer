@@ -8041,7 +8041,6 @@ class SelectMap extends Select {
 //a: init_values : >0 nastaví hodnotu podle atributu value, ==2 označí jako změněné
   init  (init_values) {
     this.value= '';
-    this._changed= 0;
     if ( init_values ) {
       if ( this.owner._option && this.owner._option.x && this.owner._option.x==1
         && this._f('x')>=0 ) {
@@ -8064,6 +8063,7 @@ class SelectMap extends Select {
         this.plain();
       }
     }
+    this._changed= 0;
     this.original.value= this._key;
     this.original.key= null;
     return 1;
