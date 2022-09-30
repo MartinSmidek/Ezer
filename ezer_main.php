@@ -88,7 +88,7 @@
   }
 
   // doplnění jména aplikace o verzi ezer a pdo
-  $app_name.= '<sub><small> '.$ezer_version.($touch?' touch':'').'</small></sub>';
+  $app_name.= '<sub><small>&nbsp;'.$ezer_version.($touch?' touch':'').'</small></sub>';
 
   // nastavení cest
 //  $abs_root= isset($ezer_server) ? $abs_roots[$ezer_server] : $abs_roots[$ezer_local];
