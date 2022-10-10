@@ -2685,7 +2685,8 @@ class PanelRight extends Panel {
       .appendTo('#work');
     this.DOM_Block= jQuery('<div>')
       .addClass('PanelRight3')
-      .css({minWidth:this._w,maxHeight:this._h})     //  min..,max.. je kvůli flex
+//      .css({minWidth:this._w,maxHeight:this._h})     //  min..,max.. je kvůli flex
+      .css({maxHeight:this._h})     //  min..,max.. je kvůli flex
       .data('ezer',this)
       .appendTo(this.DOM)
       ;
