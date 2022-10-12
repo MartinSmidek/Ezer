@@ -63,7 +63,7 @@ panel upd {type:'right', title:'[fa-download] Update', _sys:'str', skill:'m'
     func append(y) {
       if (y) note= conc(note,y)
     }
-    label working [348,256,64,64] { title:"<img src='aby/img/spinner.gif'>",
+    label working [348,256,64,64] { title:"<img src='ezer3.2/client/img/spinner.gif'>",
       style:'z-index:999', format:'n' }
     func work(on) { working.display(on) }
   }
