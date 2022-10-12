@@ -35,6 +35,7 @@ class Block {
     else if ( this instanceof PanelMain )  Ezer._PanelMain= this;
     this.owner= owner;
     this.skill= skill;
+    this.trace= false;
     if ( id ) this.id= this._id= id;
     if ( id && owner && owner.part ) owner.part[id]= this;
     this.type= desc.type;
@@ -97,6 +98,10 @@ class Block {
 // other private properties
     this.owner= null;
     this.options= {};
+  }
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  trace
+  block_trace (on) {
+    this.trace= on;
   }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  _check
 // test integrity bloku po jeho dokončení
@@ -2938,6 +2943,16 @@ class Var extends Block {
 //fm: Var.set (val[,part])
 //      nastaví hodnotu proměnné, pokud je typu object pak part určuje podsložku
   set (val,part) {
+    if (this.trace) {                            Ezer.trace('*',`${this.type} ${this.id} changed`);
+      if (Ezer.calee && Ezer.calee.proc) {
+        let proc= Ezer.calee.proc,
+            lc= proc.desc._lc ? proc.desc._lc.split(',') : null;
+        if ( lc ) {
+          Ezer.calee.proc.proc_stop(1,lc[0]);
+          dbg_proc_show();
+        }
+      }
+    }
     if ( part!==undefined ) {
       if ( Array.isArray(this.value) ) {
         let v= this.value,
@@ -3084,6 +3099,11 @@ class Proc { //extends Block {
     for (var o= this; o; o= o.owner) {
       if ( o.desc ) {
         if ( (pos.file= o.desc._file) ) {
+          pos.app= o.desc._app||'';
+          pos.root= o;
+          break;
+        }
+        else if ( (pos.file= o.desc.file_) ) {
           pos.app= o.desc._app||'';
           pos.root= o;
           break;

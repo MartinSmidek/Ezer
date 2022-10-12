@@ -22,7 +22,7 @@
     echo $yjson;
     exit;
   }
-
+  
   // parametry aplikace DBG
   $app=      'dbg';
   $app_name= 'Debugger pro framework Ezer';

@@ -1,4 +1,4 @@
-/* global dbg, doc, Cookie, Ezer, dbg_onclick_start */
+/* global dbg, doc, Cookie, Ezer, dbg_onclick_start, app_ezer */
 
 // (c) 2020 Martin Smidek <martin@smidek.eu>
 
@@ -157,6 +157,30 @@ function dbg_onclick_start(file) {
           return false; 
         }
       ];
+      let touch= function(type,on,ln) {
+        let elem= type=='break' ? 'stops' : 'traces',
+            list= doc.Ezer.sys.dbg.files[doc.Ezer.sys.dbg.file][elem];
+//        dbg_touch('proc '+elem.id,menu_el);
+        if (type=='break') {
+          if (on) {
+//                dbg.src[l].find('span.text').addClass(type);
+            dbg.src[ln].find('span.line').addClass(type);
+          }
+          else {
+//                dbg.src[l].find('span.text').removeClass(type);
+            dbg.src[ln].find('span.line').removeClass(type);
+          }
+        }
+        else if ( on ) {
+          dbg.src[l].addClass(type);
+          list.push(l);
+        }
+        else {
+          dbg.src[l].removeClass(type);
+          let i= list.indexOf(l);
+          if ( i>-1 ) list.splice(i);
+        }
+      }
       switch (elem ? elem.type : null) {
         case 'var':
         case 'const':
@@ -186,6 +210,16 @@ function dbg_onclick_start(file) {
                   value= dbg_prompt(elem.id,value,function(val){elem.set(val);return false;},menu_el);
                 }
                 return false;
+            }],
+            ['-[fa-film] zahaj hlídání změny', function(el) {
+                elem.block_trace(1);
+                touch('trace',1);
+                return false;
+            }],
+            ['[fa-times] zruš hlídání změny', function(el) {
+                elem.block_trace(0);
+                touch('trace',0);
+                return false;
             }]
           ],menu_el);
           break;}
@@ -214,30 +248,6 @@ function dbg_onclick_start(file) {
         case 'proc':{
           let lc= elem.desc._lc ? elem.desc._lc.split(',') : null;
           l= lc ? lc[0] : l;
-          let touch= function(type,on,ln) {x
-            let elem= type=='break' ? 'stops' : 'traces',
-                list= doc.Ezer.sys.dbg.files[doc.Ezer.sys.dbg.file][elem];
-            dbg_touch('proc '+elem.id,menu_el);
-            if (type=='break') {
-              if (on) {
-//                dbg.src[l].find('span.text').addClass(type);
-                dbg.src[ln].find('span.line').addClass(type);
-              }
-              else {
-//                dbg.src[l].find('span.text').removeClass(type);
-                dbg.src[ln].find('span.line').removeClass(type);
-              }
-            }
-            else if ( on ) {
-              dbg.src[l].addClass(type);
-              list.push(l);
-            }
-            else {
-              dbg.src[l].removeClass(type);
-              let i= list.indexOf(l);
-              if ( i>-1 ) list.splice(i);
-            }
-          }
           dbg_contextmenu([
             editovat,
             ['-[fa-usb] zobraz graf volání', function(el) {
@@ -681,7 +691,9 @@ function dbg_find_block(name,l,c) {
       }
     }
   }
-  return {block:found_block,elem:found_elem,msg:msg};
+  return {
+    block:found_block ? found_block : (found_elem ? found_elem.owner : null),
+    elem:found_elem,msg:msg};
 }
 // =======================================================================================> DEBUGGER
 jQuery.fn.extend({
@@ -903,6 +915,7 @@ function dbg_show_proc(cnt,on) {
       lc= cnt.proc.desc._lc ? cnt.proc.desc._lc.split(',') : null;
   if ( lc ) {
     let pos= cnt.proc.app_file();
+    pos.file= app_ezer[pos.file];
     if ( on ) {
       // stopnutí procedury
       msg= 'proc '+cnt.proc.id+args(cnt,cnt)+' stopped';

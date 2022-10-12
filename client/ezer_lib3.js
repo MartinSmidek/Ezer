@@ -155,6 +155,14 @@ function dbg_proc_stop(on_off) {
       Ezer.sys.dbg.win_ezer.dbg_show_proc(Ezer.continuation,on_off);
     }
 }
+// ----------------------------------------------------------------------------------- dbg proc_show
+// DBG - voláno z intepreta po vytvoření aktivačního záznamu v zásobníku
+// Ezer.continuation obsahuje aktuální stav interpreta
+function dbg_proc_show() {
+    if ( Ezer.sys.dbg.win_ezer ) {
+      Ezer.sys.dbg.win_ezer.dbg_show_proc(Ezer.calee,1);
+    }
+}
 // ------------------------------------------------------------------------------- dbg_onclick_start
 //function dbg_onclick_start(win) {
 //  win= win ? win : window;

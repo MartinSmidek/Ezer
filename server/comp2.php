@@ -19,7 +19,7 @@ function comp ($src) {
 }
 # ----------------------------------------------------------------------------------- comp ezer_list
 # seznam Ezer modulů s informací o aktuálnost
-# musí dát stejné seznam jako comp2:comp_ezer_list
+# musí dát stejné seznam jako sys_doc:comp_ezer_list
 function comp_ezer_list() { trace();
   global $app_ezers, $ezer_path_appl; //, $ezer_ezer;
   // projití složky aplikace
@@ -38,7 +38,7 @@ function comp_ezer_list() { trace();
 //    doc_ezer_state($fname,$files);
 //  }
   sort($app_ezers);
-//                                                         debug($files,'ezer files');
+                                                         debug($app_ezers,"ezer files z $ezer_path_appl");
 //  return $files;
 }
 # ---------------------------------------------------------------------------------------comp define

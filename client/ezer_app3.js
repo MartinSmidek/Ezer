@@ -1608,8 +1608,16 @@ class Application {
             ['save',                  function(el) { Ezer.App.save_drag() }],
             ['-help mode start',      function(el) { DOM_help(1) }],
             ['help mode end',         function(el) { DOM_help(0) }],
-            ['-stop execution',       function(el) { Ezer.dbg.stop= true; }],
-            ['continue execution',    function(el) { Ezer.dbg.stop= false; }]
+            ['-stop execution',       function(el) { 
+                Ezer.dbg.stop= true; 
+                jQuery('#logoContinue').css({display:'block'});
+                jQuery('#maskContinue').css({display:'block'});
+//              }],
+//            ['continue execution',    function(el) { 
+//                Ezer.dbg.stop= false; 
+//                jQuery('#logoContinue').css({display:'block'});
+//                jQuery('#maskContinue').css({display:'none'});
+              }]
           ],e);
           return false;
         })
@@ -1619,9 +1627,12 @@ class Application {
     let button= jQuery('#logoContinue');
     if ( button ) {
       button.click( () => {
-        if ( Ezer.continuation ) {
-          button.css({display:'none'});
-          jQuery('#maskContinue').css({display:'none'});
+        button.css({display:'none'});
+        jQuery('#maskContinue').css({display:'none'});
+        if (Ezer.dbg.stop) { // zastopování přes context menu výše
+          Ezer.dbg.stop= false;
+        }
+        else if ( Ezer.continuation ) {
           dbg_proc_stop(false); // funkce v ezer_lib3 volající dbg3
           Ezer.continuation.eval();
           Ezer.continuation= null;
