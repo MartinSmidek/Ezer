@@ -560,6 +560,7 @@
   # y: value
   case 'browse_map':
     $y->value= '';
+    if (!isset($x->keys)) break;
     $x->keys= (array)$x->keys;
     if ( function_exists($x->fce) ) {
       $val= call_user_func_array($x->fce,array($x->keys));
@@ -1084,7 +1085,7 @@
             $i++;
             foreach ($row3 as $f => $val) {
               $a= $val;
-              if ( $pipe[$f] ) $a= $pipe[$f][0]($a,$pipe[$f][1]);
+              if ( isset($pipe[$f]) ) $a= $pipe[$f][0]($a,$pipe[$f][1]);
               $y->values[$i][$f]= $a; //win2utf($a);
             }
           }

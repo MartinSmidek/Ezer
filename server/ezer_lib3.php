@@ -497,7 +497,7 @@ __EOD;
     foreach($css as $x) {
       // rozklad zápisu href=id
       $id= $get= '';
-      list($base,$par)= explode('?',$x);
+      list($base,$par)= array_pad(explode('?',$x),2,'');
       list($href,$id)= explode('=',"$base=");
       if ( $id ) {
         $id= "id='$id'";

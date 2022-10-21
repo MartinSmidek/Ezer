@@ -65,7 +65,9 @@ function sys_user_record($id_user=0) {  trace();
   $res= mysql_qry($qry,0,0,0,'ezer_system');
   if ( $res && ($u= pdo_fetch_object($res)) ) {
 //    $opt= $json->decode($u->options);
-    $opt= json_decode($u->options);
+    $opt= (object)array_merge(array(
+          'vyrizuje'=>'','telefon'=>'','potvrzuje'=>'','email'=>'','smtp'=>'','css'=>'','email_foot'=>''),
+        (array)json_decode($u->options));
     $html.= row('přihlášení',$u->username);
     $html.= row('heslo','************');
     $html.= row('křestní jméno',$u->forename);
@@ -100,7 +102,9 @@ function sys_user_get ($id_user,$typ,$fld) { // trace();
     $u= pdo_fetch_object($res);
 //                                                debug($u,'fetch');
 //    $options= $json->decode($u->options);
-    $options= json_decode($u->options);
+    $options= (object)array_merge(array(
+          'vyrizuje'=>'','telefon'=>'','potvrzuje'=>'','email'=>'','smtp'=>'','css'=>'','email_foot'=>''),
+        (array)json_decode($u->options));
     switch ($typ) {
     case 'fld':                                         // _user.fld
       $val= $u->$fld;

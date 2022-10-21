@@ -1030,7 +1030,7 @@ function doc_todo1($item,$source='app',$nic="<dl class='todo'><dt>V tomto obdob√
 }
 # ----------------------------------------------------------------------------------- doc todo_show1
 # vygeneruje p≈ôehled aktivit podle menu
-function doc_todo_show1($ods,$dos,$odt=0,$dot=99999,$path,$nic='') { trace();
+function doc_todo_show1($ods,$dos,$odt=0,$dot=99999,$path='.',$nic='') { trace();
   $file= @file_get_contents("$path/todo.wiki");
   if ( !$file ) fce_error("LIBR: chybi soubor todo.wiki");
   $f1= strpos($file,"\n$ods") + strlen($ods) + 3;

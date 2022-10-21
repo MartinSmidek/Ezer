@@ -38,7 +38,7 @@ function comp_ezer_list() { trace();
 //    doc_ezer_state($fname,$files);
 //  }
   sort($app_ezers);
-                                                         debug($app_ezers,"ezer files z $ezer_path_appl");
+//                                                         debug($app_ezers,"ezer files z $ezer_path_appl");
 //  return $files;
 }
 # ---------------------------------------------------------------------------------------comp define
@@ -428,16 +428,16 @@ function dbg_context_load ($ctx) {  #trace();
         $includes[$try]= $code;
         $level= array();
         if ( $try=='$' ) {
-          $level[]= (object)array(id=>'$','ctx'=>$code);
+          $level[]= (object)array('id'=>'$','ctx'=>$code);
           $id= '$';
         }
         elseif ( $code->library ) {
-          $level[]= (object)array(id=>'#','ctx'=>$code);
+          $level[]= (object)array('id'=>'#','ctx'=>$code);
           $id= '#';
         }
         elseif ( $k>0 ) {
           $id= $ids[$k-1];
-          $level[]= (object)array(id=>$id,'ctx'=>$code);
+          $level[]= (object)array('id'=>$id,'ctx'=>$code);
         }
         else $log.= "LINK: chyba pro $name";
         $includes[$try]->id= $id;
@@ -1477,7 +1477,7 @@ function gen2($pars,$vars,$c) {
   // -------------------------------------- id ( expr1, ... ) ? value
   case 'call': 
     $code= array();
-    $npar= count($c->par);
+    $npar= $c->par ? count($c->par) : 0;
     if ( $c->op=='ask' ) {
       $ask= $c->par[0]->value;
       $ask_lc= $c->par[0]->lc;

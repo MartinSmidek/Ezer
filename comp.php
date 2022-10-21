@@ -2,14 +2,14 @@
   
 # screen=1 zobrazí rozměr klientské části
 
-  error_reporting(E_ALL ^ E_NOTICE);
+  error_reporting(E_ALL ^ E_NOTICE ^ E_WARNING);
   $pwd= getcwd();
 
   # identifikace ostrého serveru
   $ezer_local= preg_match('/^\w+\.bean/',$_SERVER["SERVER_NAME"]);
   $favicon= $ezer_local ? "comp_local.png" : "comp.png";
 
-  if ( $_GET['spec'] ) {
+  if ( isset($_GET['spec']) ) {
     switch ($_GET['spec']) {
     case 'phpinfo': phpinfo(); break;
     }
@@ -19,17 +19,18 @@
   session_start();
 
   $root= $_GET['root'];
-  $option_state= $_GET['trace'];
-  $option_list= $_GET['list'];
-  $option_source= $_GET['source'];
-//  $option_cpp= $_GET['cpp']; // OBSOLETE
+  $option_state= isset($_GET['trace']) ? $_GET['trace'] : '';
+  $option_list= isset($_GET['list']) ? $_GET['list'] : '';
+  $option_source= isset($_GET['source']) ? $_GET['source'] : '';
+  $option_all= isset($_GET['all']) ? $_GET['all'] : '';
+  $option_cpp= ''; //$_GET['cpp']; // OBSOLETE
 
   // verze použitého jádra Ezeru
   $ezer_version= "3.2"; 
   
   global $display, $trace, $json, $ezer_path_serv, $ezer_path_appl, $ezer_path_code, $ezer_root;
 
-  list($url)= explode('?',$_SERVER['HTTP_REFERER']);
+  list($url)= explode('?',isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '');
 
   require_once("server/ae_slib.php");
   // seznam složky aplikace
@@ -55,7 +56,7 @@
   $checks.= "\n\n<input type='checkbox' $checked  onchange='set_option_trace(this.checked,4)'/> trace all";
   $checked= $option_source==1 ? 'checked' : '';
   $checks.= "\n<input type='checkbox' $checked  onchange='set_option_source(this.checked,1)'/> zdroj";
-  $checked= $option_cpp==1 ? 'checked' : '';
+//  $checked= $option_cpp==1 ? 'checked' : '';
 //  $checks.= "\n&nbsp; &nbsp; &nbsp; &nbsp; "
 //      . "<input type='checkbox' $checked  onchange='set_option_cpp(this.checked,1)'/> C++";
   $checked= $option_state==7 ? 'checked' : '';
@@ -70,8 +71,9 @@
   }
   $checks.= "<br>\n<input type='submit' value='obnova tabulek' onclick='go_tables();' />";
   $checks.= "<br>\n<input type='submit' value='PHPinfo' onclick='go_phpinfo();' />";
-  $ip= "<br>remote:{$_SERVER["REMOTE_ADDR"]}<br>forwarded:{$_SERVER["HTTP_X_FORWARDED_FOR"]}";
-  $ip.= "<br>client:{$_SERVER["HTTP_CLIENT_IP"]}<br>proc:".get_ip_address();
+  $ip= "<br>remote:{$_SERVER["REMOTE_ADDR"]}";
+  $ip.= isset($_SERVER["HTTP_X_FORWARDED_FOR"]) ? "<br>forwarded:{$_SERVER["HTTP_X_FORWARDED_FOR"]}" : '';
+  $ip.= isset($_SERVER["HTTP_CLIENT_IP"]) ? "<br>client:{$_SERVER["HTTP_CLIENT_IP"]}<br>proc:".get_ip_address() : '';
   // východ a západ slunce pro 49°11'33.633"N, 16°31'52.405"E
   function gps2float($deg, $min, $sec = 0) {
     return $deg + $min/60 + $sec/60/60;
@@ -82,6 +84,11 @@
     . ' - ' . date_sunset(time(),SUNFUNCS_RET_STRING,$lat,$lon,90,1);
   $checks.= "\n$ip";
   $files= array();
+  $css= '';
+  $appl= $root;
+  $compiled= '';
+  $lst= '';
+  $txt= '';
   if (($dh= opendir($ezer_path_appl))) {
     while (($file= readdir($dh)) !== false) {
       if ( substr($file,-5)=='.ezer' ) {
@@ -104,7 +111,6 @@
   // ------------------------------------------------------------------------------------ appls
   // nalezení dostupných aplikací "o patro níž" a zřetězení souborů comp.css
   $appls= array();
-  $css= '';
   $downdir= substr($ezer_path_appl,0,strrpos($ezer_path_appl,'/'));
   if (($dh= opendir($downdir))) {
     while (($appl= readdir($dh)) !== false) {
@@ -129,7 +135,7 @@
   }
   $sel.= "</select>";
   // -------------------------------------------------------------------------------- obnova tabulek
-  if ( $_GET['refresh']=='tables' ) {
+  if ( isset($_GET['refresh']) && $_GET['refresh']=='tables' ) {
     if (!isset($_SESSION[$ezer_root]['abs_root'])) { 
       die("Je třeba mít spuštěnou aplikaci {$root} .. neexistuje session"); 
     }
@@ -164,24 +170,22 @@
     $lst.= $display;
   }
   // kompilace
-  else if ( $_GET['all']=='yes' ) {
+  else if ( $option_all=='yes' ) {
     // kompilace neaktuálních modulů celé aplikace
     $lst= comp_application($ezer_root,$state);
-    $compiled= '';
   }
-  else if ( $_GET['all']=='any' ) {
+  else if ( $option_all=='any' ) {
     // kompilace neaktuálních modulů celé aplikace
     $lst= comp_application($ezer_root,$state,true,true);
-    $compiled= '';
   }
-  else if ( $_GET['all']=='err' ) {
+  else if ( $option_all=='err' ) {
     // kompilace neaktuálních modulů celé aplikace včetně chyb
     $lst= comp_application($ezer_root,$state,true);
-    $compiled= '';
   }
   else {
+    $name= isset($_GET['file']) ? $_GET['file'] : '';
     // kompilace jednoho modulu
-    if ( $name= $_GET['file'] ) {
+    if ( $name ) {
       $txt= comp_module($name,$ezer_root,$state);
       $compiled= $name;
       $lst.= $trace;
@@ -216,7 +220,7 @@ __EOD
   $menu.= "</table>";
   // ------------------------------------------------------------------------------------ layout
   // výsledek
-  if ( $_GET['all']!='yes' ) {
+  if ( $option_all!='yes' ) {
     global $call_php, $call_ezer;
     $calls= "<b>Kompilace:</b> $state";
     $calls.= "<br><br><b>PHP funkce volané ask a make:</b> "; $del= '';
@@ -328,9 +332,9 @@ echo <<<__EOF
 </html>
 __EOF;
 /** ************************************************************************************************ procedury */
-function comp_module($name,$root='',&$state) {
+function comp_module($name,$root,&$state) {
   global $display, $trace, $json, $ezer_path_appl, $ezer_path_code;
-  global $code, $option_source, $option_list, $option_cpp, $lst;
+  global $code, $option_source, $option_list, $lst;
 //   $trace= $option_state;
   $state= comp_file($name,$root,$option_list,true);
   $txt= '';
@@ -358,7 +362,7 @@ function comp_module($name,$root='',&$state) {
 
 // kompilace modulů aplikace 
 //   err= i s chybou; yes= neaktuální; any= úplně všechny
-function comp_application($root='',&$state,$errs=false,$all=false) {
+function comp_application($root,&$state,$errs=false,$all=false) {
   global $files, $display, $trace, $err, $errors;
   $txt= '';
   foreach($files as $name=>$status) {
