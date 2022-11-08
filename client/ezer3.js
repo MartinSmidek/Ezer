@@ -2706,6 +2706,7 @@ class PanelRight extends Panel {
 //i: PanelPopup.onfocus - panel se stal viditelný
 //i: PanelPopup.onblur - panel přestal být viditelný
 //oo: PanelPopup.par{} - close:'no' zakáže zavírací tlačítko
+//                       move:'no' zakáže přesouvání panelu
 //                       min_top:n minimální vzdálenost od horního okraje okna    
 class PanelPopup extends Panel {
 //os: PanelPopup.format - zarovnání nadpisu
@@ -2770,8 +2771,11 @@ class PanelPopup extends Panel {
       .css({width:this._w,height:this._h})
       .data('ezer',this)
       .appendTo(this.owner.DOM||'#work')
-      .drags({handle:'div.pop_head',top:min_top})
       .hide();
+    if (!this.options.par || !this.options.par.move || this.options.par.move!=='no') {
+      this.DOM
+      .drags({handle:'div.pop_head',top:min_top})
+    }
     this.DOM_Block= this.DOM.find('div.pop_body')
 //      .css({width:this._w,height:this._h})
       ;
