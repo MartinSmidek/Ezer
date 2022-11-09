@@ -2489,16 +2489,18 @@ class Panel extends Block {
 //   is_fixed: 0,
   focus (par) {
     var value= 1;
-    if ( this.owner.type=='tabs' ) {
-      if ( par=='fix' )
-        this.is_fixed= 1;
-      else if ( par=='unfix' )
-        this.is_fixed= 0;
-      else if ( par=='fixed' )
-        value= this.is_fixed;
-      else {
-        this.owner._focus();
-        this._focus(par);
+    if (Ezer.panel!=this) {
+      if ( this.owner.type=='tabs' ) {
+        if ( par=='fix' )
+          this.is_fixed= 1;
+        else if ( par=='unfix' )
+          this.is_fixed= 0;
+        else if ( par=='fixed' )
+          value= this.is_fixed;
+        else {
+          this.owner._focus();
+          this._focus(par);
+        }
       }
     }
     return value;
