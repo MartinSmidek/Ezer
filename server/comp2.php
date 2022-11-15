@@ -4965,6 +4965,7 @@ function lex_analysis2 ($dbg=false) {
     ? ("<"."?php\n $dbg _dbg_() ".'{'."$ezer \n} ?".">")
     : ("<"."?php\n $ezer ?".">"));
   $inside_template= false;
+  $inside_template_expr= false;
 //                                                             debug($tok,'tok');
   note_time('lexical1');
   tok_positions($tok);
@@ -4985,6 +4986,7 @@ function lex_analysis2 ($dbg=false) {
   for ($i= 0; $i<$count; $i++) {
     $t= $tok[$i];
     $tp= $tok2lex[$tok[$i][0]];
+//                                                              display("$i/$k: {$tok[$i][0]} = $tp");
     if ( $debugger ) {
       // v debuggeru může identifikátor začínat dolarem následovaným číslem
       if ( $t[1]=='$' ) {
@@ -5004,7 +5006,7 @@ function lex_analysis2 ($dbg=false) {
     }
     switch ( $tp ) {
     case 'blank':
-      if ($skip) continue 2;
+      if ($skip || $inside_template_expr) continue 2;
       if ( $inside_template ) {
         $typ[$k]= 'str'; $lex[$k]= $t[1]; $pos[$k]= "{$t[2]},{$t[3]}"; $k++;
       }
@@ -5072,6 +5074,12 @@ function lex_analysis2 ($dbg=false) {
       if ($skip) continue 2;
       if ( $t[1]=='`' ) {
         $inside_template= !$inside_template;
+      }
+      elseif ( $t[1]=='${' ) {
+        $inside_template_expr= 1;
+      }
+      elseif ( $t[1]=='}' ) {
+        $inside_template_expr= 0;
       }
     case 'num':
       if ($skip) continue 2;
