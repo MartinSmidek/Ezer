@@ -258,7 +258,9 @@ __EOD;
   $ip_ok= false;
   $ip_msg= '';
   $key_msg= '';
-  if ( (isset($pars->watch_ip) && $pars->watch_ip || isset($pars->watch_key) && $pars->watch_key)
+  if ( (isset($pars->watch_ip) && $pars->watch_ip 
+     || isset($pars->watch_key) && $pars->watch_key
+     || isset($pars->watch_pin) && $pars->watch_pin)
     // ověření přístupu - externí přístup hlídat vždy, lokální jen je-li  no_local=true
     && (isset($pars->no_local) && $pars->no_local || !$is_local ) ) {
     // 1) pokud se má hlídat IP a je v pořádku
