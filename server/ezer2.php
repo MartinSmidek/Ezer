@@ -1348,7 +1348,7 @@
         $rand= mt_rand(100000, 999999);
         query("UPDATE $ezer_system._user SET pin='$rand' WHERE id_user=$id_user");
         // pošli mail
-        $app_name= trim($_SESSION[$ezer_root]['app_name']);
+        $app_name= preg_replace('/<.*>/','',trim($_SESSION[$ezer_root]['app_name']),1);
         $subj= "Žádost o přístup do $app_name ($rand)";
         $body= "<p>Někdo Vaším jménem požádal o přístup do aplikace <b>$app_name</b>,
             <br>pokud jste to byl vy, napište do položky <i>zaslaný PIN</i> číslo <b>$rand</b>.</p>
@@ -1365,7 +1365,7 @@
         }
       }
       else {
-        $y->msg= 'adresa nemá oprávnění';
+        $y->msg= 'adresát nemá oprávnění';
       }
     }
     else {
