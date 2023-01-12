@@ -163,12 +163,13 @@ function doc_chngs_show($type='ak',$days=30,$app_name='') { trace();
 # provede git par.cmd>.git.log a zobrazí jej
 # fetch pro lokální tj. vývojový server nepovolujeme
 function git_exec($par) {
-  global $abs_root, $ezer_version, $ezer_path;
+  global $abs_root, $ezer_version, $ezer_path_root;
   $bean= preg_match('/bean/',$_SERVER['SERVER_NAME'])?1:0;
-  display("ezer$ezer_version, abs_root=$abs_root, bean=$bean");
+  display("ezer$ezer_version, ezer_path_root=$ezer_path_root, abs_root=$abs_root, bean=$bean");
   if ($ezer_version!='3.1') { fce_error("POZOR není aktivní jádro 3.1 ale $ezer_version"); }
   $cmd= $par->cmd;
   $folder= $par->folder;
+  $ezer_path= "$ezer_path_root/ezer$ezer_version";
   $lines= array();
   $msg= "";
   // nastav složku pro Git
