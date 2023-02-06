@@ -366,8 +366,10 @@ class Area extends Block {
 //               Ezer.sys.dbg= {app:node.data.pos.app,file:node.data.pos.file,
 //                 start:node.data.pos.start,start_lc:node.data.pos.lc||''};
 //             }
-            if ( context )
+            if ( context ) {
+              this.fire('tree_onclick',[node.id,idn,node.data,ndata,adata,texts,node.text]);
               this.fire('tree_oncontextmenu',[node.id,idn,node.data,ndata,adata,texts,node.text]);
+            }
             else
               this.fire('tree_onclick',[node.id,idn,node.data,ndata,adata,texts,node.text]);
           }
