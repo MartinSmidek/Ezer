@@ -470,40 +470,82 @@ function cms_mail_send($address,$subject,$body,$reply='') {
   // nastavení phpMail
   $mail= new PHPMailer(true);
   try {
-    $mail->SMTPDebug = 0;
-    $mail->SetLanguage('cs');//,"$phpmailer_path/language/");
-    $mail->IsSMTP();
-    $mail->SMTPAuth = true; // enable SMTP authentication
-    $mail->SMTPSecure= "ssl"; // sets the prefix to the server
-    $mail->Host= "smtp.gmail.com"; // sets GMAIL as the SMTP server
-    $mail->Port= 465; // set the SMTP port for the GMAIL server
-    $mail->Username= $EZER->CMS->GMAIL->mail;
-    $mail->Password= $EZER->CMS->GMAIL->pswd;
-    $mail->CharSet= "UTF-8";
-    $mail->IsHTML(true);
-    // zpětné adresy
-    $mail->ClearReplyTos();
-    $mail->AddReplyTo($reply ? $reply : $EZER->CMS->GMAIL->mail);
-    $mail->SetFrom($EZER->CMS->GMAIL->mail, $EZER->CMS->GMAIL->name);
-    // vygenerování mailu
-    $mail->Subject= $subject;
-    $mail->Body= $body;
-    // přidání příloh
-    $mail->ClearAttachments();
-    // přidání adresy
-    $mail->ClearAddresses();
-    $mail->AddAddress($address);
-    // přidání kopií
-    $mail->ClearCCs();
-    if ( $reply )
-      $mail->AddCC($reply);
-    if ( $EZER->CMS->TEST ) {
-      $ret->msg= "TESTOVÁNÍ - vlastní mail.send je vypnuto";
+    if (isset($EZER->CMS->GMAIL->mail)){
+      $mail->SMTPDebug = 0;
+      $mail->SetLanguage('cs');//,"$phpmailer_path/language/");
+      $mail->IsSMTP();
+      $mail->SMTPAuth = true; // enable SMTP authentication
+      $mail->SMTPSecure= "ssl"; // sets the prefix to the server
+      $mail->Host= "smtp.gmail.com"; // sets GMAIL as the SMTP server
+      $mail->Port= 465; // set the SMTP port for the GMAIL server
+      $mail->Username= $EZER->CMS->GMAIL->mail;
+      $mail->Password= $EZER->CMS->GMAIL->pswd;
+      $mail->CharSet= "UTF-8";
+      $mail->IsHTML(true);
+      // zpětné adresy
+      $mail->ClearReplyTos();
+      $mail->AddReplyTo($reply ? $reply : $EZER->CMS->GMAIL->mail);
+      $mail->SetFrom($EZER->CMS->GMAIL->mail, $EZER->CMS->GMAIL->name);
+      // vygenerování mailu
+      $mail->Subject= $subject;
+      $mail->Body= $body;
+      // přidání příloh
+      $mail->ClearAttachments();
+      // přidání adresy
+      $mail->ClearAddresses();
+      $mail->AddAddress($address);
+      // přidání kopií
+      $mail->ClearCCs();
+      if ( $reply )
+        $mail->AddCC($reply);
+      if ( $EZER->CMS->TEST ) {
+        $ret->msg= "TESTOVÁNÍ - vlastní mail.send je vypnuto";
+      }
+      else {
+      // odeslání mailu
+        $mail->Send();
+        $mail->smtpClose();
+      }
+    }
+    elseif (isset($EZER->CMS->SEZNAM->mail)){
+      $mail->SMTPDebug = 0;
+      $mail->SetLanguage('cs');//,"$phpmailer_path/language/");
+      $mail->IsSMTP();
+      $mail->SMTPAuth = true; // enable SMTP authentication
+      $mail->SMTPSecure= "ssl"; // sets the prefix to the server
+      $mail->Host= "smtp.seznam.cz"; // sets SEZNAM as the SMTP server
+      $mail->Port= 465; // set the SMTP port for the SEZNAM server
+      $mail->Username= $EZER->CMS->SEZNAM->mail;
+      $mail->Password= $EZER->CMS->SEZNAM->pswd;
+      $mail->CharSet= "UTF-8";
+      $mail->IsHTML(true);
+      // zpětné adresy
+      $mail->ClearReplyTos();
+      $mail->AddReplyTo($reply ? $reply : $EZER->CMS->SEZNAM->mail);
+      $mail->SetFrom($EZER->CMS->SEZNAM->mail, $EZER->CMS->SEZNAM->name);
+      // vygenerování mailu
+      $mail->Subject= $subject;
+      $mail->Body= $body;
+      // přidání příloh
+      $mail->ClearAttachments();
+      // přidání adresy
+      $mail->ClearAddresses();
+      $mail->AddAddress($address);
+      // přidání kopií
+      $mail->ClearCCs();
+      if ( $reply )
+        $mail->AddCC($reply);
+      if ( $EZER->CMS->TEST ) {
+        $ret->msg= "TESTOVÁNÍ - vlastní mail.send je vypnuto";
+      }
+      else {
+      // odeslání mailu
+        $mail->Send();
+        $mail->smtpClose();
+      }
     }
     else {
-    // odeslání mailu
-      $mail->Send();
-      $mail->smtpClose();
+      fce_error("Není nastavena komunikační mailová adresa.");
     }
   }
   catch (Exception $e) {
