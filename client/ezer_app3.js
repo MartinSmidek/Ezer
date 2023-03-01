@@ -2298,7 +2298,7 @@ class Eval {
                     this.proc,this.nargs,this.nvars,'T',cc.i);
               }
               // řešení zastopování procedury
-              if ( this.step || this.proc.stop.length 
+              if ( this.step || (this.proc.stop && this.proc.stop.length)
                 || this.proc.desc && this.proc.desc.stop && this.proc.desc.stop.length ) {
                 this.trace_proc(cc.s,'>>>STOP '+this.context.id+'.'+cc.i,this.proc,this.nargs,this.nvars,'T');
                 jQuery('#logoContinue').css({display:'block'});
