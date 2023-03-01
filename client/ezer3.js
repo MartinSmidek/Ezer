@@ -5501,6 +5501,15 @@ class Button extends Block {
     this.DOM_get();             // převzetí hodnoty z DOM do this.value
     return this.value;
   }
+// ------------------------------------------------------------------------------------ set_skill
+//fm: Button.set_skill (on)
+//      dynamicky změní podle on přístup k tlačítku. Pro on=1 tlačítko uvolní pro on=0 zablokuje
+//a: on - hodnota 0/1
+  set_skill (on) {
+    this.skill= on ? 2 : 0;
+    this.DOM_enabled(on);
+    return 1;
+  }
 // =====================================================================================> Button DOM
   DOM_add () {
     this.DOM_Block= jQuery(`<button class="Button3">`)

@@ -335,7 +335,7 @@ div.MenuGroup3 > a { display: block;
 div.MenuGroup3 ul { margin: 7px 0 0 0; padding: 0; }
 div.MenuGroup3 li { border-right: 4px solid;
     padding: 4px 5px 6px 33px; margin: 2px 0; height: 9px; cursor: pointer; white-space: nowrap; }
-div.MenuGroup3 li i:first-of-type { font-size: 14px; margin-left: -28px; width: 25px; }
+div.MenuGroup3 li i:first-of-type {font-size: 14px;margin-left: -28px;width: 25px;display: inline-block;}
 div.MenuGroup3 li:hover { border-right: 4px solid; }
 div.MenuGroup3 li.selected3 { background-color: #ffffff; border-right: 4px solid #ffffff; }
 div.MenuGroup3 li.selected3:hover { }
