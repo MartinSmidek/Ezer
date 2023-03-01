@@ -94,7 +94,7 @@ class Block {
 //      ; 'r' : <i>redaktor</i> základní přístup
 //      ; 'a' : <i>admin</i> změny nastavení aplikace, správa uživatelů
 //      ; 'm' : <i>maintainer</i> programátor
-    this.skill= true;                     // uživatel má oprávnění k bloku
+    this.skill= 1;                     // uživatel má oprávnění k bloku
 // other private properties
     this.owner= null;
     this.options= {};
@@ -5620,6 +5620,15 @@ class Button extends Block {
   get () {
     this.DOM_get();             // převzetí hodnoty z DOM do this.value
     return this.value;
+  }
+// ------------------------------------------------------------------------------------ set_skill
+//fm: Button.set_skill (on)
+//      dynamicky změní podle on přístup k tlačítku. Pro on=1 tlačítko uvolní pro on=0 zablokuje
+//a: on - hodnota 0/1
+  set_skill (on) {
+    this.skill= on ? 2 : 0;
+    this.DOM_enabled(on);
+    return 1;
   }
 // =====================================================================================> Button DOM
   DOM_add () {
