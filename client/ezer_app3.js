@@ -176,7 +176,8 @@ Ezer.Google= {
   },
   // Called when the client library is loaded to start the auth flow.
   ApiLoaded: function () {
-    window.setTimeout(Ezer.Google.authorize, 1);
+    if (Ezer.options.Google.CLIENT_ID)
+      window.setTimeout(Ezer.Google.authorize, 1);
   },
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  files_list
 // viz https://developers.google.com/drive/web/search-parameters
