@@ -384,6 +384,8 @@ panel users [,,,543] {type:'right', title:'Uživatelé', _sys:'uzi', skill:'a|a'
   menu see { type:'left', active:*, format:'f-'
     menu all { title:'přehled',type:'group'
       item actives { title:'[fa-user-plus] aktivní uživatelé', par:°{on:'h',off:'u',cond:"LEFT(deleted,1)!='H'"}}
+      item { title:'[fa-user-plus] ... s přístupem omezeným na jejich akce', 
+              par:{on:'h',off:'u',cond:"LEFT(deleted,1)!='H' AND skills REGEXP '(^|\\\\s)T(\\\\s|$)' "}}
       item         { title:'[fa-user-times] skrytí uživatelé', par:°{on:'u',off:'h',cond:"deleted LIKE 'H%'"}}
       item         { title:'[fa-user] všichni uživatelé',      par:°{on:'h|u',off:'',cond:1}}
     }
