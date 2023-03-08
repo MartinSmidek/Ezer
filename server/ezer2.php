@@ -1980,6 +1980,10 @@
           // prodloužíme context
           array_push($context,(object)array('id'=>$id,'ctx'=>$obj));
         }
+        else if ( $owner->type=='use' && $owner->_of=='form' && $owner->_init) {
+          $obj= find_obj($owner->_init);
+          array_push($context,(object)array('id'=>$id,'ctx'=>$obj));
+        }
         else {
           $obj= null; 
           goto end;
