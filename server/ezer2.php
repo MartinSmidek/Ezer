@@ -1972,13 +1972,29 @@
       global $context;
       // doplníme kontext vybudovaný dbg_context_load podle $full
       $ids= explode('.',$full);
-      for ($i= count($context); $i<count($ids); $i++) {
-        $owner= $context[$i-1]->ctx;
+      $offset= 0;
+      if ($ids[0]=='#') {
+        for ($i= 0; $i<count($context); $i++) {
+          if ($context[$i]->id=='#') break;
+          array_shift($context);
+//          $offset++;
+        }
+      } 
+      for ($i= 1; $i<count($ids); $i++) {
+        $owner= $context[$offset]->ctx;
+        $offset++;
         $id= $ids[$i];
         if ( $id && isset($owner->part->$id) ) {
           $obj= $owner->part->$id;
-          // prodloužíme context
-          array_push($context,(object)array('id'=>$id,'ctx'=>$obj));
+          if (!isset($context[$offset])) {
+            // prodloužíme context
+            array_push($context,(object)array('id'=>$id,'ctx'=>$obj));
+            if ( $obj->type=='use' && $obj->_of=='form' && $obj->_init) {
+              $obj= find_obj($obj->_init);
+              array_push($context,(object)array('id'=>$obj->id,'ctx'=>$obj));
+              $offset++;
+            }
+          }
         }
         else if ( $owner->type=='use' && $owner->_of=='form' && $owner->_init) {
           $obj= find_obj($owner->_init);
