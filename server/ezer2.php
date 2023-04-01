@@ -664,6 +664,7 @@
       $x->from= $x->from>0 ? $x->from : 0;
       $y->from= 0+$x->from;
       $y->cursor= 0+$x->cursor;
+      if (!$x->key_id) fce_error("browse/ask: funkce browse_load nenalezla atribut key_id");
       $y->key_id= $x->key_id;
       $y->quiet= $x->quiet;
       $y->oldkey= isset($x->oldkey) ? $x->oldkey : '';
