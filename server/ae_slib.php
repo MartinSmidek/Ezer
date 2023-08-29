@@ -163,7 +163,7 @@ function doc_chngs_show($type='ak',$days=30,$app_name='') { trace();
 # provede git par.cmd>.git.log a zobrazí jej
 # fetch pro lokální tj. vývojový server nepovolujeme
 function git_exec($par) {
-  global $abs_root, $ezer_version, $ezer_path_root;
+  global $abs_root, $ezer_version, $ezer_path_root, $git_app_branch;
   $bean= preg_match('/bean/',$_SERVER['SERVER_NAME'])?1:0;
   display("ezer$ezer_version, ezer_path_root=$ezer_path_root, abs_root=$abs_root, bean=$bean");
   if ($ezer_version!='3.2') { fce_error("POZOR není aktivní jádro 3.2 ale $ezer_version"); }
@@ -184,7 +184,8 @@ function git_exec($par) {
   debug($par,"git_make(...), ezer_version=$ezer_version, bean=$bean, ezer_path=$ezer_path, cwd=".getcwd());
   // proveď příkaz Git
   $state= 0;
-  $branch= $folder=='ezer' ? ($ezer_version=='3.1' ? 'master' : 'ezer3.2') : 'master';
+  $branch= $folder=='ezer' ? ($ezer_version=='3.1' ? 'master' : 'ezer3.2') 
+      : ( isset($git_app_branch) ? $git_app_branch : 'master');
   switch ($cmd) {
     case 'log':
     case 'status':
