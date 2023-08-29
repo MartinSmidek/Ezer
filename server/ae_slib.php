@@ -184,7 +184,8 @@ function git_exec($par) {
   debug($par,"git_make(...), ezer_version=$ezer_version, bean=$bean, ezer_path=$ezer_path, cwd=".getcwd());
   // proveď příkaz Git
   $state= 0;
-  $branch= $folder=='ezer' ? ($ezer_version=='3.1' ? 'master' : 'ezer3.2') : 'master';
+  $branch= $folder=='ezer' ? ($ezer_version=='3.1' ? 'master' : 'ezer3.2') 
+      : ( isset($git_app_branch) ? $git_app_branch : 'master');
   switch ($cmd) {
     case 'log':
     case 'status':
@@ -2257,8 +2258,8 @@ function ezer_qry ($op,$table,$cond_key,$zmeny,$key_id='') {
         default:
           // zmena->pip je definovaná ve form_save v případech zápisu hodnoty přes sql_pipe
           $val= pdo_real_escape_string($zmena->val);
-          $old= $zmena->old ? pdo_real_escape_string($zmena->old) : (
-                $zmena->pip ? pdo_real_escape_string($zmena->pip) : '');
+          $old= isset($zmena->old) && $zmena->old ? pdo_real_escape_string($zmena->old) : (
+                isset($zmena->pip) && $zmena->pip ? pdo_real_escape_string($zmena->pip) : '');
           break;
         }
         $qry= "$qry_prefix,'$fld','$op','$old','$val'); ";

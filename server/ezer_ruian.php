@@ -158,12 +158,12 @@ end:
 //                                                        debug($geo);
   return $geo;
 }
-# -------------------------------------------------------------------------------- curl_get_contents
+# -------------------------------------------------------------------------------- curl get_contents
 function curl_get_contents($url) {
   global $ezer_server;
   switch ($ezer_server) {
     case 0:
-      $html= file_get_contents($url); 
+      $html= @file_get_contents($url); // vrátí false při neúspěchu
       break;
     default:
       $ctx= stream_context_create(['ssl' => 
