@@ -163,7 +163,7 @@ function curl_get_contents($url) {
   global $ezer_server;
   switch ($ezer_server) {
     case 0:
-      $html= file_get_contents($url); 
+      $html= @file_get_contents($url); 
       break;
     default:
       $ctx= stream_context_create(['ssl' => 

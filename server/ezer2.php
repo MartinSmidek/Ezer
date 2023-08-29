@@ -582,6 +582,7 @@
     ezer_connect($db);
     $table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
     $as= explode('AS',$x->table);
+    if (!$x->key_id) fce_error("browse/ask: funkce browse_load nenalezla atribut key_id");
     $y->key_id= $key_id= isset($as[1]) && $as[1] ? trim($as[1]).'.'.$x->key_id : $x->key_id;
 //     $cond= stripslashes(utf2win($x->cond));
     $cond= stripslashes($x->cond);
@@ -645,6 +646,7 @@
       $x->from= $x->from>0 ? $x->from : 0;
       $y->from= 0+$x->from;
       $y->cursor= 0+$x->cursor;
+      if (!$x->key_id) fce_error("browse/ask: funkce browse_load nenalezla atribut key_id");
       $y->key_id= $x->key_id;
       $y->quiet= $x->quiet;
       $y->oldkey= isset($x->oldkey) ? $x->oldkey : '';
@@ -816,6 +818,7 @@
     }
     else {
       // scroll records
+      if (!$x->key_id) fce_error("browse/ask: funkce browse_load nenalezla atribut key_id");
       $db= isset($x->db) && $x->db ? $x->db : $mysql_db; 
       ezer_connect($db);
       $fields= ''; $del= '';
@@ -935,6 +938,7 @@
     ezer_connect($db);
     $table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
     $atable= explode(' AS ',$table);
+    if (!$x->key_id) fce_error("browse/ask: funkce browse_load nenalezla atribut key_id");
     $key_id= (isset($atable[1]) && $atable[1] ? "{$atable[1]}." : '') . $x->key_id;
     $pipe= array();
     foreach ($x->fields as $desc) {
