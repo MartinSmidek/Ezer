@@ -84,7 +84,11 @@
 //  $ip.= "<br>sun: " . date_sunrise(time(),SUNFUNCS_RET_STRING,$lat,$lon,90,1)
 //    . ' - ' . date_sunset(time(),SUNFUNCS_RET_STRING,$lat,$lon,90,1);
   $ip.= "<br>PHP_VERSION=".PHP_VERSION;
-  $ip.= "<br>token_name(T_IF)=='T_IF' => ".(token_name(T_IF)=='T_IF' ? 'true' : 'false');
+  $ip.= "<br>token_name(T_IF)==".token_name(T_IF);
+  global $tok2lex; 
+  compiler_init();
+  $T_IF= T_IF;
+  $ip.= "<br>\$tok2lex[T_IF]=='{$tok2lex[T_IF]}'";
   $checks.= "\n$ip";
   $files= array();
   $css= '';
