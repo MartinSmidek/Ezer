@@ -4972,7 +4972,7 @@ function lex_analysis2 ($dbg=false) {
   note_time('lexical2');
 //  if ( $pragma_strings ) tok_strings($tok);
   note_time('lexical3');
-//                                                             debug($tok,'tok');
+                                                             if ($_GET['trace']==8) debug($tok,'tok');
   $lex= $typ= $pos= $not= $str= array(); $k= 0;
   // poznámky začínající #$ se pokládají za vygenerované a jsou ignorovány
   // poznámky začínající # a mezerou se připojí k prvnímu klíčovému slovu s nastaveným note
@@ -4986,6 +4986,9 @@ function lex_analysis2 ($dbg=false) {
   for ($i= 0; $i<$count; $i++) {
     $t= $tok[$i];
     $tp= $tok2lex[$tok[$i][0]];
+    // PATH na verzi 8.0.30 - neplatí T_IF se nenajde v $tok2lex tedy neplatí token_name(T_IF)=='T_IF'
+    if (token_name($tok[$i][0])=='T_IF') $tp= 'id';
+
 //                                                              display("$i/$k: {$tok[$i][0]} = $tp");
     if ( $debugger ) {
       // v debuggeru může identifikátor začínat dolarem následovaným číslem
@@ -5099,11 +5102,11 @@ function lex_analysis2 ($dbg=false) {
     }
   }
   lex_assert(!$skip_tag,'chybí #endif'); 
-//                                                             debug($lex,'lex');
-//                                                             debug($str,'str');
-//                                                             debug($typ,'typ');
-//                                                             debug($pos,'pos');
-//                                                             debug($not,'not');
+                                     if ($_GET['trace']==8) {debug($lex,'lex');
+                                                             debug($str,'str');
+                                                             debug($typ,'typ');
+                                                             debug($pos,'pos');
+                                                             debug($not,'not');}
   if (count($define_used)) debug($define_used,'použité #define proměnné');
 //  if (count($define)) debug($define,"#define proměnné ");
   return true;
@@ -5112,11 +5115,11 @@ function lex_assert($bool,$msg) {
   if (!$bool) comp_error("LEXICAL chyba direktiv podmíněného překladu - $msg");
 }
 # ------------------------------------------------------------------------------------ tok_positions
-function tok_positions(&$tok) {
+function tok_positions(&$tok) { 
   $line= 0; $col= 1; $count= count($tok);
   for ($i= 0; $i<$count; $i++) {
     if (is_array($tok[$i])) {
-//      $tok[$i][4]= token_name($tok[$i][0]); // jen pro debug v lex_analysis2
+      if ($_GET['trace']==8) $tok[$i][4]= token_name($tok[$i][0]); // jen pro debug v lex_analysis2
       $c= $tok[$i][1];
     }
     else if (is_string($tok[$i])) {

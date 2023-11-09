@@ -80,8 +80,11 @@
   }
   $lat= gps2float(49,11,33.633);
   $lon= gps2float(16,31,52.405);
-  $ip.= "<br>sun: " . date_sunrise(time(),SUNFUNCS_RET_STRING,$lat,$lon,90,1)
-    . ' - ' . date_sunset(time(),SUNFUNCS_RET_STRING,$lat,$lon,90,1);
+  // php8.2 Deprecated: Function date_sunrise() is deprecated
+//  $ip.= "<br>sun: " . date_sunrise(time(),SUNFUNCS_RET_STRING,$lat,$lon,90,1)
+//    . ' - ' . date_sunset(time(),SUNFUNCS_RET_STRING,$lat,$lon,90,1);
+  $ip.= "<br>PHP_VERSION=".PHP_VERSION;
+  $ip.= "<br>token_name(T_IF)=='T_IF' => ".(token_name(T_IF)=='T_IF' ? 'true' : 'false');
   $checks.= "\n$ip";
   $files= array();
   $css= '';
