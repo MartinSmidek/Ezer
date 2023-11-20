@@ -101,7 +101,7 @@ function doc_chngs_show($type='ak',$days=30,$app_name='') { trace();
     $a= str_replace("'","&#39;",$a);
     return "<span class='chng_day' title='$a'>$d $w:</span>";
   };
-  $get_help= function($db='.main.',$level='a',$abbr) use (&$lines,$ezer_db,$days,$header) {
+  $get_help= function($db='.main.',$level='a',$abbr='') use (&$lines,$ezer_db,$days,$header) {
     if ( $db=='.main.' || isset($ezer_db[$db]) ) {
       ezer_connect($db);
       $qh= "SELECT datum, version, name, help FROM /*$db*/ _help
@@ -234,7 +234,7 @@ function fce_error ($msg,$send_mail='') { trace();
   }
   $btrace= debug_backtrace(); 
   $call0= $btrace[0]; 
-  $call1= $btrace[1]; 
+  $call1= isset($btrace[1]) && $btrace[1] ? $btrace[1] : array('function'=>'?'); 
   $msg.= " at {$call1['function']} in {$call0['file']};{$call0['line']} (f0) "; 
   $err= isset($_COOKIE['error_reporting']) ? $_COOKIE['error_reporting'] : 1;
   if ( $err<2 || strlen($msg)>520 ) 
@@ -647,7 +647,7 @@ function select($expr,$table='',$cond=1,$db='.main.') {
     $res= mysql_qry($qry,0,0,0,$db);
     if ( !$res ) fce_error(wu("chyba funkce select:$qry/".pdo_error()));
     $o= pdo_fetch_object($res);
-    $result= $o->_result_;
+    $result= $o ? $o->_result_ : '?';
   }
 //                                                 debug($result,"select");
   return $result;
@@ -660,7 +660,7 @@ function select1($expr,$table,$cond=1,$db='.main.') {
   $res= mysql_qry($qry,0,0,0,$db);
   if ( !$res ) fce_error(wu("chyba funkce select1:$qry/".pdo_error()));
   $o= pdo_fetch_object($res);
-  $result= $o->_result_;
+  $result= $o ? $o->_result_ : '';
   return $result;
 }
 # ------------------------------------------------------------------------------------ select_object

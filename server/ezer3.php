@@ -16,14 +16,16 @@
   # ----------------------------------------------------------------------------------------- params
   # cmd    - příkaz
   # x      - parametry
-  if (get_magic_quotes_gpc()) $_POST= stripSlashes_r($_POST);
+//  if (get_magic_quotes_gpc()) 
+  $_POST= stripSlashes_r($_POST);
   $x= array2object($_POST);
   // vlastní knihovny
   $_SESSION[$ezer_root]['touch']= date("j.n.Y H:i:s");
 //   chdir($ezer_path_root);
   $y= (object)array();
   $y->cmd= $x->cmd;
-  $totrace= $x->totrace;                // kopie ae_trace: používá se k omezení trasovacích informací
+  // kopie ae_trace: používá se k omezení trasovacích informací
+  $totrace= isset($x->totrace) ? $x->totrace : '';   
   $y->qry_ms= 0;
   switch ( $x->cmd ) {
   # ================================================================================== VOLÁNÍ z EZER
@@ -52,13 +54,18 @@ end_switch:
   if ( $trace && strpos($x->totrace,'u')!==false )
     $y->trace= $trace;
   if ( $warning ) $y->warning= $warning;
-  $y->lc= $x->lc;                       // redukce informace místo $y->x= $x;
+  $y->lc= isset($x->lc) ? $x->lc : '';                 // redukce informace místo $y->x= $x;
   header('Content-type: application/json; charset=UTF-8');
   $y->php_ms= round(getmicrotime() - $php_start,4);
   $yjson= json_encode($y);
   echo $yjson;
   exit;
 
+# ----------------------------------------------------------------------------------- stripSlashes_r
+# odstraní slashes ze superglobálních polí -- kvůli magic_quotes_gpc do PHP 5.3
+function stripSlashes_r($array) {
+  return is_array($array) ? array_map('stripSlashes_r', $array) : stripslashes($array);
+}
 # ------------------------------------------------------------------------------------- getmicrotime
 function getmicrotime() {
   return round(microtime(true)*1000);

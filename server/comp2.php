@@ -739,7 +739,7 @@ function proc(&$c,$name,$block) { #trace();
       $c->npar= count((array)$c->par);
       $c->nvar= count((array)$c->vars);
       $c->code= $desc->code;
-      if ( strpos($c->id,'.')!==false )            // bude se volat plným jménem
+      if ( $c->id && strpos($c->id,'.')!==false )            // bude se volat plným jménem
         $c->_init= $name;
     } catch(Exception $e) {
       if ($trace_me) display("<table class='proc'><tr><td colspan=2>$PROC $name</td></tr>".
@@ -776,7 +776,7 @@ function proc(&$c,$name,$block) { #trace();
     if (in_array($c->type,array('proc'))) continue;
     $val= $typ= $const= null; 
     eval_expr($desc,$val,$typ,$const);
-    $typ= strtr($typ,array('s'=>'text','n'=>'number','o'=>'object','a'=>'array'));
+    $typ= $typ ? strtr($typ,array('s'=>'text','n'=>'number','o'=>'object','a'=>'array')) : '?';
     if ($c->type=='const') {
       $c->_of= $typ;
       if ($const) {
@@ -1050,7 +1050,7 @@ function export(&$c,$id) {
   $e= null;
   if ( !$c->_old ) {
   $e= (object)array();
-    foreach (get_object_vars($c) as $i => $o) {
+    if ($c) foreach (get_object_vars($c) as $i => $o) {
       switch ( $i ) {
       case 'type':
       case '_of':
@@ -1070,7 +1070,7 @@ function export(&$c,$id) {
           $ee= export($cpart,$cid);
           if ( $ee ) {
             $e->part->$cid= $ee;
-            if ( substr($e->type,0,12)=='browse.smart' && $e->part->$cid->type=='show') {
+            if ( $e->type && substr($e->type,0,12)=='browse.smart' && $e->part->$cid->type=='show') {
               $e->part->$cid->type= 'show.smart';
             }
             if ( $e->part->$cid->type=='var' && $e->part->$cid->_of=='table') {
@@ -1894,6 +1894,7 @@ function name_split($name,$pars,$vars,$call=false,$lc='') {
     // najdeme nejbližší odpovídající kontext 
     $end_cx= count($context)-1;
     for ($i= $end_cx; $i>=0; $i--) {
+      if (!$context[$i]->ctx->type) continue;
       list($type)= explode('.',$context[$i]->ctx->type);
       if ( $type==$id || $id=='this' ) {
         $full.= '';
@@ -4972,7 +4973,7 @@ function lex_analysis2 ($dbg=false) {
   note_time('lexical2');
 //  if ( $pragma_strings ) tok_strings($tok);
   note_time('lexical3');
-                                                             if ($_GET['trace']==8) debug($tok,'tok');
+                                 if (isset($_GET['trace']) && $_GET['trace']==8) debug($tok,'tok');
   $lex= $typ= $pos= $not= $str= array(); $k= 0;
   // poznámky začínající #$ se pokládají za vygenerované a jsou ignorovány
   // poznámky začínající # a mezerou se připojí k prvnímu klíčovému slovu s nastaveným note
@@ -5102,7 +5103,7 @@ function lex_analysis2 ($dbg=false) {
     }
   }
   lex_assert(!$skip_tag,'chybí #endif'); 
-                                     if ($_GET['trace']==8) {debug($lex,'lex');
+            if (isset($_GET['trace']) && $_GET['trace']==8) {debug($lex,'lex');
                                                              debug($str,'str');
                                                              debug($typ,'typ');
                                                              debug($pos,'pos');
@@ -5119,7 +5120,7 @@ function tok_positions(&$tok) {
   $line= 0; $col= 1; $count= count($tok);
   for ($i= 0; $i<$count; $i++) {
     if (is_array($tok[$i])) {
-      if ($_GET['trace']==8) $tok[$i][4]= token_name($tok[$i][0]); // jen pro debug v lex_analysis2
+      if (isset($_GET['trace']) && $_GET['trace']==8) $tok[$i][4]= token_name($tok[$i][0]); // jen pro debug v lex_analysis2
       $c= $tok[$i][1];
     }
     else if (is_string($tok[$i])) {

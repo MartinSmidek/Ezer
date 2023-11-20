@@ -340,7 +340,7 @@ class EzerWiki {
 		$this->stop = false;
 		$this->stop_all = false;
 
-		$called = array();
+		$called = array('list'=>false,'definitionlist'=>false,'preformat'=>false,'newline'=>false,'sections'=>false); //231110ms
 		
 		$line = rtrim($line);
 				
@@ -368,7 +368,7 @@ class EzerWiki {
 		if ($this->preformat && !$called['preformat']) $line = $this->handle_preformat(false,true) . $line;
 		
 		// suppress linebreaks for the next line if we just displayed one; otherwise re-enable them
-		if ($isline) $this->suppress_linebreaks = ($called['newline'] || $called['sections']);
+		if ($isline) $this->suppress_linebreaks = (isset($called['newline']) && $called['newline'] || isset($called['sections']) && $called['sections']);
 		
 		return $line;
 	}
@@ -446,7 +446,12 @@ Done.
 	}
 	
 	function parse($text,$title="") {
-		$this->redirect = false;
+		$this->first_h1 = ''; //231110ms
+		$this->first_h2 = ''; //231110ms
+        $this->preformat = false; //231110ms
+        $this->emphasis = array(0,0,0,0,0,0); //231110ms
+
+        $this->redirect = false;
 		
 		$this->nowikis = array();
 		$this->list_level_types = array();

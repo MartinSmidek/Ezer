@@ -1569,6 +1569,10 @@ class Application {
     if ( Ezer.panel ) {
       Ezer.panel._onresize(w,h);
     }
+    // upozornění hlavního panelu na změnu (Ezer bez standardního menu)
+    else if ( Ezer._PanelMain ) {
+      Ezer._PanelMain._onresize(w,h);
+    }
   }
 // -------------------------------------------------------------------------- _status resize
 // změna rozměru trasovacího okna myší

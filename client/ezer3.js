@@ -3960,7 +3960,8 @@ class Form extends Block {
           fields.push(desc);
         }
       }
-      x= {cmd:'form_insert', db:table.options.db||'', table:table.id, fields:fields};
+      x= {cmd:'form_insert', db:table.options.db||'', table:table.id, key_id:table.options.key_id, 
+        fields:fields};
       this._key_id= x.key_id;
     }
     return x;

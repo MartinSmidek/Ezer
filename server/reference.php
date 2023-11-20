@@ -1124,7 +1124,7 @@ function i_doc_table_struct($tab,$all=1,$css='stat') {  #trace();
       // řádek tabulky
       $key= $c->Key; // ? '*' : '';
       $note= $c->Comment;
-      if ( $all || $note[0]!='-' ) {
+      if ( $note && ($all || $note[0]!='-') ) {
         if ( $note[0]=='#' ) {
           $db= ''; $inote= 1;
           if ( $note[1]=='#' && $note[2]=='#' ) {
@@ -1192,7 +1192,7 @@ function sys_db_info($par,$panel_self) { //debug($par);
   }
   // doplnění leftmenu o itemy pro jednotlivé tabulky
   foreach ($sys_db_info->tables as $name=>$flds_title) {
-    list($desc,$title)= explode('|',$flds_title);
+    list($desc,$title)= explode('|',$flds_title.'|');
     $title= $title ?: wu("tabulka ").strtoupper($name);
     $itms[]= (object)array('type'=>'item','options'=>(object)array(
         'title'=>"[fa-database] $title",
@@ -1206,7 +1206,8 @@ function sys_db_info($par,$panel_self) { //debug($par);
 # ----------------------------------------------------------------------------------- sys db_selects
 function sys_db_selects() { 
   global $sys_db_info, $ezer_root;
-  $sys_db_info= $_SESSION[$ezer_root]['sys_db_info'];
+  $sys_db_info= isset($_SESSION[$ezer_root]['sys_db_info']) && $_SESSION[$ezer_root]['sys_db_info'] 
+      ? $_SESSION[$ezer_root]['sys_db_info'] : array();
   $selects= $del= '';
   $key= 1;
   foreach (array_keys((array)$sys_db_info->tables) as $name) {
@@ -1245,7 +1246,7 @@ function sys_db_struct($tab,$all=1) {  #trace();
       // řádek tabulky
       $key= $c->Key; // ? '*' : '';
       $note= $c->Comment;
-      if ( $all || $note[0]!='-' ) {
+      if ( $note && ($all || $note[0]!='-') ) {
         if ( $note[0]=='#' ) {
           $db= ''; $inote= 1;
           if ( $note[1]=='#' && $note[2]=='#' ) {

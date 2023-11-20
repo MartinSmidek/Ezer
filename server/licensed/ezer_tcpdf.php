@@ -260,9 +260,10 @@ function tc_dopisy_end($fname,&$listu) { trace();
 #   $new   -- 0:na začátku nebude inicializováno $pdf, 1:na začátku bude inicializováno $pdf
 #   $save  -- 0:na konci nebude proveden zápis, 1:na konci bude proveden zápis;
 #
-function tc_dopisy($texty,$fname,$pro='rozesilani',$vyrizuje,&$listu,$druh='D',$max=1,$new=1,$save=1) { //trace();
+function tc_dopisy($texty,$fname,$pro,$vyrizuje,&$listu,$druh='D',$max=1,$new=1,$save=1) { //trace();
 //                                                 debug($texty,'texty');
   global $pdf, $USER, $dop_rozesilani;
+  if ( !$pro ) $pro= 'rozesilani';
   if ( !$texty ) throw new Exception('nebyla požadována ani jedna strana');
   if ( $new )
     tc_default();

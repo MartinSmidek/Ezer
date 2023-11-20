@@ -229,7 +229,7 @@ function ezer_connect ($db0='.main.',$even=false,$initial=0) {
 }
 # ------------------------------------------------- pdo funkce
 function pdo_num_rows($rs) {
-  $num= $rs->rowCount();
+  $num= $rs ? $rs->rowCount() : 0;
   return $num;
 }
 function pdo_result($rs,$cnum) {
@@ -403,7 +403,7 @@ function pdo_qry($qry,$pocet=null,$err=null,$to_throw=false,$db='') {
   else {
     fce_error("pdo_qry nelze použít pro ".substr($qry,0,6).' ...');
   }
-  if ( strpos($totrace,'M')!==false ) {
+  if ( $totrace && strpos($totrace,'M')!==false ) {
     $pretty= trim($myqry);
     if ( strpos($pretty,"\n")===false )
       $pretty= preg_replace("/(FROM|LEFT JOIN|JOIN|WHERE|GROUP|HAVING|ORDER)/","\n\t\$1",$pretty);

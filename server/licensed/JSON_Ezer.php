@@ -2,7 +2,7 @@
 /**
  * Correction of different behavior of encode method with respect to PHP native jsou_encode
  * (lines with comments //Ezer)
- * Author: Martin Šmídek
+ * Author: Martin Å mÃ­dek
  */
 
 /* vim: set expandtab tabstop=4 shiftwidth=4 softtabstop=4: */
@@ -625,7 +625,7 @@ class Services_JSON_Ezer
                         $stk = array(SERVICES_JSON_IN_ARR);
                         $arr = array();
                     } else {
-                        if ($this->use & SERVICES_JSON_LOOSE_TYPE) {
+                        if (isset($this->use) && ($this->use & SERVICES_JSON_LOOSE_TYPE) ) {
                             $stk = array(SERVICES_JSON_IN_OBJ);
                             $obj = array();
                         } else {
@@ -683,7 +683,7 @@ class Services_JSON_Ezer
                                     $key = $this->decode($parts[1]);
                                     $val = $this->decode($parts[2]);
 
-                                    if ($this->use & SERVICES_JSON_LOOSE_TYPE) {
+                                    if (isset($this->use) && ($this->use & SERVICES_JSON_LOOSE_TYPE) ) {
                                         $obj[$key] = $val;
                                     } else {
                                         $obj->$key = $val;

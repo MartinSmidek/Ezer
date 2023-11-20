@@ -2,6 +2,8 @@
   # ----------------------------------------------------------------------------------- obsluha chyb
   $err= isset($_COOKIE['error_reporting']) ? $_COOKIE['error_reporting'] : 1;
   error_reporting($err==3 ? E_ALL : E_ALL & ~E_NOTICE);
+  $y= (object)array();  // pro catch syntaktické chyby
+  $php_start= 0;        // pro catch syntaktické chyby
   try {
   if ( $err>=2 ) {
     function exception_error_handler($errno, $errstr, $errfile, $errline ) {
@@ -310,9 +312,12 @@
       $fce= $x->fce;
       $ok= function_exists($fce);
       if ( !$ok ) {
-        list($class,$meth)= explode('::',$fce);
-        $ok= method_exists($class,$meth);
-        $fce= array($class,$meth);
+        $class_meth= explode('::',$fce);
+        if (count($class_meth)==2) {
+          list($class,$meth)= $class_meth;
+          $ok= method_exists($class,$meth);
+          $fce= array($class,$meth);
+        }
       }
       if ( $ok ) {
 //                                                         display("ask $fce");
@@ -350,7 +355,7 @@
     ezer_connect($db);
     // zjištění správného počtu před smazáním
     $y->ok= 0;
-    $table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
+    $table= (isset($ezer_db[$db][5]) && isset($ezer_db[$db][5]) && $ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
     if ( ($count= $x->count) ) {
       $qry= "SELECT count(*) AS _pocet FROM $table WHERE {$x->cond} ";
       $res= mysql_qry($qry);
@@ -373,7 +378,7 @@
     $db= isset($x->db) && $x->db ? $x->db : $mysql_db; 
     ezer_connect($db);
     $y->ok= 0;
-    $table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
+    $table= (isset($ezer_db[$db][5]) && isset($ezer_db[$db][5]) && $ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
     $ids= $vals= ''; $del= '';
     foreach($x->par as $id=>$val) {
       $ids.= "$del$id";
@@ -396,7 +401,7 @@
     ezer_connect($db);
     // zjištění správného počtu před smazáním
     $y->ok= 0;
-    $table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
+    $table= (isset($ezer_db[$db][5]) && isset($ezer_db[$db][5]) && $ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
     $set= ''; $del= '';
     foreach ($x->set as $fld=>$val) {
       $set= "$fld='".pdo_real_escape_string($val)."'";
@@ -424,7 +429,7 @@
     $db= isset($x->db) && $x->db ? $x->db : $mysql_db; 
     ezer_connect($db);
     $zmeny= array();
-    $table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
+    $table= (isset($ezer_db[$db][5]) && isset($ezer_db[$db][5]) && $ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
     if ( $x->fields ) {
       foreach ($x->fields as $desc) {
         $fld= $desc->id;
@@ -449,7 +454,7 @@
     $db= isset($x->db) && $x->db ? $x->db : $mysql_db; 
     ezer_connect($db);
     $zmeny= array();
-    $table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
+    $table= (isset($ezer_db[$db][5]) && isset($ezer_db[$db][5]) && $ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
     foreach ($x->fields as $desc) {
       $fld= $desc->id;
       $val= $desc->val;
@@ -484,7 +489,7 @@
     $fields= ''; $del= '';
     $db= isset($x->db) && $x->db ? $x->db : $mysql_db; 
     ezer_connect($db);
-    $table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
+    $table= (isset($ezer_db[$db][5]) && isset($ezer_db[$db][5]) && $ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
     $y->key= 0;
     foreach ($x->fields as $desc) {
       if ( isset($desc->expr) && $desc->expr ) { $f= $desc->id; $fields.= "$del{$desc->expr} as $f"; }
@@ -580,7 +585,7 @@
     $y->quiet= $x->quiet;
     $db= isset($x->db) && $x->db ? $x->db : $mysql_db; 
     ezer_connect($db);
-    $table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
+    $table= (isset($ezer_db[$db][5]) && isset($ezer_db[$db][5]) && $ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
     $as= explode('AS',$x->table);
     if (!$x->key_id) fce_error("browse/ask: funkce browse_load nenalezla atribut key_id");
     $y->key_id= $key_id= isset($as[1]) && $as[1] ? trim($as[1]).'.'.$x->key_id : $x->key_id;
@@ -651,7 +656,7 @@
       $y->quiet= $x->quiet;
       $y->oldkey= isset($x->oldkey) ? $x->oldkey : '';
       if ( isset($x->options) ) $y->options= $x->options;
-      $table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
+      $table= (isset($ezer_db[$db][5]) && isset($ezer_db[$db][5]) && $ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
       $atable= explode(' AS ',$table);
       $key_id= (isset($atable[1]) && $atable[1] ? "{$atable[1]}." : '') . $x->key_id;
       $pipe= array();
@@ -822,7 +827,7 @@
       $db= isset($x->db) && $x->db ? $x->db : $mysql_db; 
       ezer_connect($db);
       $fields= ''; $del= '';
-      $table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
+      $table= (isset($ezer_db[$db][5]) && isset($ezer_db[$db][5]) && $ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
       $atable= explode(' AS ',$table);
       $key_id= (isset($atable[1]) && $atable[1] ? "{$atable[1]}." : '') . $x->key_id;
       $pipe= array();
@@ -936,7 +941,7 @@
     $tmax= $x->tmax;
     $db= isset($x->db) && $x->db ? $x->db : $mysql_db; 
     ezer_connect($db);
-    $table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
+    $table= (isset($ezer_db[$db][5]) && isset($ezer_db[$db][5]) && $ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
     $atable= explode(' AS ',$table);
     if (!$x->key_id) fce_error("browse/ask: funkce browse_load nenalezla atribut key_id");
     $key_id= (isset($atable[1]) && $atable[1] ? "{$atable[1]}." : '') . $x->key_id;
@@ -1170,7 +1175,7 @@
     ezer_connect($db);
     $fields= ''; $clmns= ''; $del= '';
     $y->par= $x->par;
-    $table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
+    $table= (isset($ezer_db[$db][5]) && $ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
     $atable= explode(' AS ',$table);
     $key_id= (isset($atable[1]) && $atable[1] ? "{$atable[1]}." : '') . $x->key_id;
     $pipe= array();
@@ -1298,7 +1303,7 @@
     $db= isset($x->db) && $x->db ? $x->db : $mysql_db; 
     ezer_connect($db);
     $zmeny= array();
-    $table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
+    $table= (isset($ezer_db[$db][5]) && $ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
     $fld= $x->field;
     $val= $x->val;
     $pipe= isset($desc->pipe) && $desc->pipe ? $desc->pipe : '';
@@ -1323,7 +1328,7 @@
   case 'map_load':
     $db= isset($x->db) && $x->db ? $x->db : $mysql_db; 
     ezer_connect($db);
-    $table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
+    $table= (isset($ezer_db[$db][5]) && $ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
     $qry= "SELECT * FROM $table WHERE {$x->where} ";
     if ( isset($x->order) && $x->order ) $qry.= " ORDER BY {$x->order}";
     $res= mysql_qry($qry);
@@ -2265,7 +2270,7 @@ end_switch:
 //   $y->sys->user= $USER;              // redukce informace - přesunuto do user_relogin, user_login
 //   $y->sys->ezer= $EZER;              // redukce informace - přesunuto do user_relogin, user_login
   header('Content-type: application/json; charset=UTF-8');
-  $y->php_ms= round(getmicrotime() - $php_start,4);
+  if ($php_start) $y->php_ms= round(getmicrotime() - $php_start,4);
 
   if ( $trace && !isset($x->totrace) ) {
     $y->notrace= 1;
@@ -2370,7 +2375,7 @@ function browse_status($x,$cond=1) {
   $y->par= $x->par;
   $db= isset($x->db) && $x->db ? $x->db : $mysql_db; 
   ezer_connect($db);
-  $y->table= ($ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
+  $y->table= (isset($ezer_db[$db][5]) && $ezer_db[$db][5] ? $ezer_db[$db][5] : $db).'.'.$x->table;
   $atable= explode(' AS ',$y->table);
   $key_id= (isset($atable[1]) && $atable[1] ? "{$atable[1]}." : '') . $x->key_id;
   $pipe= array();
