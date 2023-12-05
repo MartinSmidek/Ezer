@@ -2072,11 +2072,21 @@ end:
 # přeloží (složené) jméno jako volání funkce na základě informace z name_split
 function gen_caller($s,$pars) {
   global $func_expr;
-  if ( !$s->fce && !$s->type=='proc' || !$s->call ) 
-    comp_error("CODE: chybné volání funkce '$s->itm'",$func_expr->lc);
   $code= array();
   $npars= count($pars);
-  if ( $s->type=='fce' ) {
+  if ( !$s->fce && !$s->type=='proc' || !$s->call ) {
+    if ( $s->type=='var' && $s->bas->typ=='E' && $s->bas->_of=='e' && $s->_of=='e' && $s->tras=='Er') {  
+      // volání Ezer.funkce ezer-objektu obsaženého v proměnné
+      $s->call->a= $npars;
+      $code[]= (object)array('o'=>'o','i'=>$s->bas->nam);
+      $code[]= (object)array('o'=>'v','v'=>$s->rel);
+      $code[]= $pars;
+      $code[]= (object)array('o'=>'m','i'=>'_call','a'=>$npars+1);
+    }
+    else 
+      comp_error("CODE: chybné volání funkce '$s->itm' (g)",$func_expr->lc);
+  }
+  elseif ( $s->type=='fce' ) {
     // volání Ezer.fce
     $s->call->a= $npars;
     $code[]= $pars;
