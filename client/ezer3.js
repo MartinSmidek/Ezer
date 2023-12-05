@@ -809,10 +809,14 @@ class Block {
       for (var name in desc0.part) {
         var desc= desc0.part[name];
 //                                                 Ezer.trace('L','subBlocks of '+this.type+' '+this.id+': '+desc.type+' '+name);
-        if ( this.value && this.value.part && this.value.part[name] && this.value.part[name].type=='proc') {
+        if ( this.part && this.part[name] && this.part[name].type=='proc') {
           // přepis kódu procedury v use
-          this.value.part[name].code= desc0.part[name].code;
+          this.part[name].code= desc0.part[name].code;
         }
+//        if ( this.value && this.value.part && this.value.part[name] && this.value.part[name].type=='proc') {
+//          // přepis kódu procedury v use
+//          this.value.part[name].code= desc0.part[name].code;
+//        }
         else if ( this.part && this.part[name] ) {
           let part= this.part[name];
           if ( extend=='include' ) {
