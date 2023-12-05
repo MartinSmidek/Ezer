@@ -1,7 +1,7 @@
 <?php # (c) 2008 Martin Smidek <martin@smidek.eu>
   # ----------------------------------------------------------------------------------- obsluha chyb
   $err= isset($_COOKIE['error_reporting']) ? $_COOKIE['error_reporting'] : 1;
-  error_reporting($err==3 ? E_ALL : E_ALL & ~E_NOTICE);
+  error_reporting($err==3 ? E_ALL : ($err==2 ? E_ALL & ~E_NOTICE : E_ALL & ~E_NOTICE & ~E_WARNING));
   $y= (object)array();  // pro catch syntaktické chyby
   $php_start= 0;        // pro catch syntaktické chyby
   try {

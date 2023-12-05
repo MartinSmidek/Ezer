@@ -2,7 +2,9 @@
   
 # screen=1 zobrazí rozměr klientské části
 
-  error_reporting(E_ALL ^ E_NOTICE ^ E_WARNING);
+//  error_reporting(E_ALL ^ E_NOTICE ^ E_WARNING);
+  $err= isset($_COOKIE['error_reporting']) ? $_COOKIE['error_reporting'] : 1;
+  error_reporting($err==3 ? E_ALL : ($err==2 ? E_ALL & ~E_NOTICE : E_ALL & ~E_NOTICE & ~E_WARNING));
   $pwd= getcwd();
 
   # identifikace ostrého serveru
