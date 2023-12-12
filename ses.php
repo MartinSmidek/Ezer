@@ -1,8 +1,7 @@
 <?php
 
 // ochrana neoprávněného čtení session
-echo(my_ip());
-if (my_ip()!='192.168.99.119' && my_ip()!='127.0.0.1') 
+if (my_ip()!='217.64.3.170' && my_ip()!='127.0.0.1') 
   die(''); 
 
 //error_reporting(E_ALL & ~E_NOTICE);
