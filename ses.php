@@ -1,16 +1,18 @@
 <?php
 
-error_reporting(E_ALL & ~E_NOTICE);
+// ochrana neoprávněného čtení session
+echo(my_ip());
+if (my_ip()!='192.168.99.119' && my_ip()!='127.0.0.1') 
+  die(''); 
+
+//error_reporting(E_ALL & ~E_NOTICE);
+error_reporting(-1);
 ini_set('display_errors', 'On');
 
 $ezer_root= $_GET['root'];
-$base_url= $_GET['url'];
+$base_url= isset($_GET['url']) ? $_GET['url'] : "/{$_SERVER['SERVER_NAME']}";
 
-if ( !isset($_SESSION) ) session_start();
-//$abs_root= $_SESSION[$ezer_root]['abs_root'];
-//$rel_root= $_SESSION[$ezer_root]['rel_root'];
-//chdir($abs_root);
-//echo($abs_root);
+session_start();
 
 # -------------------------------------------------------------------- identifikace ladícího serveru
 // definice podporovaných serverů
@@ -22,9 +24,9 @@ $ezer_local= $ezer_server==0;
 $js= <<<__EOD
 function op(op_arg) {
   if ( op_arg=='reload.' )
-    location.href= "ezer3.2/ses.php?root=$ezer_root&url=$base_url";
+    location.href= "ezer3.2/ses.php?root=$ezer_root";
   else
-    location.href= "ezer3.2/ses.php?root=$ezer_root&url=$base_url&op="+op_arg;
+    location.href= "ezer3.2/ses.php?root=$ezer_root&op="+op_arg;
 }
 __EOD;
 # ------------------------------------------------------------------------------------------- server
@@ -37,6 +39,7 @@ if ( isset($_GET['op']) ) {
     $_SESSION[$arg]= array();
     break;
   case 'destroy':
+    $_SESSION= array();
     session_destroy();
     break;
   case 'clear_cg':
@@ -62,7 +65,7 @@ if ( isset($_GET['op']) ) {
     $_SESSION['dbg']= $arg;
     break;
   }
-  header("Location: ses.php?root=$ezer_root&url=$base_url");
+  header("Location: ses.php?root=$ezer_root");
   exit();
 }
 # ------------------------------------------------------------------------------------------- client
@@ -93,7 +96,7 @@ $cms.= debug($_SERVER,'SERVER').'<br/>';
 
 echo <<<__EOD
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en" dir="ltr">
   <head>
   <meta http-equiv="content-type" content="text/html; charset=utf-8">
   <base href="$base_url">
@@ -205,12 +208,6 @@ function debugx(&$gt,$label=false,$html=0,$depth=64,$length=64,$win1250=0,$getty
   }
   return $x;
 }
-# -------------------------------------------------------------------------------------------- my ip
-# zjištění klientské IP
-function my_ip() {
-  return isset($_SERVER['HTTP_X_FORWARDED_FOR'])
-    ? $_SERVER['HTTP_X_FORWARDED_FOR'] : $_SERVER['REMOTE_ADDR'];
-}
 # --------------------------------------------------------------------------------------- tailCustom
 	/**
 	 * Slightly modified version of http://www.geekality.net/2011/05/28/php-tail-tackling-large-files/
@@ -264,4 +261,10 @@ function my_ip() {
 		passthru('tail -'  . $lines . ' ' . escapeshellarg($filepath));
 		return trim(ob_get_clean());
 	}
+# -------------------------------------------------------------------------------------------- my ip
+# zjištění klientské IP
+function my_ip() {
+  return isset($_SERVER['HTTP_X_FORWARDED_FOR'])
+    ? $_SERVER['HTTP_X_FORWARDED_FOR'] : $_SERVER['REMOTE_ADDR'];
+}
 ?>
