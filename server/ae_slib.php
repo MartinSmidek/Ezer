@@ -350,7 +350,7 @@ function display ($msg) {
   global $trace;
 //   $msg= win2utf($msg);
 //   if ( $trace )
-  $trace.= ($trace?"<div />":'').$msg;
+  $trace.= ($trace?"<br />":'').$msg;
 //   else $trace= $msg;
 }
 # ----------------------------------------------------------------------------------------- display_
@@ -2256,8 +2256,8 @@ function ezer_qry ($op,$table,$cond_key,$zmeny,$key_id='') {
         default:
           // zmena->pip je definovaná ve form_save v případech zápisu hodnoty přes sql_pipe
           $val= pdo_real_escape_string($zmena->val);
-          $old= $zmena->old ? pdo_real_escape_string($zmena->old) : (
-                $zmena->pip ? pdo_real_escape_string($zmena->pip) : '');
+          $old= isset($zmena->old) ? pdo_real_escape_string($zmena->old) : (
+                isset($zmena->pip) ? pdo_real_escape_string($zmena->pip) : '');
           break;
         }
         $qry= "$qry_prefix,'$fld','$op','$old','$val'); ";

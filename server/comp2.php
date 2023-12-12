@@ -1287,7 +1287,7 @@ function find_part_rel($name,&$full,$type='') { #trace();
 function add_call($proc,$lc='',$name='') {
   global $call_ezer, $func_name_lc;
   // vložíme do seznamu ezer-funkcí
-  $id= $proc->options->name;
+  $id= $proc->options->name?:'';
   $id_lc= $id.'.'.str_replace(',','.',$proc->_lc);
   if ($lc) {
     list($l,$c)= explode(',',$lc);
@@ -2077,6 +2077,7 @@ function gen_caller($s,$pars) {
   if ( !$s->fce && !$s->type=='proc' || !$s->call ) {
     if ( $s->type=='var' && $s->bas->typ=='E' && $s->bas->_of=='e' && $s->_of=='e' && $s->tras=='Er') {  
       // volání Ezer.funkce ezer-objektu obsaženého v proměnné
+      if (!isset($s->call)) $s->call= (object)array();
       $s->call->a= $npars;
       $code[]= (object)array('o'=>'o','i'=>$s->bas->nam);
       $code[]= (object)array('o'=>'v','v'=>$s->rel);

@@ -326,6 +326,7 @@ if (!defined('T_SMALLER_OR_EQUAL'))
 if (!defined('T_MATCH'))         define('T_MATCH',-2); // definice až  od PHP 8
 $tok2lex= array(
   T_AND_EQUAL => 'del', T_ARRAY => 'id', T_ARRAY_CAST => 'x', T_AS => 'id', //T_BAD_CHARACTER => 'x',
+  T_AMPERSAND_NOT_FOLLOWED_BY_VAR_OR_VARARG => 'del',
   T_BOOL_CAST => 'x', T_BOOLEAN_AND => 'del', T_BOOLEAN_OR => 'del', T_BREAK => 'id', T_CASE => 'id',
   T_CLASS => 'id', T_CLASS_C => 'x', T_CLOSE_TAG => 'x', T_COMMENT => 'cmnt', T_CONCAT_EQUAL => 'x',
   T_CONST => 'id', T_CONSTANT_ENCAPSED_STRING => 'str', T_CONTINUE => 'id', T_CURLY_OPEN => 'del',
@@ -338,9 +339,9 @@ $tok2lex= array(
   T_FOREACH => 'id', T_FUNC_C => 'x', T_FUNCTION => 'id', T_GLOBAL => 'id', //T_CHARACTER => 'del',
   T_IF => 'id', T_INC => 'del', T_INCLUDE => 'id', T_INCLUDE_ONCE => 'id', T_INLINE_HTML => 'x',
   T_INT_CAST => 'x', T_IS_EQUAL => 'del', T_IS_GREATER_OR_EQUAL => 'del', T_IS_IDENTICAL => 'x',
-  T_IS_NOT_EQUAL => 'del', T_IS_NOT_IDENTICAL => 'x', T_ISSET => 'id', T_LINE => 'x', T_LIST => 'id',
-  T_LNUMBER => 'num', T_LOGICAL_AND => 'id', T_LOGICAL_OR => 'id', T_LOGICAL_XOR => 'id',
-  T_MATCH => 'id',
+  T_IS_NOT_EQUAL => 'del', T_IS_SMALLER_OR_EQUAL => 'del', T_IS_NOT_IDENTICAL => 'x', T_ISSET => 'id', 
+  T_LINE => 'x', T_LIST => 'id', T_LNUMBER => 'num', 
+  T_LOGICAL_AND => 'id', T_LOGICAL_OR => 'id', T_LOGICAL_XOR => 'id', T_MATCH => 'id',
   T_MINUS_EQUAL => 'x', T_ML_COMMENT => 'cmnt', T_MOD_EQUAL => 'x', T_MUL_EQUAL => 'x',
   T_NEW => 'id', T_NUM_STRING => 'num', T_OBJECT_CAST => 'x', T_OBJECT_OPERATOR => 'x',
   T_OLD_FUNCTION => 'id', T_OPEN_TAG => 'x', T_OPEN_TAG_WITH_ECHO => 'x', T_OR_EQUAL => 'x',
