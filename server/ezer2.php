@@ -1245,8 +1245,12 @@
         $mapi++;
         $tab= (isset($mopt->db) && $mopt->db ? "{$mopt->db}." : '').$map->table;
         $where= $mopt->where;
-        if ( $map->table=='_cis' )
-          $where= str_replace('druh=',"\$m$mapi.druh=",$where);
+        if ( $map->table=='_cis' ) {
+          // $where= str_replace('druh=',"\$m$mapi.druh=",$where);
+          $where= preg_replace(
+            '/(\w+)\s*(=|<=|<>|<>|=|>|!=|\sIN\s|\sBETWEEN\s|\sLIKE\s|\REGEXP\s)\s*/m',
+             "\$m$mapi.\$1\$2",$where);
+        }
         $join= "\nLEFT JOIN $tab AS \$m$mapi ";
         $join.= "ON \$m$mapi.{$mopt->key_id}=$fld AND $where ";
         $joins.= $join;
