@@ -317,13 +317,19 @@ $keywords= array();                                 // pomocné pole - sjednocen
 # definice povolených omezovačů
 $dels= '{[(|)]};:,*';                   // specifickou roli má tečka, apostrof, uvozovka
 // úpravy od PHP
-if (!defined('T_OLD_FUNCTION'))  define('T_OLD_FUNCTION', 'T_FUNCTION');
-if (!defined('T_ML_COMMENT'))    define('T_ML_COMMENT',   'T_COMMENT');
-else                             define('T_DOC_COMMENT',  'T_ML_COMMENT');
+if (!defined('T_OLD_FUNCTION'))  
+  define('T_OLD_FUNCTION', 'T_FUNCTION');
+if (!defined('T_ML_COMMENT'))    
+  define('T_ML_COMMENT',   'T_COMMENT');
+if (!defined('T_DOC_COMMENT'))                             
+  define('T_DOC_COMMENT',  'T_COMMENT');
 if (!defined('T_SMALLER_OR_EQUAL')) 
   define('T_SMALLER_OR_EQUAL',PHP_VERSION<7 ? 287 : 290); // definice v PHP prostě chyběla
   
-if (!defined('T_MATCH'))         define('T_MATCH',-2); // definice až  od PHP 8
+if (!defined('T_MATCH'))         
+  define('T_MATCH',-2); // definice až  od PHP 8
+if (!defined('T_AMPERSAND_NOT_FOLLOWED_BY_VAR_OR_VARARG')) 
+  define('T_AMPERSAND_NOT_FOLLOWED_BY_VAR_OR_VARARG',-2); // definice až  od PHP 8
 $tok2lex= array(
   T_AND_EQUAL => 'del', T_ARRAY => 'id', T_ARRAY_CAST => 'x', T_AS => 'id', //T_BAD_CHARACTER => 'x',
   T_AMPERSAND_NOT_FOLLOWED_BY_VAR_OR_VARARG => 'del',

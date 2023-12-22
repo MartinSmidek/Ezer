@@ -19,8 +19,9 @@
   }
 
   session_start();
+  date_default_timezone_set('Europe/Prague');
 
-  $root= $_GET['root'];
+  $root= isset($_GET['root']) ? $_GET['root'] : '';
   $option_state= isset($_GET['trace']) ? $_GET['trace'] : '';
   $option_list= isset($_GET['list']) ? $_GET['list'] : '';
   $option_source= isset($_GET['source']) ? $_GET['source'] : '';

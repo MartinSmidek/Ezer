@@ -2,7 +2,8 @@
 
 // ochrana neoprávněného čtení session
 if (my_ip()!='217.64.3.170' && my_ip()!='127.0.0.1') 
-  die(''); 
+//  die(''); 
+  die(my_ip());
 
 //error_reporting(E_ALL & ~E_NOTICE);
 error_reporting(-1);
