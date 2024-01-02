@@ -1,8 +1,11 @@
 <?php
 
-// ochrana neoprávněného čtení session
-if (my_ip()!='217.64.3.170' && my_ip()!='127.0.0.1') 
-//  die(''); 
+# -------------------------------------------------------------------- identifikace ladícího serveru
+$ezer_localhost= preg_match('/^localhost|^192\.168\./',$_SERVER["SERVER_NAME"])?1:0;
+$ezer_local= $ezer_localhost || preg_match('/^\w+\.bean/',$_SERVER["SERVER_NAME"])?1:0;
+
+// pokud není ladící, musí mít moji IP
+if (!$ezer_local && my_ip()!='217.64.3.170' && my_ip()!='127.0.0.1') 
   die(my_ip());
 
 //error_reporting(E_ALL & ~E_NOTICE);
@@ -19,7 +22,6 @@ session_start();
 global $ezer_server, $path_log;
 $deep_dps= "../files/$ezer_root/$ezer_root.dbs.php";
 if (file_exists($deep_dps)) require_once($deep_dps);
-$ezer_local= $ezer_server==0;
 # ----------------------------------------------------------------------------------------------- js
 $js= <<<__EOD
 function op(op_arg) {
