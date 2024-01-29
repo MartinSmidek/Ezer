@@ -4868,7 +4868,7 @@ Ezer.error= function (str,level,block=null,lc='',calls=null) {
   var estr= "<b>ERROR:</b> "+str;
   var inside= "";
   var trail= Ezer.fce.trail('show_err');
-  if ( !ok ) {
+  if ( 1 ) { //!ok ) {      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     // systémové zpracování chyby
     if ( level=='S' ) {
       // volání z funkce Ezer.Eval.eval
