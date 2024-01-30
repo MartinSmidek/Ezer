@@ -676,7 +676,8 @@ function select_object($expr,$table,$cond=1,$db='.main.') {
 # provedení MySQL dotazu
 function query($qry,$db='.main.') {
   $res= mysql_qry($qry,0,0,0,$db);
-//  if ( !$res ) fce_error(wu("chyba funkce query:$qry/".pdo_error()));
+  if ( $res===false ) 
+    fce_error(wu("chyba funkce query:$qry/".pdo_error()));
   return $res;
 }
 # ---------------------------------------------------------------------------------------- sql query
