@@ -308,8 +308,11 @@ div.Popup3 div.pop_head { position: absolute; top: 0; left: 0; width: 100%;
 div.Popup3 div.pop_head button { float:right; }
 div.Popup3 div.pop_close { position: absolute; right: 0; top: 0; cursor: pointer;
   margin: 5px; width: 13px; height: 13px; background: url(img/closebtn.gif) no-repeat; }
-div.Popup3 div.pop_body { position: absolute; /*overflow: auto; */
-  width:calc(100% - 30px); height:calc(100% - 42px); 
+div.Popup3 div.pop_body {
+  position: absolute;
+  /*overflow: auto; */
+  width:calc(100% - 30px);
+  height:calc(100% - 42px);
 }
 div.Popup3 div.pop_head i.fa { display:initial; }
 
@@ -392,7 +395,9 @@ div.MenuGroup3 .disabled3 i.fa-darkviolet { color:grey
 /* -------------------------------------------------------------------------------------==> Label */
 
 .Label3 {
-  position:absolute; z-index:1; }
+  position:absolute;
+  z-index:1;
+  }
 /*.Label3 h1 {
   font-size:12pt; margin:0; padding:0 }*/
 .Label3 a {
@@ -454,7 +459,8 @@ button.Button3:disabled3 i.fa-red { color:grey }
   position:absolute; width:100%; border:1px solid #aaa; z-index:1; height: 16px;
 }
 div.Element3 {
-  position:absolute; }
+  position:absolute;
+  }
 div.Element3 .Label3, div.Select3 .Label3, div.FieldDate3 .Label3 {
   white-space: pre;
 }
@@ -480,8 +486,7 @@ div.Element3 .Label3, div.Select3 .Label3, div.FieldDate3 .Label3 {
 
 .Edit3 { position:absolute; font-family:Arial,Helvetica,sans-serif; font-size:9pt; z-index:1;
   border:1px solid #aaa; overflow-y:scroll; width:100%; height:100%; resize:none; }
-.EditHtml3 { position:absolute;
-}
+.EditHtml3 {/* position:absolute; */}
 .ui-autocomplete {
   z-index: 9999;
 }
