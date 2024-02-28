@@ -10,6 +10,7 @@ func onstart() { var db_info:object
 }
 func append(x) { info.append(x) }
 func tab_append(tab,cond,mode) {
+  echo(`tab_append(${tab},${cond},${mode}) ezer3.1`);
   clear();
   if (mode==1)
     info.append(php.sys_db_append_using(tab,cond));
