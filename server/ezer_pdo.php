@@ -265,16 +265,16 @@ function pdo_real_escape_string($inp) {
 // pro INSERT|UPDATE|DELETE vrací počet modifikovaných řádků
 // pro SELECT vrací PDOStatement
 // jinak vrací chybu
-function pdo_query($query) {
+function pdo_query($query,$quiet=false) {
   global $ezer_db, $curr_db;
   $pdo= $ezer_db[$curr_db][0];
   if ( preg_match('/^\s*(SET|INSERT|UPDATE|REPLACE|DELETE|TRUNCATE|DROP|CREATE|ALTER)/',$query) ) {
     $res= $pdo->exec($query);
-    if ( $res===false ) fce_error($pdo->errorInfo()[2]);
+    if ( $res===false && !$quiet) fce_error($pdo->errorInfo()[2]);
   }
   else if ( preg_match('/^\s*(SELECT|SHOW)/',$query) ) {
     $res= $pdo->query($query);
-    if ( $res===false ) fce_error($pdo->errorInfo()[2]);
+    if ( $res===false && !$quiet ) fce_error($pdo->errorInfo()[2]);
   }
   else {
     fce_error("pdo_query nelze použít pro ".substr($query,0,6).' ...');

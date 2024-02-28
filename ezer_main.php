@@ -27,7 +27,7 @@
   // platí buďto isnull($ezer_local) nebo isnull($ezer_server)
   global $ezer_local, $ezer_server;
   if ( is_null($ezer_local) && is_null($ezer_server) ) 
-    fce_error("inconsistent server setting (2)");
+    die("inconsistent server setting (2)");
   $is_local= is_null($ezer_local) ? !$ezer_server : $ezer_local;
   
   // nastavení zobrazení PHP-chyb a výjimek v ezer2.php
