@@ -15,6 +15,8 @@ ini_set('display_errors', 'On');
 $ezer_root= $_GET['root'];
 $base_url= isset($_GET['url']) ? $_GET['url'] : "/{$_SERVER['SERVER_NAME']}";
 
+$only_key= isset($_GET['key']) ? $_GET['key'] : '';
+
 session_start();
 
 # -------------------------------------------------------------------- identifikace ladícího serveru
@@ -23,12 +25,13 @@ global $ezer_server, $path_log;
 $deep_dps= "../files/$ezer_root/$ezer_root.dbs.php";
 if (file_exists($deep_dps)) require_once($deep_dps);
 # ----------------------------------------------------------------------------------------------- js
+$and= $only_key ? "&key=$only_key" : '';
 $js= <<<__EOD
 function op(op_arg) {
   if ( op_arg=='reload.' )
-    location.href= "ezer3.2/ses.php?root=$ezer_root";
+    location.href= "ezer3.2/ses.php?root=$ezer_root$and";
   else
-    location.href= "ezer3.2/ses.php?root=$ezer_root&op="+op_arg;
+    location.href= "ezer3.2/ses.php?root=$ezer_root$and&op="+op_arg;
 }
 __EOD;
 # ------------------------------------------------------------------------------------------- server
@@ -93,7 +96,7 @@ $cms.= "<div>
          </div>  
          <div style='width:800px;height:100px;overflow:auto;background:white;margin:5px 40px'>$log</div>
        </div>";
-$cms.= debug($_SESSION,'SESSION').'<br/>';
+$cms.= $only_key ? debug($_SESSION[$only_key],"SESSION[$only_key]") : debug($_SESSION,'SESSION').'<br/>';
 $cms.= debug($_SERVER,'SERVER').'<br/>';
 
 echo <<<__EOD
