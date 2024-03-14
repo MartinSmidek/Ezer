@@ -1324,9 +1324,11 @@ function sys_db_append($table,$cond) {
   $path= $sys_db_info->path;
   $css= $sys_db_info->css;
   $tables= array_keys((array)$sys_db_info->tables);
+  $th= "th align='left'";
   $html= '';
   // vytvoř header a nalezni primární klíč
   $ths= $key= '';  $n= 0;
+//  $ths.= "<th>?</th>";
   list($flds)= explode('|',$sys_db_info->tables->$table);
   $flds= explode(',',$flds);
   foreach ($flds as $f) {
@@ -1347,17 +1349,24 @@ function sys_db_append($table,$cond) {
   while ( $rt && ($t= pdo_fetch_object($rt)) ) {
     $n++;
     $html.= '<tr>';
+    $href= "href='ezer://$path.tab_rec_show/$table/$key/{$t->$key}'";
+//    $html.= "<th><a title='$table' $href class='fa fa-table'></a></th>";
     foreach ($flds as $f) {
       list($f,$tab2)= explode('>',$f);
       $val= $t->$f;
       if ($tab2=='*') {
         // zobraz záznamy obsahující tento klíč
         $href= "href='ezer://$path.tab_append/$table/$val/1'";
-        $html.= "<th><a title='$tab2' $href>$val</a></th>";
+
+        $href2= "href='ezer://$path.tab_rec_show/$table/$key/$val'";
+        $show= "<a title='$table' $href2 class='fa fa-table'></a>";
+
+        $html.= "<$th>$show <a title='$tab2' $href>$val</a></th>";
       }
       elseif ($tab2=='-') {
         // klíč bez odkazu
-        $html.= "<td>$val</td>";
+//        $html.= "<td>$val</td>";
+        $html.= "<td><a title='$table' $href class='fa fa-table'></a> $val</td>";
       }
       elseif ($tab2 && preg_match("/[\w]*/",$tab2)) { 
         if ( in_array($tab2,$tables)) {
@@ -1365,7 +1374,11 @@ function sys_db_append($table,$cond) {
           $fld2= explode(',',$sys_db_info->tables->$tab2);
           list($key2)= explode('>',$fld2[0]);
           $href= "href='ezer://$path.tab_append/$tab2/$key2=$val/0'";
-          $html.= "<th><a title='$tab2' $href>$val</a></th>";
+          
+          $href2= "href='ezer://$path.tab_rec_show/$tab2/$key2/$val'";
+          $show= "<a title='$table' $href2 class='fa fa-table'></a>";
+          
+          $html.= "<$th>$show <a title='$tab2' $href>$val</a></th>";
         }
         else {
           // zavolej uživatelskou funkci 
@@ -1383,7 +1396,7 @@ function sys_db_append($table,$cond) {
           }
           else {
             $href= "href='ezer://$path.$tab2/$table/$val'";
-            $html.= "<th><a title='$tab2' $href>$val</a></th>";
+            $html.= "<th>C <a title='$tab2' $href>$val</a></th>";
           }
         }
       }
@@ -1404,4 +1417,27 @@ function sys_db_append($table,$cond) {
   $html.= "</table><br>";
 end:  
   return $n ? $html : '';
+}
+# ---------------------------------------------------------------------------------- sys db_rec_show
+# zobraz všechny položky daného záznamu dané tabulky, které mají komentář nezačínající -
+function sys_db_rec_show($tab,$key,$idt) {
+  global $sys_db_info, $ezer_root;
+  $sys_db_info= $_SESSION[$ezer_root]['sys_db_info'];
+  $html= '';
+  $css= $sys_db_info->css;
+  $r= select_object('*',$tab,"$key=$idt"); 
+  $html.= "<table class='$css'>";
+  $rt= pdo_query("SHOW FULL COLUMNS FROM $tab");
+  while ($rt && ($t= pdo_fetch_object($rt))) {
+    $fld= $t->Field;
+    $val= $r->$fld;
+    if (preg_match("/_json/",$fld)) {
+      $val= json_decode($val);
+      $val= debugx($val,'',0,64,64,1);
+      $val= "<div class='dbg'>$val</div>";
+    }
+    $html.= "<tr><th>$fld</th><td>$val</td></tr>";
+  }
+  $html.= "</table><br>";
+  return $html;
 }
