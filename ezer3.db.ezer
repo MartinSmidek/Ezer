@@ -4,13 +4,13 @@
 // (c) 2021 Martin Šmídek <martin@smidek.eu>
 
 # ===================================================================================== DATABÁZE
-func onstart() { var db_info:object
+func onfirstfocus() { var db_info:object
   db_info= php.sys_db_info(this.par,this.self()); 
   mdb.str.attach_code(db_info.group);
 }
 func append(x) { info.append(x) }
 func tab_append(tab,cond,mode) {
-  echo(`tab_append(${tab},${cond},${mode}) ezer3.1`);
+  echo(`tab_append(${tab},${cond},${mode}) ... ezer3.2`);
   clear();
   if (mode==1)
     info.append(php.sys_db_append_using(tab,cond));
@@ -20,6 +20,11 @@ func tab_append(tab,cond,mode) {
 //    info.append(php.man_append(tab,cond));
   else // mode==0
     info.append(php.sys_db_append(tab,cond));
+}
+func tab_rec_show(tab,key_name,tid) {
+  echo(`tab_rec_show(${tab},${key_name},${tid}) ... ezer3.2`);
+  clear();
+  info.stick(php.sys_db_rec_show(tab,key_name,tid));
 }
 use info: form right [12,4,,] 
 menu mdb {type:'left', active:*
@@ -51,17 +56,34 @@ menu mdb {type:'left', active:*
 }
 # ==> formulář pro levostranné menu s postupným zápisem a obsluhou zobrazení tabulek
 form right [,,*,50] {
+  var last_stick= 0 // délka před přilepení sticku
   label head [0,0,*,50]  { title:' ' }
   label note [0,36,*,] { title:' ' }
-  proc header(i) {
-   fill(replace_fa(conc(i.owner.title,' - ',i.title)),' ');
+  func header(i:ezer) { var i_owner:ezer
+    clear_stick();
+    i_owner= i.owner();
+    note= '';
+    head= replace_fa(`<div class='karta'>${i_owner.title} - ${i.title}</div>`);
   }
-  proc fill(h,n) {
-    [ h; head.set(conc("<div class='karta'>",h,"</div>")) ];
-    [ n; note.set(n) ]
+  func fill(h,n) {
+    clear_stick();
+    if (h) head= conc("<div class='karta'>",h,"</div>");
+    if (n) note= n;
   }
-  proc append(n) {
-    note.set(conc(note.get,n))
+  func clear_stick() { 
+    if (last_stick) {
+      note= substr(note,0,last_stick);
+    }
+    last_stick= 0;
+  }
+  func stick(n) { 
+    clear_stick();
+    last_stick= array_length(note);
+    note= conc(note,n);
+  }
+  func append(n) {
+    clear_stick();
+    note= conc(note,n);
   }
   select tab [-253,5,150,] {tag:'t', title:'tabulka', css:'v_karte', format:'t', skill:'m|m'}
   field idt [-152,5,70,] {tag:'t', title:'klíč', css:'v_karte', format:'t', skill:'m|m'}
@@ -71,6 +93,6 @@ form right [,,*,50] {
           php.sys_db_append(tab,idt ? `*='${idt}'`:'TRUE')); // * bude primary_key
   }}
   button [-22,5,,] {tag:'t', title:'vymaž', skill:'m|m'
-    func onclick() { form.note= '';
+    func onclick() { clear(); form.note= ''; form.clear_stick();
   }}
 }

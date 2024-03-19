@@ -462,8 +462,17 @@ div.Element3 .Label3, div.Select3 .Label3, div.FieldDate3 .Label3 {
 
 /* --------------------------------------------------------------------------------------==> Edit */
 
-.Edit3 { position:absolute; font-family:Arial,Helvetica,sans-serif; font-size:9pt; z-index:1;
-  border:1px solid #aaa; overflow-y:scroll; width:100%; height:100%; resize:none; }
+.Edit3 {
+  position:absolute;
+  font-family:Arial,Helvetica,sans-serif;
+  font-size:9pt;
+  z-index:1;
+  border:1px solid #aaa;
+  overflow-y:scroll;
+  width:100%;
+  height: 60px;
+  resize:none;
+  }
 .EditHtml3 { position:absolute;
 }
 .ui-autocomplete {
