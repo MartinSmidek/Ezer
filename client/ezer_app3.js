@@ -3725,6 +3725,7 @@ Ezer.fce.erase= function (x,list,sep) {
 //   Např:  substr('abcdef',0,-1) vrátí 'abcde' narozdíl od javascriptu který vrátí ''
 //s: funkce
 Ezer.fce.substr= function (x,begin,length) {
+  begin= Number(begin); length= Number(length);
   return x ? (length>=0 ? x.substr(begin,length) :
     (length<0 ? x.substr(begin,x.length+length) : x.substr(begin))) : '';
 };

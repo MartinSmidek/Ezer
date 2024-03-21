@@ -1247,7 +1247,7 @@ function gen2($pars,$vars,$c) {
   // -------------------------------------- id ( expr1, ... ) ? value
   case 'call':
     $code= array();
-    $npar= count($c->par);
+    $npar= isset($c->par) ? count($c->par) : 0;
     if ( $c->op=='ask' ) {
       $ask= $c->par[0]->value;
       add_call_php($ask,$c->lc);
