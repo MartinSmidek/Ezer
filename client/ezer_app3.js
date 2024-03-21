@@ -3790,6 +3790,7 @@ Ezer.fce.erase= function (x,list,sep) {
 //   Např:  substr('abcdef',0,-1) vrátí 'abcde' narozdíl od javascriptu který vrátí ''
 //s: funkce
 Ezer.fce.substr= function (x,begin,length) {
+  begin= Number(begin); length= Number(length);
   return x ? (length>=0 ? x.substr(begin,length) :
     (length<0 ? x.substr(begin,x.length+length) : x.substr(begin))) : '';
 };
@@ -3846,11 +3847,12 @@ Ezer.fce.trim= function (x) {
 };
 // -------------------------------------------------------------------------------------- repeat
 //ff: fce text.repeat (x,n)
-//      funkce vrátí zřetězení n kopií stringu s
+//      funkce vrátí zřetězení n kopií řetězce x
 //a: x - řetězec
 //   n - počet opakování
 //s: funkce
 Ezer.fce.repeat= function (x,n) {
+  n= Number(n);
   var s= '';
   for (var i= 1; i<=n; i++) {
     s+= x;
