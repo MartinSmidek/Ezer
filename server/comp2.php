@@ -46,6 +46,10 @@ function comp_ezer_list() { trace();
 function comp_define ($root) {
   global $ezer_version, $define, $define_used;
   $define= array(
+      'test_version'=>
+        isset($_GET['test_version']) ? $_GET['test_version'] : (
+        isset($_SESSION[$root]['test_version']) ? $_SESSION[$root]['test_version'] 
+        : '0'),
       'ezer_version'=>$ezer_version,
       'appl_version'=> 
         isset($_GET['appl_version']) ? $_GET['appl_version'] : (
@@ -219,10 +223,10 @@ function comp_file ($name,$root='',$_list_only='',$_comp_php=false) {  #trace();
       $start->part->$id->_old= true;
     }
     // vlastní překlad
-//                                                        if ($_GET['trace']??0==3) debug($start,'před get_ezer');
+                                                        if (($_GET['trace']??0)==3) debug($start,'před get_ezer');
     $dbgobj= null;
     $ok= get_ezer($start,$dbgobj) ? 'ok' : 'ko';
-//                                                        if ($_GET['trace']??0==2) debug($start,"po get_ezer = $ok");
+                                                        if (($_GET['trace']??0)==2) debug($start,"po get_ezer = $ok");
     // pokud je pragma.names, připrav doplnění jednoznačných jmen
     if ( $pragma_syntax ) $start= pragma_syntax($start);        // provedení pragma.syntax
     if ( $pragma_attrs ) pragma_attrs($start);                  // provedení pragma.attrs
@@ -237,7 +241,7 @@ function comp_file ($name,$root='',$_list_only='',$_comp_php=false) {  #trace();
       if ($start->part) foreach ($start->part as $id=>$spart) {
         link_code($spart,"\$.$id",true,"$id");
       }
-                                                        if ($_GET['trace']??0==4) debug($start,"před PROC");
+                                                        if (($_GET['trace']??0)==4) debug($start,"před PROC");
       if ($start->part) foreach ($start->part as $id=>$spart) {
         proc($spart,"\$.$id",$id); // bylo proc($spart,"",$id);
       }
@@ -248,7 +252,7 @@ function comp_file ($name,$root='',$_list_only='',$_comp_php=false) {  #trace();
         foreach ($start->part as $id=>$spart) {
           link_code($spart,"$top.$id",false,$id);
         }
-                                                        if ($_GET['trace']??0==4) debug($start,"před PROC");
+                                                        if (($_GET['trace']??0)==4) debug($start,"před PROC");
         foreach ($start->part as $id=>$spart) {
           proc($spart,"$top.$id",$id);
         }
@@ -271,7 +275,7 @@ function comp_file ($name,$root='',$_list_only='',$_comp_php=false) {  #trace();
     $code->_app= $root;
     $code->_file= $name;
     $loads->code= $code;
-                                                        if ($_GET['trace']??0==4) debug($loads,"kód");
+                                                        if (($_GET['trace']??0)==4) debug($loads,"kód");
     // informace o kódu pro informaci o struktuře aplikace
     global $metrics;
     $loads->info= (object)array(
@@ -299,7 +303,7 @@ function comp_file ($name,$root='',$_list_only='',$_comp_php=false) {  #trace();
     display($e->getMessage());
   }
   // listing modulu pro trace=7
-  if ( isset($_GET['trace']) && ($_GET['trace']??0==7 || $_GET['trace']??0==1) ) {
+  if ( isset($_GET['trace']) && (($_GET['trace']??0)==7 || ($_GET['trace']??0)==1) ) {
     $lst= $dbg= '';
 //     $dbg= debugx($loads->code);
     $lst= xlist($loads->code,0,$list_only);
@@ -720,7 +724,7 @@ function proc(&$c,$name,$block) { #trace();
   global $context, $procs, $error_code_lc, $call_elem;
 //                                                 if ( $name='dbg' || $name=='$.test.fce.dbg._d.test' ) debug($context,"proc($name)",(object)array('depth'=>3));
   if ( $c->type=='proc' ) {
-    $trace_me= $_GET['trace']??0==1; //&& $c->id=='xonclick';
+    $trace_me= ($_GET['trace']??0)==1; //&& $c->id=='xonclick';
     $trace_list= isset($_GET['list']) ? $_GET['list'] : '';
     if ($trace_me) $before= debugx($c);
     $desc= (object)array('id'=>$name);
@@ -804,8 +808,16 @@ function proc(&$c,$name,$block) { #trace();
         // jména z include:onload dávej do pole $onloads
         global $onloads, $ezer_app;
         if ( $iname ) {
-          $ids= explode('.',$iname);
-          $inc= (object)array('file'=>"{$ids[0]}/$iname",'block'=>$block,'include'=>$typ);
+          $islash= strrpos($iname,'/');
+          if ($islash===false) {
+            $ids= explode('.',$iname);
+            $inc= (object)array('file'=>"{$ids[0]}/$iname",'block'=>$block,'include'=>$typ);
+          }
+          else {
+            $path= substr($iname,0,$islash);
+            $file= substr($iname,$islash);
+            $inc= (object)array('file'=>"$iname",'block'=>$block,'include'=>$typ);
+          }
         }
         else {
           $iname= substr($name,2);
@@ -828,7 +840,7 @@ function eval_expr ($c,&$val,&$typ,&$const,$depth=0) { //trace();
   $c_type= gettype($c);
   if ($c_type=='object') {
     if (isset($c->lc)) $error_code_lc= $c->lc;
-//                                if ($_GET['trace']??0==4) debug($c,"eval_expr: $c_type/$c->expr");
+                                if (($_GET['trace']??0)==4) debug($c,"eval_expr: $c_type/$c->expr");
     switch ( $c->expr ) {
       
     // -------------------------------------- id '[' expr ']'
@@ -4986,7 +4998,7 @@ function lex_analysis2 ($dbg=false) {
   note_time('lexical2');
 //  if ( $pragma_strings ) tok_strings($tok);
   note_time('lexical3');
-                                 if (isset($_GET['trace']) && $_GET['trace']??0==8) debug($tok,'tok');
+                                 if (isset($_GET['trace']) && ($_GET['trace']??0)==8) debug($tok,'tok');
   $lex= $typ= $pos= $not= $str= array(); $k= 0;
   // poznámky začínající #$ se pokládají za vygenerované a jsou ignorovány
   // poznámky začínající # a mezerou se připojí k prvnímu klíčovému slovu s nastaveným note
@@ -5004,7 +5016,7 @@ function lex_analysis2 ($dbg=false) {
     if (token_name($tok[$i][0])=='T_IF') $tp= 'id';
 
 //                                                              display("$i/$k: {$tok[$i][0]} = $tp");
-    if ( $debugger ) {
+//    if ( $debugger ) {
       // v debuggeru může identifikátor začínat dolarem následovaným číslem
       if ( $t[1]=='$' ) {
         $tp= 'id';
@@ -5020,7 +5032,7 @@ function lex_analysis2 ($dbg=false) {
           $t[1]= $id;
         }
       }
-    }
+//    }
     switch ( $tp ) {
     case 'blank':
       if ($skip || $inside_template_expr) continue 2;
@@ -5116,7 +5128,7 @@ function lex_analysis2 ($dbg=false) {
     }
   }
   lex_assert(!$skip_tag,'chybí #endif'); 
-            if (isset($_GET['trace']) && $_GET['trace']??0==8) {debug($lex,'lex');
+            if (isset($_GET['trace']) && ($_GET['trace']??0)==8) {debug($lex,'lex');
                                                              debug($str,'str');
                                                              debug($typ,'typ');
                                                              debug($pos,'pos');
@@ -5133,7 +5145,7 @@ function tok_positions(&$tok) {
   $line= 0; $col= 1; $count= count($tok);
   for ($i= 0; $i<$count; $i++) {
     if (is_array($tok[$i])) {
-      if (isset($_GET['trace']) && $_GET['trace']??0==8) $tok[$i][4]= token_name($tok[$i][0]); // jen pro debug v lex_analysis2
+      if (isset($_GET['trace']) && ($_GET['trace']??0)==8) $tok[$i][4]= token_name($tok[$i][0]); // jen pro debug v lex_analysis2
       $c= $tok[$i][1];
     }
     else if (is_string($tok[$i])) {

@@ -949,6 +949,14 @@ class Block {
                       ctx= Ezer.code_name(name,null,this);
                   Ezer.assert(ctx,name+' je neznámé jméno - očekává se jméno form');
                   Ezer.assert(ctx[0].type=='form',name+' není jméno form');
+                  // nalezneme nejbližší library pro případ, že popis form je v něm
+                  // je to zapotřebí pro funkci Ezer..code_run_name
+                  for (let i= 0; i<ctx.length; i++) {
+                    if (ctx[i].library) {
+                      desc.options.library= ctx[i];
+                      break;
+                    }
+                  }
                   part= new Form(this,ctx[0],DOM,desc.options,id);
                 }
                 else if ( desc._of=='area' && typeof Area==="function" ) {

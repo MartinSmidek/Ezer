@@ -3031,9 +3031,11 @@ Ezer.code_run_name= function (name,context,ctx,ids) {
     }
     else if ( ids[0]=='#' ) {
       // pokud jméno začíná # najdi knihovní kořen (nejbližšího s atributem library)
-      for (var lib= context; lib && !lib._library && !lib.desc.library; lib= lib.owner);
+      for (var lib= context; 
+          lib && !lib.options.library && !lib._library && !lib.desc.library; 
+          lib= lib.owner);
       Ezer.assert(lib,'code_name:'+name+' in '+context.id+' (a)');
-      code= lib.desc;
+      code= lib.options.library ? lib.options.library : lib.desc;
     }
     ctx[0]= code;
     // další id již musí být obsaženy v postupně se upřesňujícím kontextu
@@ -4811,7 +4813,7 @@ Ezer.fce.debug= function (o,label,depth) {
 Ezer.assert=
 Ezer.fce.assert= function(test,msg,block) {
   if ( !test ) {
-    block= block||Ezer.calee.proc;
+    block= block||Ezer.calee&&Ezer.calee.proc||null;
     Ezer.fce.error(msg+'<br/>',block?'S':'E',block);
     throw {level:block?'S':'E',msg:msg};
   }

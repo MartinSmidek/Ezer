@@ -27,7 +27,10 @@
   $option_source= isset($_GET['source']) ? $_GET['source'] : '';
   $option_all= isset($_GET['all']) ? $_GET['all'] : '';
   $option_cpp= ''; //$_GET['cpp']; // OBSOLETE
-
+  $test_version= isset($_GET['test_version']) ? $_GET['test_version'] : 
+      (isset($_SESSION[$root]['test_version']) ? $_SESSION[$root]['test_version'] : '');
+  $_SESSION[$root]['test_version']= $test_version;
+  
   // verze použitého jádra Ezeru
   $ezer_version= "3.2"; 
   
@@ -63,8 +66,9 @@
 //  $checks.= "\n&nbsp; &nbsp; &nbsp; &nbsp; "
 //      . "<input type='checkbox' $checked  onchange='set_option_cpp(this.checked,1)'/> C++";
   $checked= $option_state==7 ? 'checked' : '';
-  $checks.= "<br>\n<input type='checkbox' $checked  onchange='set_option_trace(this.checked,7)'/> list proc";
+  $checks.= "<br>\n<input type='checkbox' $checked  onchange='set_option_trace(this.checked,7)'/> list proc ";
   $checks.= "<input type='text' title='výběr trasované procedury regulárním výrazem' value='$option_list' size=7 onchange='set_option_list(this)'/>";
+  $checks.= "<br> test_version: <input type='text' title='hodnota pro #if ... #endif' value='$test_version' size=2 onchange='set_test_version(this)'/>";
   $checks.= "<br>\n<input type='submit' value='celou aplikaci' onclick='go_all(\"yes\");' />";
   $checks.= "<br>\n<input type='submit' value='... včetně err' onclick='go_all(\"err\");' />";
   $checks.= "<br>\n<input type='submit' value='... včetně ok' onclick='go_all(\"any\");' />";
@@ -261,6 +265,7 @@ echo <<<__EOF
   <link rel="shortcut icon" href="$favicon" />
   <title>kompilace $root</title>$css
   <script type="text/javascript">
+    var test_version= '$test_version';
     var option_state= '$option_state';
     var option_list= '$option_list';
     var option_source= '$option_source';
@@ -288,7 +293,9 @@ echo <<<__EOF
       }
     }
     function go(appl,file) {
-      var url= "$url"+"?root="+appl+(file?"&file="+file:'')
+      var url= "$url"+"?root="+appl
+       +(test_version?('&test_version='+test_version):'')
+       +(file?"&file="+file:'')
        +(option_list?'&list='+option_list:'')
        +(option_state?'&trace='+option_state:'')
        //+(option_cpp?'&cpp=1':'')
@@ -297,6 +304,7 @@ echo <<<__EOF
     }
     function go_all(mode) {
       var url= "$url"+"?root=$root"+"&all="+mode
+       +(test_version?('&test_version='+test_version):'')
        +(option_state?'&trace='+option_state:'')
        //+(option_cpp?'&cpp=1':'')
        +(option_source?'&source=1':'');
@@ -324,6 +332,9 @@ echo <<<__EOF
     }
     function set_option_cpp(x) {
       option_cpp= x ? 1 : 0;
+    }
+    function set_test_version(x) {
+      test_version= x.value;
     }
   </script>
 </head>
