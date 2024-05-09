@@ -21,6 +21,12 @@ func tab_append(tab,cond,mode) {
   else // mode==0
     info.append(php.sys_db_append(tab,cond));
 }
+func tab_id_show(tab,idt) {
+  panel.focus();
+  info.idt= idt;
+  info.tab= tab;
+  info.go.onclick();
+}
 func tab_rec_show(tab,key_name,tid) {
   echo(`tab_rec_show(${tab},${key_name},${tid}) ... ezer3.2`);
   clear();
@@ -87,7 +93,7 @@ form right [,,*,50] {
   }
   select tab [-253,5,150,] {tag:'t', title:'tabulka', css:'v_karte', format:'t', skill:'m|m'}
   field idt [-152,5,70,] {tag:'t', title:'klíč', css:'v_karte', format:'t', skill:'m|m'}
-  button [-82,5,,] {tag:'t', title:'zobraz', skill:'m|m'
+  button go [-82,5,,] {tag:'t', title:'zobraz', skill:'m|m'
     func onclick() {
       clear(); form.note= conc(form.note,
           php.sys_db_append(tab,idt ? `*='${idt}'`:'TRUE')); // * bude primary_key

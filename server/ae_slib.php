@@ -2182,9 +2182,16 @@ function ezer_qry ($op,$table,$cond_key,$zmeny,$key_id='') {
     }
     // provedení UPDATE pro jeden záznam s kontrolou starých hodnot položek
     $key_val= $cond_key;
-    $qry= "SELECT $key_id FROM $table WHERE $key_id=$key_val $and ";
-    if ( mysql_qry($qry,1) )  {
-      $qry= "UPDATE $table SET $set WHERE $key_id=$key_val $and ";
+    if ($and) {
+      $qry= "SELECT $key_id FROM $table WHERE $key_id=$key_val $and ";
+      if ( mysql_qry($qry,1) )  {
+        $qry= "UPDATE $table SET $set WHERE $key_id=$key_val $and ";
+        mysql_qry($qry);
+        $result= 1;
+      }
+    }
+    else {
+      $qry= "UPDATE $table SET $set WHERE $key_id=$key_val ";
       mysql_qry($qry);
       $result= 1;
     }
