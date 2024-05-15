@@ -4477,7 +4477,9 @@ function get_cases($context,&$cs) {
 #   https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Operator_Precedence
 # expr4   :: expr6 [ '?' expr4 ':' expr4 ]      --> {expr:tern,par:[G(e/1),G(e/2),G(e/3)}
 # expr6   :: expr7 ( '||' expr7 )*              --> G(expr7) | {expr:cor,par:G(expr)*}
-# expr7   :: expr11 ( '&&' expr11 )*            --> G(expr11) | {expr:cand,par:G(expr)*}
+# expr7   :: expr8 ( '&&' expr8 )*              --> G(expr11) | {expr:cand,par:G(expr)*}
+# expr8   :: expr9 ( '|' expr9 )*               --> G(expr8) | {expr:call,op=bit_or,par:G(expr)*}
+# expr9   :: expr10 ( '&' expr11 )*             --> G(expr9) | {expr:call,op=bit_and,par:G(expr)*}
 # expr11  :: expr12 [ op_eql expr12 ]           --> G(expr12) | {expr:call,op:G(op_eql),par:G(expr)*}
 #  op_eql :: '==' | '!='
 # expr12  :: expr14 ( op_rel expr14 ]           --> G(expr14) | {expr:call,op:G(op_rel),par:G(expr)*}
@@ -4521,16 +4523,50 @@ function get_expr6($context,&$expr) {
 }
 function get_expr7($context,&$expr) { 
   global $last_lc;
+  $ok= get_expr8($context,$expr);
+  # expr8 --> G(expr8)
+  if ( $ok && get_if_delimiter('&&') ) {
+    # expr8 ( '&&' expr8 )* --> G(expr8) | {expr:cand,par:G(expr)*}
+    $expr= (object)array('expr'=>'cand','par'=>array($expr),'value'=>1,'lc'=>$last_lc);
+    while ( $ok ) {
+      $arg= null;
+      get_expr8($context,$arg);
+      $expr->par[]= $arg;
+      $ok= get_if_delimiter('&&');
+    }
+    $ok= true;
+  }
+  return $ok;
+}
+function get_expr8($context,&$expr) { 
+  global $last_lc;
+  $ok= get_expr9($context,$expr);
+  # expr9 --> G(expr9)
+  if ( $ok && get_if_delimiter('|') ) {
+    # expr9 ( '&&' expr9 )* --> G(expr9) | {expr:call,op=bit_or,par:G(expr)*}
+    $expr= (object)array('expr'=>'call','op'=>'bit_or','par'=>array($expr),'value'=>1,'lc'=>$last_lc);
+    while ( $ok ) {
+      $arg= null;
+      get_expr9($context,$arg);
+      $expr->par[]= $arg;
+      $ok= get_if_delimiter('|');
+    }
+    $ok= true;
+  }
+  return $ok;
+}
+function get_expr9($context,&$expr) { 
+  global $last_lc;
   $ok= get_expr11($context,$expr);
   # expr11 --> G(expr11)
-  if ( $ok && get_if_delimiter('&&') ) {
-    # expr11 ( '&&' expr11 )* --> G(expr11) | {expr:cand,par:G(expr)*}
-    $expr= (object)array('expr'=>'cand','par'=>array($expr),'value'=>1,'lc'=>$last_lc);
+  if ( $ok && get_if_delimiter('&') ) {
+    # expr11 ( '&&' expr11 )* --> G(expr11) | {expr:bit_and,par:G(expr)*}
+    $expr= (object)array('expr'=>'call','op'=>'bit_and','par'=>array($expr),'value'=>1,'lc'=>$last_lc);
     while ( $ok ) {
       $arg= null;
       get_expr11($context,$arg);
       $expr->par[]= $arg;
-      $ok= get_if_delimiter('&&');
+      $ok= get_if_delimiter('&');
     }
     $ok= true;
   }

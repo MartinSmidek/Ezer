@@ -33,7 +33,7 @@ func tab_rec_show(tab,key_name,tid) {
   info.stick(php.sys_db_rec_show(tab,key_name,tid));
 }
 use info: form right [12,4,,] 
-menu mdb {type:'left', active:*
+menu mdb {type:'left', active:*, format:'f+'
   menu  {title:'Zobrazení dat aplikace', type:'group', skill:'m'
     item {title:'[fa-question] zobrazení záznamů'
       func onclick (i:ezer) { 

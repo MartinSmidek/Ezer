@@ -3431,10 +3431,10 @@ Ezer.fce.array= function () {
 };
 // ----------------------------------------------------------------------------- array_length
 //ff: fce object.array_length (pole)
-//      vrátí délku pole
+//      vrátí délku pole nebo počet položek objektu
 //s: funkce
 Ezer.fce.array_length= function (a) {
-  return a.length;
+  return typeof(a)=='object' ? Object.keys(a).length : a.length;
 };
 // ====================================================================================> . objektové
 // ------------------------------------------------------------------------------------ object
@@ -3461,6 +3461,7 @@ Ezer.fce.object= function () {
 //      Pro kombinaci of lze použít 4. parametr, vnucující přepsání originálních hodnot 
 //        >0 vynutí použití _load místo set; =2 způsobí vyvolání události change
 //      Pro kombinace fo,lo lze použít 4. parametr, který omezí kopírování pouze na změněné položky
+//      Pro kombinaci fo lze v parametru delimiters specifikovar reg.výraz vybírající z atributu tag
 // Pozn.: implementovány jsou tyto kombinace parametrů: fb, bf, of, fo, sf, lo, ol.
 //s: funkce
 Ezer.fce.copy_by_name= function (x,y,delimiters,par4) {
@@ -3530,7 +3531,10 @@ Ezer.fce.copy_by_name= function (x,y,delimiters,par4) {
     y.fire('onload');                           // proveď akci formuláře po naplnění daty
   }
   else if ( typ_x=='f' && typ_y=='o' ) {        // form --> object
+    let re_tag= delimiters ? new RegExp(delimiters) : null;
     for (const id in x.part) { const field= x.part[id];
+      if (re_tag && (!field.options.tag || !re_tag.test(field.options.tag)))
+        continue;
       if ( par4 && (!field.changed || !field.changed()) ) // od 7.6.2017, Gándí ... par4 = only_changed
         continue;
       if ( id[0]!='$' && field.key ) {          // přednost má definice klíče
@@ -4206,6 +4210,28 @@ Ezer.fce.divide= function (x,y) {
   var z= Number(x);
   z/= Number(y);
   return String(Math.floor(z));
+};
+// -------------------------------------------------------------------------------------- bit_and
+//ff: fce number.bit_and (x,y)
+//   x & y - and po bitech (4&2=0)
+//s: funkce
+//a: x, y - čísla
+//r: bit and
+Ezer.fce.bit_and= function (x,y) {
+  var z= Number(x);
+  z&= Number(y);
+  return String(z);
+};
+// -------------------------------------------------------------------------------------- bit_or
+//ff: fce number.bit_or (x,y)
+//   x & y - or po bitech (4&2=0)
+//s: funkce
+//a: x, y - čísla
+//r: bit or
+Ezer.fce.bit_or= function (x,y) {
+  var z= Number(x);
+  z|= Number(y);
+  return String(z);
 };
 // -------------------------------------------------------------------------------------- modulo
 //ff: fce number.modulo (x,y)
