@@ -501,7 +501,7 @@
     // kontrukce podminky
     $atable= explode(' AS ',$table);
     $key_id= (isset($atable[1]) && $atable[1] ? "{$atable[1]}." : '') . $x->key_id;
-    $xcond= isset($x->cond) && $x->cond ? $x->cond : "$key_id={$x->key}";
+    $xcond= isset($x->cond) && $x->cond ? $x->cond : "$key_id='{$x->key}'";
 //    if ( !($xcond= $x->cond) ) {
 //      $xcond= "$key_id={$x->key}";
 //    }
