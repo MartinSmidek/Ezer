@@ -8609,11 +8609,22 @@ class Browse extends Block {
     return 1;
   }
 // ------------------------------------------------------------------------------------ browse focus+
-//fm: Browse.browse_focus ()
+//fm: Browse.browse_focus ([id])
 //      označení řádku - vyvolej událost onfocus ale ne onrowclick
-  browse_focus  () {
-    if ( this.tact )
-      this.DOM_hi_row(this.t+this.tact-1,true,true);
+  browse_focus (id) {
+    if (id==undefined) {
+      if ( this.tact )
+        this.DOM_hi_row(this.t+this.tact-1,true,true);
+    }
+    else { // EXPERIMENTAL
+      Ezer.assert(this.options.key_id,"browse_focus(id): chybí atribut key_id");
+      for (let i= 0; i<this.blen; i++) {
+        if (this.buf[i][this.options.key_id]==id) {
+          this._row_move(i,1);
+          break;
+        }
+      }
+    } // EXPERIMENTAL
     return 1;
   }
 // ------------------------------------------------------------------------------------ focus+
