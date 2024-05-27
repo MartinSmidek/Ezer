@@ -3461,7 +3461,7 @@ Ezer.fce.object= function () {
 //      Pro kombinaci of lze použít 4. parametr, vnucující přepsání originálních hodnot 
 //        >0 vynutí použití _load místo set; =2 způsobí vyvolání události change
 //      Pro kombinace fo,lo lze použít 4. parametr, který omezí kopírování pouze na změněné položky
-//      Pro kombinaci fo lze v parametru delimiters specifikovar reg.výraz vybírající z atributu tag
+//      Pro kombinaci fo,of lze v parametru delimiters specifikovar reg.výraz vybírající z atributu tag
 // Pozn.: implementovány jsou tyto kombinace parametrů: fb, bf, of, fo, sf, lo, ol.
 //s: funkce
 Ezer.fce.copy_by_name= function (x,y,delimiters,par4) {
@@ -3510,9 +3510,12 @@ Ezer.fce.copy_by_name= function (x,y,delimiters,par4) {
     y.fire('onload');                           // proveď akci formuláře po naplnění daty
   }
   else if ( typ_x=='o' && typ_y=='f' ) {        // object --> form
+    let re_tag= delimiters ? new RegExp(delimiters) : null;
     for (const id in x) { const value= x[id];
       var field= y.part[id];
       if ( field ) { 
+        if (re_tag && (!field.options.tag || !re_tag.test(field.options.tag)))
+          continue;
         if ( field.key ) {
           field.key(x[id],key);
         }
@@ -4380,6 +4383,29 @@ Ezer.fce.stop= function () {
   return 1;
 };
 // =======================================================================================> . system
+// ------------------------------------------------------------------------------------ logout
+//ff: fce system.call_func (fullname,arg1,...)
+//      zavolá funkci z bloku zadaném úplným jménem začínajícícm $ a předá argumenty arg1,...
+//s: funkce
+Ezer.fce.call_func= function (fullname,...args) {
+  let ok= 0, ids= fullname.split('.'), o= Ezer.run.$;
+  Ezer.assert(ids[0]=='$',"callfunc: jméno funkce musí začínat $");
+  for (var i= 1; i<ids.length; i++) {
+    if ( o.part && o.part[ids[i]] )
+      o= o.part[ids[i]];
+    else if ( o.type=='var' && o.value && o.value.part && o.value.part[ids[i]]) {
+      o= o.value.part[ids[i]];
+    }
+    else {
+      o= null;
+      break;
+    }
+  }
+  Ezer.assert(o,`callfunc: ${fullname} není jméno funkce`);
+  var ret= new Eval([{o:'c',i:o.id,a:args.length,s:o.lc}],o.context,args,o.id);
+  ok= ret.value;
+  return ok;
+};
 // ------------------------------------------------------------------------------------ logout
 //ff: fce system.logout ()
 //      odhlásí uživatele stejně jako při použití menu odhlásit
