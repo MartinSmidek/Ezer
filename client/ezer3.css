@@ -121,7 +121,7 @@ div.tip { position:absolute; display:none; padding:2px 5px; z-index:999999; curs
 .drop_envelope {
   border:2px dashed white; }
 .drop_area {
-  outline:2px dashed #fff; outline-radius:5px;  }
+  outline:2px dashed #fff; }
 .drop_area_hover {
   cursor:move; }
 .drop_area_run {
@@ -239,7 +239,9 @@ body {
 .fixed {
   outline:#008 solid 2px !important;}
 .readonly, .readonly * {
-  border:0px !important; background-color:transparent !important; }
+  border:0px !important; background-color:transparent !important; pointer-events:none; }
+.notouch, .notouch * {
+  pointer-events:none; }
 .Form input:focus, .Form textarea:focus, .focus {
   outline:#ff0 dotted 2px !important; }
 .Chat3 .focus {
@@ -310,7 +312,7 @@ div.Popup3 div.pop_close { position: absolute; right: 0; top: 0; cursor: pointer
   margin: 5px; width: 13px; height: 13px; background: url(img/closebtn.gif) no-repeat; }
 div.Popup3 div.pop_body {
   position: absolute;
-  overflow: auto; 
+  /*overflow: auto;*/ 
   width:calc(100% - 30px);
   height:calc(100% - 42px);
 }
@@ -396,7 +398,7 @@ div.MenuGroup3 .disabled3 i.fa-darkviolet { color:grey
 
 .Label3 {
   position:absolute;
-  z-index:1;
+  z-index: 1;
   }
 /*.Label3 h1 {
   font-size:12pt; margin:0; padding:0 }*/
@@ -608,7 +610,7 @@ td.BrowseNoClmn img.sort {
 .BrowseSmart td {
   white-space:nowrap; overflow:hidden;
   vertical-align:bottom; cursor:default; padding:0 2px; /*line-height:14px;*/
-  border-left-widtht:1px; border-bottom-width:1px;  }
+  border-left-width:1px; border-bottom-width:1px;  }
 .BrowseSmart td.tag0 {
   ; padding:0; }
 .BrowseSmart td.tag1 {
