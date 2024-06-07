@@ -3450,7 +3450,8 @@ Ezer.fce.object= function () {
   return o;
 };
 // ------------------------------------------------------------------------------------ copy_by_name
-//ff: fce object.copy_by_name (form|browse|list|object|string, form|browse|object[, delimiters='|:' [,set_original|only_changed]])
+//ff: fce object.copy_by_name (form|browse|list|object|string, 
+//                             form|browse|object[, delimiters='|:' [,set_original|only_changed]])
 //      zkopíruje zleva doprava stejně pojmenované hodnoty.
 //      Pokud se kopíruje do form, je třeba touto operací naplnit form.key (použije se při definici
 //      originality hodnoty, pokud to není žádoucí, je třeba form.key definovat jako 0)
@@ -3824,7 +3825,8 @@ Ezer.fce.sort= function (list,del,comp) {
 // -------------------------------------------------------------------------------------- split
 //ff: fce text.split (x,del[,i])
 //      funkce rozdělí x podle del (stejnojmennou funkcí javascriptu) a vrátí podřetězec
-//      s indexem i (první má index 0)
+//      s indexem i (první má index 0), 
+//      pokud je i záporné, vrací i-té odo konce - tedy pro -1 poslední
 //   pokud není 'i' uvedeno, funkce vrátí pole
 //a: x - řetězec
 //   del - dělící vzor
@@ -3837,6 +3839,10 @@ Ezer.fce.split= function (x,del,i) {
   Ezer.assert(typeof(x)=='string','split: první parametr musí být převeditelný na řetězec');
   if ( i===undefined ) {
     y= x ? x.split(del) : [];
+  }
+  else if (i<0) {
+    y= x.split(del);
+    y= y[y.length+i];
   }
   else {
     y= x.split(del,i+1);
