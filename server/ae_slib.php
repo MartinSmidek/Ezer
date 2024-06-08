@@ -86,6 +86,7 @@ function doc_chngs_show($type='ak',$days=30,$app_name='') { trace();
   global $ezer_db, $ezer_root;
   list($grp_name)= preg_split("/[\s\-_]/",$app_name);
   $lines= array();
+  
   $s2u= function($d) { return substr($d,8,2).'.'.substr($d,5,2).'.'.substr($d,0,4); };
   $db_name= function($db) use ($ezer_db) {
     // pro 1. databázi tj. .main.
@@ -101,11 +102,21 @@ function doc_chngs_show($type='ak',$days=30,$app_name='') { trace();
     $a= str_replace("'","&#39;",$a);
     return "<span class='chng_day' title='$a'>$d $w:</span>";
   };
+
   $get_help= function($db='.main.',$level='a',$abbr='') use (&$lines,$ezer_db,$days,$header) {
+    global $USER;
     if ( $db=='.main.' || isset($ezer_db[$db]) ) {
       ezer_connect($db);
-      $qh= "SELECT datum, version, name, help FROM /*$db*/ _help
-            WHERE kind='v' AND SUBDATE(NOW(),$days)<=datum";
+      // zjistíme jestli existuje sloupec help_skill 
+      $AND= '';
+      $help_skill= sql_check_column('_help','help_skill') ? ',help_skill' : '';
+      if ($help_skill) {
+        $user_skills= str_replace(' ',',',$USER->skills);
+        $AND= "AND (help_skill='' OR FIND_IN_SET(help_skill,'$user_skills')) ";
+      }
+      $qh= "SELECT datum, version, name, help $help_skill
+            FROM /*$db*/ _help
+            WHERE kind='v' AND SUBDATE(NOW(),$days)<=datum $AND";
       $rh= mysql_qry($qh);
       while ( $rh && ($h= pdo_fetch_object($rh)) ) {
         $n= $h->name;
@@ -689,6 +700,16 @@ function sql_query($qry,$db='.main.') {
     $obj= pdo_fetch_object($res);
   }
   return $obj;
+}
+# ---------------------------------------------------------------------------------------- sql query
+# provedení MySQL dotazu
+function sql_check_column($tab,$clmn,$db='') { 
+  $tab= $db ? "$db.$tab" : $tab; 
+  $res= pdo_query("SHOW COLUMNS FROM $tab WHERE Field='$clmn' ");
+  $ok= pdo_fetch_object($res);
+  $ok= $ok ? 1 : 0;
+  display("sql_check_column($tab,$clmn,$db='')=$ok");
+  return $ok;
 }
 /** =============================================================================== OSVĚDČENÉ FUNKCE */
 # ---------------------------------------------------------------------------------- dph_koeficienty

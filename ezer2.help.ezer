@@ -181,11 +181,24 @@ panel nov [,,770,] {type:'right', title:'Přehled změn', _sys:'*',
   use msg_k: form _msg_k [12,35,,] { tag:'mk', format:'n' }
   use msg_m: form _msg_m [12,35,,] { tag:'mm', format:'n' }
 
+  var user_skills:text, help_skill= 0 // nebo 1 pokud v tabulce je tento sloupec
   menu m {type:'left', active:m.chngs.month
-    proc onstart() {
-      [ sys('options','group_db')     | has_skill('ah'); w.g.enable(0) ];
-      [ sys('options','curr_version') | has_skill('ah'); w.k.enable(0) ];
+    func onstart() { 
+      if (!sys('options','group_db') && has_skill('ah')) w.g.enable(0);
+      if (!sys('options','curr_version') && has_skill('ah')) w.k.enable(0);
+      // zjistíme jestli existuje sloupec help_skill 
+      help_skill= php.sql_check_column('_help','help_skill');
+      user_skills= replace(sys('user','skills'),' ',',');
+      msg_a.s.help_skill.set_attrib('expr',help_skill ? "h.help_skill" : '');
+      msg_a.s.help_skill.width(help_skill?50:0);
+      msg_a.s.hlp.width(help_skill?441:492);
+      msg_a.hlp.property({width:help_skill?430:500});
+      msg_a.help_skill.display(help_skill);
     }
+//    proc onstart() {
+//      [ sys('options','group_db')     | has_skill('ah'); w.g.enable(0) ];
+//      [ sys('options','curr_version') | has_skill('ah'); w.k.enable(0) ];
+//    }
     menu msg {title:'Administrátorská zpráva',type:'group', skill:'a'
       item m {title:'[fa-envelope] vytvoření zprávy uživatelům', par:°{tag:'mm',level:'m'}}
     }
@@ -279,10 +292,17 @@ panel nov [,,770,] {type:'right', title:'Přehled změn', _sys:'*',
   # ------------------------------------------------------------------------ _msg_a
   form _msg_a [,,*,500] {
     var virgin= 1, a_version= 0
-    proc start() { virgin.get; refresh; virgin.set(0) }
-    proc refresh() { s.browse_load("kind='v'") }
+    func start() { 
+      if (!virgin) return;
+      refresh(); 
+      virgin= 0;
+    }
+    func refresh() { 
+      s.browse_load(panel.help_skill 
+        ? `kind='v' AND (help_skill='' OR FIND_IN_SET(help_skill,'${user_skills}')) ` : "kind='v'"); 
+    }    
+    
     view h: table _help
-
     // příkazy
     label  [12,5,145,30] { css:'ae_parm'}
     button [20,11,,] { title:"[fa-database] Nový", proc onclick() { var ver_max:number
@@ -294,7 +314,13 @@ panel nov [,,770,] {type:'right', title:'Přehled změn', _sys:'*',
       _help.delete_record(conc("id_help=",s.id_help.get)); refresh }}
 
     label  [240,5,123,30] { css:'ae_parm'}
-    button [250,11,,] { title:"[fa-save] Ulož",  proc onclick() { the_formsave(form,s) }}
+    button [250,11,,] { title:"[fa-save] Ulož",  func onclick() { 
+      if (panel.help_skill) {
+        php.query(`UPDATE _help SET help_skill='${help_skill}' WHERE id_help=${s.id_help} `);
+        form.plain(); s.browse_row();
+      }
+      if (!form.same()) the_formsave(form,&s);
+    }}
     button [306,11,,] { title:"[fa-undo] Zpět", proc onclick() { form.key(s.id_help.get); form.load}}
 
     // nová změna
@@ -307,17 +333,20 @@ panel nov [,,770,] {type:'right', title:'Přehled změn', _sys:'*',
         topic.set(replace(meta.modal,'^[^\.]+\.','')); topic.change;
         name.set(replace(meta.name.get,'<[^>]+>','','^[^\|]+\|','')); name.change; }}
     field wrk [698,20,32,] { title:'pracnost:', data:h.work, format:'r:e', skill:'m|mw' }
-    field hlp [239+60,45,431,] { data:h.help, format:'' }
+    field hlp [300,45,430,] { data:h.help, format:'' }
+    field help_skill [749,45,51,] { title:'^skill' }
     // seznam změn
     browse s [0,75,150,100] { rows:20, qry_rows:1
       show id_help { data:h.id_help }
       show [,,72,] { title:'datum', data:h.datum, format:'s-q*rt' }
       show ver [,,60,] { title:'rev', data:h.version, format:'sq*rt' }
       show topic [,,150,] { title:'topic', data:h.topic, format:'sq*t' }
-      show [,,419,] { title:'help', data:h.help, format:'sq*t' }
-      proc onrowclick() {
-        form.key(id_help.get); form.load;
-        a_version.set(ver.get);
+      show hlp [,,441,] { title:'help', data:h.help, format:'sq*t' }
+      show help_skill [,,50,] { title:'skill', expr:"h.help_skill", format:'sq*tc' }
+      func onrowclick() {
+        form.key(id_help); form.load();
+        if (panel.help_skill) form.help_skill= help_skill;
+        a_version= ver;
       }
     }
   }
@@ -351,14 +380,14 @@ panel nov [,,770,] {type:'right', title:'Přehled změn', _sys:'*',
       button [272,47,16,16] { title:"[fa-tree]", style:"padding:0 1px", css:'fa', proc onclick() {
         topic.set(replace(meta.modal,'^[^\.]+\.','')); topic.change;
         name.set(replace(meta.name.get,'<[^>]+>','','^[^\|]+\|','')); name.change; }}
-    field hlp [239+60,45,431,] { data:h.help, format:'' }
+    field hlp [300,45,500,] { data:h.help, format:'' }
     // seznam změn
     browse s [0,75,150,100] { rows:20, qry_rows:1
       show id_help { data:h.id_help }
       show [,,72,] { title:'datum', data:h.datum, format:'s-q*rt' }
       show ver [,,60,] { title:'rev.SVN', data:h.version, format:'s-q*rt' }
       show topic [,,150,] { title:'topic', data:h.topic, format:'sq*t' }
-      show [,,419,] { title:'help', data:h.help, format:'sq*t' }
+      show [,,492,] { title:'help', data:h.help, format:'sq*t' }
       proc onrowclick() {
         form.key(id_help.get); form.load;
         g_version.set(ver.get);
@@ -389,13 +418,13 @@ panel nov [,,770,] {type:'right', title:'Přehled změn', _sys:'*',
     field kind { data:h.kind, value:'v' }
     field datum [12,45,79,] { type:'date', data:h.datum, format:'r' }
     field version [98,45,41,] { data:h.version, format:'r' }
-    field hlp [149,45,521+60,] { data:h.help, format:'' }
+    field hlp [149,45,651,] { data:h.help, format:'' }
     // seznam změn
     browse s [0,75,150,100] { rows:20, qry_rows:1
       show id_help { data:h.id_help }
       show [,,72,] { title:'datum', data:h.datum, format:'sq*rt' }
       show [,,60,] { title:'rev.SVN', data:h.version, format:'s-q*rt' }
-      show hlp [,,510+60,] { title:'help', data:h.help, format:'sq*t' }
+      show hlp [,,643,] { title:'help', data:h.help, format:'sq*t' }
       proc onrowclick() {
         form.key(id_help.get); form.load;
       }
@@ -632,6 +661,7 @@ table _help {  key_id:'id_help'                     // tabulka _help je v datab�
   number id_help { key:'primary' }
   text kind, number version, date datum { sql_pipe:'sql_date1' },
   text topic, text name, text seen, text help, number work
+  text help_skill // oprávnění vidět řádek změny
 }
 group group {
   table _help {  key_id:'id_help', db:'ezer_group'  // význam 'ezer_group' je určen v {app}.ini
