@@ -166,7 +166,6 @@
   );
   if ($touch) $app_css[]= "ezer$ezer_version/client/ipad.css";
   $app_css= array_values(array_filter($app_css)); // vynechání všech false
-  $skin= $skin ?: 'default';
   $css= array_merge(
     array("$client/ezer.css$v_sys","$client/ezer3.css$v_sys","$client/ezer3.css.php=skin",  
     $awe==5

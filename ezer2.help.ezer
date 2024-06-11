@@ -317,9 +317,10 @@ panel nov [,,770,] {type:'right', title:'Přehled změn', _sys:'*',
     button [250,11,,] { title:"[fa-save] Ulož",  func onclick() { 
       if (panel.help_skill) {
         php.query(`UPDATE _help SET help_skill='${help_skill}' WHERE id_help=${s.id_help} `);
-        form.plain(); s.browse_row();
+        s.browse_row();
       }
       if (!form.same()) the_formsave(form,&s);
+      form.plain(); 
     }}
     button [306,11,,] { title:"[fa-undo] Zpět", proc onclick() { form.key(s.id_help.get); form.load}}
 
