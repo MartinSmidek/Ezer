@@ -1992,7 +1992,7 @@ function Excel5_f(&$ws,$range,$v,&$err) {
     // border=t,r,b,l | border=o   -- 1 je tečkovaná, 2 tenká, 3 tlustá
     case 'border':
       $xs= explode(',',$x);
-      $tl= array('h'=>'hair','d'=>'dotted','t'=>'thin','T'=>'thick');
+      $tl= array('h'=>'hair','d'=>'dotted','t'=>'thin','T'=>'thick','d'=>'double');
       $borders= array();
       if ( isset($xs[1]) ) {
         list($t,$r,$b,$l)= explode(',',$x);
@@ -2001,9 +2001,9 @@ function Excel5_f(&$ws,$range,$v,&$err) {
         $borders['bottom']= array('borderStyle'=>isset($tl[$b]) ? $tl[$b] : 'none');
         $borders['left']=   array('borderStyle'=>isset($tl[$l]) ? $tl[$l] : 'none');
       }
-      elseif ( $xs[0]=='+' ) {
-        $t= $xs[0];
-        $borders['inside']= array('borderStyle'=>isset($tl[$t[1]]) ? $tl[$t[1]] : 'none');
+      elseif ( $xs[0][0]=='+' ) {
+        $t= $xs[0][1];
+        $borders['inside']= array('borderStyle'=>isset($tl[$t]) ? $tl[$t] : 'none');
       }
       else {
         $t= $xs[0];
