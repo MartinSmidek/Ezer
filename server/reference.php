@@ -1342,6 +1342,13 @@ function sys_db_append($table,$cond) {
     $ths.= "<th>$ff</th>";
   }
   if (!$key) { $html= "chybí primární klíč"; goto end; }
+  // vytvoř sloupec pro záznamy v _track
+  $zmen_dnu= 30;
+  $zmen_od= date('Y-m-d',time()-60*60*24*$zmen_dnu);
+  $zmen_tab= select('COUNT(*)','_track',"kde='$table' AND DATEDIFF(kdy,'$zmen_od')>0");
+  if ($zmen_tab) {
+    $ths.= "<th>_track</th>";
+  }
   // čti tabulku
   $html.= "<table class='$css'><tr>$ths</tr>";
   $cond= str_replace('*',$key,$cond);
@@ -1412,11 +1419,38 @@ function sys_db_append($table,$cond) {
         $html.= "<td>$val</td>";
       }
     }
+    // počet změn
+    if ($zmen_tab) {
+      $href3= "href='ezer://$path.tab_track_show/$zmen_dnu/$table/{$t->$key}'";
+      $track= "<a title='změny za $zmen_dnu dnů' $href3 class='fa fa-table'></a>";
+      $zmen_rec= select('COUNT(*)','_track',
+          "klic='{$t->$key}' AND kde='$table' AND DATEDIFF(kdy,'$zmen_od')>0");
+      $html.= "<$th>$track {$zmen_rec}x</th>";
+    }
     $html.= '</tr>';
   }
   $html.= "</table><br>";
 end:  
   return $n ? $html : '';
+}
+# ---------------------------------------------------------------------------------- sys db_rec_show
+# zobraz _track dané tabulky/klíče, mladší než daný počet dnů
+function sys_db_track_show($dnu,$tab,$idt) {
+  global $sys_db_info, $ezer_root;
+  $sys_db_info= $_SESSION[$ezer_root]['sys_db_info'];
+  $od= date('Y-m-d',time()-60*60*24*$dnu);
+  $html= '';
+  $css= $sys_db_info->css;
+  $html.= "<table class='$css'><tr><th>kdo</th><th>kdy</th><th>fld</th><th>op</th>"
+      . "<th>old</th><th>val</th></tr>";
+  $rt= pdo_query("
+    SELECT * FROM _track WHERE klic='$idt' AND kde='$tab' AND DATEDIFF(kdy,'$od')>0");
+  while ($rt && ($t= pdo_fetch_object($rt))) {
+    $html.= "<tr><th>$t->kdo</th><td>$t->kdy</td><td>$t->fld</td><td>$t->op</td>"
+        . "<td>$t->old</td><td>$t->val</td></tr>";
+  }
+  $html.= "</table><br>";
+  return $html;
 }
 # ---------------------------------------------------------------------------------- sys db_rec_show
 # zobraz všechny položky daného záznamu dané tabulky, které mají komentář nezačínající -

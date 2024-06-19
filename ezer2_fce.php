@@ -730,7 +730,7 @@ function sys_watch_key() {
 # pokud ... tak vynechá uživatele, jejichž zkratky jsou v seznamu $EZER->activity->skip
 # $watch_access_opt je tabulka tabulek name, abbr, css mapujících access na hodnoty
 function sys_activity($k,$to_skip=0,$den=0,$_watch_access_opt='') {
-//                                                                 debug($k,'sys_activity');
+                                                                 debug($k,'sys_activity');
   global $ezer_root, $json, $user_options, $APLIKACE, $USER, $EZER, $watch_access_opt;
   $watch_access_opt= $_watch_access_opt;
   $user_options= $_SESSION[$ezer_root]['user_options'];
@@ -778,25 +778,26 @@ function sys_activity($k,$to_skip=0,$den=0,$_watch_access_opt='') {
     $day= $den;
     $day_mysql= sql_date($den,1);
     $html.= "<div class='karta'>Aktuální stav užívání $APLIKACE $day </div>";
-    $html.= sys_day_users($skip,$day_mysql,$k->short);
+    $html.= sys_day_users($skip,$day_mysql,$k);
     break;
   case 'uzivatele dnes':
     $day= date('j.n.Y');
     $day_mysql= date('Y-m-d');
     $html.= "<div class='karta'>Aktuální stav užívání $APLIKACE $day </div>";
-    $html.= sys_day_users($skip,$day_mysql,$k->short);
+    $html.= sys_day_users($skip,$day_mysql,$k);
     break;
   case 'uzivatele dny':
     $day= date('j.n.Y');
     $day_mysql= date('Y-m-d');
     $html.= "<div class='karta'>Historie aktivity uživatelů $APLIKACE </div>";
-    $html.= sys_days_users($skip,$day_mysql,$k->days,$k->short);
+    $html.= sys_days_users($skip,$day_mysql,$k);
+//    $html.= sys_days_users($skip,$day_mysql,$k->days,$k->short);
     break;
   case 'uzivatele vcera':
     $day= date('j.n.Y',mktime(0,0,0,date("m"),date("d")-1,date("Y")));
     $day_mysql= date('Y-m-d',mktime(0,0,0,date("m"),date("d")-1,date("Y")));
     $html.= "<div class='karta'>Stav užívání $APLIKACE $day</div>";
-    $html.= sys_day_users($skip,$day_mysql,$k->short);
+    $html.= sys_day_users($skip,$day_mysql,$k);
     break;
   # -------------------------------- errors
   case 'chyby den':
@@ -963,12 +964,13 @@ function sys_days_modules($skip,$day,$ndays,$short=false) {
   $html= sys_days_table($touch,$days,'module','#dce7f4');
   return $html;
 }
-# ------------------------------------------------------------------------------------ sys_day_users
+# ------------------------------------------------------------------------------------ sys day_users
 # vygeneruje přehled aktivit uživatelů pro daný den
-function sys_day_users($skip,$day,$short=false) {  trace();
+function sys_day_users($skip,$day,$parm) {  trace();
   global $user_options, $USER, $watch_access_opt;
   $touch= array();
   $hours= array();
+  $short= $parm->short;
   $AND=  $skip     ? "AND NOT FIND_IN_SET(user,'$skip')" : '';
   $AND=  $short==2 ? "AND module='speed' " : '';
   $qry= "SELECT u.org,day,hour(time) as hour,user,module,menu,count(*) as c,sum(hits) as h,
@@ -1004,13 +1006,16 @@ function sys_day_users($skip,$day,$short=false) {  trace();
     $touch[$user][$hour]['touch'][$menu]+= $h;
   }
   // použít tabulku barev, je-li v config
-  $html= sys_table($touch,$hours,$short==2?'speed':'user','#e7e7e7',true);
+  $parm->day= $day;
+  $html= sys_table($touch,$hours,$short==2?'speed':'user','#e7e7e7',true,$parm);
   return $html;
 }
-# ----------------------------------------------------------------------------------- sys_days_users
+# ----------------------------------------------------------------------------------- sys days_users
 # vygeneruje přehled aktivit uživatelů pro dané období (počátek a délka)
-function sys_days_users($skip,$day,$ndays,$short=false) {
+function sys_days_users($skip,$day0,$parm) {
   global $user_options, $USER, $watch_access_opt;
+  $ndays= $parm->days;
+  $short= $parm->short ?: false;
   $touch= array();
   $days= array();
   $AND=  $skip     ? "AND NOT FIND_IN_SET(user,'$skip')" : '';
@@ -1018,7 +1023,7 @@ function sys_days_users($skip,$day,$ndays,$short=false) {
   $qry= "SELECT org,day,user,module,menu,count(*) as c,sum(hits) as h,
          GROUP_CONCAT(msg SEPARATOR ';') AS _speed FROM _touch
          LEFT JOIN _user ON abbr=user
-         WHERE day BETWEEN '$day'-INTERVAL $ndays DAY AND '$day' AND user!='' $AND
+         WHERE day BETWEEN '$day0'-INTERVAL $ndays DAY AND '$day0' AND user!='' $AND
          GROUP BY user,module,menu,day ORDER BY user,day";
   $res= mysql_qry($qry);
   while ( $res && $row= pdo_fetch_assoc($res) ) {
@@ -1066,7 +1071,7 @@ function sys_days_users($skip,$day,$ndays,$short=false) {
   }
 //                                                 debug($touch,'$touch');
   // použít tabulku barev, je-li v config
-  $html= sys_days_table($touch,$days,$short==2?'speed':'user','#e7e7e7',true);
+  $html= sys_days_table($touch,$days,$short==2?'speed':'user','#e7e7e7',true,$parm);
   return $html;
 }
 # ----------------------------------------------------------------------------------------- sys_bugs
@@ -1253,13 +1258,22 @@ function sys_day_error($id,$akce) {
   }
   return $y;
 }
-# ---------------------------------------------------------------------------------------- sys_table
+# ---------------------------------------------------------------------------------------- sys table
 # zobrazí přehled aktivit pro daný den, pokud není uvedeno $color, použije se definice barev
 # z $ezer_root.php $EZER->activity->colors= "80:#f0d7e4,40:#e0d7e4,20:#dce7f4,0:#e7e7e7"; (sestupně)
 # (pokud je h>hi použije se jako podklad colori)
 # $type= user|module
-function sys_table($touch,$hours,$type,$color,$config_colors=false) { #trace();
+function sys_table($touch,$hours,$type,$color,$config_colors=false,$parm=null) { #trace();
 //                                                 display("sys_table($touch,$hours,$color,$config_colors)");
+  // obsluha zobrazení podrobností aktivity
+//  global $sys_db_info, $ezer_root;
+//  $sys_db_info= $_SESSION[$ezer_root]['sys_db_info'];
+//  debug($sys_db_info,'$sys_db_info');
+//  $path= $sys_db_info->path;
+  $path= 'syst.act';
+  $show_track= $parm->track ?: 0;
+  $day= $parm->day ?: '';
+
   $tab= '';
   // tabulka barev pro hit>0
   global $EZER;
@@ -1283,10 +1297,10 @@ function sys_table($touch,$hours,$type,$color,$config_colors=false) { #trace();
     for ($h= 0; $h<=24; $h++) if ( $hours[$h] ) $tab.= "<th width='$wh'>$h</th>";
     $tab.= "</tr>";
     // uživatelé
-//                                                 debug($touch,'$touch');
+                                                 debug($touch,'$touch');
     foreach ( $touch as $user => $activity ) {
       $tab.= "<tr><td>$user</td>";
-      for ($h= 0; $h<=24; $h++) if ( $hours[$h] )  {
+      for ($h= 0; $h<=24; $h++) { if ( $hours[$h] )  {
         switch ( $type ) {
         case 'module':
           $act= $activity[$h][0] ? $activity[$h][0] : "";
@@ -1316,13 +1330,19 @@ function sys_table($touch,$hours,$type,$color,$config_colors=false) { #trace();
               }
             }
             $title= $type=='speed' ? "" : "$tit, celkem $hit";
+            // <a $style $title href='ezer://ds.dum2.seek_order/$idx'>$idx</a></b>
+            if ($show_track) {
+              $abbr= strip_tags($user);
+              $href= "href='ezer://$path.show_track/$abbr/$day/$h'";
+              $act= "<a $href style='color: black;text-decoration:none'>$act</a>";
+            }
             $tab.= "<td $bg title='$title'>$act</td>";
           }
           else
             $tab.= "<td></td>";
           break;
         }
-      }
+      }}
       $tab.= "</tr>";
     }
     $tab.= "</table>";
@@ -1330,13 +1350,15 @@ function sys_table($touch,$hours,$type,$color,$config_colors=false) { #trace();
   $tab= "<div class='systable'>$tab</div>";
   return $tab;
 }
-# ----------------------------------------------------------------------------------- sys_days_table
+# ----------------------------------------------------------------------------------- sys days_table
 # zobrazí přehled aktivit pro období, pokud není uvedeno $color, použije se definice barev
 # z $ezer_root.php $EZER->activity->colors= "80:#f0d7e4,40:#e0d7e4,20:#dce7f4,0:#e7e7e7"; (sestupně)
 # (pokud je h>hi použije se jako podklad colori)
 # $type= user|module
-function sys_days_table($touch,$days,$type,$color,$config_colors=false) { #trace();
+function sys_days_table($touch,$days,$type,$color,$config_colors=false,$parm=none) { #trace();
 //                                                 display("sys_table($touch,$hours,$color,$config_colors)");
+  $path= 'syst.act';
+  $show_track= $parm->track ?: 0;
   $tab= '';
   // tabulka barev pro hit>0
   global $EZER;
@@ -1366,7 +1388,7 @@ function sys_days_table($touch,$days,$type,$color,$config_colors=false) { #trace
   $wh= 50;
   // čas
   $tab.= "<table width='$wt' class='systable'><tr><th width='50'></th>";
-  foreach ($xdays as $day=>$date) $tab.= "<th width='$wh'>".date('d/m',$date)."</th>";
+  foreach ($xdays as $day=>$date) { $tab.= "<th width='$wh'>".date('d/m',$date)."</th>"; }
   $tab.= "</tr>";
   foreach ( $touch as $user => $activity ) {
     $tab.= "<tr><td>$user</td>";
@@ -1398,6 +1420,11 @@ function sys_days_table($touch,$days,$type,$color,$config_colors=false) { #trace
                 break;
               }
             }
+          }
+          if ($show_track) {
+            $abbr= strip_tags($user);
+            $href= "href='ezer://$path.show_track/$abbr/$h/-1'";
+            $act= "<a $href style='color: black;text-decoration:none'>$act</a>";
           }
           $title= $type=='speed' ? "" : "$tit, celkem $hit";
           $tab.= "<td $bg title='$title'>$act</td>";

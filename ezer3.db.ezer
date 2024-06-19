@@ -32,6 +32,11 @@ func tab_rec_show(tab,key_name,tid) {
   clear();
   info.stick(php.sys_db_rec_show(tab,key_name,tid));
 }
+func tab_track_show(dnu,tab,tid) {
+  echo(`tab_track_show(${dnu},${tab},${tid}) ... ezer3.2`);
+  clear();
+  info.stick(php.sys_db_track_show(dnu,tab,tid));
+}
 use info: form right [12,4,,] 
 menu mdb {type:'left', active:*, format:'f+'
   menu  {title:'Zobrazení dat aplikace', type:'group', skill:'m'
