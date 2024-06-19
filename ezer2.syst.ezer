@@ -899,7 +899,7 @@ panel needs [,,770,] {type:'right', title:'Požadavky', _sys:'poz', skill:'sp'
 # ==========================================================================================> POPUPS
 # -----------------------------------------------------------------------------------------==> Track
 # přehled provedených změn
-panel Track [,,610,280] { title:'Historie oprav', type:'popup', css:'dialog'
+panel Track [,,650,280] { title:'Historie oprav', type:'popup', css:'dialog'
   var virgin=1
   use back: form _back [0,16,,] { tabindex:20 },
   func back_show(kde,klic) {
@@ -934,6 +934,7 @@ panel Track [,,610,280] { title:'Historie oprav', type:'popup', css:'dialog'
       show kdn [,,30,] { title:'kdn', data:_track.kdo },
       show op [,,12,] { title:'?', data:_track.op },
       show tab [,,60,] { title:'tabulka', data:_track.kde },
+      show klic [,,45,] { title:'klíč', data:_track.klic },
       show fld [,,60,] { title:'položka', data:_track.fld },
       show old [,,200,] { title:'původní hodnota', data:_track.old, format:'t' },
       show val [,,120,] { title:'změněná hodnota', data:_track.val, format:'t' },
