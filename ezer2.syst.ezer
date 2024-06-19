@@ -903,10 +903,7 @@ panel Track [,,650,280] { title:'Historie oprav', type:'popup', css:'dialog'
   var virgin=1
   use back: form _back [0,16,,] { tabindex:20 },
   func back_show(kde,klic) {
-    if (virgin) {
-      panel.popup(85,60);
-      virgin= 0;
-    }
+    if (virgin) { panel.popup(85,60); virgin= 0; } else panel.popup();
     panel.title= `Historie oprav`;
     back.list.browse_init();
     back.list.browse_load(
@@ -914,10 +911,7 @@ panel Track [,,650,280] { title:'Historie oprav', type:'popup', css:'dialog'
     back.list.raise('onrowclick')
   }
   func back_show_activity(abbr,day,hour) { var cond:text
-    if (virgin) {
-      panel.popup(85,60);
-      virgin= 0;
-    }
+    if (virgin) { panel.popup(85,60); virgin= 0; } else panel.popup();
     panel.title= conc(`Opravy provedené uživatelem ${abbr} dne ${day}`
         ,(hour>=0 ? ` v ${hour} hodin` : ''));    
     cond= hour>=0 
