@@ -899,16 +899,19 @@ panel needs [,,770,] {type:'right', title:'Požadavky', _sys:'poz', skill:'sp'
 # ==========================================================================================> POPUPS
 # -----------------------------------------------------------------------------------------==> Track
 # přehled provedených změn
-panel Track [,,540,276] { title:'Historie oprav', type:'popup', css:'dialog'
+panel Track [,,610,280] { title:'Historie oprav', type:'popup', css:'dialog'
   use back: form _back [0,16,,] { tabindex:20 },
-  proc back_show(kde,klic) {
-    panel.popup(0,1);
+  func back_show(kde,klic) {
+    panel.popup(85,60);
+    panel.title= `Historie oprav`;
     back.list.browse_load(
       conc("(kde='",kde,"' AND klic=",klic,")"),"kdy DESC");
     back.list.raise('onrowclick')
   }
   func back_show_activity(abbr,day,hour) { var cond:text
-    panel.popup(0,1);
+    panel.popup(85,60);
+    panel.title= conc(`Opravy provedené uživatelem ${abbr} dne ${day}`
+        ,(hour>=0 ? ` v ${hour} hodin` : ''));    
     cond= hour>=0 
         ? `kdy BETWEEN '${day} ${hour}:00:00' AND '${day} ${hour}:59:59'` : `DATE(kdy)='${day}'`;
     back.list.browse_load(`kdo='${abbr}' AND ${cond}`);
@@ -921,6 +924,7 @@ panel Track [,,540,276] { title:'Historie oprav', type:'popup', css:'dialog'
       show kdy [,,90,] { title:'kdy', data:_track.kdy, sql_pipe:'sql_time1' },
       show kdn [,,30,] { title:'kdn', data:_track.kdo },
       show op [,,12,] { title:'?', data:_track.op },
+      show tab [,,60,] { title:'tabulka', data:_track.kde },
       show fld [,,60,] { title:'položka', data:_track.fld },
       show old [,,200,] { title:'původní hodnota', data:_track.old, format:'t' },
       show val [,,120,] { title:'změněná hodnota', data:_track.val, format:'t' },
