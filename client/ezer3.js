@@ -2579,6 +2579,7 @@ class Panel extends Block {
   }
 // ------------------------------------------------------------------- _show
   _show (l,t,noevent) {
+    Ezer.panel= this;
     this.DOM.show();
     if ( this.DOM_li ) this.DOM_li.addClass('Active').removeClass('Pasive');
     if ( l!==undefined ) this.DOM.css('left',l);
