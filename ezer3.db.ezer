@@ -22,10 +22,10 @@ func tab_append(tab,cond,mode) {
     info.append(php.sys_db_append(tab,cond));
 }
 func tab_id_show(tab,idt) {
-  panel.focus();
   info.idt= idt;
   info.tab= tab;
   info.go.onclick();
+  panel.focus();
 }
 func tab_rec_show(tab,key_name,tid) {
   echo(`tab_rec_show(${tab},${key_name},${tid}) ... ezer3.2`);
