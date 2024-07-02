@@ -1497,18 +1497,23 @@ function sys_track_show($abbr,$day,$hour=-1) {
     return $html;
   };
   $html_nazev= function($tab,$id) {
-    $html= "<a href='ezer://syst.dat.tab_id_show/$tab/$id'>".strtoupper($tab[0]).$id."</a> ";
     switch ($tab) {
       case 'osoba': 
-        $html.= '<b>'.select1("GROUP_CONCAT(prijmeni,' ',jmeno)",'osoba',"id_osoba=$id").'</b>'; 
+        $nazev= '<b>'.select1("GROUP_CONCAT(prijmeni,' ',jmeno)",'osoba',"id_osoba='$id'").'</b>'; 
         break;
       case 'rodina': 
-        $html.= '<b>'.select("nazev",'rodina',"id_rodina=$id").'</b>'; 
+        $nazev= select("nazev",'rodina',"id_rodina='$id'"); 
         break;
       case 'akce': 
-        $html.= '<b>'.select("nazev",'akce',"id_duakce=$id").'</b>'; 
+        $nazev= select("nazev",'akce',"id_duakce='$id'"); 
+        break;
+      default: 
+        $nazev= select("'ok'",$tab,"id_$tab='$id'"); 
         break;
     }
+    $style= $nazev ? '' : "style='color:red'";
+    $html= "<a $style href='ezer://syst.dat.tab_id_show/$tab/$id'>".strtoupper($tab[0]).$id."</a> "
+        . "<b>$nazev</b> ";
     return $html;
   };
   $remove= function(&$arr,$val) { 
@@ -1539,7 +1544,7 @@ function sys_track_show($abbr,$day,$hour=-1) {
       $O[$id][$fld]= $val;    
     }
     if ($tab=='tvori')  { // případně doplníme O a R
-      list($ido,$idr)= select('id_osoba,id_rodina','tvori',"id_tvori=$id"); 
+      list($ido,$idr)= select('id_osoba,id_rodina','tvori',"id_tvori='$id'"); 
       if ($ido && !isset($O[$ido])) $O[$ido]= [];
       if (!isset($R[$idr])) $R[$idr]= [];
       if (!isset($RO[$idr]) || !in_array($ido,$RO[$idr])) $RO[$idr][]= $ido;
@@ -1551,7 +1556,7 @@ function sys_track_show($abbr,$day,$hour=-1) {
       $R[$id][$fld]= $val;
     }
     if ($tab=='spolu')  { // případně doplníme O a P a PO
-      list($ido,$idp)= select('id_osoba,id_pobyt','spolu',"id_spolu=$id"); 
+      list($ido,$idp)= select('id_osoba,id_pobyt','spolu',"id_spolu='$id'"); 
       if ($ido && !isset($O[$ido])) $O[$ido]= [];
       if (!isset($P[$idp])) $P[$idp]= [];
       if (!isset($PO[$idp]) || !in_array([$op,$id,$ido],$PO[$idp],true)) 
@@ -1561,7 +1566,7 @@ function sys_track_show($abbr,$day,$hour=-1) {
     if ($tab=='pobyt') {
       list($ida,$idr)= $op=='x'
           ? [$old,0]
-          : select('id_akce,i0_rodina','pobyt',"id_pobyt=$id");
+          : select('id_akce,i0_rodina','pobyt',"id_pobyt='$id'");
       if ($ida && !isset($A[$ida])) $A[$ida]= [];
       if (!isset($AP[$ida]) || !in_array($id,$AP[$ida])) $AP[$ida][]= $id;
       if ($idr) {
@@ -1584,7 +1589,7 @@ function sys_track_show($abbr,$day,$hour=-1) {
     // rozšíření pobytu - A, AP, PR, R
     foreach (array_keys($P) as $idp) {
       if (!$idp) continue;
-      list($ida,$idr)= select('id_akce,i0_rodina','pobyt',"id_pobyt=$idp");
+      list($ida,$idr)= select('id_akce,i0_rodina','pobyt',"id_pobyt='$idp'");
       // ke každému pobytu přidáme akci, pokud ještě není
       if ($ida && !isset($A[$ida])) {
         $A[$ida]= [];
@@ -1608,7 +1613,7 @@ function sys_track_show($abbr,$day,$hour=-1) {
     // doplnění pobytu pro O pokud je přítomna na nějaké A
     foreach (array_keys($A) as $ida) {
       $idps= select('GROUP_CONCAT(id_pobyt)','spolu JOIN pobyt USING (id_pobyt)',
-          "id_akce=$ida AND id_osoba IN ($all_O)");
+          "id_akce='$ida' AND id_osoba IN ($all_O)");
       foreach (explode(',',$idps) as $idp) { 
         if (!isset($P[$idp])) {
           $P[$idp]= [];
@@ -1618,7 +1623,7 @@ function sys_track_show($abbr,$day,$hour=-1) {
     }
     // doplnění RO pro osoby na akci
     foreach (array_keys($R) as $idr) {
-      $idos= select('GROUP_CONCAT(id_osoba)','tvori',"id_rodina=$idr AND id_osoba IN ($all_O)"); 
+      $idos= select('GROUP_CONCAT(id_osoba)','tvori',"id_rodina='$idr' AND id_osoba IN ($all_O)"); 
       if ($idos) {
         foreach(explode(',',$idos) as $ido) {
           if (!isset($RO[$idr]) || !in_array($ido,$RO[$idr])) {
