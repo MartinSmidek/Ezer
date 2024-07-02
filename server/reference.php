@@ -1508,7 +1508,7 @@ function sys_track_show($abbr,$day,$hour=-1) {
         $nazev= select("nazev",'akce',"id_duakce='$id'"); 
         break;
       default: 
-        $nazev= select("'ok'",$tab,"id_$tab='$id'"); 
+        $nazev= select("'&nbsp;'",$tab,"id_$tab='$id'"); 
         break;
     }
     $style= $nazev ? '' : "style='color:red'";
