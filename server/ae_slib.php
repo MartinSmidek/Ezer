@@ -691,6 +691,77 @@ function query($qry,$db='.main.') {
     fce_error(wu("chyba funkce query:$qry/".pdo_error()));
   return $res;
 }
+# -------------------------------------------------------------------------------------- query track
+# provede některá SQL včetně zápisu do _track
+#   INSERT INTO tab (f1,f2,...) VALUES (v1,v2,...) 
+#   UPDATE tab SET f1=v1, f2=v2, ... WHERE id_tab=v0
+# kde vi jsou jednoduché hodnoty: číslo nebo string uzavřený v apostorfech 
+function query_track($qry) {
+  global $mysql_db_track, $mysql_tracked;
+  // rozklad výrazu: 1:table, 2:field list, 3:values list
+  $res= 0;
+  $m= null;
+  $ok= preg_match('/(INSERT)\s+INTO\s+([\w\.]+)\s+\(([,\s\w]+)\)\s+VALUE(?:S|)\s+\(((?:.|\s)+)\)$/',$qry,$m)
+    || preg_match('/(UPDATE)\s+([\w\.]+)\s+SET\s+(.*)\s+WHERE\s+([\w]+)\s*=\s*(.*)\s*/m',$qry,$m)
+    || preg_match('/(DELETE)\s+FROM\s+([\w\.]+)\s+WHERE\s+([\w]+)\s*=\s*(.*)\s*/m',$qry,$m)
+  ;
+//  debug($m);
+  $fce= $m[1] ?: '';
+  $tab= $m[2] ?: '';
+  if ( $mysql_db_track && strpos($mysql_tracked,",$tab,")!==false ) {
+    if ($ok && $fce=='INSERT') {
+      $fld= explode_csv($m[3]); 
+      $val= explode_csv($m[4]); 
+      $chng= [];
+      for ($i= 0; $i<count($fld); $i++) {
+        $v= trim($val[$i],"'");
+        $chng[]= (object)['fld'=>$fld[$i],'op'=>'i','val'=>$v];
+      }
+      $res= ezer_qry("INSERT",$tab,0,$chng);
+    }
+    elseif ($ok && $fce=='UPDATE') {
+  //    debug($m);
+      $sets= explode_csv($m[3]); 
+      $key_id= $m[4];
+      $key_val= $m[5];
+      // kontrola podmínky
+      $ok= ($tab=='akce' && $key_id=='id_duakce') || $key_id=="id_$tab";
+      if ($ok) {
+        $chng= [];
+        foreach ($sets as $set) {
+          list($fld,$val)= explode('=',$set,2);
+          $old= select($fld,$tab,"$key_id=$key_val");
+          $v= trim($val,"'");
+          $chng[]= (object)['fld'=>$fld,'op'=>'u','old'=>$old,'val'=>$v];
+        }
+        $res= ezer_qry("UPDATE",$tab,$key_val,$chng,$key_id);
+      }
+    }
+    elseif ($ok && $fce=='DELETE') {
+      $key_id= $m[3];
+      $key_val= $m[4];
+      // kontrola podmínky
+      $ok= ($tab=='akce' && $key_id=='id_duakce') || $key_id=="id_$tab";
+      if ($ok) {
+        global $USER;
+        query("INSERT INTO _track (kdy,kdo,kde,klic,op) "
+            . "VALUE (NOW(),'$USER->abbr','$tab',$key_val,'x')");
+        $res= query("DELETE FROM $tab WHERE $key_id=$key_val");
+      }
+    }
+    else {
+      $ok= 0;
+    }
+    if (!$ok) {
+      fce_error("funkce query-track nemá předepsaný tvar argumentu ale $qry");
+    }
+  }
+  else {
+    $res= query($qry);
+  }
+end:
+  return $res;
+}
 # ---------------------------------------------------------------------------------------- sql query
 # provedení MySQL dotazu
 function sql_query($qry,$db='.main.') {

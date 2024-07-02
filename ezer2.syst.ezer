@@ -251,15 +251,14 @@ panel cis [,,,*] {type:'right', title:'Číselníky', _sys:'cis', skill:'m|m'
 }
 # ========================================================================================> AKTIVITY
 panel act [,,*,] {type:'right', title:'Aktivita', _sys:'akt', skill:'a|a;aa|aa'
-  var skip: number
+  var skip: number, activity:text
   func onstart() { skip= 0 }
   func onfirstfocus() { left.a.d.click() }
   func show_track(abbr,day,hour) {
-    echo(abbr,',',day,',',hour);
-    Track.back_show_activity(abbr,day,hour);
-//    js.call_root_func_par('show_activity_track',{abbr:abbr,day:day,hour:hour},panel,'show_track_');
+    clear();
+    u.result= conc(activity,php.sys_track_show(abbr,day,hour));
+    if (u.track2) Track.back_show_activity(abbr,day,hour);
   }
-//  func show_track_() { echo('end'); }
   menu left { type:'left', format:'f'
     menu a { title:'Aktivní uživatelé',type:'group'
       item d { title:'dnes'               par:{s:'uzivatele',c:'dnes',short:'1'}}
@@ -329,14 +328,17 @@ panel act [,,*,] {type:'right', title:'Aktivita', _sys:'akt', skill:'a|a;aa|aa'
     }
     func onclick (i:ezer) { var parm:object
       parm= i.par;
-      if (has_skill('m')) parm.track= u.track;
-      u.result= conc("<div id='info'>",
-        php.sys_activity(parm,skip,u.den,sys('options','watch_access_opt')),"</div>")
+      if (has_skill('m')) parm.track= u.track1;
+      activity= conc("<div id='info'>",
+        php.sys_activity(parm,skip,u.den,sys('options','watch_access_opt')),"</div>");
+      u.result= activity;
     }
   }
   use u: form _touch [12,4,,]
   form _touch [,,*,50] {
-    check track [-200,4,100,18] { title:'změny dat', format:'t', value:'0',              skill:'m|m'
+    check track1 [-300,4,100,18] { title:'změny dat', format:'t', value:'0',              skill:'m|m'
+        style:'z-index:2;color:white'}
+    check track2 [-200,4,100,18] { title:'i jako panel', format:'t', value:'0',           skill:'m|m'
         style:'z-index:2;color:white'}
     field den [-20,4,85,18] { type:'date', style:'z-index:2', format:'Rrt', 
         title:'nastavený&nbsp;den', css:'v_karte' }
@@ -903,7 +905,7 @@ panel Track [,,650,280] { title:'Historie oprav', type:'popup', css:'dialog'
   var virgin=1
   use back: form _back [0,16,,] { tabindex:20 },
   func back_show(kde,klic) {
-    if (virgin) { panel.popup(85,60); virgin= 0; } else panel.popup();
+    if (virgin) { panel.popup(85,60); virgin= 0; } else panel.popup(0,0,0,1);
     panel.title= `Historie oprav`;
     back.list.browse_init();
     back.list.browse_load(
@@ -911,12 +913,14 @@ panel Track [,,650,280] { title:'Historie oprav', type:'popup', css:'dialog'
     back.list.raise('onrowclick')
   }
   func back_show_activity(abbr,day,hour) { var cond:text
-    if (virgin) { panel.popup(85,60); virgin= 0; } else panel.popup();
+    if (virgin) { panel.popup(85,60); virgin= 0; } else panel.popup(0,0,0,1);
     panel.title= conc(`Opravy provedené uživatelem ${abbr} dne ${day}`
         ,(hour>=0 ? ` v ${hour} hodin` : ''));    
     cond= hour>=0 
         ? `kdy BETWEEN '${day} ${hour}:00:00' AND '${day} ${hour}:59:59'` : `DATE(kdy)='${day}'`;
     back.list.browse_init();
+    clear();
+    php.sys_track_show(abbr,day,hour);
     back.list.browse_load(`kdo='${abbr}' AND ${cond}`);
     back.list.raise('onrowclick')
   }

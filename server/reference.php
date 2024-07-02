@@ -1475,3 +1475,237 @@ function sys_db_rec_show($tab,$key,$idt) {
   $html.= "</table><br>";
   return $html;
 }
+# ----------------------------------------------------------------------------------- sys track_show
+# ukáže v přehledném tvaru změny ve sledovaných tabulkách podle zápisů v _track
+# procedené zadaným uživatelem v v danémm dnu, případně hodině (-1 značí celý den)
+# výpis je optimalizovaný pro datový model ezer_db2 ale použitelný obecně pro databáze ezer_
+function sys_track_show($abbr,$day,$hour=-1) {
+  $html_ops= function($attrs) {
+    $prefix= '';
+    foreach (array_keys($attrs) as $atr) {
+      if (in_array($atr,['i','u','x'])) $prefix.= $atr; 
+    }
+    return $prefix ? "<b>$prefix</b>" : '-';
+  };
+  $html_attrs= function($attrs) {
+    $html= '';
+    foreach ($attrs as $atr=>$val) {
+      if (in_array($atr,['id_akce','id_osoba'])) continue;
+      if (in_array($atr,['i','u','x'])) { $prefix.= $atr; continue; }
+      $html.= " $atr=$val ";
+    }
+    return $html;
+  };
+  $html_nazev= function($tab,$id) {
+    $html= "<a href='ezer://syst.dat.tab_id_show/$tab/$id'>".strtoupper($tab[0]).$id."</a> ";
+    switch ($tab) {
+      case 'osoba': 
+        $html.= '<b>'.select1("GROUP_CONCAT(prijmeni,' ',jmeno)",'osoba',"id_osoba=$id").'</b>'; 
+        break;
+      case 'rodina': 
+        $html.= '<b>'.select("nazev",'rodina',"id_rodina=$id").'</b>'; 
+        break;
+      case 'akce': 
+        $html.= '<b>'.select("nazev",'akce',"id_duakce=$id").'</b>'; 
+        break;
+    }
+    return $html;
+  };
+  $remove= function(&$arr,$val) { 
+    if (($key= array_search($val,$arr))!==false) {
+      unset($arr[$key]);
+    }    
+  };
+  // shromáždění změn do paměti v tvaru tab -> id -> fld {kdy,val,op[,old]}
+  $t= (object)[];
+  $A= $P= $R= $O= []; // id -> (i|u|d|fld)* ... pro O 
+  $Or= $Op= [];       // ... pro fld ze spolu a tvori
+  $all_O= '';         // seznam ido
+  $AP= [];            // ida -> idp*
+  $PR= [];            // idp -> idr{0,1} 
+  $RO= [];            // idr -> ido* ... ido může být vicekrát (člen více rodin)
+  $PO= [];            // spolu: idp -> [op,ids,ido]* ... ido -"-
+  $time_cond= $hour>=0 
+      ? "kdy BETWEEN '$day $hour:00:00' AND '$day $hour:59:59'" : "DATE(kdy)='$day'";
+  $rt= pdo_qry("SELECT kdy,kde,klic,fld,op,old,val "
+      . "FROM _track WHERE kdo='$abbr' AND $time_cond ORDER BY kdy"); // od dávných k novým změnám
+  while ( $rt && list($kdy,$tab,$id,$fld,$op,$old,$val)= pdo_fetch_array($rt) ) {
+    if (!isset($t->$tab[$id])) $t->$tab[$id]= [];
+    $t->$tab[$id][$fld]= ['kdy'=>$kdy,'val'=>$val,'op'=>$op,'old'=>$old]; 
+    // zapiš vlastnosti měněných atributů entit
+    if ($tab=='osoba')  {
+      if (!isset($O[$id])) $O[$id]= [];
+      if (!isset($O[$id][$op])) $O[$id][$op]= 1;
+      $O[$id][$fld]= $val;    
+    }
+    if ($tab=='tvori')  { // případně doplníme O a R
+      list($ido,$idr)= select('id_osoba,id_rodina','tvori',"id_tvori=$id"); 
+      if ($ido && !isset($O[$ido])) $O[$ido]= [];
+      if (!isset($R[$idr])) $R[$idr]= [];
+      if (!isset($RO[$idr]) || !in_array($ido,$RO[$idr])) $RO[$idr][]= $ido;
+      $Or[$ido][$fld]= $val; 
+    }
+    if ($tab=='rodina') {
+      if (!isset($R[$id])) $R[$id]= [];
+      if (!isset($R[$id][$op])) $R[$id][$op]= 1;
+      $R[$id][$fld]= $val;
+    }
+    if ($tab=='spolu')  { // případně doplníme O a P a PO
+      list($ido,$idp)= select('id_osoba,id_pobyt','spolu',"id_spolu=$id"); 
+      if ($ido && !isset($O[$ido])) $O[$ido]= [];
+      if (!isset($P[$idp])) $P[$idp]= [];
+      if (!isset($PO[$idp]) || !in_array([$op,$id,$ido],$PO[$idp],true)) 
+          $PO[$idp][]= [$op,$id,$ido];
+      $Op[$ido][$fld]= $val; 
+    }
+    if ($tab=='pobyt') {
+      list($ida,$idr)= $op=='x'
+          ? [$old,0]
+          : select('id_akce,i0_rodina','pobyt',"id_pobyt=$id");
+      if ($ida && !isset($A[$ida])) $A[$ida]= [];
+      if (!isset($AP[$ida]) || !in_array($id,$AP[$ida])) $AP[$ida][]= $id;
+      if ($idr) {
+        if (!isset($PR[$id])) $PR[$id]= $idr;
+        if (!isset($R[$idr])) $R[$idr]= [];
+      }
+      if (!isset($P[$idp])) $P[$idp]= [];
+      if (!isset($P[$id][$op])) $P[$id][$op]= 1;
+      $P[$id][$fld]= $val;
+    }
+    if ($tab=='akce')   $A[$id][$fld]= $val;
+  }
+  $all_O= implode(',',array_keys($O)); if (!$all_O) $all_O= '0';
+//  display("all_O=$all_O"); debug($O,'O'); debug($P,'P'); debug($R,'R'); debug($A,'A'); 
+  
+  // uděláme tranzitivní obal
+  $continue= true;
+  while ($continue) {
+    $continue= false;
+    // rozšíření pobytu - A, AP, PR, R
+    foreach (array_keys($P) as $idp) {
+      if (!$idp) continue;
+      list($ida,$idr)= select('id_akce,i0_rodina','pobyt',"id_pobyt=$idp");
+      // ke každému pobytu přidáme akci, pokud ještě není
+      if ($ida && !isset($A[$ida])) {
+        $A[$ida]= [];
+        $continue= true;
+      }
+      if (!isset($AP[$ida]) || !in_array($idp,$AP[$ida])) {
+        $AP[$ida][]= $idp;
+        $continue= true;
+      }
+      // případně rodinu
+      if ($idr && !isset($R[$idr])) {
+        $R[$idr]= [];
+        $PR[$idp]= $idr;
+        $continue= true;
+      }
+      if (!isset($PR[$idp])) {
+        $PR[$idp]= $idr ?: 0;
+        $continue= true;
+      }
+    }
+    // doplnění pobytu pro O pokud je přítomna na nějaké A
+    foreach (array_keys($A) as $ida) {
+      $idps= select('GROUP_CONCAT(id_pobyt)','spolu JOIN pobyt USING (id_pobyt)',
+          "id_akce=$ida AND id_osoba IN ($all_O)");
+      foreach (explode(',',$idps) as $idp) { 
+        if (!isset($P[$idp])) {
+          $P[$idp]= [];
+          $continue= true;
+        }
+      }
+    }
+    // doplnění RO pro osoby na akci
+    foreach (array_keys($R) as $idr) {
+      $idos= select('GROUP_CONCAT(id_osoba)','tvori',"id_rodina=$idr AND id_osoba IN ($all_O)"); 
+      if ($idos) {
+        foreach(explode(',',$idos) as $ido) {
+          if (!isset($RO[$idr]) || !in_array($ido,$RO[$idr])) {
+            $RO[$idr][]= $ido;
+            $continue= true;
+          }
+        }
+      }
+    }
+    continue;
+  }
+  
+  // doplnění A podle P
+  debug($A,'A 2'); debug($P,'P 2'); debug($R,'R 2'); debug($O,'O 2'); 
+  debug($AP,'AP 2'); debug($PR,'PR 2'); debug($PO,'PO 2'); debug($RO,'RO 2'); 
+  // zobrazení 
+  $html.= '';
+  foreach (array_keys($A) as $ida) {
+    $akce= $html_nazev('akce',$ida); 
+    $html.= "<br>1 $akce";    
+    $html.= $html_attrs($A[$ida]);
+    // projdeme akce a jejich pobyty
+    foreach ($AP[$ida] as $idp) {
+      $ops= $html_ops($P[$idp]); 
+      $pobyt= $html_nazev('pobyt',$idp); 
+      $html.= "<br>2 . &nbsp; $ops $pobyt";
+      $html.= $html_attrs($P[$idp]);
+      // projdeme napřed rodinu tohoto pobytu
+      if (($idr= $PR[$idp])) {
+        $ops= $html_ops($R[$idr]); 
+        $rodina= $html_nazev('rodina',$idr); 
+        $html.= "<br>3 . &nbsp; . &nbsp; $ops $rodina";
+        $html.= $html_attrs($R[$idr]);
+        foreach ($RO[$idr] as $ido) {
+          $ops= $html_ops($O[$ido]); 
+          $osoba= $html_nazev('osoba',$ido); 
+          $html.= "<br>4 . &nbsp; . &nbsp; . &nbsp; $ops $osoba";
+          $html.= $html_attrs($O[$ido]);
+          $html.= $html_attrs($Or[$ido]);
+          $html.= $html_attrs($Op[$ido]);
+          unset($O[$ido]);
+        }
+        unset($RO[$idr]);
+      }
+      unset($R[$idr]);
+      // potom nerodinné členy 
+      foreach ($PO[$idp] as list($op,$ids,$ido)) {
+        if (!isset($O[$ido])) continue;
+        $ops_s= "<b>$op</b>"; 
+        $ops_o= $html_ops($O[$ido]); 
+        $osoba= $html_nazev('osoba',$ido); 
+        $spolu= $html_nazev('spolu',$ids); 
+        $html.= "<br>5 . &nbsp; . &nbsp; $ops_s $spolu $ops_o $osoba";
+        $html.= $html_attrs($O[$ido]);
+        $html.= $html_attrs($Op[$ido]);
+        unset($O[$ido]);
+      }
+      unset($PO[$idp]);
+    }
+    unset($AP[$ida]);
+  }
+  // změny rodin a jejich členů mimo akce
+  foreach (array_keys($R) as $idr) {
+    $ops= $html_ops($R[$idr]); 
+    $rodina= $html_nazev('rodina',$idr); 
+    $html.= "<br>6 $ops $rodina";
+    $html.= $html_attrs($R[$idr]);
+    foreach ($RO[$idr] as $ido) {
+      $osoba= $html_nazev('osoba',$ido); 
+      $html.= "<br>7 . &nbsp; $osoba";
+      $html.= $html_attrs($O[$ido]);
+      $html.= $html_attrs($Or[$ido]);
+      unset($O[$ido]);
+    }
+    unset($RO[$idr]);
+  }
+  unset($R);
+  // změny osob mimo akce a rodiny
+  foreach (array_keys($O) as $ido) {
+    $ops= $html_ops($O[$ido]); 
+    $osoba= $html_nazev('osoba',$ido); 
+    $html.= "<br>8 $ops $osoba";
+    $html.= $html_attrs($O[$ido]);
+    unset($O[$ido]);
+  }
+  debug($t,"$abbr $day $hour");
+  $title= "Úpravy provedené uživatelem $abbr dne $day ".($hour>=0 ? " v $hour hodin" : ''); 
+  return "<h3>$title</h3>$html";  
+}
+
