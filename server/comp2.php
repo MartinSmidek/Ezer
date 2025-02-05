@@ -304,6 +304,7 @@ function comp_file ($name,$root='',$_list_only='',$_comp_php=false) {  #trace();
   }
   // listing modulu pro trace=7
   if ( isset($_GET['trace']) && (($_GET['trace']??0)==7 || ($_GET['trace']??0)==1) ) {
+    global $lst;
     $lst= $dbg= '';
 //     $dbg= debugx($loads->code);
     $lst= xlist($loads->code,0,$list_only);

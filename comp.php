@@ -358,7 +358,9 @@ function comp_module($name,$root,&$state) {
   global $display, $trace, $json, $ezer_path_appl, $ezer_path_code;
   global $code, $option_source, $option_list, $lst;
 //   $trace= $option_state;
+//  echo("option_list=$option_list, trace=$trace ... {$_GET['trace']}");
   $state= comp_file($name,$root,$option_list,true);
+//    echo($lst);
   $txt= '';
   if ( $option_source ) {
     $src= file_get_contents("$ezer_path_appl/$name.ezer");

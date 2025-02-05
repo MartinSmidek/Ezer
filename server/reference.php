@@ -1466,9 +1466,16 @@ function sys_db_rec_show($tab,$key,$idt) {
     $fld= $t->Field;
     $val= $r->$fld;
     if (preg_match("/_json/",$fld)) {
-      $val= json_decode($val);
-      $val= debugx($val,'',0,64,64,1);
-      $val= "<div class='dbg'>$val</div>";
+      $obj= json_decode($val,null,32,JSON_UNESCAPED_UNICODE | JSON_HEX_QUOT);
+      if (json_last_error() !== JSON_ERROR_NONE) {
+        global $ezer_path_serv;
+        require_once("$ezer_path_serv/licensed/JSON_Ezer.php");
+        $json= new Services_JSON_Ezer();
+        $obj= $json->decode($val);
+        $obj->json_error= json_last_error_msg();
+      }
+      $dbg= debugx($obj,'',0,64,64,1);
+      $val= "<div class='dbg'>$dbg</div>";
     }
     $html.= "<tr><th>$fld</th><td>$val</td></tr>";
   }
