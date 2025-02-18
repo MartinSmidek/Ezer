@@ -359,7 +359,7 @@ function lorem_ipsum($repeat=1) {
 # ------------------------------------------------------------------------------------------ display
 function display ($msg) {
   global $totrace, $trace;
-  if (strpos($totrace,'u')===false ) return '';
+  if (!$totrace || strpos($totrace,'u')===false ) return '';
   $trace.= ($trace?"<br />":'').$msg;
 }
 # ----------------------------------------------------------------------------------------- display_
@@ -372,7 +372,7 @@ function display_ ($msg) {
 # $note je poznámka uvedená za trasovací informací
 function trace($note='',$coding='') {
   global $totrace, $trace, $trace_parm;
-  if (strpos($totrace,'u')===false ) return '';
+  if (!$totrace || strpos($totrace,'u')===false ) return '';
   $time= date("H:i:s");
   $act= debug_backtrace();
   $x= ($trace ? "<br/>" : '')."$time ".call_stack($act,1).($note?" / $note":'');
