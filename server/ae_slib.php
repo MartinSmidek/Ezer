@@ -111,7 +111,7 @@ function doc_chngs_show($type='ak',$days=30,$app_name='') { trace();
       $AND= '';
       $help_skill= sql_check_column('_help','help_skill') ? ',help_skill' : '';
       if ($help_skill) {
-        $user_skills= str_replace(' ',',',$USER->skills);
+        $user_skills= $USER ? str_replace(' ',',',$USER->skills) : '';
         $AND= "AND (help_skill='' OR FIND_IN_SET(help_skill,'$user_skills')) ";
       }
       $qh= "SELECT datum, version, name, help $help_skill
