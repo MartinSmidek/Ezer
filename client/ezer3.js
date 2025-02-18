@@ -1450,8 +1450,11 @@ class Block {
     if ( title_as_label ) {
       // případný atribut title jako label
       const sgn_lab= title_as_label.match(/^(\^|-|Γ|)(.*)/), label= sgn_lab[2], sgn= sgn_lab[1],
-            up= sgn=='^'||sgn=='Γ', up_left= ignore_right===true || !this._fc('r') || sgn=='Γ',
+            up= sgn=='^'||sgn=='Γ', up_left= ignore_right===true || sgn!='Γ',
             right= title_as_label[0]=='-';
+//      const sgn_lab= title_as_label.match(/^(\^|-|Γ|)(.*)/), label= sgn_lab[2], sgn= sgn_lab[1],
+//            up= sgn=='^'||sgn=='Γ', up_left= ignore_right===true || !this._fc('r') || sgn=='Γ',
+//            right= title_as_label[0]=='-';
       this.DOM_Label= jQuery(`<div class="Label3">${label}</div>`)
         .css(up ? (up_left ? {top:-14,left:2}       : {top:-14,right:isNaN(ignore_right)?0:ignore_right})
                 : (right   ? {top:3,left:this._w+3} : {top:3,right:this._w+2}));
@@ -6490,7 +6493,8 @@ class Edit extends Elem {
       .data('ezer',this)
       .css(this.coord(corr));
     this.DOM_ElemEvents();
-    this.DOM_optStyle(this.DOM_Input,this.options.title,true);    // u title ignorovat zarovnání
+    this.DOM_optStyle(this.DOM_Input,this.options.title);    //250218 neignorovat zarovnání
+//    this.DOM_optStyle(this.DOM_Input,this.options.title,true);    // u title ignorovat zarovnání
   }
 }
 
