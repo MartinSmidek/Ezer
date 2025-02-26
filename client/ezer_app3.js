@@ -1525,6 +1525,8 @@ class Application {
         }
         else {
           let msg= 'SERVER failure (1)';
+          if (x.cmd !== undefined)
+            msg+= ` in ${x.cmd} `;
           if ( typeof(xhr.responseText)==='string' )
             msg+= xhr.responseText;
           Ezer.error(msg,'C');
