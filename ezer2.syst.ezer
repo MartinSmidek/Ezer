@@ -354,12 +354,12 @@ panel users [,,,543] {type:'right', title:'Uživatelé', _sys:'uzi', skill:'a|a'
   const sys_users_cmd = 476
 
   var last_par: object,
-  var novy: number,
+//  var novy: number,
   var new_skill: text,
   var sel: text,
 
-  use uzivatele: form users [10,7,,],
-  use uzivatel: form user [610,7,,]
+  use uzivatele: form users_ [10,7,,],
+  use uzivatel: form user_ [610,7,,]
   use cmd: form butt [22,sys_users_cmd,,],
 
   proc onfirstfocus() {
@@ -374,36 +374,46 @@ panel users [,,,543] {type:'right', title:'Uživatelé', _sys:'uzi', skill:'a|a'
     cmd.watch_key.display(sys('options','watch_key'));
   }
   # ==> ... uložení uživatele s kontrolou
-  proc u_uloz () {
-    uzivatel.same;
-  | uzivatel.kdo.set(sys('user','id_user')); uzivatel.kdo.change; uzivatel.kdy.set(now_sql(1));
-    uzivatel.kdy.change;
-    uzivatel.key;
-    { u_test(uzivatel.key)
-    | uzivatel.save; uzivatel.load;
-      uzivatele.lst.browse_seek;
-      cmd.get.enable(0,'c');
-    }
-  | not(uzivatel.key);
-    { u_test(0)
-    | uzivatel.insert; novy.set(uzivatel.key); uzivatel.load;
-      uzivatele.lst.browse_load; uzivatele.lst.raise('onrowclick',novy.get);
-      cmd.get.enable(0,'c');
+  func u_uloz () { var novy: number
+    if (!uzivatel.same()) {
+//      uzivatel.kdo= sys('user','id_user'); uzivatel.kdo.change(); 
+//      uzivatel.kdy= now_sql(1); uzivatel.kdy.change();
+      if (uzivatel.u.key()) {
+        if (!u_test(uzivatel.u.key())) {
+          uzivatel.u.save(); uzivatel.u.load();
+          uzivatele.lst.browse_seek();
+          cmd.enable(0,'c');
+        }
+      }
+      else { //not(uzivatel.u.key);
+        if (!u_test(0)) {
+          uzivatel.u.insert(); novy= uzivatel.u.key(); uzivatel.u.load();
+          uzivatele.lst.browse_load(); uzivatele.lst.raise('onrowclick',novy);
+          cmd.enable(0,'c');
+        }
+      }
     }
   }
   # test položek před uložením
   var msg:text
-  proc u_test(id) {
-    sys('options','watch_access');
-    msg.set(ask('sys_user_access',sys('options','watch_access'),uzivatel.org.key,uzivatel.access.key));
-    msg.get; alert(msg.get); return(1)
-  | msg.set(ask('sys_user_unique',id,uzivatel.username.get,uzivatel.znacka.get));
-    msg.get; alert(msg.get); return(1)
-  | // testy prošly - uprav změny pro uložení
-    [ uzivatel.access.changed; uzivatel.access.set(uzivatel.access.key); uzivatel.access.change ];
-    [ uzivatel.org.changed; uzivatel.org.set(uzivatel.org.key); uzivatel.org.change ];
-    [ uzivatel.password.changed; msg.set(ask('sys_hash_password', uzivatel.password.get)); uzivatel.password.set(msg.get); uzivatel.password.change ];
-    return(0)
+  func u_test(id) {
+    if (!sys('options','watch_access')) return 1;
+    msg= php.sys_user_access(sys('options','watch_access'),uzivatel.org.key(),uzivatel.access.key());
+    if (msg) { alert(msg); return(1) }
+    // access je v pořádku
+    if (!id) { // nový musí mít odlišné jméno i zkratku
+      msg= php.sys_user_unique(id,uzivatel.username,uzivatel.znacka);
+      if (msg) { alert(msg); return(1) }
+    }
+    // testy prošly - uprav změny pro uložení - ukládáme klíče
+    if (!uzivatel.access.key() || !uzivatel.org.key()) { alert("doplň organizaci i přístup"); return 1 };
+    if (uzivatel.access.changed()) { uzivatel.access= uzivatel.access.key(); uzivatel.access.change() };
+    if (uzivatel.org.changed()) { uzivatel.org= uzivatel.org.key(); uzivatel.org.change() };
+    if (uzivatel.password.changed()) { 
+      msg= php.sys_hash_password(uzivatel.password); 
+      uzivatel.password= msg; uzivatel.password.change();
+    }
+    return 0;
   }
   # obnovení seznamu uživatelů
   proc refresh() { var see_access:text
@@ -435,12 +445,12 @@ panel users [,,,543] {type:'right', title:'Uživatelé', _sys:'uzi', skill:'a|a'
     }
   }
   # ----------------------------------------------------------------==> ... uživatelé
-  form users [,,587,470] { css:'ae_work'
+  form users_ [,,587,470] { css:'ae_work'
     view u: table _user
     view t: table _track { join_type:'NONE', join:"ON abbr=kdo" }
     label [6,4,89,15] { title:'Uživatelé' css:'karta' style:"color:white;font-size:14px" }
     browse lst [4,37,0,54] { rows:sys_users_list, qry_rows:1, buf_rows:100, group_by:'abbr'
-      show user [,,27,] { title:'č.', help:'jednoznačné číslo uživatele',
+      show idu [,,27,] { title:'č.', help:'jednoznačné číslo uživatele',
         data:u.id_user, format:'rsq=' }
       show zkratka [,,35,] { title:'značka', help:'jednoznačná třípísmenná zkratka',
         data:u.abbr, format:'sq*', css_cell:'' }
@@ -484,7 +494,7 @@ panel users [,,,543] {type:'right', title:'Uživatelé', _sys:'uzi', skill:'a|a'
       func onrowclick () {
         new_skill= '';
         cmd.enable(0,'c');
-        uzivatel.load(user);
+        uzivatel.u.load(idu);
         watch_css();
         uzivatel.org.key(org);
         uzivatel.access.key(access);
@@ -494,28 +504,28 @@ panel users [,,,543] {type:'right', title:'Uživatelé', _sys:'uzi', skill:'a|a'
         uzivatel.seznam.selected('set',php.sys_skills2ids(uzivatel.skills));
         uzivatel.seznam.selected(sel);
         uzivatel.seznam.browse_load();
-        uzivatel.key(user);
       }
     }
   }
-  # ----------------------------------------------------------------==> ... user
-  form user [,,433,470] { css:'ae_work', // style:"z-index:2"
+  # ----------------------------------------------------------------==> ... _user
+  form user_ [,,433,470] { css:'ae_work', // style:"z-index:2"
+    view u: table _user
     proc onchanged() { cmd.get.enable(1,'c') }
     label [5,4,89,15] { title:'Uživatel' css:'karta' style:"color:white;font-size:14px" }
-    field skills [2,46,146,] { data:_user.skills, format:'n' }
-    field username [5,48,60,] { data:_user.username, title:'^username' }
-    field password [74,48,42,] { data:_user.password, title:'^heslo', format:'p' }
-    field znacka [124,48,34,] { data:_user.abbr, title:'^zkratka' }
-    select org [168,48,66,] { tag:'ac', data:_user.org, format:'w', title:'^organizace' }
-    select access [242,48,67,] { tag:'ac', data:_user.access, format:'w', title:'^přístup k' }
-    edit ips [316,47,107,97] { tag:'ip', data:_user.ips, title:'^povolené IP adresy' }
-    field prijmeni [5,87,152,] { data:_user.surname, title:'^příjmení' }
-    field jmeno [168,87,117,] { data:_user.forename, title:'^jméno' }
+    field skills [2,46,146,] { data:u.skills, format:'n' }
+    field username [5,48,60,] { data:u.username, title:'^username' }
+    field password [74,48,42,] { data:u.password, title:'^heslo', format:'p' }
+    field znacka [124,48,34,] { data:u.abbr, title:'^zkratka' }
+    select org [168,48,66,] { tag:'ac', data:u.org, format:'w', title:'^organizace' }
+    select access [242,48,67,] { tag:'ac', data:u.access, format:'w', title:'^přístup k' }
+    edit ips [316,47,107,97] { tag:'ip', data:u.ips, title:'^povolené IP adresy' }
+    field prijmeni [5,87,152,] { data:u.surname, title:'^příjmení' }
+    field jmeno [168,87,117,] { data:u.forename, title:'^jméno' }
     // pro dvoufázové přihlášení
-    field usermail [5,126,207,] { data:_user.usermail, title:'^mailová adresa' }    
-    field login { data:_user.login }
-    field kdo { data:_user.zmena_kdo }
-    field kdy { data:_user.zmena_kdy }
+    field usermail [5,126,207,] { data:u.usermail, title:'^mailová adresa' }    
+    field login { data:u.login }
+//    field kdo { data:u.zmena_kdo }
+//    field kdy { data:u.zmena_kdy }
     // seznamm oprávnění
     label [5,161,100,15] { title:'oprávnění' }
     label missing [60,161,360,15]
@@ -598,14 +608,15 @@ panel users [,,,543] {type:'right', title:'Uživatelé', _sys:'uzi', skill:'a|a'
     } }
     button zpet_clena [715,12,,] { tag:'c', type:'html', title:'[fa-undo] Zpět'
       func onclick () {
-        if (uzivatel.key()) { uzivatel.load(); cmd.enable(0,'c');}
+        if (uzivatel.u.key()) { uzivatel.u.load(); cmd.enable(0,'c');}
     } }
+//    button [800,12,,] { title:'idu?' func onclick () { echo(`onclick: id_user=${uzivatel.u.key()}`);} }
     button vytvor_clena [851,12,,] { type:'html', title:'[fa-heart] Vytvořit'
-      proc onclick () {
-        cmd.get.enable(0,'c');
+      func onclick () {
+        cmd.enable(0,'c');
         uzivatel.seznam.selected('clear');
-        uzivatele.lst.blur; uzivatel.init; uzivatel.kdo.set(sys('user','id_user'));
-        uzivatel.kdy.set(now);
+        uzivatele.lst.blur(); uzivatel.init(); uzivatel.u.init(); 
+//        uzivatel.kdo= sys('user','id_user'); uzivatel.kdy= now();
         uzivatel.znacka.enable(1);
     } }
   }
