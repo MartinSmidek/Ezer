@@ -1454,11 +1454,12 @@ function sys_db_track_show($dnu,$tab,$idt) {
 }
 # ---------------------------------------------------------------------------------- sys db_rec_show
 # zobraz všechny položky daného záznamu dané tabulky, které mají komentář nezačínající -
-function sys_db_rec_show($tab,$key,$idt) {
+function sys_db_rec_show($tab,$key,$idt,$css='') { trace();
   global $sys_db_info, $ezer_root;
   $sys_db_info= $_SESSION[$ezer_root]['sys_db_info'];
   $html= '';
-  $css= $sys_db_info->css;
+  $css= $css==='-' ? '' : $sys_db_info->css;
+  display("css=$css");
   $r= select_object('*',$tab,"$key=$idt"); 
   $html.= "<table class='$css'>";
   $rt= pdo_query("SHOW FULL COLUMNS FROM $tab");
