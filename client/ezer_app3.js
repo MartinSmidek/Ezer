@@ -527,6 +527,7 @@ class Application {
       this._barSwitch('E','výpočty');
       this._barSwitch('e','události');
       this._barSwitch('f','funkce');
+      this._barSwitch('j','funkce JS');
       this._barSwitch('m','metody');
       this._barSwitch('x','metody na serveru');
       this._barSwitch('X','x podrobně');
@@ -1974,7 +1975,7 @@ class Eval {
     // argumenty
     if ( args ) {
       tr+= '(';
-      for (var i= 0; i<args.length; i++) {
+      for (var i= t=='j' ? 1 : 0; i<args.length; i++) {
         tr+= del+this.val(args[i]);
         del= ',';
       }
@@ -1986,7 +1987,7 @@ class Eval {
       tr= "<span class='trace_click'>"+padNum(lcs[0],3)+"</span>"+tr;
     }
     // úprava podle typu a výstup
-    if ( typ=='f'  || typ=='m'  ) tr+= '=>'+this.val(val);
+    if ( typ=='f' || typ=='j' || typ=='m'  ) tr+= '=>'+this.val(val);
     else if ( typ=='x1' || typ=='a1' ) tr+= '>';
     else if ( typ=='x2' || typ=='a2' ) tr+= val!==false?'=>'+this.val(val):'';
     Ezer.trace(typ.substr(0,1),tr,context,ms);
@@ -2397,8 +2398,9 @@ class Eval {
             // funkce: na zásobníku jsou argumenty - po volání hodnota funkce 'i'
             case 'f': {
               val= false;
+              let args= [];
               nargs= cc.a || 0;
-              for (i= nargs-1, args= []; i>=0; i--)
+              for (i= nargs-1; i>=0; i--)
                 args.push(this.stack[this.top-i]);
               this.top-= nargs;
               fce= Ezer.fce[cc.i];
@@ -2407,7 +2409,10 @@ class Eval {
               Ezer.calee= this;
               val= fce.apply(this.context,args);
               Ezer.calee= null;
-              if ( Ezer.to_trace && Ezer.is_trace.f ) this.trace_fce(cc.s,cc.i,this.context,args,'f',val);
+              if ( Ezer.to_trace && Ezer.is_trace.j && cc.i=='apply') 
+                this.trace_fce(cc.s,args[0],this.context,args,'j',val);
+              if ( Ezer.to_trace && Ezer.is_trace.f ) 
+                this.trace_fce(cc.s,cc.i,this.context,args,'f',val);
               if ( val!==false ) this.stack[++this.top]= val;
               break; }
             // struktura: na zásobník dá kód pro výpočet
