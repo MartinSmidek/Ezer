@@ -168,7 +168,7 @@ __EOD;
     'refresh'           => $refresh,
     'skin'              => "'$skin'",
     'start_datetime'    => date("'Y-m-d H:i:s'"),
-    'login_interval'    => 2*60,                // povolená nečinnost v minutách - default=2 hodiny
+    'login_interval'    => $pars->login_interval ?? 2*60, // povolená nečinnost v minutách - default=2 hodiny
     'mini_debug'        => isset($options->mini_debug) ? $options->mini_debug
                          : ($ezer_template=='menu' ? 'true' : 'false'),
     'status_bar'        => $ezer_template=='menu' ? 'true' : 'false',

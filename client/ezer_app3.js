@@ -816,8 +816,6 @@ class Application {
       return false;
     var wait= 5;              // minuty na zobrazení výzvy k prodloužení sezení přes nečinnost
     if ( Ezer.sys.user.id_user && !quiet ) {
-      // pokud je někdo přihlášený, zjistíme jestli _help enobsahuje nepřečtenou zprávu
-      this.bar_chat({op:'sysmsg?'});
       // pak se podíváme na změny během uplynulé minuty
       this.clock_tics++;
       this.session_tics++;
@@ -852,6 +850,9 @@ class Application {
         // uživatel neaktivní ale nepřekročen limit NEBO čekáme
 //        this.bar_chat({op:'message?'});  *****************************************************************
       }
+      // pokud je někdo přihlášený, zjistíme jestli _help neobsahuje nepřečtenou zprávu
+      this.bar_chat({op:'sysmsg?'});
+      // ukaž čas a uživatele
       var hm= this.bar_clock_show(true);
       if ( hm.substr(-2)==='59' )
         this.bar_clock_hour();
@@ -920,6 +921,7 @@ class Application {
   bar_clock_break () {
     let v= 'odhlaseno '+ae_datum(1)+' po expiraci SESSION';
     document.cookie= Ezer.root+'_logoff' + '=' + encodeURIComponent(v);
+    // server bude už nedostupný, takže odchod přímo
     location.replace(window.location.href);
   }
   // ----------------------------------------------------------------------------- bar_chat
