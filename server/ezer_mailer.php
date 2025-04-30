@@ -1,0 +1,164 @@
+<?php
+/**
+ * (c) 2025 Martin Smidek <martin@smidek.eu> - rozšíření PHPMailer pro projekt Answer
+ * 
+ * $mail= new Ezer_PHPMailer($x)
+ *   pro gmail 
+ *     $x= {Host:smtp.google.com,Username,files_path:cesta k creditals a tokens}
+ *   pro seznam a jiné
+ *     $x= {Host:smtp server,Port,Username,Password,[SMTPOptions]}
+ *       pokud SMTPOptions=-
+ *       bude přidáno [ssl => [verify_peer=>false,verify_peer_name=>false,allow_self_signed=>true]]
+ * 
+ * $mail->Ezer_Send() odešle mail 
+ *   pro gmail službou Google_Service_Gmail_Message 
+ *   jinak $mail->Send
+ */
+
+spl_autoload_register(function ($class) {
+  global $abs_root;
+  $server= "$abs_root/ezer3.2/server";
+  $phpmailer_path= "$server/licensed/phpmailer";
+//  $phpmailer_path = $_SERVER['DOCUMENT_ROOT'] . "/ezer3.2/server/licensed/phpmailer";
+  $map = [
+      'PHPMailer' => "$phpmailer_path/class.phpmailer.php",
+      'SMTP'      => "$phpmailer_path/class.smtp.php",
+      'Ezer_PHPMailer' => "$server/ezer_mailer.php", // Tento soubor obsahuje definici třídy Ezer_PHPMailer
+  ];
+  if (isset($map[$class])) {
+      require_once $map[$class];
+  }
+});
+
+
+class Ezer_PHPMailer extends PHPMailer {
+  protected $serverConfig;
+  protected $oauthClient;
+  // Cache pro autorizace jednotlivých serverů
+  protected static $oauthClientsCache= [];
+  // konstruktor
+  public function __construct($serverConfig) {
+    parent::__construct(true); // true = umožní výjimky
+    $this->serverConfig= $serverConfig;
+    // Nastavení serveru
+    $this->isSMTP();
+    $this->SMTPAuth= 1;
+    $this->Host= $serverConfig->Host;
+    $this->Port= 465;
+    $this->SMTPSecure= 'ssl';
+    $this->Username= $serverConfig->Username;
+    $this->From= $serverConfig->Username;
+    //$this->SetLanguage('cs',"$phpmailer_path/language/");
+    $this->CharSet= "UTF-8";
+    $this->IsHTML(true);
+    
+    // Řešení pro gmail
+    if ($this->Host === 'smtp.gmail.com') {
+      // Klíč pro cache - může být třeba hostname serveru
+      $cacheKey= $this->Host;
+      if (!isset(self::$oauthClientsCache[$cacheKey])) {
+        try {
+          self::$oauthClientsCache[$cacheKey]= $this->createOAuthClient($serverConfig);
+        } 
+        catch (Exception $e) {
+          throw new Exception('Selhání při vytváření OAuth2 klienta: ' . $e->getMessage());
+        }
+      }      
+      // Použít existujícího klienta
+      $this->oauthClient= self::$oauthClientsCache[$cacheKey];
+    } 
+    else {
+      // Klasické SMTP přihlašování
+      $this->Password= $serverConfig->Password;
+      $this->IsHTML(true);  
+      $this->Mailer= "smtp";
+      foreach ($serverConfig as $part=>$value) {
+        if ($part=="SMTPOptions" && $value=="-")
+          $this->SMTPOptions= array('ssl' => array(
+            'verify_peer' => false,
+            'verify_peer_name' => false,
+            'allow_self_signed' => true));
+        else
+          $this->$part= $value;
+      }
+    }
+  }
+
+  // Vytvoří a nastaví nový Google_Client pro OAuth2.
+  protected function createOAuthClient($serverConfig) {
+    global $abs_root;
+    $server= "$abs_root/ezer3.2/server";
+    $gmail_api_library= "$server/licensed/google_api/vendor/autoload.php";
+    require_once $gmail_api_library;
+    // získání údajů pro autentizaci
+    $credentials_path= "$this->files_path/credential.json";
+    if (!is_file($credentials_path) || !is_readable($credentials_path)) {
+      throw new Exception("CHYBA při odesílání mailu došlo k chybě: nepřístupný creditals");
+    }
+    $tokenPath= "$this->files_path/token_$serverConfig->Username.json";
+    if (!is_file($tokenPath) || !is_readable($tokenPath)) {
+      throw new Exception("CHYBA při odesílání mailu došlo k chybě: nepřístupný token");
+    }
+    $required_privileges= array("https://mail.google.com/"); //global privilege
+    $client= new Google_Client();
+    $client->setAuthConfig($credentials_path);
+    $client->setPrompt("consent");
+    $client->setScopes($required_privileges);
+    $client->setAccessType('offline');
+    $client->setIncludeGrantedScopes(true);
+    // access token
+    $accessToken= json_decode(file_get_contents($tokenPath), true);
+    $client->setAccessToken($accessToken);
+    // refresh token automatically if necessary
+    if ($client->isAccessTokenExpired()) {
+      $refreshToken= $client->getRefreshToken();
+      if ($refreshToken) {
+        $client->fetchAccessTokenWithRefreshToken($refreshToken);
+      } 
+      else {
+        throw new Exception("CHYBA při odesílání mailu došlo k chybě: nelze obnovit token");
+      }
+    }
+    return $client;
+  }
+  
+  public function Ezer_Send() {
+    $msg= 'ok';
+    if ($this->Host === 'smtp.gmail.com') {
+      $message= new Google_Service_Gmail_Message();
+      if ($this->preSend()) {
+        $mime= $this->getSentMIMEMessage();
+        $data= base64_encode($mime);
+        $data= str_replace(array('+','/','='),array('-','_',''),$data); // url safe
+        $message->setRaw($data);
+      } 
+      else {
+        $msg= "CHYBA při odesílání mailu došlo k chybě tvorby zprávy: " . $this->ErrorInfo;
+        goto end;
+      }
+      $service= new Google_Service_Gmail($this->oauthClient);
+      try {
+        $result= $service->users_messages->send('me', $message);
+        file_put_contents("email-logs.txt", $result, FILE_APPEND);
+        $msg= "ok";
+      } 
+      catch (Google_Service_Exception $e) {
+        file_put_contents("email-logs.txt", $e, FILE_APPEND);
+        $msg= "CHYBA při odesílání mailu došlo k chybě služby Gmail: $e->getCode() = $e->getMessage()";
+      } 
+      catch (Exception $e) {
+        file_put_contents("email-logs.txt", $e, FILE_APPEND);
+        $msg= "CHYBA při odesílání mailu došlo k chybě: $e->getMessage()";
+      }
+      return $msg;
+    }
+    else {
+      if (!$this->Send()) {
+        $msg= "CHYBA při odesílání mailu došlo k chybě tvorby zprávy: " . $this->ErrorInfo;
+        goto end;
+      }
+    }
+  end:
+    return $msg;
+  }
+}
