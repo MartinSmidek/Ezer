@@ -1,16 +1,16 @@
 <?php
 /**
- * (c) 2025 Martin Smidek <martin@smidek.eu> - rozšíření PHPMailer pro projekt Answer
+ * (c) 2025 Martin Smidek <martin@smidek.eu> - rozšíření PHPMailer pro framework Ezer
  * 
  * $mail= new Ezer_PHPMailer($x)
  *   pro gmail 
  *     $x= {Host:smtp.google.com,Username,files_path:cesta k creditals a tokens}
  *   pro seznam a jiné
  *     $x= {Host:smtp server,Port,Username,Password,[SMTPOptions]}
- *       pokud SMTPOptions=-
+ *       pokud SMTPOptions='-'
  *       bude přidáno [ssl => [verify_peer=>false,verify_peer_name=>false,allow_self_signed=>true]]
  * 
- * $mail->Ezer_Send() odešle mail 
+ * $mail->Ezer_Send() odešle mail a vrátí 'ok' nebo text chyby
  *   pro gmail službou Google_Service_Gmail_Message 
  *   jinak $mail->Send
  */
@@ -33,7 +33,6 @@ spl_autoload_register(function ($class) {
 
 class Ezer_PHPMailer extends PHPMailer {
   protected $serverConfig;
-  protected $oauthClient;
   // Cache pro autorizace jednotlivých serverů
   protected static $oauthClientsCache= [];
   // konstruktor
@@ -51,9 +50,7 @@ class Ezer_PHPMailer extends PHPMailer {
     //$this->SetLanguage('cs',"$phpmailer_path/language/");
     $this->CharSet= "UTF-8";
     $this->IsHTML(true);
-    
-    // Řešení pro gmail
-    if ($this->Host === 'smtp.gmail.com') {
+    if ($this->Host === 'smtp.gmail.com') { // -------------------- Řešení pro gmail
       // Klíč pro cache - může být třeba hostname serveru
       $cacheKey= $this->Host;
       if (!isset(self::$oauthClientsCache[$cacheKey])) {
@@ -67,10 +64,8 @@ class Ezer_PHPMailer extends PHPMailer {
       // Použít existujícího klienta
       $this->oauthClient= self::$oauthClientsCache[$cacheKey];
     } 
-    else {
-      // Klasické SMTP přihlašování
+    else { // ---------------------------- Klasické SMTP přihlašování - jméno a heslo
       $this->Password= $serverConfig->Password;
-      $this->IsHTML(true);  
       $this->Mailer= "smtp";
       foreach ($serverConfig as $part=>$value) {
         if ($part=="SMTPOptions" && $value=="-")
@@ -91,11 +86,11 @@ class Ezer_PHPMailer extends PHPMailer {
     $gmail_api_library= "$server/licensed/google_api/vendor/autoload.php";
     require_once $gmail_api_library;
     // získání údajů pro autentizaci
-    $credentials_path= "$this->files_path/credential.json";
+    $credentials_path= "$serverConfig->files_path/credential.json";
     if (!is_file($credentials_path) || !is_readable($credentials_path)) {
       throw new Exception("CHYBA při odesílání mailu došlo k chybě: nepřístupný creditals");
     }
-    $tokenPath= "$this->files_path/token_$serverConfig->Username.json";
+    $tokenPath= "$serverConfig->files_path/token_$serverConfig->Username.json";
     if (!is_file($tokenPath) || !is_readable($tokenPath)) {
       throw new Exception("CHYBA při odesílání mailu došlo k chybě: nepřístupný token");
     }
@@ -124,7 +119,7 @@ class Ezer_PHPMailer extends PHPMailer {
   
   public function Ezer_Send() {
     $msg= 'ok';
-    if ($this->Host === 'smtp.gmail.com') {
+    if ($this->Host === 'smtp.gmail.com') { // -------------------------- OAuth2
       $message= new Google_Service_Gmail_Message();
       if ($this->preSend()) {
         $mime= $this->getSentMIMEMessage();
@@ -152,7 +147,7 @@ class Ezer_PHPMailer extends PHPMailer {
       }
       return $msg;
     }
-    else {
+    else { // ----------------------------------------------------------- SMTP
       if (!$this->Send()) {
         $msg= "CHYBA při odesílání mailu došlo k chybě tvorby zprávy: " . $this->ErrorInfo;
         goto end;
