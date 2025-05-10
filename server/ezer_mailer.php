@@ -59,6 +59,7 @@ class Ezer_PHPMailer extends PHPMailer {
         } 
         catch (Exception $e) {
           $this->Ezer_error= 'CHYBA gmail: ' . $e->getMessage();
+          return;
         }
       }      
       // Použít existujícího klienta
