@@ -28,26 +28,14 @@
   global $ezer_local, $ezer_server;
   global $json, $USER, $EZER, $ezer_user_id;
   date_default_timezone_set("Europe/Prague");
-//   if ( $_POST['app_root'] ) chdir("..");
   # --------------------------------------------------------------------------------------- requires
   # vložení a inicializace balíků
   $ezer_root= $_POST['root'];                        // jméno adresáře a hlavního objektu aplikace
   if ( !$ezer_root ) $ezer_root= $_GET['root'];
-//  $ezer_session= $_POST['session'];                  // způsob práce se $_SESSION php|ezer
-//  if ( !$ezer_session ) $ezer_session= $_GET['session'];
-//  # ---------------------------------------------------------------------------------------- session
-//  # session - vlastní nebo standardní obsluha $_SESSION
-//  if ( $ezer_session=='ezer' ) {
-//    require_once("$ezer_path_serv/session.php");
-//    sess_start(); // obsahuje volání session_start()
-//  }
-//  else {
-    session_start(); // defaultní práce se session
-    $USER= isset($_SESSION[$ezer_root]['USER']) ? $_SESSION[$ezer_root]['USER'] : null;
-//  }
+  session_start(); // defaultní práce se session
   # ------------------------------------------------------------------------- test existence SESSION
   # po uplynutí gc_maxlifetime je session zrušena (runtimem PHP) => vrátit informaci do klienta
-  if ( !count($_SESSION) ) {
+  if ( !isset($_SESSION[$ezer_root])) {
     $_SESSION[$ezer_root]['off']= 1;
     header('Content-type: application/json; charset=UTF-8');
     $y= (object)array('session_none'=>1,'error'=>'odhlášeno pro nečinnost','POST'=>$_POST,'GET'=>$_GET);
@@ -66,6 +54,7 @@
     exit;
   }
   # ----------------------------------------------------------------------------------- root.inc.php
+  $USER= isset($_SESSION[$ezer_root]['USER']) ? $_SESSION[$ezer_root]['USER'] : null;
   $ezer_root_inc= '';
   if ( isset($_SESSION[$ezer_root]['abs_root']) ) {
     $path= $_SESSION[$ezer_root]['abs_root'];
