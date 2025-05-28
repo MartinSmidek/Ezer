@@ -4453,6 +4453,7 @@ Ezer.fce.href= function (path) {
         // pouze když odkaz vede na jiné Tabs
         part._focus(1);
       }
+      deep:
       for (var i=1; i<xs.length; i++) {
         if ( /*(part.options.include===undefined || part.options.include=='onload'
            || part.options.include=='loaded')
@@ -4488,7 +4489,7 @@ Ezer.fce.href= function (path) {
             }
 //            new Eval(part.code,part.context||part.owner,args,part.id,false,false,part);
             new Eval([{o:'c',i:part.id,a:args.length,s:part.lc}],part.context,args,part.id);
-            break;
+            break deep;
           default:
             Ezer.fce.warning('odkaz '+path+' má chybnou ',i+1,'. část');
             break walk;

@@ -2743,11 +2743,16 @@ class PanelPopup extends Panel {
 //      ukáže panel jako modální dialog. Další příkaz bude interpretován až po uzavření dialogu.
 //      Uzavření dialogu je provedeno funkcí hide, jehož argument se stane
 //      hodnotou modal.
+//  pro uživatelsky posunovatelný poprvé ve středu: modal(0,0,'',0,0,1)     
 //a: l,t - poloha, pokud je vynechána bude dialog vycentrovám
 //   title - volitelný nadpis, pokud má být odlišný od panel.title
 //   nomodal - panel nebude modální, lze jej zavřít metodou close
-  modal (l,t,title,noevent=0,nomodal=0) {
-    this._show(l,t,noevent,title);
+//   nomove=1 znouzobrazený panel si pamatuje posunutou polohu (pro l=t=0)
+  modal (l,t,title,noevent=0,nomodal=0,nomove=0) {
+    if (this.virgin)
+      this._show(l,t,noevent,title);
+    else
+      this._show(l,t,noevent,title,nomove);
     if ( !nomodal ) this.DOM_modal(1);
     // pokud vrátí false pokračuje interpret další instrukcí; pokud vrátí objekt, uloží
     // do jeho continuation interpret stav, metody tohoto objektu mohou pokračovat ve výpočtu
@@ -2809,13 +2814,15 @@ class PanelPopup extends Panel {
   _show (l,t,noevent,title,nomove) {
     // panel position
     if ( !nomove ) {
-      if ( l!==undefined && t!==undefined )
+//      if ( l!==undefined && t!==undefined )
+      if ( l && t )
         this.DOM.css({left:Number(l),top:Number(t),marginLeft:0,marginTop:0});
       else
         this.DOM.css({left:'50%',top:'50%',marginLeft:-this._w/2-5,marginTop:-this._h/2-15});
     }
     // panel title
-    if ( title!==undefined )
+//    if ( title!==undefined )
+    if ( title )
       this.DOM.find('div.pop_head span').first().html(title);
     else {
       var title2= (this.options.title||this.id)
