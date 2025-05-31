@@ -913,7 +913,7 @@ function eval_expr ($c,&$val,&$typ,&$const,$depth=0) { //trace();
         $const&= $cp;
         $arg[]= $vp;
       }
-      // pokud je to sčítání a první argument je string nebo text provedeme spojení řetězců
+      // pokud je to sčítání a některý argument je string nebo text provedeme spojení řetězců
       $c->op= $tp0=='s'||$tp0=='text' && $c->op=='sum' ? 'conc' : $c->op;
       if ($const) {
         switch ($c->op) {
@@ -1538,9 +1538,13 @@ function gen2($pars,$vars,$c) {
       for ($i= 0; $i<$npar; $i++) {
         $args[]= gen2($pars,$vars,$c->par[$i]);
       }
-      // pokud je to sčítání a první argument je string nebo text provedeme místo sčítání spojení 
-      if ($op->fce=='sum' && $c->par[0]->type=='s') {
-        $op->call->i= 'conc';
+      // pokud je to sčítání a některý argument je string nebo text provedeme místo sčítání spojení 
+      if ($op->fce=='sum') {
+        foreach ($c->par as $cp) {
+          if ($cp->type=='s') {
+            $op->call->i= 'conc';
+          }
+        }
       }
       $code= gen_caller($op,$args); 
     }
@@ -4231,6 +4235,7 @@ function get_slist($context,&$st) {
 # -------------------------------------------------------------------------------------------- stmnt
 # stmnt   :: '{' slist '}'                      --> G(slist)
 #          | id '=' expr4                       --> {expr:asgn,op:id,expr:G(expr4)}
+#          | id ('+='|'-=') expr4               --> {expr:asgn,op:id,expr:G({expr:call,op:...,{expr:name,name:id},expr4)}}
 #          | id '[' expr4 ']' '=' expr4         --> {expr:asgn,id:id,index:expr4/1,par:[G(expr4/2)]}
 #          | id '++' | id '--'                  --> {expr:inc,name:id,inc:1/-1}
 #          | 'if' '(' expr4 ')' stmnt [ 'else' stmnt ]
@@ -4275,6 +4280,23 @@ function get_stmnt($context,&$st) {
     elseif ( get_if_delimiter('=') ) {
       $expr='';
       $ok= get_expr4($context,$expr);
+      $st= (object)array('expr'=>'asgn','left'=>$id,'right'=>$expr,'lc'=>$last_lc);
+    }
+    elseif ( ($del= get_if_delimiters(array('+=','-='))) ) {
+      $expr='';
+      $expr1= (object)array('expr'=>'name','name'=>$id,'lc'=>$last_lc);
+      $expr2='';
+      $ok= get_expr4($context,$expr2);
+      switch ($del) {
+        case '+=': 
+          $op= 'sum'; 
+          break;
+        case '-=': 
+          $op= 'sum'; 
+          $expr2= (object)array('expr'=>'call','op'=>'minus','par'=>array($expr2),'value'=>1);
+          break;
+      }
+      $expr= (object)array('expr'=>'call','op'=>$op,'par'=>array($expr1,$expr2),'value'=>1,'lc'=>$last_lc);
       $st= (object)array('expr'=>'asgn','left'=>$id,'right'=>$expr,'lc'=>$last_lc);
     }
     elseif ( get_if_delimiter('[') ) {
