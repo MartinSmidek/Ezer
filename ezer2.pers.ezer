@@ -39,15 +39,16 @@ menu m {type:'left',
       'ses',{msg.txt.set(ask('sys_session'))}) }
   }
   menu {title:"Změna osobního nastavení", type:'group', _sys:'jm'
-    item { title:"změna emailové adresy"      ,par:°{typ:'opt',fld:'email'} }
-    item { title:"změna emailové patičky"     ,par:°{typ:'txt',fld:'email_foot'} }
-    item { title:"změna textu 'vyřizuje'"     ,par:°{typ:'opt',fld:'vyrizuje'} }
-    item { title:"změna textu 'potvrzuje'"    ,par:°{typ:'opt',fld:'potvrzuje'} }
-    item { title:"m: změna options 'to_trace'",par:°{typ:'oop',fld:'to_trace'}, skill:'m' }
-    item { title:"změna stylu zobrazení"      ,par:°{typ:'opt',fld:'css'} }
-    item { title:"změna hesla"                ,par:°{typ:'pas'} }
-    item { title:"změna přihlašovacího jména" ,par:°{typ:'fld',fld:'username'} }
-    item { title:"m: změna položky 'state'"   ,par:°{typ:'fld',fld:'state'}, skill:'m' }
+    item { title:"změna emailové adresy"      ,par:{typ:'opt',fld:'email'} }
+    item { title:"změna emailové patičky"     ,par:{typ:'txt',fld:'email_foot'} }
+    item { title:"změna SMTP serveru"         ,par:{typ:'opt',fld:'smtp'} }
+    item { title:"změna textu 'vyřizuje'"     ,par:{typ:'opt',fld:'vyrizuje'} }
+    item { title:"změna textu 'potvrzuje'"    ,par:{typ:'opt',fld:'potvrzuje'} }
+    item { title:"m: změna options 'to_trace'",par:{typ:'oop',fld:'to_trace'}, skill:'m' }
+    item { title:"změna stylu zobrazení"      ,par:{typ:'opt',fld:'css'} }
+    item { title:"změna hesla"                ,par:{typ:'pas'} }
+    item { title:"změna přihlašovacího jména" ,par:{typ:'fld',fld:'username'} }
+    item { title:"m: změna položky 'state'"   ,par:{typ:'fld',fld:'state'}, skill:'m' }
   }
   proc onclick (i) {
     last_item.set(i);
