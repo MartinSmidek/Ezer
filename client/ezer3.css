@@ -210,7 +210,7 @@ body {
 .ae_switch_on { background-color:#fb6; color:navy;  }
 .ae_switch_sel { background-color:#fb6; color:white;  }
 #kuk div.trace { margin-left:70px; color:#000; padding:0; white-space:pre-wrap; }
-#kuk div.trace_hide { margin-left:70px; color:#777; height:13px; overflow:hidden; white-space:pre-line; }
+#kuk div.trace_hide { margin-left:70px; color:#777; height:16px; overflow:hidden; white-space:pre-line; }
 #kuk span.trace_on { color:#777;
   width:69px; margin:0; padding:0; float:left; left:0; }
 #kuk span.trace_click { background-color:#ddd;

@@ -33,6 +33,7 @@ spl_autoload_register(function ($class) {
 
 class Ezer_PHPMailer extends PHPMailer {
   protected $serverConfig;
+  protected $log_errors=1;
   // Cache pro autorizace jednotlivých serverů
   protected static $oauthClientsCache= [];
   // konstruktor
@@ -58,6 +59,7 @@ class Ezer_PHPMailer extends PHPMailer {
           self::$oauthClientsCache[$cacheKey]= $this->createOAuthClient($serverConfig);
         } 
         catch (Exception $e) {
+          $this->log_e($e);
           $this->Ezer_error= 'CHYBA gmail: ' . $e->getMessage();
           return;
         }
@@ -134,28 +136,45 @@ class Ezer_PHPMailer extends PHPMailer {
       }
       $service= new Google_Service_Gmail($this->oauthClient);
       try {
-        //$result= 
+//        $result= 
         $service->users_messages->send('me', $message);
-        //file_put_contents("email-logs.txt", $result, FILE_APPEND);
+//        file_put_contents("email-logs.txt", $result, FILE_APPEND);
         $msg= "ok";
       } 
       catch (Google_Service_Exception $e) {
-        //file_put_contents("email-logs.txt", $e, FILE_APPEND);
+        $this->log_e($e);
         $msg= "CHYBA gmail/G: $e->getCode() = $e->getMessage()";
       } 
       catch (Exception $e) {
-        //file_put_contents("email-logs.txt", $e, FILE_APPEND);
+        $this->log_e($e);
         $msg= "CHYBA gmail/E: $e->getMessage()";
       }
       return $msg;
     }
     else { // ----------------------------------------------------------- SMTP
-      if (!$this->Send()) {
-        $msg= "CHYBA smtp: " . $this->ErrorInfo;
-        goto end;
+      try {
+        if (!$this->Send()) {
+          $msg= "CHYBA smtp: " . $this->ErrorInfo;
+          goto end;
+        }
+      } 
+      catch (Google_Service_Exception $e) {
+        $this->log_e($e);
+        $msg= "CHYBA gmail/G: $e->getCode() = $e->getMessage()";
+      } 
+      catch (Exception $e) {
+        $this->log_e($e);
+        $msg= "CHYBA gmail/E: $e->getMessage()";
       }
     }
   end:
     return $msg;
+  }
+  
+  protected function log_e($e) {
+    if ($this->log_errors) {
+      $msg= 'code:'.$e->getCode().' message:'.$e->getMessage();
+      file_put_contents("email-logs.txt", $msg, FILE_APPEND);
+    }
   }
 }
