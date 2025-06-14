@@ -633,10 +633,21 @@ panel faq [,,770,] {type:'right', title:'Tvorba nápovědy', _sys:'*', skill:'ah
     label hlp [La+0,89,500,290] { css:'PanelPopup ContextHelp' }
   }
   # ================================================================================> help_edit
-  panel help_edit [0,0,645,520] { title:' Úprava textu nápovědy', type:'popup', css:'dialog'
+  panel help_edit [0,0,645,540] { title:' Úprava textu nápovědy', type:'popup', css:'dialog'
     use h: form _hlp [0,0,,],
     # -------------------------------------------------------------------==> _hlp
     form _hlp [10,10,600,460] {
+      label drp [0,0,160,30] { type:'drop', title:'přetáhni sem obrázek'
+        func ondrop(f:object) {
+          echo(debug(f));
+          return f.name;
+        }
+        func onload(f:object) {
+          img= php.img2base64(f.name);
+        }
+        func onstart() { this.init('/tmp','S:','',{utf8:1,list:0}) }
+      }
+      edit img [240,0,200,30] { title:'inline img:' }
       button  [540,9,,] { title:'[fa-save] Uložit', help:'ukončit editor a uložit změny'
         proc onclick() {panel.hide(1); }}
       button  [600,9,,] { title:'Zpět', help:'[fa-undo] ukončit editor bez uložení změn'

@@ -1562,6 +1562,21 @@ function utf2ascii($val,$allow='') {
   $ref= preg_replace("~[^-a-z0-9_$allow]+~", '', $ref);
   return $ref;
 }
+# --------------------------------------------------------------------------------------- img2base64
+# zkonvertuje obrázek uložený v souboru v docs/tmp na inline text a smaže soubor
+function img2base64($fname) {
+  global $ezer_path_docs, $ezer_root;
+  $img= "ERROR";
+  $fpath= "$ezer_path_docs/$ezer_root/tmp/$fname";
+  display($fpath);
+  if (file_exists($fpath)) {
+    $obrazek= file_get_contents($fpath);
+    $base64= base64_encode($obrazek);
+    $img= '<img alt="" src="data:image/png;base64,' . $base64 . '" />';
+    unlink($fpath);
+  }
+  return $img;
+}
 # --------------------------------------------------------------------------- array values_recursive
 # seznam prvků polí
 function array_values_recursive($array) {
