@@ -639,7 +639,6 @@ panel faq [,,770,] {type:'right', title:'Tvorba nápovědy', _sys:'*', skill:'ah
     form _hlp [10,10,600,460] {
       label drp [0,0,160,30] { type:'drop', title:'přetáhni sem obrázek'
         func ondrop(f:object) {
-          echo(debug(f));
           return f.name;
         }
         func onload(f:object) {

@@ -1566,9 +1566,8 @@ function utf2ascii($val,$allow='') {
 # zkonvertuje obrázek uložený v souboru v docs/tmp na inline text a smaže soubor
 function img2base64($fname) {
   global $ezer_path_docs, $ezer_root;
-  $img= "ERROR";
+  $img= "ERROR nelze transformovat";
   $fpath= "$ezer_path_docs/$ezer_root/tmp/$fname";
-  display($fpath);
   if (file_exists($fpath)) {
     $obrazek= file_get_contents($fpath);
     $base64= base64_encode($obrazek);
