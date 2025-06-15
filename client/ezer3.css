@@ -337,6 +337,7 @@ div.HelpList { float:right; background-color:#f2f8ff; padding:10px;
   max-width: 230px; word-wrap:break-word; }
 .HelpList ul    { margin:0; padding:0 10px; }
 #cke_editable { margin-top:-20px }
+div.ContextHelp img { padding:0 5px }
 
 /* ----------------------------------------------------------------------------------==> MenuLeft */
 
