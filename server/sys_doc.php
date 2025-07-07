@@ -1,6 +1,35 @@
 <?php # (c) 2007-2009 Martin Smidek <martin@smidek.eu>
 /** =====================================================================================> CALLGRAPH */
 # -------------------------------------------------------------------------------------- doc metrics
+# seznam JS modulů, jejich fcí a metod
+# používá ezer3.2/client/licensed/count-functions.js vytvořeného s pomocí chatGPT
+function doc_js_fce($src = '') {
+  global $ezer_root, $ezer_root_js;
+  $root= $ezer_root_js ?: $ezer_root;
+  $src= $src ?: $root;
+//  $base = 'ezer3.2/client/licensed';
+  $script = "ezer3.2/client/count-functions.js";
+  $cmd= "node " . escapeshellarg($script) . " " . escapeshellarg($src);
+  display($cmd);
+  $lst= shell_exec($cmd);
+  display($lst);
+  $lst= explode(',',$lst);
+  $n_mod= count($lst)-1;
+  list(,$nn_fce,$nn_meth)= explode(':',$lst[0]);
+  $mods= '';
+  for ($i= 1; $i<=$n_mod; $i++) {
+    list($mod,$n_fce,$n_meth)= explode(':',$lst[$i]);
+    display("$mod,$n_fce,$n_meth");
+    $mods.= "<br><br><b>$mod</b> - $n_fce funkcí".($n_meth!=0 ? " a $n_meth metod" : '');
+  }
+  // redakce
+  $html= "<div class='karta'>Seznam JS modulů aplikace '$ezer_root'</div>
+    <i><p>Aplikace používá $n_mod JS modulů s $nn_fce funkcemi "
+      . ($nn_meth ? "a $nn_meth metodami" : '')
+      . "</p></i>$mods";
+  return $html;
+}
+# -------------------------------------------------------------------------------------- doc metrics
 # seznam Ezer modulů, vytvoří globální struktury pro debugger, pokud je $info_only nevrací text
 # $ezer_dbg_names= [ name: {typ:'php', php:file}, ... ];
 function doc_metrics($par) { trace();
@@ -43,15 +72,8 @@ function doc_ezer($info_only=false) { trace();
   global $ezer_root, $ezer_php, $ezer_dbg_names, $ezer_path_root;
 //                                                 display("$ezer_root, $ezer_php"); return;
   $ezer_dbg_names= array();
-  $html= "<div class='karta'>Komentovaný seznam Ezer modulů aplikace '$ezer_root'</div>";
-  $html.= "
-    <i>Seznam <b style='color:blue'>Ezer-modulů</b> aplikace se seznamem PHP-funkcí, volaných
-    prostřednictvím <b>ask</b>, <b>make</b> a použitých v atributu <b>sql_pipe</b>, uspořádaným
-    podle <b style='color:blueviolet'>PHP modulů</b>. <b style='color:green'>Standardní</b>
-    funkce obsažené v seznamu \$ezer_php_libr v $ezer_root.inc[.php]
-    a knihovní funkce PHP jsou uvedeny zvlášť.
-    Nedefinované funkce jsou označeny <span style='color:red'>červeně</span>.
-    </i>";
+  $html= '';
+  $n_mod= 0;
   $ezers= doc_ezer_list();
   $fce= get_defined_functions();                // seznam dostupných funkcí 'user','internal'
   $cg= doc_php_cg(implode(',',$ezer_php));
@@ -68,12 +90,15 @@ function doc_ezer($info_only=false) { trace();
     $info= $desc->info;
     $php= $info->php;
     $html.= "<dt><b  style='color:blue'>$ezer.ezer</b></dt>";
+    $n_mod++;
     if ( $php ) {
       $html.= "<dd>";
       foreach($cg->calls as $mod=>$fces) {
         // rejstřík jmen pro debugger
-        foreach ($fces as $name=>$def) if ($name!='?') {
-          $ezer_dbg_names[$name]= (object)array('typ'=>'php','php'=>$mod);
+        foreach ( $fces as $name => $def ) {
+          if ( $name != '?' ) {
+            $ezer_dbg_names[$name] = (object) array('typ' => 'php', 'php' => $mod);
+          }
         }
         // funkce definované v některém modulu
         $lst= array();
@@ -107,6 +132,15 @@ function doc_ezer($info_only=false) { trace();
   }
   $html.= "</dl>";
   $html.= "</div>";
+  $html= "<div class='karta'>Komentovaný seznam Ezer modulů aplikace '$ezer_root'</div>
+    <i><p>Aplikace používá $n_mod Ezer modulů</p>
+    <p>Seznam <b style='color:blue'>Ezer-modulů</b> aplikace se seznamem PHP-funkcí, volaných
+    prostřednictvím <b>ask</b>, <b>make</b> a použitých v atributu <b>sql_pipe</b>, uspořádaným
+    podle <b style='color:blueviolet'>PHP modulů</b>. <b style='color:green'>Standardní</b>
+    funkce obsažené v seznamu \$ezer_php_libr v $ezer_root.inc[.php]
+    a knihovní funkce PHP jsou uvedeny zvlášť.
+    Nedefinované funkce jsou označeny <span style='color:red'>červeně</span>.
+    </p></i>$html";
 //                                                 $ezer_dbg_names= array(1,2,3);
 //                                                debug($ezer_dbg_names,'ezer_dbg_names');
   return $info_only ? $ezer_dbg_names : $html;
@@ -118,38 +152,39 @@ function doc_ezer_fce($info_only=false) { trace();
   global $ezer_root;
   $ezer_dbg_names= array();
   $php_called= (object)array(); // {php-fce:[ezer-fce/isource, ...], ...}
-  $html= "<div class='karta'>Podrobný seznam Ezer modulů aplikace '$ezer_root'</div>";
-  $html.= "
-    <i>Seznam <b style='color:blue'>Ezer-modulů</b> aplikace se seznamem Ezer-funkcí, 
-    spolu s jimi přímo volanými Ezer a PHP funkcemi
-    </i>";
+  $html= '';
+  $n_mod= $nn_fce= 0;
   $e_srcs= doc_ezer_list();
-  $kap= '';
-  $html.= "<br><br>";
+//  $kap= '';
+//  $html.= "<br><br>";
   $isource= 0;
   foreach($e_srcs as $e_src=>$desc) {
+//                                                  debug($desc,"$e_src desc");
 //    $ids= explode('.',$e_src);
 //    if ( count($ids)==2 && $kap!=$ezer ) {
 //      $kap= $e_src;
 //      $html.= "<h3>$kap</h3>";
 //    }
-    $html.= "<h4><b  style='color:blue'>$e_src.ezer</b></h4><dl>";
     $state= $desc->state;
     $info= $desc->info;
     // obsažené funkce
     $ezer= (array)$info->ezer;
+    $html_mod= '';
+    $n_fce= 0;
     if (is_array($ezer) && count($ezer)) {
 //                                                  debug($ezer,$e_src);
       foreach ($ezer as $efce=>$list) {
         if (!count($list)) continue;
         $href= "href='ezer://doc.str.str_click/$efce:$isource'";
         list($id,$ln)= explode('.',$efce);
-        $html.= "<dt><a style='background:#fbb' $href>$id</a>.$ln<dd>";
+        $clr= '#fbb';
+        $html_mod.= "<dt><a style='background:$clr' $href>$id</a>.$ln<dd>";
+        $n_fce++;
         $del= '';
         foreach ($list as $pfce) {
-          list($pfce,$imodul)= explode(':',$pfce);
+          list($pfce,)= explode(':',$pfce);
           list($pfce)= explode('-',$pfce);
-          $html.= "$del$pfce";
+          $html_mod.= "$del$pfce";
 
           $del= ', ';
           if ($pfce[0]=='$') {
@@ -166,15 +201,22 @@ function doc_ezer_fce($info_only=false) { trace();
             array_push($php_called->$pfce,"$efce:$isource");
           }
         }
-        $html.= "</dd></dt>";
+        $html_mod.= "</dd></dt>";
       }
       $isource++;
     }
 //    if ( count($lst) ) {
 //      $html.= "<dd><b style='color:green'></b> ".implode(', ',$lst)."</dd>";
 //    }
-    $html.= "</dl>";
+    $html.= "<h3><b  style='color:blue'>$e_src.ezer</b> - $n_fce funkcí</h3><dl>$html_mod</dl>";
+    $n_mod++;
+    $nn_fce+= $n_fce;
   }
+  $html= "<div class='karta'>Podrobný seznam Ezer modulů aplikace '$ezer_root'</div>
+    <i><p>Aplikace používá $n_mod Ezer modulů s celkem $nn_fce funkcemi</p>
+    <p>Seznam <b style='color:blue'>Ezer-modulů</b> aplikace se seznamem Ezer-funkcí, 
+    spolu s jimi přímo volanými Ezer a PHP funkcemi
+    </p></i>$html";
 //                                                  debug($php_called,"php_called $e_src");
   return $info_only ? $ezer_dbg_names : $html;
 }
@@ -182,20 +224,8 @@ function doc_ezer_fce($info_only=false) { trace();
 # seznam PHP modulů s označením nepoužitých
 function doc_php($app_phps='*',$sys_phps='') { trace();
   global $ezer_root, $ezer_php;
-  $html= "<div class='karta'>Komentovaný seznam PHP modulů aplikace '$ezer_root'</div>";
-  $html.= "
-    <i>Seznam ezer-modulů aplikace se seznamem php-funkcí.
-    Číslo před jménem funkce je řádek její definice, 
-    v závorce je hloubka volání vzhledem k Ezerskriptu.
-    Jména funkcí jsou označena jako zcela <b style='color:red'>nepoužitá</b>
-    resp. jako <b style='color:black'>nepoužitá</b> z Ezerscriptu
-    resp. jako volaná <b style='color:limegreen'>přímo </b> resp. <b style='color:blue'>nepřímo </b>
-    z Ezerscriptu.
-    Jméno funkce je následováno seznamem volaných funkcí
-    (standardní funkce obsažené v seznamu \$ezer_php_libr v $ezer_root.inc.php jsou vynechány).
-    <br><b>Poznámka</b> volání metod (objekt->metoda) nejsou zpracovávány, ani v call grafy se tedy 
-    neobjevují ...
-    </i>";
+  $n_mod= $nn_fce= 0;
+  $html= '';
   $ezers= doc_ezer_list();
   $cg= doc_php_cg($app_phps,$sys_phps);
   // $used obsahuje volané funkce: $fce => $n kde $n je vzdálenost od ezer-skriptu
@@ -241,7 +271,8 @@ function doc_php($app_phps='*',$sys_phps='') { trace();
   global $ezer_path_root;
   foreach($cg->calls as $php=>$desc) {
     $php0= str_replace("$ezer_path_root/",'',$php);
-    $html.= "<dt><h3>$php0</h3></dt>";
+    $html_fce= '';
+    $n_fce= 0;
     foreach($desc as $fce=>$calls) {
       if ( $fce=='?' ? count($calls) : true ) {
         $ln= str_pad($cg->lines[$fce],4,'0',STR_PAD_LEFT);
@@ -250,26 +281,46 @@ function doc_php($app_phps='*',$sys_phps='') { trace();
               $t==1 ? "style='color:limegreen'" : (
               $f    ? "style='color:blue'" : ''));
         $href= "href='ezer://doc.str.str_click/$fce'";
-        $html.= "<dd style='text-indent:-10px'>$ln: <b><a $clr $href>$fce</a></b> ($u): ".implode(', ',$calls)."</dd>";
+        $html_fce.= "<dd style='text-indent:-10px'>$ln: <b><a $clr $href>$fce</a></b> ($u): "
+            .implode(', ',$calls)."</dd>";
+        $n_fce++;
       }
     }
+    $n_mod++;
+    $nn_fce+= $n_fce;
+    $html.= "<dt><h3>$php0 - $n_fce funkcí</h3></dt>$html_fce";
   }
   $html.= "</dl>";
   $html.= "</div>";
+  $html= "<div class='karta'>Komentovaný seznam PHP modulů aplikace '$ezer_root'</div>
+    <i><p>Aplikace používá $n_mod PHP modulů s celkem $nn_fce funkcemi.</p>
+    <p>Seznam ezer-modulů aplikace se seznamem php-funkcí.
+    Číslo před jménem funkce je řádek její definice, 
+    v závorce je hloubka volání vzhledem k Ezerskriptu.
+    Jména funkcí jsou označena jako zcela <b style='color:red'>nepoužitá</b>
+    resp. jako <b style='color:black'>nepoužitá</b> z Ezerscriptu
+    resp. jako volaná <b style='color:limegreen'>přímo </b> resp. <b style='color:blue'>nepřímo </b>
+    z Ezerscriptu.
+    Jméno funkce je následováno seznamem volaných funkcí
+    (standardní funkce obsažené v seznamu \$ezer_php_libr v $ezer_root.inc.php jsou vynechány).
+    <br><b>Poznámka</b> volání metod (objekt->metoda) nejsou zpracovávány, ani v call grafy se tedy 
+    neobjevují ...
+    </p></i>$html";
   return $html;
 }
 # --------------------------------------------------------------------------------------- doc called
 # called graph PHP modulů
 function doc_called() { trace();
   global $ezer_root, $ezer_php;
-  $html= "<div class='karta'>Seznam PHP funkcí aplikace '$ezer_root'</div>";
-  $html.= "<i>Abecední seznam PHP funkcí se seznamem funkcí, ze kterých jsou volány.<br>
-    Volání z modulů Ezer jsou uvedena <b style='color:blue'>tučně</b>.</i>";
+  $html= '';
+  $n= 0;
   $ezers= doc_ezer_list();
   $cg= doc_php_cg(implode(',',$ezer_php));
-//                                                 debug($cg,'CG');
+//                                                 debug($cg->called,'CG');
   $html.= "<dl>";
   foreach($cg->called as $fce=>$calls) {
+    if (strchr($fce,'.')!==false) continue;
+    $n++;
     $html.= "<dt><b>$fce</b></dt>";
     $ezer_calls= array();
     foreach($ezers as $ezer=>$desc) {
@@ -286,6 +337,10 @@ function doc_called() { trace();
   }
   $html.= "</dl>";
   $html.= "</div>";
+  $html= "<div class='karta'>Seznam PHP funkcí aplikace '$ezer_root'</div>
+    <i><p>Aplikace používá celkem <b>$n</b> PHP funkcí.</p>
+    <p>Následuje abecední seznam PHP funkcí se seznamem funkcí, ze kterých jsou volány.<br>
+    Volání z modulů Ezer jsou uvedena <b style='color:blue'>tučně</b>.</i></p>$html";
   return $html;
 }
 # ------------------------------------------------------------------------------------ doc ezer_list
