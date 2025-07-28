@@ -1,4 +1,5 @@
-<?php # (c) 2007-2018 Martin Smidek (martin@smidek.eu)
+<?php # (c) 2008-2025 Martin Smidek <martin@smidek.eu>
+define("EZER_VERSION","3.3");  
 
 /** 
  * upgrade do verze Ezer3.x
@@ -177,7 +178,9 @@ function git_exec($par) {
   global $abs_root, $ezer_version, $ezer_path_root, $git_app_branch;
   $bean= preg_match('/bean/',$_SERVER['SERVER_NAME'])?1:0;
   display("ezer$ezer_version, ezer_path_root=$ezer_path_root, abs_root=$abs_root, bean=$bean");
-  if ($ezer_version!='3.2') { fce_error("POZOR není aktivní jádro 3.2 ale $ezer_version"); }
+  if ($ezer_version!=EZER_VERSION) { 
+    fce_error("POZOR je aktivní jádro $ezer_version a nikoliv ".EZER_VERSION); 
+  }
   $cmd= $par->cmd;
   $folder= $par->folder;
   $ezer_path= "$ezer_path_root/ezer$ezer_version";
@@ -192,10 +195,10 @@ function git_exec($par) {
     chdir(".");
   else
     fce_error('chybná aktuální složka');
-  debug($par,"git_make(...), ezer_version=$ezer_version, bean=$bean, ezer_path=$ezer_path, cwd=".getcwd());
+  debug($par,"git_make(...), ezer_version=EZER_VERSION, bean=$bean, ezer_path=$ezer_path, cwd=".getcwd());
   // proveď příkaz Git
   $state= 0;
-  $branch= $folder=='ezer' ? ($ezer_version=='3.1' ? 'master' : 'ezer3.2') 
+  $branch= $folder=='ezer' ? 'ezer'.EZER_VERSION 
       : ( isset($git_app_branch) ? $git_app_branch : 'master');
   switch ($cmd) {
     case 'log':

@@ -72,11 +72,11 @@ panel str [,,770,] {type:'right', title:'Struktura', _sys:'*', skill:'m'
       item {title:'Ezer moduly'         func onclick () { clear(); u.fill(php.doc_ezer()) } }
       item {title:'... a jejich funkce' func onclick () { clear(); u.fill(php.doc_ezer_fce()) } }
       item {title:'JS moduly'           func onclick () { clear(); u.fill(php.doc_js_fce()) } }
-      item {title:'... jen systémové'   func onclick () { clear(); u.fill(php.doc_js_fce('ezer3.2/client')) } }
+      item {title:'... jen systémové'   func onclick () { clear(); u.fill(php.doc_js_fce('ezer3.3/client')) } }
       item {title:'PHP moduly'          par:{app:'*',sys:''}}
       item {title:'... i systémové'     par:{app:'*',sys:'*'}}
-      item {title:'... jen sys_doc'     par:{app:'',sys:'server/sys_doc.php'}}
-      item {title:'... jen kompilátor'  par:{app:'',sys:'server/comp2.php'}}
+//      item {title:'... jen sys_doc'     par:{app:'',sys:'server/sys_doc.php'}}
+//      item {title:'... jen kompilátor'  par:{app:'',sys:'server/comp2.php'}}
       item {title:'Seznam PHP funkcí'   func onclick () { clear(); u.fill(php.doc_called()) } }
       func onclick (i:ezer) { 
         clear(); php_app= i.par.app; php_sys= i.par.sys;

@@ -131,7 +131,7 @@ function dbg_onshiftclick(block) {
           l= x[0], t= x[1], w= x[2]-16, h= x[3]-67;
       var position= `left=${l},top=${t},width=${w},height=${h}`;
       Ezer.sys.dbg.win_ezer= window.open(
-        `./ezer3.2/dbg3.php?err=1&app=${Ezer.root}&src=${fname}&file=${pos.file}&pick=${line}`,'dbg',
+        `./ezer3.3/dbg3.php?err=1&app=${Ezer.root}&src=${fname}&file=${pos.file}&pick=${line}`,'dbg',
         position+',resizable=1,titlebar=0,menubar=0');
       if ( Ezer.sys.dbg.win_ezer ) {
 //        dbg_reload(pos.file);
@@ -161,6 +161,23 @@ function dbg_proc_stop(on_off) {
 function dbg_proc_show() {
     if ( Ezer.sys.dbg.win_ezer ) {
       Ezer.sys.dbg.win_ezer.dbg_show_proc(Ezer.calee,1);
+    }
+}
+// ----------------------------------------------------------------------------------- dbg line_show
+// DBG - voláno z intepreta po kroku ladění
+function dbg_line_show(lc,bckg) {
+    if ( Ezer.sys.dbg.win_ezer ) {
+      let ln= lc.split(',')[0];
+      Ezer.sys.dbg.win_ezer.dbg_show_line(ln,bckg??'pick');
+    }
+}
+// ------------------------------------------------------------------------------ dbg file_line_show
+// DBG - voláno z intepreta po kroku ladění
+function dbg_file_line_show(flc,bckg) {
+    if ( Ezer.sys.dbg.win_ezer ) {
+      let file,ln;
+      [file,ln]= flc.split(',');
+      Ezer.sys.dbg.win_ezer.dbg_show_line(ln,bckg??'pick',undefined,false,file);
     }
 }
 // ------------------------------------------------------------------------------- dbg_onclick_start
@@ -1062,7 +1079,7 @@ function ask3(x,then) {
   x.root= Ezer.root;                  // název/složka aplikace
   x.app_root= Ezer.app_root;          // {root].inc.php je ve složce aplikace
   jQuery.ajax({
-    url: 'ezer3.2/server/ezer3.php',
+    url: 'ezer3.3/server/ezer3.php',
     method: 'POST',
     data: x
   })

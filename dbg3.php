@@ -241,6 +241,8 @@ __EOD;
         background-color: orange; }
       li.pick, span.pick {
         background-color: yellow; }
+      li.pick2, span.pick2 {
+        background-color: #ff244861; }
       /* ----------------------- debug */
       #log {
         position:absolute; display: none; background-color:#eee; box-shadow:5px 5px 10px #567;

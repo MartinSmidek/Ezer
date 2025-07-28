@@ -268,6 +268,20 @@ function dbg_onclick_start(file) {
                 touch('trace',0);
                 return false;
             }],
+            ['-[fa-hand-stop-o] stop na řádku', function(el) {
+                let ln= Number(jQuery(el).parent().attr('id'));
+                doc.Ezer.dbg.stops.push(`${app_ezer.indexOf(doc.Ezer.sys.dbg.file)},${ln}`);
+                touch('break',1,ln);
+                return false;
+            }],
+            ['[fa-times] uvolni stop', function(el) {
+                let ln= Number(jQuery(el).parent().attr('id')),
+                    i= doc.Ezer.dbg.stops.indexOf(`${app_ezer.indexOf(doc.Ezer.sys.dbg.file)},${ln}`);
+                if (i!==-1)
+                  doc.Ezer.dbg.stops.splice(i,1);
+                touch('break',0,ln);
+                return false;
+            }],
             ['-[fa-anchor] zastopuj proceduru', function(el) {
                 let ln= Number(jQuery(el).parent().attr('id'));
                 elem.proc_stop(1,ln);
@@ -737,7 +751,8 @@ function dbg_reload(file,ln=0,clear=0) {
   dbg_ask({cmd:'source',app:app,file:file,line:ln},dbg_reload_,clear);
 }
 function dbg_reload_(y,clear) {
-  doc.Ezer.fce.clear(); 
+  if (clear) 
+    doc.Ezer.fce.clear(); 
   dbg.name= y.name;
   dbg.app_ezer= y.app_ezer; // seznam všech ezer modulů ve stejném pořadí jako při kompilaci
   ezer.path= y.path;
@@ -918,10 +933,11 @@ function dbg_show_proc(cnt,on) {
   if ( lc ) {
     let pos= cnt.proc.app_file();
     pos.file= app_ezer[pos.file];
+    let pos_file= doc.Ezer.sys.dbg.files[pos.file] ?? null;
     if ( on ) {
       // stopnutí procedury
       msg= 'proc '+cnt.proc.id+args(cnt,cnt)+' stopped';
-      doc.Ezer.sys.dbg.files[pos.file].stop= lc[0];
+      if (pos_file) pos_file.stop= lc[0];
       // pokus o trace-back
       for (let i= cnt.calls.length-1; i>0; i--  ) {
         let proc= cnt.calls[i].proc,
@@ -942,7 +958,7 @@ function dbg_show_proc(cnt,on) {
     else {
       // uvolnění procedury
       dbg.src[lc[0]].removeClass('stop');
-      doc.Ezer.sys.dbg.files[pos.file].stop= 0;
+      if (pos_file) pos_file.stop= 0;
       msg= 'proc '+cnt.proc.id+' continued';
     }
   }
@@ -1062,8 +1078,7 @@ function dbg_show_text(ln,cg=null) {
     }
   }
 }
-function encode_utf8( s )
-{
+function encode_utf8( s ) {
   return unescape( encodeURIComponent( s ) );
 }
 
@@ -1138,16 +1153,16 @@ function htmlentities(h) {
 // ------------------------------------------------------------------------------==> . dbg show_line
 // zobrazení textu ve struktuře
 // ln= řádek[.index souboru]
-function dbg_show_line(ln,css='pick',el=undefined,clear=true) {
+function dbg_show_line(ln,css='pick',el=undefined,clear=true,file=0) {
   if (el!=undefined) 
     el.stopImmediatePropagation();
   else if (window.event!=undefined) 
     window.event.stopImmediatePropagation();
   // odznač cílový řádek a zruš okno CG
   if (clear) dbg.dbg_clear();
-  dbg.lines.find('li.pick').removeClass('pick');
+  dbg.lines.find(`li.${css}`).removeClass(css);
   // je zobrazený stejný soubor jako je cílový?
-  let name= doc.Ezer.sys.dbg.file;
+  let name= file ? app_ezer[file] : doc.Ezer.sys.dbg.file;
   if (typeof ln === 'string') {
     let lns= ln.split('.');
     ln= lns[0];
@@ -1157,7 +1172,7 @@ function dbg_show_line(ln,css='pick',el=undefined,clear=true) {
   }
   // pokud je to odkaz do jiného modulu, načti jej
   if (doc.Ezer.sys.dbg.file!=name) {
-    dbg_reload(name,ln,1);
+    dbg_reload(name,ln,clear);
   }
   // jinak je to zobrazený soubor
   else {
@@ -1517,8 +1532,7 @@ function dbg_ask(x,then,arg) {
   x.root= doc.Ezer.root;                  // název/složka aplikace
   x.app_root= doc.Ezer.app_root;          // {root].inc.php je ve složce aplikace
   jQuery.ajax({
-    url: '../ezer3.2/dbg3.php',
-//    url: 'dbg3.php',
+    url: '../ezer3.3/dbg3.php',
     method: 'POST',
     data: x
   })

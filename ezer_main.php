@@ -1,4 +1,6 @@
-<?php // ezer 3.2
+<?php # (c) 2008-2025 Martin Smidek <martin@smidek.eu>
+define("EZER_VERSION","3.3");  
+
 /**
  * $app_name      - zobrazený název aplikace
  * $app_login     - username/password (pouze pro automatické přihlášení)
@@ -18,11 +20,12 @@
   if (isset($abs_roots)) $abs_root= $abs_roots[$ezer_server];
   if (isset($rel_roots)) $rel_root= $rel_roots[$ezer_server];
 
-  global $app_root, $ezer_root, $api_key, $const, $appl_version, $ezer_version; //==3.2 z aplikace
+  global $app_root, $ezer_root, $api_key, $const, $appl_version, $ezer_version; 
   $ezer_root= $app_root;
   
   // ověření korektnosti předaných hodnot
-  if ($ezer_version!='3.2') die("konflikt verzí jádra - požadováno $ezer_version, použito 3.2");
+  if ($ezer_version!=EZER_VERSION) 
+    die("konflikt verzí jádra - požadováno $ezer_version, použito ".EZER_VERSION);
   
   // platí buďto isnull($ezer_local) nebo isnull($ezer_server)
   global $ezer_local, $ezer_server;

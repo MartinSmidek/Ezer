@@ -14,12 +14,12 @@
  *   pro gmail službou Google_Service_Gmail_Message 
  *   jinak $mail->Send
  */
+define("EZER_VERSION","3.3");  
 
 spl_autoload_register(function ($class) {
   global $abs_root;
-  $server= "$abs_root/ezer3.2/server";
+  $server= "$abs_root/ezer".EZER_VERSION."/server";
   $phpmailer_path= "$server/licensed/phpmailer";
-//  $phpmailer_path = $_SERVER['DOCUMENT_ROOT'] . "/ezer3.2/server/licensed/phpmailer";
   $map = [
       'PHPMailer' => "$phpmailer_path/class.phpmailer.php",
       'SMTP'      => "$phpmailer_path/class.smtp.php",
@@ -85,7 +85,7 @@ class Ezer_PHPMailer extends PHPMailer {
   // Vytvoří a nastaví nový Google_Client pro OAuth2.
   protected function createOAuthClient($serverConfig) {
     global $abs_root;
-    $server= "$abs_root/ezer3.2/server";
+    $server= "$abs_root/ezer".EZER_VERSION."/server";
     $gmail_api_library= "$server/licensed/google_api/vendor/autoload.php";
     require_once $gmail_api_library;
     // získání údajů pro autentizaci

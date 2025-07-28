@@ -1,14 +1,15 @@
-<?php # (c) 2007-2009 Martin Smidek <martin@smidek.eu>
+<?php # (c) 2008-2025 Martin Smidek <martin@smidek.eu>
+define("EZER_VERSION","3.3");  
+
 /** =====================================================================================> CALLGRAPH */
 # -------------------------------------------------------------------------------------- doc metrics
 # seznam JS modulů, jejich fcí a metod
-# používá ezer3.2/client/licensed/count-functions.js vytvořeného s pomocí chatGPT
+# používá client/licensed/count-functions.js vytvořeného s pomocí chatGPT
 function doc_js_fce($src = '') {
   global $ezer_root, $ezer_root_js;
   $root= $ezer_root_js ?: $ezer_root;
   $src= $src ?: $root;
-//  $base = 'ezer3.2/client/licensed';
-  $script = "ezer3.2/client/count-functions.js";
+  $script = 'ezer'.EZER_VERSION."/client/count-functions.js";
   $cmd= "node " . escapeshellarg($script) . " " . escapeshellarg($src);
   display($cmd);
   $lst= shell_exec($cmd);
@@ -222,10 +223,21 @@ function doc_ezer_fce($info_only=false) { trace();
 }
 # ------------------------------------------------------------------------------------------ doc php
 # seznam PHP modulů s označením nepoužitých
-function doc_php($app_phps='*',$sys_phps='') { trace();
-  global $ezer_root, $ezer_php;
+#  -- update určuje update tabulky _fce
+function doc_php($app_phps='*',$sys_phps='',$update=1) { trace();
+  global $ezer_root;
   $n_mod= $nn_fce= 0;
   $html= '';
+  if ($update) {
+    // načteme a updatujeme exists
+    $tab_fce= [];
+    $rf= pdo_qry('SELECT * FROM _fce ORDER BY file,line');
+    while ($rf && ($fce= pdo_fetch_object($rf))) {
+//      if ($fce->lang=='php') $fce->alive= function_exists($fce->name) ? 1 : 0;
+      $fce->alive= 0;
+      $tab_fce[$fce->id_fce]= $fce;
+    }
+  }
   $ezers= doc_ezer_list();
   $cg= doc_php_cg($app_phps,$sys_phps);
   // $used obsahuje volané funkce: $fce => $n kde $n je vzdálenost od ezer-skriptu
@@ -237,7 +249,7 @@ function doc_php($app_phps='*',$sys_phps='') { trace();
     foreach($cg->called as $php=>$desc) {
       $used[$php]= 0;
     }
-  foreach($ezers as $ezer=>$desc) {
+  foreach($ezers as $desc) {
     $info= $desc->info;
     if ( ($phps= $info->php) ) {
       foreach ($phps as $php ) {
@@ -249,7 +261,7 @@ function doc_php($app_phps='*',$sys_phps='') { trace();
   $zmena= true;
   while ($zmena) {
     $zmena= false;
-    foreach($cg->calls as $fname=>$fces) {
+    foreach($cg->calls as $fces) {
       foreach($fces as $fce=>$calls) {
         if ( count($calls) ) {
           foreach($calls as $call) {
@@ -267,45 +279,136 @@ function doc_php($app_phps='*',$sys_phps='') { trace();
     }
   }
   // zpráva
-  $html.= "<dl>";
+//  $html.= "<dl>";
   global $ezer_path_root;
   foreach($cg->calls as $php=>$desc) {
+    $php_lines= count(file($php));
     $php0= str_replace("$ezer_path_root/",'',$php);
-    $html_fce= '';
+//                                            if($php0!='tut/tut.the.php') continue;
+//    $html_fce= '';
     $n_fce= 0;
     foreach($desc as $fce=>$calls) {
-      if ( $fce=='?' ? count($calls) : true ) {
+//      display("$php0 -- $fce");
+//      if ( $fce=='?' ? count($calls) : true ) {
+      if ( $fce!='?' ) {
         $ln= str_pad($cg->lines[$fce],4,'0',STR_PAD_LEFT);
         $u= $used[$fce]; $f= $flow[$fce]; $t= $top[$fce];
-        $clr= $u==0 ? "style='color:red'" : (
-              $t==1 ? "style='color:limegreen'" : (
-              $f    ? "style='color:blue'" : ''));
-        $href= "href='ezer://doc.str.str_click/$fce'";
-        $html_fce.= "<dd style='text-indent:-10px'>$ln: <b><a $clr $href>$fce</a></b> ($u): "
-            .implode(', ',$calls)."</dd>";
+//        $clr= $how= '?';
+//        $clr= $u==0 ? "style='color:red'" : (
+//              $t==1 ? "style='color:green'" : (
+//              $f    ? "style='color:blue'" : "style='color:orange'"));
+        $how= $u==0 ? 0 : (
+              $t==1 ? 1 : (
+              $f    ? 2 : 3));
+//        $href= "href='ezer://doc.str.str_click/$fce'";
+        $calling= implode(', ',$calls);
+//        $html_fce.= "<dd style='text-indent:-10px'>$ln: <b><a $clr $href>$fce</a></b> ($u): $calling</dd>";
+        // má se udržovat tabulka _fce?
+          $idf= array_search(true, array_map(
+              function($o) use ($fce) {return $o->lang==='php' && $o->name===$fce;}, $tab_fce),true)?:0;
+          if (preg_match('/auto/',$fce)) { display("$fce ... $idf"); }
+          if ($idf==0) {
+            $idf= max(array_keys($tab_fce))+1;
+            $tab_fce[$idf]= (object)['id_fce'=>$idf,'lang'=>'php','name'=>$fce];
+          }
+          $tab_fce[$idf] = (object)array_merge((array)$tab_fce[$idf], 
+              ['line'=>$ln, 'used_by'=>$how, 'cout'=>$calling,'alive'=>1,
+               'called'=>$u, 'calling'=>count($calls), 'file'=>$php0]);
+//        }
         $n_fce++;
       }
     }
+      $last_line= $php_lines;
+      // doplníme size
+      $fces= array_filter($tab_fce, function($o) use ($php0) {return $o->file===$php0;});
+      usort($fces, function($a, $b) {return $b->line <=> $a->line;});
+      foreach ($fces as $fce) {
+        $fce->size= $last_line - $fce->line;
+        $last_line= $fce->line;
+      }
+//      debug($fces,'$fces');
+//    }
     $n_mod++;
     $nn_fce+= $n_fce;
-    $html.= "<dt><h3>$php0 - $n_fce funkcí</h3></dt>$html_fce";
+//    $html.= "<dt><h3>$php0 - $n_fce funkcí</h3></dt>$html_fce";
   }
-  $html.= "</dl>";
-  $html.= "</div>";
+//  $html.= "</dl>";
+//  $html.= "</div>";
+//  if ($update) {
+    $files= [];
+    foreach ($tab_fce as $fce) {
+      if (!$fce->alive) continue;
+      if (!isset($files[$fce->file])) {
+        $files[$fce->file]= (object)['n'=>0,'parts'=>['']];
+      }
+      $files[$fce->file]->n++;
+      if ($fce->part && !in_array($fce->part,$files[$fce->file]->parts)) {
+        $files[$fce->file]->parts[]= $fce->part;
+      }
+//    }    
+//    debug($files,'files');
+    // redakce
+    usort($tab_fce, function($a, $b) {return $a->line <=> $b->line;});
+    $lst= '<dl>';
+    foreach ($files as $file=>$desc) {
+      $lst.= "<dt><h3>$file - $desc->n funkcí</h3></dt>";
+      sort($desc->parts);
+      foreach ($desc->parts as $part) {      
+        $lst.= "<dt><h4 style='padding-left:10px'>$part</h4></dt>";
+        foreach ($tab_fce as $fce) {      
+          if (!$fce->alive) continue;
+          if ($fce->file==$file && $fce->part==$part) {
+            $clr= ['red','green','blue','orange'][$fce->used_by];
+            $href= "href='ezer://doc.str.str_click/$fce->name'";
+            $lst.= "<dd style='text-indent:-10px'>$fce->line: "
+                . "<b><a style='color:$clr' $href>$fce->name</a></b> ($fce->called): $fce->cout</dd>";
+          }
+        }      
+      }
+    }
+    $lst.= '</dl>';
+  }
+//  debug($tab_fce,'tab_fce');
+  if ($update) {
+    $zmeny= 0;
+    foreach ($tab_fce as $fce) {
+      if ($fce->alive) {
+        $cols = [];
+        $vals = [];
+        $updates = [];
+        foreach ($fce as $col => $val) {
+          if (in_array($col,['alive','cout'])) continue;
+          $cols[] = "`$col`";
+          $escaped = addslashes($val);
+          $vals[] = "'$escaped'";
+          $updates[] = "`$col` = VALUES(`$col`)";
+        }
+        $cols_sql = implode(', ', $cols);
+        $vals_sql = implode(', ', $vals);
+        $updates_sql = implode(', ', $updates);
+        $sql = "INSERT INTO _fce ($cols_sql) VALUES ($vals_sql) ON DUPLICATE KEY UPDATE $updates_sql;";
+      }
+      else {
+        $sql= "DELETE FROM _fce WHERE id_fce=$fce->id_fce";
+      }
+      $zmeny+= query($sql);
+    }
+    display("Celkem provedeno $zmeny změn");
+  }
   $html= "<div class='karta'>Komentovaný seznam PHP modulů aplikace '$ezer_root'</div>
     <i><p>Aplikace používá $n_mod PHP modulů s celkem $nn_fce funkcemi.</p>
     <p>Seznam ezer-modulů aplikace se seznamem php-funkcí.
     Číslo před jménem funkce je řádek její definice, 
     v závorce je hloubka volání vzhledem k Ezerskriptu.
     Jména funkcí jsou označena jako zcela <b style='color:red'>nepoužitá</b>
-    resp. jako <b style='color:black'>nepoužitá</b> z Ezerscriptu
-    resp. jako volaná <b style='color:limegreen'>přímo </b> resp. <b style='color:blue'>nepřímo </b>
+    resp. jako <b style='color:orange'>nepoužitá</b> z Ezerscriptu
+    resp. jako volaná <b style='color:green'>přímo </b> resp. <b style='color:blue'>nepřímo </b>
     z Ezerscriptu.
     Jméno funkce je následováno seznamem volaných funkcí
     (standardní funkce obsažené v seznamu \$ezer_php_libr v $ezer_root.inc.php jsou vynechány).
-    <br><b>Poznámka</b> volání metod (objekt->metoda) nejsou zpracovávány, ani v call grafy se tedy 
+    <br><b>Poznámka</b> volání metod (objekt->metoda) nejsou zpracovávány, ani v call grafu se tedy 
     neobjevují ...
-    </p></i>$html";
+    </p></i>$lst";
   return $html;
 }
 # --------------------------------------------------------------------------------------- doc called
@@ -350,15 +453,17 @@ function doc_ezer_list() { trace();
   global $ezer_version, $ezer_path_root, $dbg_info, $ezer_ezer; 
 //  $TEST= 'tut.cmp';
   // projití složek aplikace
-  $files= array();
+  $filess= array();
+//                                                         debug($dbg_info->src_path,'src_path');
   foreach ($dbg_info->src_path??[] as $root) {
     $path_appl= "$ezer_path_root/$root";
     $path_code= "$ezer_path_root/$root/code$ezer_version";
-    if (($dh= opendir($path_appl))) {
+    $files= array();
+    if (($dh= opendir($path_appl))) { // beg
       while (($file= readdir($dh)) !== false) {
         if ( substr($file,-5)==='.ezer' ) {
           $name= substr($file,0,strlen($file)-5);
-          if (isset($TEST) && $TEST!==$name) continue;
+//          if (isset($TEST) && $TEST!==$name) continue;
           $etime= filemtime("$path_appl/$name.ezer");
           $cname= "$path_code/$name.json";
           $ctime= file_exists($cname) ? filemtime($cname) : '';
@@ -375,25 +480,27 @@ function doc_ezer_list() { trace();
         }
       }
       closedir($dh);
-    }
+    } // end
+    ksort($files);
+    $filess= array_merge($filess,$files);
   }
   // přidání případných modulů z jiné složky
-  if (!isset($TEST)) {
+//  if (!isset($TEST)) {
     foreach($ezer_ezer as $fname) {
-      doc_ezer_state($fname,$files);
+      doc_ezer_state($fname,$filess);
     }
-  }
-  ksort($files);
-//                                                         debug($files,'ezer files');
-  return $files;
+//  }
+//                                                         debug($filess,'ezer files');
+end:
+  return $filess;
 }
 # ----------------------------------------------------------------------------------- doc ezer_state
 # zjištění stavu souboru
 function doc_ezer_state ($fname,&$files) { trace();
   global $ezer_path_root, $ezer_version;
   list($appl,$name)= explode('/',$fname);
-  $etime= @filemtime("$ezer_path_root/$appl/$name.ezer");
-  $ctime= @filemtime($cname= "$ezer_path_root/$appl/code$ezer_version/$name.json");
+  $etime= filemtime("$ezer_path_root/$appl/$name.ezer");
+  $ctime= filemtime($cname= "$ezer_path_root/$appl/code$ezer_version/$name.json");
   $files[$name]= (object)array();
   if ( !$ctime)
     $files[$name]->state= 'err';
@@ -421,6 +528,7 @@ function doc_ezer_state ($fname,&$files) { trace();
 function doc_php_cg ($app_php='*',$sys_php0='',$restore=false) { trace();
   global $ezer_version, $ezer_root, $ezer_path_root, $EZER, $ezer_php_libr, $ezer_php;
   // optimalizace - CG necháváme v SESSION
+  $restore= true; 
   if (!$restore && isset($_SESSION[$ezer_root]['CG']) 
       && $app_php==$_SESSION[$ezer_root]['CG']->app_php
       && $sys_php0==$_SESSION[$ezer_root]['CG']->sys_php ) {
@@ -438,7 +546,6 @@ function doc_php_cg ($app_php='*',$sys_php0='',$restore=false) { trace();
   else
     $sys_php= $sys_php0;
   $html= "";
-  $ezer_path= "$ezer_path_root/ezer$ezer_version";
   $fnames= array();
   if ($app_php) {
     $fnames= $app_php=='*' ? $ezer_php : explode(",",$app_php);
@@ -474,6 +581,7 @@ function doc_php_cg ($app_php='*',$sys_php0='',$restore=false) { trace();
 //  }
   // seznam funkcí vynechaných ze seznamu volaných - odvozený z $ezer_php_libr
   $omi= array();
+  debug($ezer_php_libr,'$ezer_php_libr - '.getcwd());
   foreach($ezer_php_libr as $fname) {
     if ($php_sys){
       // ty chtěné ovšem nevynecháme
@@ -482,11 +590,11 @@ function doc_php_cg ($app_php='*',$sys_php0='',$restore=false) { trace();
             continue 2;
       }
     }
-    if ( !file_exists("$ezer_path/$fname") ) {
-      $html.= "<div style='color:red'><br>POZOR soubor $fname není dostupný</div>";
+    if ( !file_exists("$ezer_path_root/$fname") ) {
+      $html.= "<div style='color:red'><br>POZOR soubor $ezer_path_root/$fname není dostupný</div>";
       continue;
     }
-    $ts= token_get_all(file_get_contents("$ezer_path/$fname"));
+    $ts= token_get_all(file_get_contents("$ezer_path_root/$fname"));
     for ($i= 0; $i<count($ts); $i++) {
       if ( is_array($ts[$i]) && $ts[$i][0]==T_FUNCTION ) {
         $i+= 2;
@@ -512,8 +620,8 @@ function doc_php_cg ($app_php='*',$sys_php0='',$restore=false) { trace();
     $last= "?";
     $prev= ''; // předchozí fce
     $ts= array();
-    $ts0= @token_get_all(file_get_contents($fname));
-    $endline= 9990;
+    $ts0= token_get_all(file_get_contents($fname));
+    $endline= 99990;
     for ($i= count($ts0); $i>0; $i--) {
       if (is_array($ts0[$i])) {
         $endline= $ts0[$i][2];
@@ -535,8 +643,8 @@ function doc_php_cg ($app_php='*',$sys_php0='',$restore=false) { trace();
 //      if ( is_array($ts[$i]) && $ts[$i][0]==T_WHITESPACE ) continue;
       // seznam funkcí
       if ( !is_array($ts[$i]) ) continue;
-      if ( $ts[$i][0]==T_OBJECT_OPERATOR ) {  // vynecháme objekt->člen
-        $i+= 1;
+      if ( $ts[$i][0]==T_OBJECT_OPERATOR ) {  // vynecháme objekt->člen pokud není poslední
+        if ($ts[$i+1][0]!==T_FUNCTION) $i+= 1;
       }
       elseif ( $ts[$i][0]==T_FUNCTION && $ts[$i+1]!='(' ) {
         $ln= $ts[$i][2];

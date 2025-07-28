@@ -626,13 +626,13 @@ $template= <<<__EOD
 $html_header
 <body id="body" x="1" x-ms-format-detection="none">
 <!-- menu a submenu -->
-  <div id="maskContinue" class="mask3" style='z-index:2011'></div>
+  <div id="maskContinue" class="mask3" style='z-index:2011;background-color:rgba(51,51,51,0.2)'></div>
   <div id='horni' class="MainBar">
     <div id="appl" $version>$title_right</div>
     <div id='logo'>
-      <button id='logoContinue' 
-          style='display:none;outline:3px solid orange;z-index:2011;margin:7px;position:absolute'>
-        continue</button>
+      <button id='logoContinue' class='logoContinue' title='dokončit bez trasování'>continue</button>
+      <button id='logoStep' class='logoContinue' title='provést tento příkaz' style='left:70px'>step</button>
+      <button id='logoOver' class='logoContinue' title='provést tento příkaz bez trasování' style='left:115px'>over</button>
       <img class="StatusIcon" id="StatusIcon_idle" src="$app/img/-logo.gif" />
       <img class="StatusIcon" id="StatusIcon_server" src="$app/img/+logo.gif" />
     </div>

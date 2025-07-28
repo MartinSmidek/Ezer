@@ -2922,52 +2922,7 @@ class Var extends Block {
       // proměnná má počáteční hodnotu
       this.value= this.options.value;
     }
-//    else if ( desc._init ) {
-//      if ( desc._of=='form' ) {
-//        let name= desc._init,
-//            ctx= Ezer.code_name(name,null,this);
-//        Ezer.assert(ctx,name+' je neznámé jméno - očekává se jméno form');
-//        Ezer.assert(ctx[0].type=='form',name+' není jméno form');
-//        var form= new Form(this,ctx[0],DOM,this.options,ctx[0].id);
-//        // od verze 3.2.0 se form nevkládá jako value ale jako part
-//        //this.set(form);
-//        //this.value.id= id;
-//        this.part= form.part;
-//        this.DOM_Block= form.DOM_Block;
-//      }
-//      else if ( desc._of=='area' && typeof Area==="function" ) {
-//        let name= desc._init,
-//            ctx= Ezer.code_name(name,null,this);
-//        Ezer.assert(ctx,name+' je neznámé jméno - očekává se jméno area');
-//        Ezer.assert(ctx[0].type=='area',name+' není jméno area');
-//        // nalezneme panel
-//        var panel= null;
-//        for (var o= this.owner; o; o= o.owner) {
-//          if ( o.type.substr(0,5)=='panel' ) {
-//            panel= o;
-//            break;
-//          }
-//        }
-//        if ( panel && panel.DOM_Block ) {
-//          // vyvoření area bez události area_oncreate
-//          var area= new Area(panel,ctx[0],panel.DOM_Block,this.options,ctx[0].id,[],true);
-//          this.set(area);
-//          this.value.id= id;
-//        }
-//        else Ezer.error("area není vnořena do panelu");
-//      }
-//    }
-//    // vložení případných podčástí (např. přepisu těl procedur)
-//    this.subBlocks(desc,this.DOM_Block);
   }
-//// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  start
-////f: Var.start (code,oneval)
-//  start (codes,oneval) {
-//    super.start(codes,oneval);
-//    if ( this._of=='form' && this.value ) {
-//      this.value.start(codes,oneval);
-//    }
-//  }
 // ------------------------------------------------------------------------------------ set
 //fm: Var.set (val[,part])
 //      nastaví hodnotu proměnné, pokud je typu object pak part určuje podsložku
@@ -5377,13 +5332,8 @@ class LabelMap extends Label {
         }
         if ( obj.poly_edit ) {
           let coords= this.poly.getCoords();
-//          let start= function(e) {
-//            let node= e.target.getContainer();
-//            node[SMap.LAYER_MARKER].style.cursor= "url(ezer3.2/client/img/cursor_marker.png), auto"; //"grabbing";
-//          }.bind(this);
           let stop= function(e) {
             let mark= e.target, coords= this.poly.getCoords();
-//            mark.getContainer()[SMap.LAYER_MARKER].style.cursor= "help";
             let i= mark.getId();
             coords[i]= mark.getCoords();
             this.poly.setCoords(coords);
@@ -5409,7 +5359,7 @@ class LabelMap extends Label {
           for (let i in coords) {
             let ll= SMap.Coords.fromWGS84(coords[i].x,coords[i].y),
                 mark= new SMap.Marker(ll,i,
-                  {url:'./ezer3.2/client/img/circle_red_11x11.png',anchor:{left:5,top:6},title:i});
+                  {url:'./ezer3.3/client/img/circle_red_11x11.png',anchor:{left:5,top:6},title:i});
             mark.decorate(SMap.Marker.Feature.Draggable);
             this.layer_poly_mark.addMarker(mark);
           }

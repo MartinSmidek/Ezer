@@ -1,11 +1,12 @@
-<?php
+<?php # (c) 2008-2025 Martin Smidek <martin@smidek.eu>
+define("EZER_VERSION","3.3");  
 
 # -------------------------------------------------------------------- identifikace ladícího serveru
 $ezer_localhost= preg_match('/^localhost|^192\.168\./',$_SERVER["SERVER_NAME"])?1:0;
 $ezer_local= $ezer_localhost || preg_match('/^\w+\.bean/',$_SERVER["SERVER_NAME"])?1:0;
 
 // pokud není ladící, musí mít moji IP
-if (!$ezer_local && !in_array(my_ip(),array('217.64.3.170','127.0.0.1','86.49.250.80','88.103.194.219')) )
+if (!$ezer_local && !in_array(my_ip(),array('192.168.7.8','217.64.3.170','127.0.0.1','86.49.250.80','88.103.194.219')) )
   die(my_ip());
 
 //error_reporting(E_ALL & ~E_NOTICE);
@@ -29,9 +30,9 @@ $and= $only_key ? "&key=$only_key" : '';
 $js= <<<__EOD
 function op(op_arg) {
   if ( op_arg=='reload.' )
-    location.href= "ezer3.2/ses.php?root=$ezer_root$and";
+    location.href= "ezer".EZER_VERSION."/ses.php?root=$ezer_root$and";
   else
-    location.href= "ezer3.2/ses.php?root=$ezer_root$and&op="+op_arg;
+    location.href= "ezer".EZER_VERSION."/ses.php?root=$ezer_root$and&op="+op_arg;
 }
 __EOD;
 # ------------------------------------------------------------------------------------------- server
@@ -76,7 +77,8 @@ if ( isset($_GET['op']) ) {
 # ------------------------------------------------------------------------------------------- client
 render:
 $all= true;
-$icon= $ezer_local ? "ezer3.2/client/img/ses_local.png" : "ezer3.2/client/img/ses.png";
+$icon= $ezer_local 
+    ? "ezer".EZER_VERSION."/client/img/ses_local.png" : "ezer".EZER_VERSION."/client/img/ses.png";
 
 $cms= '<br>'.debug($_GET,'GET').'<br/>';
 $cms.= debug($_POST,'POST').'<br/>';

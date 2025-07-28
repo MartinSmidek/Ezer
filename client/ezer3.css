@@ -159,6 +159,7 @@ body {
 
 .StatusIcon { position:absolute; z-index:2010; cursor:pointer; color:#FFAD39; font-size:20pt;
   font-weight:bold; }
+.logoContinue { display:none; outline:3px solid orange; z-index:2011; margin:7px; position:absolute }
 #appl { color:#ffffff; font-size:20pt; font-weight:bold; position:absolute; right:6px; top:1px; }
 
 /* -------------------------------------------------------------------------------------- paticka */
@@ -192,10 +193,10 @@ body {
 
 #trace { height:100%; width:100%; }
 
-#kuk, #kuk_err, #error, #dbg { position:relative; z-index:2; height:100%; margin:0;
+#kuk, #kuk_err, #error, #dbg { position:relative; z-index:2012; height:100%; margin:0;
   background-color:#eee; overflow-y:auto; font-size:8pt; line-height:13px; }
 #kuk_err, #error { display:none; }
-#dbg { float:right; background-color:#ffa; width:400px; border:0; padding:0; resize:none; }
+#dbg { z-index:2012; float:right; background-color:#ffa; width:400px; border:0; padding:0; resize:none; }
 .dbg_context { outline:2px dotted #ff00ff; }
 .dbg { margin:0; overflow-y:auto; font-size:8pt; line-height:13px; }
 #warning { background-color:#FBC84F; color:#000000; opacity:.8; font-weight:bold;

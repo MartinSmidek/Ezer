@@ -10,7 +10,7 @@ func onfirstfocus() { var db_info:object
 }
 func append(x) { info.append(x) }
 func tab_append(tab,cond,mode) {
-  echo(`tab_append(${tab},${cond},${mode}) ... ezer3.2`);
+  echo(`tab_append(${tab},${cond},${mode}) ... ezer3.3`);
   clear();
   if (mode==1)
     info.append(php.sys_db_append_using(tab,cond));
@@ -28,12 +28,12 @@ func tab_id_show(tab,idt) {
   info.go.onclick();
 }
 func tab_rec_show(tab,key_name,tid) {
-  echo(`tab_rec_show(${tab},${key_name},${tid}) ... ezer3.2`);
+  echo(`tab_rec_show(${tab},${key_name},${tid}) ... ezer3.3`);
   clear();
   info.stick(php.sys_db_rec_show(tab,key_name,tid));
 }
 func tab_track_show(dnu,tab,tid) {
-  echo(`tab_track_show(${dnu},${tab},${tid}) ... ezer3.2`);
+  echo(`tab_track_show(${dnu},${tab},${tid}) ... ezer3.3`);
   clear();
   info.stick(php.sys_db_track_show(dnu,tab,tid));
 }

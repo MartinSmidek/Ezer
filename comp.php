@@ -1,5 +1,6 @@
-<?php # (c) 2008-2022 Martin Smidek <martin@smidek.eu>
-  
+<?php # (c) 2008-2025 Martin Smidek <martin@smidek.eu>
+define("EZER_VERSION","3.3");  
+
 # screen=1 zobrazí rozměr klientské části
 
 //  error_reporting(E_ALL ^ E_NOTICE ^ E_WARNING);
@@ -32,7 +33,7 @@
   $_SESSION[$root]['test_version']= $test_version;
   
   // verze použitého jádra Ezeru
-  $ezer_version= "3.2"; 
+  $ezer_version= EZER_VERSION; 
   
   global $display, $trace, $json, $ezer_path_serv, $ezer_path_appl, $ezer_path_code, $ezer_root;
 
@@ -359,21 +360,29 @@ function comp_module($name,$root,&$state) {
   global $code, $option_source, $option_list, $lst;
 //   $trace= $option_state;
 //  echo("option_list=$option_list, trace=$trace ... {$_GET['trace']}");
+  global $totrace; $totrace= 'u';
   $state= comp_file($name,$root,$option_list,true);
 //    echo($lst);
+  $ln= 0;
   $txt= '';
   if ( $option_source ) {
-    $src= file_get_contents("$ezer_path_appl/$name.ezer");
-    $src= str_replace(' ','&nbsp;',$src);
-    $src= nl2br($src);
-    $note= false;
-    for ($i= 0; $i<strlen($src); $i++) {
-      $ch= $src[$i];
-      if ( $ch=='#' ) $note= true;
-      if ( $ch=='<' ) $note= false;
-//      if ( !$note ) 
-        $txt.= $ch;
+    $lines= file("$ezer_path_appl/$name.ezer");
+    foreach ($lines as $i => $line) {
+      $cislo_radku= str_pad($i + 1, 2, '0', STR_PAD_LEFT);
+      $line= $cislo_radku . ': ' . $line . "<br>"; 
+      $txt.= str_replace(' ', '&nbsp;', $line); 
     }
+//    $src= file_get_contents("$ezer_path_appl/$name.ezer");
+//    $src= str_replace(' ','&nbsp;',$src);
+//    $src= nl2br($src);
+//    $note= false;
+//    for ($i= 0; $i<strlen($src); $i++) {
+//      $ch= $src[$i];
+//      if ( $ch=='#' ) $note= true;
+//      if ( $ch=='<' ) $note= false;
+////      if ( !$note ) 
+//        $txt.= $ch;
+//    }
   }
 //  if ( $option_cpp ) { // OBSOLETE
 //    $src= file_get_contents("$ezer_path_code/$name.cpp");
@@ -392,6 +401,7 @@ function comp_application($root,&$state,$errs=false,$all=false) {
   foreach($files as $name=>$status) {
     if ( $all || $status=='old' || ($errs && $status=='err') ) {
       $trace= '';
+      
       $state.= comp_file($name,$root,'',true).'<hr />';
       display($state);
       $txt.= $trace;

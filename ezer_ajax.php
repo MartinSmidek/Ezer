@@ -71,7 +71,8 @@
   $ezer_ezer= array();
   
   // standardní moduly v PHP obsažené v $ezer_path_root/ezer2 - vynechané v dokumentaci
-  $server= "../ezer$ezer_version/server";
+//  $server= "../ezer$ezer_version/server";
+  $server= "ezer$ezer_version/server";
   $ezer_php_libr= array(
     "$server/ezer_pdo.php",
     "$server/ae_slib.php",
@@ -80,6 +81,8 @@
     "../ezer$ezer_version/ezer2_fce.php",
     "$server/sys_doc.php",
     "$server/ezer2.php",
+//    "$server/ezer_ruian.php",
+//    "$server/ezer_cms3.php",
 //    "$server/vendor/autoload.php"
   );
   

@@ -2,6 +2,9 @@
 
 global $trace, $err,$ezer_path_code, $debugger;
 
+global $TEST_DBG; $TEST_DBG= 2;
+//$TEST_DBG= 0;
+
 # zaslepení funkcí
 function note_time() {}
 # ================================================================================================== COMPILER
@@ -679,7 +682,7 @@ function link_code(&$c,$name,$isroot,$block) {
     }
     array_pop($context);
   }
-  // verze 3.2 procházení options pro coord, include, sql_pipe
+  // verze 3:2 procházení options pro coord, include, sql_pipe
   if ( $c->options??0 ) {
     foreach ($c->options as $id=>$desc) {
       // řešení symbolicky zadaných rozměrů - nahrazuje jména konstant jejich hodnotou
@@ -1328,6 +1331,7 @@ function add_call_php($name,$lc='',$ask=0) {
 function gen_func($c,&$desc,$name) {
   global $error_code_context, $error_code_lc, $code_top, $begs, $ends, $func, $func_name, $returns;
   global $pragma_names, $proc_path, $depth, $call_ezer, $func_name_lc;
+  global $TEST_DBG, $gen2_file;
 //                                                 debug($c,"gen_proc: $name");
   $func= $c;
   $func_name= explode('.',$name);
@@ -1357,12 +1361,13 @@ function gen_func($c,&$desc,$name) {
   $call_ezer[$func_name_lc]= array();
   // prázdná procedura obsahuje jen return
   $depth= $returns= $begs= $ends= 0;
-  $c= $c->code ? gen2($c->par,$c->var,$c->code) : array((object)array('o'=>'f','i'=>'stop'));
+  if ($TEST_DBG) $gen2_file= $c->file_;
+  $code= $c->code ? gen2($c->par,$c->var,$c->code) : array((object)array('o'=>'f','i'=>'stop'));
   if ($func->options->type && !$returns)
     comp_error("CODE: ve funkci '$func_name' s typem chybí return");
-  gen_breaks($c);
-//  $c= optimize($c);
-  $desc->code= $c;
+  gen_breaks($code);
+//  $code= optimize($code);
+  $desc->code= $code;
 }
 # --------------------------------------------------------------------------------------------- gen2
 # generuje kód příkazů pro FUNC
@@ -1370,6 +1375,7 @@ function gen_func($c,&$desc,$name) {
 #   $depth je hloubka zanoření cyklů a switch - používá se pro doplnění překladu break a continue
 function gen2($pars,$vars,$c) {
   global $code_top, $call_php, $begs, $ends, $func, $func_name, $func_expr, $returns;
+  global $TEST_DBG, $gen2_lc, $gen2_file;
   $expr= function ($c,$ref=false) use ($vars,$pars) {
     if ( $c->expr=='name' ) {
       $right= name_split($c->name,$pars,$vars);
@@ -1380,10 +1386,15 @@ function gen2($pars,$vars,$c) {
     }
     return $value;
   };
+  if ($TEST_DBG) $prefix_op= function(&$code,$lc,$cmnt) { 
+    global $gen2_file;
+    array_unshift($code,(object)['o'=>'*','flc'=>"$gen2_file,$lc",'cmnt'=>$cmnt]);
+  }; 
   $func_expr= $c;
   switch ( $c->expr ) {
   // -------------------------------------- value
   case 'value':
+    if ($TEST_DBG && $c->lc??'') $gen2_lc= $c->lc;
     $code= $c->type=='this'
       ? (object)array('o'=>'t','i'=>$c->value[0])
       : (object)array('o'=>'v','v'=>$c->value);
@@ -1402,6 +1413,7 @@ function gen2($pars,$vars,$c) {
     break;
   // -------------------------------------- id ( '.' id )* | '&' id // může být jen jako argument
   case 'name':
+    if ($TEST_DBG && $c->lc??'') $gen2_lc= $c->lc;
     $code= $expr($c);
     break;
   // -------------------------------------- '&' id
@@ -1424,14 +1436,17 @@ function gen2($pars,$vars,$c) {
     else {
       $code= gen_setter($left,$expr($c->right)); 
     }
+    if ($TEST_DBG==2) $prefix_op($code,$gen2_lc,'asgn');
     break;
   // -------------------------------------- id '++' | id '--'
   case 'inc':
+    if ($TEST_DBG && $c->lc??'') $gen2_lc= $c->lc;
     $id= name_split($c->name,$pars,$vars);
     $code[]= gen_getter($id);
     $code[]= (object)array('o'=>'v','v'=>$c->inc);
     $code[]= (object)array('o'=>'f','i'=>'sum','a'=>2);
     $code= gen_setter($id,$code); 
+    if ($TEST_DBG==2) $prefix_op($code,$gen2_lc,'inc');
     break;
   // -------------------------------------- expr || expr ... 
   case 'cor':
@@ -1491,6 +1506,8 @@ function gen2($pars,$vars,$c) {
   // -------------------------------------- id ( expr1, ... ) ? value
   case 'call': 
     $code= array();
+    if ($TEST_DBG) $call_lc= $c->lc;
+    if ($TEST_DBG) $call_op= $c->op;
     $npar= $c->par ? count($c->par) : 0;
     if ( $c->op=='ask' ) {
       $ask= $c->par[0]->value;
@@ -1548,8 +1565,10 @@ function gen2($pars,$vars,$c) {
       }
       $code= gen_caller($op,$args); 
     }
-    if ( !$c->value )
+    if ( !$c->value ) {
       $code[]= (object)array('o'=>'z','i'=>1);
+      if ($TEST_DBG==2) $prefix_op($code,$call_lc,"call/$call_op");
+    }
     break;
 
   // -------------------------------------- [ expr1, ... ]
@@ -1594,6 +1613,7 @@ function gen2($pars,$vars,$c) {
     // výpočet všech částí test-then
     $code= array();
     $tests= array(gen2($pars,$vars,$c->test));
+    if ($TEST_DBG) $if_lc= $gen2_lc;
     $thens= array(gen2($pars,$vars,$c->then));
     if ( isset($c->elif) ) { // if then elseif+ [else]
       foreach ( $c->elif as $e ) {
@@ -1613,6 +1633,7 @@ function gen2($pars,$vars,$c) {
       $go= (object)array('o'=>0,'go'=>$toend+1);
       $code[]= array($tests[$i],$iff,$thens[$i],$go);
     }
+    if ($TEST_DBG==2) $prefix_op($code,$if_lc,'if');
     if ( isset($c->else) ) { // if then else
       $code[]= $else;
     }
@@ -2343,8 +2364,8 @@ function gen_proc($c,&$desc,$name) {
   $call_ezer[$func_name_lc]= array();
 // prázdná procedura obsahuje jen return
   $struct= null;
-  $c= $c->code ? gen($c->par,$c->var,$c->code,0,$struct) : array((object)array('o'=>'f','i'=>'stop'));
-  $desc->code= $c;
+  $code= $c->code ? gen($c->par,$c->var,$c->code,0,$struct) : array((object)array('o'=>'f','i'=>'stop'));
+  $desc->code= $code;
   walk_struct($struct,$desc->code,0,$struct->len??0,$struct->len??0,$struct->len??0);
   walk_y($desc->code);
   clean_code($desc->code);
@@ -4258,6 +4279,7 @@ function get_slist($context,&$st) {
 # elseif  :: 'elseif' '(' expr4 ')' stmnt       --> {expr:elif,test:G(expr4),then:G(st1)}
 function get_stmnt($context,&$st) {
   global $last_lc;
+//  display("stmnt beg - $last_lc");
   $ok= false;
   $id= '';
   # '{' slist '}' --> G(slist)
@@ -4442,6 +4464,8 @@ function get_stmnt($context,&$st) {
     $ok= true;
   }
 end:
+//  display("stmnt end - $last_lc");
+  if ($st && !$st->lc) $st->lc= $last_lc;
   return $ok;
 }
 # -------------------------------------------------------------------------------------------- cases
@@ -4794,6 +4818,7 @@ function get_call2_id($context,&$expr,$id,$valued) {
   global $last_lc;
   // volání funkce $id s parametry
   # id '(' ')' | id '(' expr4 ( ',' expr4 )* ')' --> {expr:call,op:id,par:[G(expr4),...]}
+  $beg_lc= $last_lc;
   $expr= (object)array('expr'=>'call','value'=>$valued);
   $fce= explode('.',$id);
   $par= array();
@@ -4851,6 +4876,7 @@ function get_call2_id($context,&$expr,$id,$valued) {
     $expr->op= $op;
     $expr->par= $par;
   }
+  $last_lc= $beg_lc;
   return true;
 }
 
