@@ -30,6 +30,8 @@ var mode='ezer',  // ezer|ezer_edit|php|php_edit
 
 function dbg_mode(_mode) { doc.Ezer.fce.echo('mode: ',mode,' -> ',_mode); mode= _mode; }
 function dbg_onclick_start(file) {
+  // inicializace ladění
+  dbg_trace_init(); 
   // -----------------------------------==> .. periodické ujištění o existenci laděné aplikace
   // pro případ, že event befireunload v laděné apliakci není proveden
   setInterval(function(){
@@ -282,18 +284,18 @@ function dbg_onclick_start(file) {
                 touch('break',0,ln);
                 return false;
             }],
-            ['-[fa-anchor] zastopuj proceduru', function(el) {
-                let ln= Number(jQuery(el).parent().attr('id'));
-                elem.proc_stop(1,ln);
-                touch('break',1,ln);
-                return false;
-            }],
-            ['[fa-times] uvolni proceduru', function(el) {
-                let ln= Number(jQuery(el).parent().attr('id'));
-                elem.proc_stop(0,ln);
-                touch('break',0,ln);
-                return false;
-            }],
+//            ['-[fa-anchor] zastopuj proceduru', function(el) {
+//                let ln= Number(jQuery(el).parent().attr('id'));
+//                elem.proc_stop(1,ln);
+//                touch('break',1,ln);
+//                return false;
+//            }],
+//            ['[fa-times] uvolni proceduru', function(el) {
+//                let ln= Number(jQuery(el).parent().attr('id'));
+//                elem.proc_stop(0,ln);
+//                touch('break',0,ln);
+//                return false;
+//            }],
 //            ["-vyhodnoť tělo proc", function(el) {
 //                dbg_prompt(`výraz je v kontextu procedury ${elem.id}`,dbg_last_script,
 //                    function(script){
@@ -711,19 +713,83 @@ function dbg_find_block(name,l,c) {
     block:found_block ? found_block : (found_elem ? found_elem.owner : null),
     elem:found_elem,msg:msg};
 }
+// =============================================================================> ladění a trasování
+function dbg_trace_buttons(on,cont_too=true) {
+  if (cont_too) jQuery('#dbg_cont').prop('disabled',on?false:true);
+  jQuery('#dbg_step').prop('disabled',on?false:true);
+  jQuery('#dbg_over').prop('disabled',on?false:true);
+}
+function dbg_trace_init() {
+  dbg.trace.dblclick( () => dbg.trace.empty() );
+  jQuery('#dbg_cont').off('click').prop('disabled',true).on('click', () => {
+    dbg_trace_buttons(false);
+    if ( doc.Ezer.dbg.state ) {
+      doc.dbg_proc_stop(false); // funkce v ezer_lib3 volající dbg3
+      doc.Ezer.dbg.state= 0;  // ukončení ladění
+      doc.Ezer.continuation.step= false; // dokončení výpočtu
+      doc.Ezer.continuation.eval();
+      doc.Ezer.continuation= null;
+    }
+    return false;
+  });
+  jQuery('#dbg_step').off('click').prop('disabled',true).on('click', () => {
+    if (doc.Ezer.continuation.calls.length==0) { // je konec?
+      dbg_trace_buttons(false,true);
+      doc.Ezer.dbg.state= 0;  // ukončení ladění
+    }
+    else {
+      doc.Ezer.dbg.state= 1; // krokování
+      doc.Ezer.continuation.eval();
+    }
+    return false;
+  });
+  jQuery('#dbg_over').off('click').prop('disabled',true).on('click', () => {
+    if (doc.Ezer.continuation.calls.length==0) { // je konec?
+      dbg_trace_buttons(false,true);
+      doc.Ezer.dbg.state= 0;  // ukončení ladění
+    }
+    else {
+      doc.Ezer.dbg.state= 2; // přeskakování
+      doc.Ezer.dbg.depth= doc.Ezer.continuation.calls.length; // výška zásobníku aktivačních záznamů procedur
+      doc.Ezer.continuation.eval();
+    }
+    return false;
+  });
+}
+function dbg_trace_line(line) {
+  dbg.trace.append(line+'<br>');
+  dbg.trace.scrollTop(dbg.trace[0].scrollHeight);
+}
+// podbarvi řádek na pozici flc
+function dbg_trace_source(flc,bckg) {
+  let file,ln;
+  [file,ln]= flc.split(',');
+  dbg_show_line(ln,bckg??'pick',undefined,false,file);
+}
+function dbg_trace_stmnt(prefix,flc) {
+  let [file,ln,c]= flc.split(','),
+      click= `onclick="dbg_trace_source('${flc}','line-show')"`,
+      src= dbg.src[ln].find('span.text').text(),
+      pos= ` <span ${click} style='cursor:alias'>${flc} ${src}</span>`;
+  dbg.trace.append(`${prefix} ${pos}<br>`);
+  dbg.trace.scrollTop(dbg.trace[0].scrollHeight);
+}
 // =======================================================================================> DEBUGGER
 jQuery.fn.extend({
   // ------------------------------------------------- + scrollIntoViewIfNeeded
-  scrollIntoViewIfNeeded: function() {
-    let elem= this[0];
-    var rect= elem.getBoundingClientRect();
-    if (rect.bottom > window.innerHeight) {
-      elem.scrollIntoView(false);
-      elem.parentElement.parentElement.scrollTop+= 10*13;
+  scrollIntoViewIfNeeded: function(container_id) {
+    const elem = this[0];
+    const container = elem.closest(container_id); // nebo jiný selektor podle potřeby
+    if (!elem || !container) return;
+    const elemRect = elem.getBoundingClientRect();
+    const containerRect = container.getBoundingClientRect();
+    if (elemRect.bottom > containerRect.bottom - 2*13) {
+      elem.scrollIntoView(false); // dole
+      container.scrollTop += 13;
     }
-    if (rect.top < 0) {
-      elem.scrollIntoView(true);
-      elem.parentElement.parentElement.scrollTop-= 5*13;
+    if (elemRect.top < containerRect.top) {
+      elem.scrollIntoView(true); // nahoře
+      container.scrollTop -= 13;
     }
   }
 })
@@ -904,7 +970,7 @@ function dbg_show_line_php(ln,css='pick') {
       li= ul.find('#php'+ln);
   ul.find('li.'+css).removeClass(css);
   if (li.length) {
-    li.addClass(css).scrollIntoViewIfNeeded();
+    li.addClass(css).scrollIntoViewIfNeeded('#php');
     php.ln_curr= Number(ln);
   }
 }
@@ -948,7 +1014,7 @@ function dbg_show_proc(cnt,on) {
       }
       if ( doc.Ezer.sys.dbg.file==pos.file ) {
         // pokud je procedura v otevřeném souboru
-        dbg.src[lc[0]].addClass('stop').scrollIntoViewIfNeeded();
+        dbg.src[lc[0]].addClass('stop').scrollIntoViewIfNeeded('#TXT');
       }
       else {
         // jinak zobraz její soubor a nastav pick na stop
@@ -1180,7 +1246,7 @@ function dbg_show_line(ln,css='pick',el=undefined,clear=true,file=0) {
     if ( dbg.src[ln] ) {
       dbg.src[ln]
         .addClass(css)
-        .scrollIntoViewIfNeeded();
+        .scrollIntoViewIfNeeded('#TXT');
       doc.Ezer.sys.dbg.files[doc.Ezer.sys.dbg.file].pick= ln;
     }
     // označení poznámek
@@ -1189,7 +1255,7 @@ function dbg_show_line(ln,css='pick',el=undefined,clear=true,file=0) {
       if ( dbg.not[i] && ( i>=ln || i==dbg.not.length-1 )) {
         dbg.not[i]
           .addClass('pick')
-          .scrollIntoViewIfNeeded();
+          .scrollIntoViewIfNeeded('#notes');
         if ( i>ln ) {
           for (var j= i-1; j>0; j-- ) {
             if ( dbg.not[j] ) {

@@ -21,7 +21,14 @@ Ezer.onlogout= function() {};   // a odhlášení z aplikace
 Ezer.ontouch=  function() {};   // pokud byl zápis do _touch WHERE menu=login OR module=error
                                 // během poslední minuty a skill='m' EXPERIMENTÁLNÍ
 Ezer.run= {};                   // běhové struktury
-Ezer.dbg= {state:0,depth:0,process:0,stop:false,stops:[]};  // ladící struktury
+Ezer.dbg= {                     // ladící struktura
+  state:0,
+  depth:0,
+  process:0,
+  stop:false,
+  stops:[],
+  last_flc:''};                 // -- poloha posledního interpretovaného *-kódu
+
 Ezer.design= false;             // design-mode
 Ezer.help_mode= false;          // help-mode
 Ezer.continuation= null;        // pokračování po stop-adrese
@@ -921,8 +928,10 @@ class Application {
   bar_clock_break () {
     let v= 'odhlaseno '+ae_datum(1)+' po expiraci SESSION';
     document.cookie= Ezer.root+'_logoff' + '=' + encodeURIComponent(v);
-    // server bude už nedostupný, takže odchod přímo
-    location.replace(window.location.href);
+    // 250729 odhlásit
+    this.logout();
+//    // server bude už nedostupný, takže odchod přímo
+//    location.replace(window.location.href);
   }
   // ----------------------------------------------------------------------------- bar_chat
   // udržuje se serverem konverzaci
@@ -1619,12 +1628,12 @@ class Application {
             ['help mode end',         function(el) { DOM_help(0) }],
             ['-stop execution',       function(el) { 
                 Ezer.dbg.stop= true; 
-                jQuery('.logoContinue').css({display:'block'});
-                jQuery('#maskContinue').css({display:'block'});
-//              }],
-//            ['continue execution',    function(el) { 
-//                Ezer.dbg.stop= false; 
 //                jQuery('#logoContinue').css({display:'block'});
+//                jQuery('#maskContinue').css({display:'block'});
+              }],
+            ['continue execution',    function(el) { 
+                Ezer.dbg.stop= false; 
+//                jQuery('#logoContinue').css({display:'none'});
 //                jQuery('#maskContinue').css({display:'none'});
               }]
           ],e);
@@ -1632,58 +1641,58 @@ class Application {
         })
       }
     }
-    // pokračování zastopované procedury
-    let button= jQuery('#logoContinue');
-    if ( button ) {
-      button.off('click').on('click', () => {
-        jQuery('.logoContinue').css({display:'none'});
-        jQuery('#maskContinue').css({display:'none'});
-        if (Ezer.dbg.stop) { // zastopování přes context menu výše
-          Ezer.dbg.stop= false;
-        }
-        else if ( Ezer.dbg.state ) {
-          dbg_proc_stop(false); // funkce v ezer_lib3 volající dbg3
-          Ezer.dbg.state= 0;  // ukončení ladění
-          Ezer.continuation.step= false; // dokončení výpočtu
-          Ezer.continuation.eval();
-          Ezer.continuation= null;
-        }
-        return false;
-      });
-    }
-    // krok zastopované procedury
-    button= jQuery('#logoStep');
-    if ( button ) {
-      button.off('click').on('click', () => {
-        if (Ezer.continuation.calls.length==0) { // je konec?
-          jQuery('#logoStep').css({display:'none'});
-          jQuery('#logoOver').css({display:'none'});
-        }
-        else {
-          Ezer.dbg.state= 1; // krokování
-//          Ezer.continuation.c++; // posun za operaci '*'
-          Ezer.continuation.eval();
-        }
-        return false;
-      });
-    }
-    // přeskok procedury
-    button= jQuery('#logoOver');
-    if ( button ) {
-      button.off('click').on('click', () => {
-        if (Ezer.continuation.calls.length==0) { // je konec?
-          jQuery('#logoStep').css({display:'none'});
-          jQuery('#logoOver').css({display:'none'});
-        }
-        else {
-          Ezer.dbg.state= 2; // přeskakování
-          Ezer.dbg.depth= Ezer.continuation.calls.length; // výška zásobníku aktivačních záznamů procedur
-//          Ezer.continuation.c++; // posun za operaci '*'
-          Ezer.continuation.eval();
-        }
-        return false;
-      });
-    }
+//    // pokračování zastopované procedury
+//    let button= jQuery('#logoContinue');
+//    if ( button ) {
+//      button.off('click').on('click', () => {
+//        jQuery('.logoContinue').css({display:'none'});
+//        jQuery('#maskContinue').css({display:'none'});
+//        if (Ezer.dbg.stop) { // zastopování přes context menu výše
+//          Ezer.dbg.stop= false;
+//        }
+//        else if ( Ezer.dbg.state ) {
+//          dbg_proc_stop(false); // funkce v ezer_lib3 volající dbg3
+//          Ezer.dbg.state= 0;  // ukončení ladění
+//          Ezer.continuation.step= false; // dokončení výpočtu
+//          Ezer.continuation.eval();
+//          Ezer.continuation= null;
+//        }
+//        return false;
+//      });
+//    }
+//    // krok zastopované procedury
+//    button= jQuery('#logoStep');
+//    if ( button ) {
+//      button.off('click').on('click', () => {
+//        if (Ezer.continuation.calls.length==0) { // je konec?
+//          jQuery('#logoStep').css({display:'none'});
+//          jQuery('#logoOver').css({display:'none'});
+//        }
+//        else {
+//          Ezer.dbg.state= 1; // krokování
+////          Ezer.continuation.c++; // posun za operaci '*'
+//          Ezer.continuation.eval();
+//        }
+//        return false;
+//      });
+//    }
+//    // přeskok procedury
+//    button= jQuery('#logoOver');
+//    if ( button ) {
+//      button.off('click').on('click', () => {
+//        if (Ezer.continuation.calls.length==0) { // je konec?
+//          jQuery('#logoStep').css({display:'none'});
+//          jQuery('#logoOver').css({display:'none'});
+//        }
+//        else {
+//          Ezer.dbg.state= 2; // přeskakování
+//          Ezer.dbg.depth= Ezer.continuation.calls.length; // výška zásobníku aktivačních záznamů procedur
+////          Ezer.continuation.c++; // posun za operaci '*'
+//          Ezer.continuation.eval();
+//        }
+//        return false;
+//      });
+//    }
     // kontextové menu pro Android a iPad
     function actual_dim() {
       return ""
@@ -2086,6 +2095,11 @@ class Eval {
       while (true) {
       last_level:
         while ( this.code[this.c] ) {
+          // reakce na stop
+          if ( Ezer.dbg.stop ) {
+            throw 'stop';
+            return;
+          }
           this.value= null;
           if ( back ) {
             back= false;
@@ -2099,9 +2113,6 @@ class Eval {
           }
           else {
             no_iff= false;  // příznak potlačení skoku pro S (switch)
-            // reakce na stop
-            if ( Ezer.dbg.stop )
-              throw 'stop';
             // interpretace další instrukce
             c= this.c;
             cc= this.code[c];
@@ -2115,49 +2126,51 @@ class Eval {
               break;
             }
             case '*': {
-              if (!Ezer.dbg.state && Ezer.dbg.stops.length) { // nejsme na stopce?
-                let file, ln, fl;
-                [file, ln]= cc.flc.split(',');
-                fl= `${file},${ln}`;
-                if (Ezer.dbg.stops.includes(fl)) {
-                  Ezer.continuation= this;
-                  this.step= true;
-//                  this.trace_proc(cc.s,'>>>STOP '+this.context.id+'.'+cc.i,this.proc,this.nargs,this.nvars,'T');
-                  jQuery('.logoContinue').css({display:'block'});
-                  jQuery('#maskContinue').css({display:'block'});
-//                  dbg_proc_stop(true); // funkce v ezer_lib3 volající dbg3
-//                  this.simple= false;
-                  Ezer.dbg.state= 1; // defaultně krokování
-                  Ezer.dbg.depth= this.calls.length;
-                  Ezer.dbg.process= this.process;
-                }
-              }
-              if (Ezer.dbg.state) {
-                let click= `onclick="dbg_file_line_show('${cc.flc}','pick2')"`,
-                    line= ` <span ${click} style='background:yellow;cursor:alias'>${cc.flc}</span>`
-                      +` ${cc.cmnt} depth=${this.calls.length}`
-                      +`, Ezer.dbg.depth=${Ezer.dbg.depth}, process=${this.process}`;
-                if (Ezer.dbg.process==this.process) {
-                  if (Ezer.dbg.state==1) {
-                    Ezer.trace('*',` ? ${line}`);
-                    dbg_file_line_show(cc.flc); // funkce v ezer_lib3 volající dbg3
-                    this.c++;
-                    return;
-                  }
-                  else if (this.calls.length==Ezer.dbg.depth) { // Ezer.dbg.state==2
-                    Ezer.trace('*',` ? ${line}`);
-                    dbg_file_line_show(cc.flc); // funkce v ezer_lib3 volající dbg3
-                    Ezer.dbg.state= 1;
-                    this.c++;
-                    return;
-                  }
-                  Ezer.trace('*',` . ${line}`);
-                }
-                else {
-                  let indent= " -".repeat(this.process - Ezer.dbg.process);
-                  Ezer.trace('*',` ${indent} ${line}`);
-                }
-              }
+              Ezer.dbg.last_flc= cc.flc; // pro zobrazení případné následující chyby
+              if (dbg_source_line.call(this,'stmnt')) return;
+//              if (!Ezer.dbg.state && Ezer.dbg.stops.length) { // nejsme na stopce?
+//                let file, ln, fl;
+//                [file, ln]= cc.flc.split(',');
+//                fl= `${file},${ln}`;
+//                if (Ezer.dbg.stops.includes(fl)) {
+//                  Ezer.continuation= this;
+//                  this.step= true;
+////                  this.trace_proc(cc.s,'>>>STOP '+this.context.id+'.'+cc.i,this.proc,this.nargs,this.nvars,'T');
+//                  jQuery('.logoContinue').css({display:'block'});
+//                  jQuery('#maskContinue').css({display:'block'});
+////                  dbg_proc_stop(true); // funkce v ezer_lib3 volající dbg3
+////                  this.simple= false;
+//                  Ezer.dbg.state= 1; // defaultně krokování
+//                  Ezer.dbg.depth= this.calls.length;
+//                  Ezer.dbg.process= this.process;
+//                }
+//              }
+//              if (Ezer.dbg.state) {
+//                let click= `onclick="dbg_file_line_show('${cc.flc}','pick2')"`,
+//                    line= ` <span ${click} style='background:yellow;cursor:alias'>${cc.flc}</span>`
+//                      +` ${cc.cmnt} depth=${this.calls.length}`
+//                      +`, Ezer.dbg.depth=${Ezer.dbg.depth}, process=${this.process}`;
+//                if (Ezer.dbg.process==this.process) {
+//                  if (Ezer.dbg.state==1) {
+//                    Ezer.trace('*',` ? ${line}`);
+//                    dbg_file_line_show(cc.flc,'curr'); // funkce v ezer_lib3 volající dbg3
+//                    this.c++;
+//                    return;
+//                  }
+//                  else if (this.calls.length==Ezer.dbg.depth) { // Ezer.dbg.state==2
+//                    Ezer.trace('*',` ? ${line}`);
+//                    dbg_file_line_show(cc.flc,'curr'); // funkce v ezer_lib3 volající dbg3
+//                    Ezer.dbg.state= 1;
+//                    this.c++;
+//                    return;
+//                  }
+//                  Ezer.trace('*',` . ${line}`);
+//                }
+//                else {
+//                  let indent= " -".repeat(this.process - Ezer.dbg.process);
+//                  Ezer.trace('*',` ${indent} ${line}`);
+//                }
+//              }
               break;
             }
             case 'v': {
@@ -2426,20 +2439,21 @@ class Eval {
                 if ( Ezer.is_trace.q )
                   this.trace((this.code?padNum(this.code.length,2):'  ')+'::'+(this.context?this.context.id:'?')+'.'+cc.i);
                 if ( Ezer.is_trace['*'] && Ezer.dbg.state) { // zobrazovat ladění
-                  let desc= this.proc.desc,
-                      flc= `${desc.file_},${desc._lc}`,
-                      typ= desc.options.code,
-                      click= `onclick="dbg_file_line_show('${flc}','pick2')"`,
-                      line= ` <span ${click} style='background:yellow;cursor:alias'>${flc}</span>`
-                        +` <b>${typ} ${desc.options.name}</b> process=${this.process}`
-                      +`, depth=${this.calls.length}, process=${this.process}`;
-                  if (Ezer.dbg.process==this.process) {
-                    Ezer.trace('*',` . ${line}`);
-                  }
-                  else {
-                    let indent= " -".repeat(this.process - Ezer.dbg.process);
-                    Ezer.trace('*',` ${indent} ${line}`);
-                  }
+                  dbg_source_line.call(this,'func_beg');
+//                  let desc= this.proc.desc,
+//                      flc= `${desc.file_},${desc._lc}`,
+//                      typ= desc.options.code,
+//                      click= `onclick="dbg_file_line_show('${flc}','pick2')"`,
+//                      line= ` <span ${click} style='background:yellow;cursor:alias'>${flc}</span>`
+//                        +` <b>${typ} ${desc.options.name}</b> process=${this.process}`
+//                      +`, depth=${this.calls.length}, process=${this.process}`;
+//                  if (Ezer.dbg.process==this.process) {
+//                    Ezer.trace('*',` . ${line}`);
+//                  }
+//                  else {
+//                    let indent= " -".repeat(this.process - Ezer.dbg.process);
+//                    Ezer.trace('*',` ${indent} ${line}`);
+//                  }
                 }
                 if ( Ezer.is_trace.E ) {
                   let cc_s= cc.s;
@@ -2455,23 +2469,23 @@ class Eval {
                     this.proc,this.nargs,this.nvars,'T',cc.i);
               }
               // řešení zastopování procedury
-              if ( this.step || (this.proc.stop && this.proc.stop.length)
-                || this.proc.desc && this.proc.desc.stop && this.proc.desc.stop.length ) {
-                if (!Ezer.dbg.state) {
-                  Ezer.continuation= this;
-                  this.step= true;
-                  this.trace_proc(cc.s,'>>>STOP '+this.context.id+'.'+cc.i,this.proc,this.nargs,this.nvars,'T');
-                  jQuery('.logoContinue').css({display:'block'});
-                  jQuery('#maskContinue').css({display:'block'});
-                  dbg_proc_stop(true); // funkce v ezer_lib3 volající dbg3
-                  this.simple= false;
-                  Ezer.dbg.state= 1; // defaultně krokování
-                  Ezer.dbg.depth= this.calls.length;
-                  Ezer.dbg.process= this.process;
-                  if ( Ezer.options.to_speed ) this.speed(eval_start);
-//                  return;
-                }
-              }
+//              if ( this.step || (this.proc.stop && this.proc.stop.length)
+//                || this.proc.desc && this.proc.desc.stop && this.proc.desc.stop.length ) {
+//                if (!Ezer.dbg.state) {
+//                  Ezer.continuation= this;
+//                  this.step= true;
+//                  this.trace_proc(cc.s,'>>>STOP '+this.context.id+'.'+cc.i,this.proc,this.nargs,this.nvars,'T');
+//                  jQuery('.logoContinue').css({display:'block'});
+//                  jQuery('#maskContinue').css({display:'block'});
+//                  dbg_proc_stop(true); // funkce v ezer_lib3 volající dbg3
+//                  this.simple= false;
+//                  Ezer.dbg.state= 1; // defaultně krokování
+//                  Ezer.dbg.depth= this.calls.length;
+//                  Ezer.dbg.process= this.process;
+//                  if ( Ezer.options.to_speed ) this.speed(eval_start);
+////                  return;
+//                }
+//              }
               continue last_level; };
             // u a        return pro 'proc' bez kontroly
             case 'u': {
@@ -2914,20 +2928,21 @@ class Eval {
         if ( this.calls.length>0 ) {
           // pokud je to konec vnořené procedury, odstraň argumenty
           if ( Ezer.is_trace['*'] && Ezer.dbg.state) { // zobrazovat ladění
-            let desc= this.proc.desc,
-                flc= `${desc.file_},${desc.lc_}`,
-                typ= desc.options.code,
-                click= `onclick="dbg_file_line_show('${flc}','pick2')"`,
-                line= ` <span ${click} style='background:yellow;cursor:alias'>${flc}</span>`
-                  +` <b>end ${typ} ${desc.options.name}</b> process=${this.process}`
-                +`, depth=${this.calls.length}, process=${this.process}`;
-            if (Ezer.dbg.process==this.process) {
-              Ezer.trace('*',` . ${line}`);
-            }
-            else {
-              let indent= " -".repeat(this.process - Ezer.dbg.process);
-              Ezer.trace('*',` ${indent} ${line}`);
-            }
+            dbg_source_line.call(this,'func_end');
+//            let desc= this.proc.desc,
+//                flc= `${desc.file_},${desc.lc_}`,
+//                typ= desc.options.code,
+//                click= `onclick="dbg_file_line_show('${flc}','pick2')"`,
+//                line= ` <span ${click} style='background:yellow;cursor:alias'>${flc}</span>`
+//                  +` <b>end ${typ} ${desc.options.name}</b> process=${this.process}`
+//                +`, depth=${this.calls.length}, process=${this.process}`;
+//            if (Ezer.dbg.process==this.process) {
+//              Ezer.trace('*',` . ${line}`);
+//            }
+//            else {
+//              let indent= " -".repeat(this.process - Ezer.dbg.process);
+//              Ezer.trace('*',` ${indent} ${line}`);
+//            }
           }
           if ( Ezer.is_trace.T && this.proc.trace )
             this.trace_proc(cc.s,'&lt;'+this.context.id+(cc.o=='C'?'.desc.':'.')+this.proc.id,
@@ -3000,7 +3015,7 @@ class Eval {
         if ( e=='S' ) {                                     // volání this.say_error v eval
         }
         else if (typeof(e)=='object' && e.level=='user') {  // chyba ošetřená uživatelem: Ezer.fce.error
-          this.say_error(e.msg||'','s',this.proc,null,this.calls);
+//          this.say_error(e.msg||'','s',this.proc,null,this.calls);
         }
         else {
           if (e.level=='system')
@@ -4761,7 +4776,7 @@ Ezer.fce.source_= function(text,file,app,l,c,reload,root) {
 Ezer.fce.alert= function (...args) {
   var str= '';
   for (const arg of args) str+= arg;
-  Ezer.fce.DOM.confirm(str,Ezer.fce._confirm,[{tit:'Ok',val:1}],{heading:"Upozornění"});
+  Ezer.fce.DOM.confirm(str,Ezer.fce._confirm,[{tit:'Ok',val:1}],{heading:"Upozornění (Ezer3.3)"});
   return 1;
 };
 // -------------------------------------------------------------------------------------- wait
@@ -5037,6 +5052,12 @@ Ezer.fce.error= function (str,level='user') {
 //   block - (nepovinně pro level='S') Ezer-blok s chybou, pokud je uveden vypíše se informace o místě ve zdrojvém textu
 //   lc - (nepovinně pro level='S') případné upřesnění polohy
 Ezer.error= function (str,level,block=null,lc='',calls=null) {
+  // spolupracuj se zapnutým debugerem
+  if ( Ezer.sys.dbg.win_ezer ) {
+    if (Ezer.dbg.last_flc) {
+      dbg_error_show(Ezer.dbg.last_flc,str);
+    }
+  }
   // oprav počáteční podmínky čitačů
   Ezer.app._ajax_init();
   Ezer.app.evals_init();

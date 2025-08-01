@@ -1,5 +1,6 @@
 <?php # (c) 2008-2025 Martin Smidek <martin@smidek.eu>
 define("EZER_VERSION","3.3");  
+$ezer_version= EZER_VERSION;
 
 # -------------------------------------------------------------------- identifikace ladícího serveru
 $ezer_localhost= preg_match('/^localhost|^192\.168\./',$_SERVER["SERVER_NAME"])?1:0;
@@ -30,9 +31,9 @@ $and= $only_key ? "&key=$only_key" : '';
 $js= <<<__EOD
 function op(op_arg) {
   if ( op_arg=='reload.' )
-    location.href= "ezer".EZER_VERSION."/ses.php?root=$ezer_root$and";
+    location.href= "ezer$ezer_version/ses.php?root=$ezer_root$and";
   else
-    location.href= "ezer".EZER_VERSION."/ses.php?root=$ezer_root$and&op="+op_arg;
+    location.href= "ezer$ezer_version/ses.php?root=$ezer_root$and&op="+op_arg;
 }
 __EOD;
 # ------------------------------------------------------------------------------------------- server

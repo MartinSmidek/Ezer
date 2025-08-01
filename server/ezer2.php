@@ -137,7 +137,7 @@ define("EZER_VERSION","3.3");
       ezer_connect('ezer_system');      // používá se kvůli pdo_query
       $qry= "SELECT options FROM $ezer_system._user WHERE id_user={$x->user_id}";
       try {
-        $res= @pdo_query($qry);       // nelze použít mysql_qry - neohlásila by se chyba
+        $res= pdo_query($qry);       // nelze použít mysql_qry - neohlásila by se chyba
         if ( $res ) {
           $u= pdo_fetch_object($res);
 //          $options= $json->decode($u->options);

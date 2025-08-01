@@ -164,7 +164,7 @@ body {
 
 /* -------------------------------------------------------------------------------------- paticka */
 
-#paticka { z-index: 999; font-size:8pt; overflow:auto; }
+#paticka { z-index: 2013; font-size:8pt; overflow:auto; }
 #paticka td { border:1px solid #aaa;font:x-small Arial;color:#777;padding:0 3px; }
 #paticka td.title { color:#33a;}
 #paticka td.label { color:#a33;

@@ -93,6 +93,7 @@ __EOD;
     opener.doc= doc= opener;
     opener.dbg= dbg= window;
     // zapamatované elementy DOM
+    trace=  jQuery('#trace');
     log=    jQuery('#log');
     header= jQuery('#header');
     prompt= jQuery('#prompt');
@@ -114,308 +115,173 @@ __EOD;
     dbg_onclick_start('$file');
   });
 // =========================================================================================> STYLES
-    </script>
-    <style>
-      body, select {
-        font-size: 8pt; font-family: monospace,consolas; overflow: hidden; margin: 0; }
-      li {
-        white-space: pre; list-style-type: none; height:13px; }
-      .blur { filter: blur(5px); }
-      /* ----------------------- help */
-      div#help {
-        position: fixed; display: none; right: 30px; top: 25px; width: 300px; 
-        background-color: #eee; border: 1px solid #aaa; z-index: 2;
-        overflow-y: auto; min-height: 100px; max-height: calc(50% - 30px); 
-        box-shadow: 5px 5px 10px #567; }
-      /* ----------------------- cg */
-      div#cg {
-        position:fixed; display:none; right: 30px; top: 25px; width: 300px; 
-        min-height: 100px; height: calc(50% - 30px); max-height: 300px; 
-        background-color: #eee; border: 1px solid #aaa; z-index: 2;
-        box-shadow: 5px 5px 10px #567; }
-      div#cg_hdr {
-        height:27px; border-bottom: 3px double #aaa; padding:0 80px 0 3px; }
-      button.cg_but {
-        position: absolute; margin: 3px 3px 0 0; width: 20px; padding: 0; }
-      div#cg_div {
-        overflow-y: auto; height: calc(100% - 30px); }
-      div#cg_grf {
-        overflow-y: auto; width:100%; }
+  </script>
+  <style>
+    html, body { margin: 0; padding: 0; font-size: 8pt; font-family: monospace, consolas;
+      height: 100vh; display: flex; flex-direction: column;}
+    #layout { flex: 1; display: flex; overflow: hidden; }
+    #filnot { border-right: 2px solid silver; overflow-y: auto;
+      display: flex; flex-direction: column; gap: 2px; }
+    #buttons { display: flex; gap: 8px; padding: 4px; }
+    #filnot button { width: 100%; padding: 2px; }
+    #filnot select { background: silver; height: 20px; width: 120px; border: none;
+      font-size: unset; font-family: unset; }
+    #filnot ul {  margin: 0; padding: 0; overflow-y: auto; }
+    #filnot ul li {  white-space: pre; list-style-type: none; height: 13px; cursor: alias; }
+    /* ----------------------- trace */
       
-      #sources {
-        position: fixed; right: 10px; top: 2px; font-size: 16px; color: lightgray; }
-      /* ----------------------- notes */
-      div#filnot {
-        padding: 0; height: 100%; left: 0; width: 120px; position: absolute; }
-      select#files {
-        background-color: silver; position:absolute; height:20px; width:120px; }
-      ul#notes  {
-        overflow-y: scroll; padding: 0; margin-top:20px; margin-bottom: 0; height:calc(100% - 20px); }
-      ul#notes li {
-        cursor: alias; }
-      /* ----------------------- php source */
-      div#php {
-        padding: 0; top:50%; height: 50%;
-        left: 120px; right: 0px; position: absolute; 
-        background-color:#e5f2ff; margin-top: 5px; border-top: 3px double black; }
-      body div.CodeMirror {
-        padding: 0; top: calc(50% + 21px); height: calc(50% - 21px); 
-        left: 120px; right: 0px; position: absolute; }
-      div#php-border {
-        width: 100%; top: 0; height: 13px; background-color:#cce; 
-        padding-left: 30px; border-right: 1px solid #ff00004a; }
-      div#php-border span.edit {
-        color:yellow; font-weight:bold; }
-      #php ul {
-        overflow-x: auto; overflow-y: scroll; position:relative;
-        padding: 0; scroll-behavior: smooth; margin:0; height: calc(100% - 19px);}
-      #php li span.line {
-        background-color:#cce; }
-      #php span.call {
-        background-color:#cce; cursor:pointer; font-weight: bold; }
-      /* ----------------------- source */
-      textarea#editor, body div#work div.CodeMirror {
-        top:14px; height: calc(100% - 14px); left: 120px; width: calc(100% - 120px); position: absolute; }
-      div#header {
-        position:fixed; width: 100%; top: 0; left: 120px; height: 14px; background-color:silver; 
-        padding-left: 30px; }
-      div#header span.edit {
-        color:yellow; font-weight:bold; }
-      div#lines {
-        padding: 0; overflow-y: scroll; height: calc(100% - 14px); top: 14px;
-        left: 120px; right: 0px; position: absolute; padding-top: 4px; }
-      div#lines.upper {
-        height: calc(50% - 14px); top: 14px; }
-      div#gutter {
-        position: fixed; left: 120px; width: 29px; top: 0; height: 100%; background: silver; }
-      div#border {
-        position: fixed; left: 747px; width: 0; top: 14px; height: 100%; 
-        border-right: 1px solid #ff00004a; }
-      #lines ul {
-        padding: 0; margin-top: 0; scroll-behavior: smooth;}
-      #work li b {
-        text-shadow:0 0 black; }
-      #work li i {
-        text-shadow:0 0 black; background: lightgreen; }
-      #work li u {
-        text-shadow:0 0 black; background: lightsalmon; text-decoration: none}
-      li span.notext {
-        margin-left:34px; display: block; color:#999; }
-      li span.text {
-        margin-left:34px; display: block; }
-      li span.text[contenteditable=true] {
-        word-wrap: inherit; outline: none; }
-      li span.text[contenteditable=true]:focus {
-        background-color:#ffa; }
-      /* ----------------------- lines */
-      li span.line {
-        position: absolute;
-        background-color: silver; vertical-align: top; padding-right: 3px; margin-right: 5px;
-        width: 26px; text-align: right;  }
-      /* ----------------------- cg */
-      li span.go {
-        background-color: #ffdf6b; cursor:pointer;   }
-      li span.cg {
-        background-color: #e5f2ff; cursor:pointer;   }
-      /* ----------------------- uzly CG */
-      span.fce_php {
-        background-color:#e5f2ff; } 
-      span.fce_ezer {
-        background-color:#ffdf6b; } 
-      span.elem_ezer {
-        background-color:lightgreen; } 
-      /* ----------------------- break */
-      /*li.break span {
-        background-color: #ff244861;
-        color: black; }*/
-      span.break {
-        background-color: #ff244861 !important;
-        color: black; }
-      li.stop span {
-        background-color: #ff2448eb;
-        color: yellow; }
-      /* ----------------------- trace */
-      li.trace span {
-        background-color: #c0c0c0a6; }
-      li.curr {
-        background-color: orange; }
-      li.pick, span.pick {
-        background-color: yellow; }
-      li.pick2, span.pick2 {
-        background-color: #ff244861; }
-      /* ----------------------- debug */
-      #log {
-        position:absolute; display: none; background-color:#eee; box-shadow:5px 5px 10px #567;
-        padding: 5px; z-index: 4; max-height: 300px; overflow: auto; }
-      #prompt {
-        position:absolute; display: none; background-color:#eee; box-shadow:5px 5px 10px #567;
-        padding: 5px; z-index: 3; }
-      #prompt span {
-        display:block; }
-      #prompt input {
-        width:200px; font-size: 8pt; font-family: monospace,consolas; }
-      div.dbg {
-        font-size:8pt; line-height:13px; position:relative;}
-      table.dbg {
-        border-collapse:collapse; margin:1px 0;}
-      .dbg td {
-        border:1px solid #aaa; font:x-small Arial;color:#777;padding:1px 3px; line-height:11px; }
-      .dbg td.title {
-        color:#000; background-color:#aaa; }
-      .dbg td.label {
-        color:#a33;}
-      .dbg table.dbg_array {
-        background-color:#ddeeff; }
-      .dbg table.dbg_object {
-        background-color:#ffffaa; }
-      /* ----------------------==> mooTree */
-.mooTree_node {
-  font-family: Verdana, Arial, Helvetica; font-size: 10px; white-space: nowrap; }
-.mooTree_text {
-  padding-top: 3px; height: 15px; cursor: pointer; }
-.mooTree_img {
-  float: left; width: 18px; height: 18px; overflow: hidden; }
-.mooTree_selected {
-  background-color: #e0f0ff; font-weight: bold; margin-right: 10px; }
-      /* ----------------------- inverzní CG */
-div.inverzniCG .mooTree_node {
-  transform: scaleX(-1); }
-div.inverzniCG .mooTree_text {
-  transform: scaleX(-1); direction: rtl; display: flex; }
-div.inverzniCG div.mooTree_selected {
-  margin-right:0; }
-      /* ----------------------- context menu */
-.ContextMenu3 { border:1px solid #ccc; padding:2px; background:#fff; width:200px; list-style-type:none;
-  display:none; position:absolute; box-shadow:5px 5px 10px #567,inset 20px 0 0 0px #ccc; cursor:default; }
-.ContextMenu3 li { margin:0; padding:0; color:#000; }
-.ContextMenu3 li { display:block; padding:2px 2px 0px 16px; text-decoration:none; }
-.ContextMenu3 li i { margin-left:-15px; }
-.ContextMenu3 li:hover { background-color:#b2b4bf; }
-.ContextMenu3 li.disabled3 { color:#ccc; font-style:italic; }
-.ContextMenu3 li.disabled3:hover { background-color:#eee; }
-.ContextMenu3 li span { float: right; font-style: italic; }
-.ContextFocus3 { background-color:#ffa !important;
-}
-      /* ----------------------- CodeMirror ---------------------- Ezer */
-.cm-s-ezer span.cm-meta { color: #808000; }
-.cm-s-ezer span.cm-number { color: #0000FF; }
-.cm-s-ezer span.cm-keyword { font-weight: bold; text-shadow: 0 0 black; }
-.cm-s-ezer span.cm-keyword-event { font-style: italic; background: lightgreen; text-shadow: 0 0 black; }
-.cm-s-ezer span.cm-keyword-func { background: #ffdf6b; }
-.cm-s-ezer span.cm-keyword-skill { background: lightsalmon; }
-.cm-s-ezer span.cm-atom { font-weight: bold; color: #000080; }
-.cm-s-ezer span.cm-def { color: #000000; }
-.cm-s-ezer span.cm-variable { color: black; }
-.cm-s-ezer span.cm-variable-2 { color: black; }
-.cm-s-ezer span.cm-variable-3, .cm-s-ezer span.cm-type { color: black; }
-.cm-s-ezer span.cm-property { color: black; }
-.cm-s-ezer span.cm-operator { color: black; }
-.cm-s-ezer span.cm-comment { color: #999999; }
-.cm-s-ezer span.cm-string { color: #008000; }
-.cm-s-ezer span.cm-string-2 { color: #008000; }
-.cm-s-ezer span.cm-qualifier { color: #555; }
-.cm-s-ezer span.cm-error { color: #FF0000; }
-.cm-s-ezer span.cm-attribute { color: #0000FF; }
-.cm-s-ezer span.cm-tag { color: #000080; }
-.cm-s-ezer span.cm-link { color: #0000FF; }
-
-.cm-s-ezer.CodeMirror { background: oldlace; }
-.cm-s-ezer .CodeMirror-gutters { background: silver; }
-.cm-s-ezer .CodeMirror-linenumber { color:black; }
-
-.cm-s-ezer span.cm-builtin { color: #30a; }
-.cm-s-ezer span.cm-bracket { color: #cc7; }
-
-.cm-s-ezer  { font-size: 8pt; font-family: monospace,consolas; }
-
-.cm-s-ezer .CodeMirror-matchingbracket { outline:1px solid cyan; color:black !important; }
-.cm-s-ezer .CodeMirror-nonmatchingbracket { outline:1px solid red; color:black !important; }
-.cm-s-ezer .CodeMirror-activeline-gutter { background: #ffff00; }
-.cm-s-ezer .CodeMirror-activeline-background { background: #ffffaa; }
-
-.CodeMirror-hints.ezer { font-family: Consolas; color: #616569; background-color: #ebf3fd !important; }
-.CodeMirror-hints.ezer .CodeMirror-hint-active { background-color: #a2b8c9 !important; color: #5c6065 !important; }      
       
-      /* ----------------------- CodeMirror ---------------------- PHP */
-.cm-s-php span.cm-meta { color: #808000; }
-.cm-s-php span.cm-number { color: #0000FF; }
-.cm-s-php span.cm-keyword { font-weight: bold; text-shadow: 0 0 black; }
-.cm-s-php span.cm-keyword-event { font-style: italic; background: lightgreen; text-shadow: 0 0 black; }
-.cm-s-php span.cm-keyword-func { background: #ffdf6b; }
-.cm-s-php span.cm-keyword-skill { background: lightsalmon; }
-.cm-s-php span.cm-atom { font-weight: bold; color: #000080; }
-.cm-s-php span.cm-def { color: #000000; }
-.cm-s-php span.cm-variable { color: black; }
-.cm-s-php span.cm-variable-2 { color: black; }
-.cm-s-php span.cm-variable-3, .cm-s-php span.cm-type { color: black; }
-.cm-s-php span.cm-property { color: black; }
-.cm-s-php span.cm-operator { color: black; }
-.cm-s-php span.cm-comment { color: #999999; }
-.cm-s-php span.cm-string { color: #008000; }
-.cm-s-php span.cm-string-2 { color: #008000; }
-.cm-s-php span.cm-qualifier { color: #555; }
-.cm-s-php span.cm-error { color: #FF0000; }
-.cm-s-php span.cm-attribute { color: #0000FF; }
-.cm-s-php span.cm-tag { color: #000080; }
-.cm-s-php span.cm-link { color: #0000FF; }
+    /*span.break { background: #ff244861 !important; color: black; }*/
 
-body .cm-s-php.CodeMirror { background: #e5f2ff; }
-.cm-s-php .CodeMirror-gutters { background: #cce; }
-.cm-s-php .CodeMirror-linenumber { color:black; }
-.cm-s-php .CodeMirror-activeline-gutter { background: #ffff00; }
-.cm-s-php .CodeMirror-activeline-background { background: #ffffaa; }
+    li.line-break, span.break { background: orangered !important; color: black; }
+    li.line-show { background: silver !important; color: black; }
+ 
+    li.stop span { background: #ff2448eb; color: yellow; }
+    li.trace span { background: #c0c0c0a6; }
+    li.curr { background: orange; }
+    li.pick, span.pick { background: yellow; }
+    li.pick2, span.pick2 { background: #ff244861; }
+      
+      
+    #lines { flex: 1; display: flex; flex-direction: column; overflow: hidden;
+      background-color: #fff; box-sizing: border-box; }
+    #header { background: silver; padding-left: 30px; padding-top: 4px; height: 16px; white-space: nowrap; }
+    #TXT { flex: 1; overflow-y: auto; box-sizing: border-box; }
+    #TXT ul { margin: 0; padding: 0; list-style: none; }
+    #TXT li { display: flex; flex: none; white-space: pre; }
+    .line { width: 26px; min-width: 26px; text-align: right; margin-right: 6px; background: silver;  }
+    .text { flex: 1; }
+    #footer { height: 80px; display: flex; flex-direction: column;
+      background-color: #e0e0e0; border-top: 1px solid #bbb; }
+    #grip { height: 20px; background-color: #ccc; text-align: center; line-height: 20px;
+      cursor: ns-resize; font-weight: bold; user-select: none; border-bottom: 1px solid #aaa; }
+    #trace { flex: 1; padding: 6px 10px; overflow-y: auto; color: #333; }
+    /* ----------------------- context menu */
+    .ContextMenu3 { border:1px solid #ccc; padding:2px; background:#fff; width:200px; list-style-type:none;
+      display:none; position:absolute; box-shadow:5px 5px 10px #567,inset 20px 0 0 0px #ccc; cursor:default; }
+    .ContextMenu3 li { margin:0; padding:0; color:#000; }
+    .ContextMenu3 li { display:block; padding:2px 2px 0px 16px; text-decoration:none; }
+    .ContextMenu3 li i { margin-left:-15px; }
+    .ContextMenu3 li:hover { background-color:#b2b4bf; }
+    .ContextMenu3 li.disabled3 { color:#ccc; font-style:italic; }
+    .ContextMenu3 li.disabled3:hover { background-color:#eee; }
+    .ContextMenu3 li span { float: right; font-style: italic; }
+    .ContextFocus3 { background-color:#ffa !important;
+    }
+    /* ----------------------- debug */
+    #log { position:absolute; display: none; background-color:#eee; box-shadow:5px 5px 10px #567;
+      padding: 5px; z-index: 4; max-height: 300px; overflow: auto; }
+    #prompt { position:absolute; display: none; background-color:#eee; box-shadow:5px 5px 10px #567;
+      padding: 5px; z-index: 3; }
+    #prompt span { display:block; }
+    #prompt input { width:200px; font-size: 8pt; font-family: monospace,consolas; }
+    div.dbg { font-size:8pt; line-height:13px; position:relative;}
+    table.dbg { border-collapse:collapse; margin:1px 0;}
+    .dbg td { border:1px solid #aaa; font:x-small Arial;color:#777;padding:1px 3px; line-height:11px; }
+    .dbg td.title { color:#000; background-color:#aaa; }
+    .dbg td.label { color:#a33;}
+    .dbg table.dbg_array { background-color:#ddeeff; }
+    .dbg table.dbg_object { background-color:#ffffaa; }
+    /* ----------------------==> mooTree */
+    .mooTree_node { font-family: Verdana, Arial, Helvetica; font-size: 10px; white-space: nowrap; }
+    .mooTree_text { padding-top: 3px; height: 15px; cursor: pointer; }
+    .mooTree_img { float: left; width: 18px; height: 18px; overflow: hidden; }
+    .mooTree_selected { background-color: #e0f0ff; font-weight: bold; margin-right: 10px; }
+    /* ----------------------- inverzní CG */
+    div.inverzniCG .mooTree_node { transform: scaleX(-1); }
+    div.inverzniCG .mooTree_text { transform: scaleX(-1); direction: rtl; display: flex; }
+    div.inverzniCG div.mooTree_selected { margin-right:0; }
+    /* ----------------------- help */
+    div#help { position: fixed; display: none; right: 30px; top: 25px; width: 300px; 
+      background-color: #eee; border: 1px solid #aaa; z-index: 2;
+      overflow-y: auto; min-height: 100px; max-height: calc(50% - 30px); 
+      box-shadow: 5px 5px 10px #567; }
+    /* ----------------------- cg */
+    div#cg { position:fixed; display:none; right: 30px; top: 25px; width: 300px; 
+      min-height: 100px; height: calc(50% - 30px); max-height: 300px; 
+      background-color: #eee; border: 1px solid #aaa; z-index: 2;
+      box-shadow: 5px 5px 10px #567; }
+    div#cg_hdr { height:27px; border-bottom: 3px double #aaa; padding:0 80px 0 3px; }
+    button.cg_but { position: absolute; margin: 3px 3px 0 0; width: 20px; padding: 0; }
+    div#cg_div { overflow-y: auto; height: calc(100% - 30px); }
+    div#cg_grf { overflow-y: auto; width:100%; }
+  </style>
+</head>
+<body>
 
-.cm-s-php span.cm-builtin { color: #30a; }
-.cm-s-php span.cm-bracket { color: #cc7; }
+  <div id="help" style='display:none'></div>
+  <div id="cg">
+    <button class="cg_but" title="expand" style="right:0px" onclick="dbg_cg_gc(99);">
+      <i class="fa fa-asterisk"></i>
+    </button>
+    <button class="cg_but" title="inverzní" style="right:25px" onclick="dbg_cg_gc(1);">
+      <i class="fa fa-long-arrow-left"></i>
+    </button>
+    <button class="cg_but" title="call graf" style="right:50px" onclick="dbg_cg_gc(0);">
+      <i class="fa fa-long-arrow-right"></i>
+    </button>
+    <div id="cg_hdr"></div>
+    <div id="cg_div">   
+      <div id="cg_grf"></div>
+    </div>
+  </div>
+      
+  <div id="layout">
+    <div id="filnot">
+      <select id="files" onchange="dbg_reload(this.value);"></select>
 
-.cm-s-php  { font-size: 8pt; font-family: monospace,consolas; }
+      <div id="buttons">
+        <button id="dbg_cont"><i class="fa fa-share" title="continue"></i></button>
+        <button id="dbg_step"><i class="fa fa-step-forward" title="step"></i></button>
+        <button id="dbg_over"><i class="fa fa-play" title="over"></i></button>
+      </div>
 
-.cm-s-php .CodeMirror-matchingbracket { outline:1px solid cyan; color:black !important; }
-.cm-s-php .CodeMirror-nonmatchingbracket { outline:1px solid red; color:black !important; }
+      <ul id="notes"></ul>
+    </div>
 
- </style>
-  </head>
-  <body id='body' style="background-color:$background;">
-    <div id="help" style='display:none'></div>
-    <div id="cg">
-      <button class="cg_but" title="expand" style="right:0px" onclick="dbg_cg_gc(99);">
-        <i class="fa fa-asterisk"></i>
-      </button>
-      <button class="cg_but" title="inverzní" style="right:25px" onclick="dbg_cg_gc(1);">
-        <i class="fa fa-long-arrow-left"></i>
-      </button>
-      <button class="cg_but" title="call graf" style="right:50px" onclick="dbg_cg_gc(0);">
-        <i class="fa fa-long-arrow-right"></i>
-      </button>
-      <div id="cg_hdr"></div>
-      <div id="cg_div">   
-        <div id="cg_grf">
+    <div id="lines">
+      <div id="header">Záhlaví komponent</div>
+      <div id="TXT">
+        <ul></ul>
       </div>
     </div>
-    </div>
-    <div id='work'>
-      <div id='filnot'>
-        <select id='files' onchange="dbg_reload(this.value);">
-          <option selected>$file.ezer</option>
-        </select>
-        <ul id="notes"><li>notes</li></ul>
-      </div>
-      <div id='header'></div>
-      <textarea id='editor' style="display:none"></textarea>
-      <div id='lines'>
-        <div id='gutter'></div>
-        <div id='border'></div>
-        <ul><li>lines</li></ul>
-      </div>
-      <span id='log'></span>
-      <span id='prompt'><span></span><input></span>
-    </div>
-    <textarea id='php_editor' style="display:none"></textarea>
-    <div id='php' style='display:none'>
-      <div id='php-border'></div>
-      <ul><li>lines</li></ul>
-    </div>
-  </body>
+  </div>
+  <span id='log'></span>
+  <span id='prompt'><span></span><input></span>
+
+  <div id="footer">
+    <div id="grip"><i class="fa fa-arrows-v" title="Uchop a táhni"></i></div>
+    <div id="trace"></div>
+  </div>
+
+  <script>
+    const grip = document.getElementById('grip');
+    const footer = document.getElementById('footer');
+    const layout = document.getElementById('layout');
+    let isResizing = false;
+
+    grip.addEventListener('mousedown', () => {
+      isResizing = true;
+      document.body.style.cursor = 'ns-resize';
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (isResizing) {
+        const traceHeight = Math.max(window.innerHeight - e.clientY, 40);
+        footer.style.height = `\${traceHeight}px`;
+
+        layout.style.flex = 'unset';
+        layout.style.height = `\${window.innerHeight - traceHeight}px`;
+      }
+    });
+
+    window.addEventListener('mouseup', () => {
+      isResizing = false;
+      document.body.style.cursor = 'default';
+    });
+  </script>
+
+</body>
 </html>
 __EOD;
   echo $html;

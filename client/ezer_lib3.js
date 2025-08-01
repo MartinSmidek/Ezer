@@ -131,8 +131,12 @@ function dbg_onshiftclick(block) {
           l= x[0], t= x[1], w= x[2]-16, h= x[3]-67;
       var position= `left=${l},top=${t},width=${w},height=${h}`;
       Ezer.sys.dbg.win_ezer= window.open(
-        `./ezer3.3/dbg3.php?err=1&app=${Ezer.root}&src=${fname}&file=${pos.file}&pick=${line}`,'dbg',
-        position+',resizable=1,titlebar=0,menubar=0');
+        `./ezer3.3/dbg3.php?err=1&app=${Ezer.root}&src=${fname}&file=${pos.file}&pick=${line}`,
+        'dbg',position);
+//      // varianta bez titlebar
+//      Ezer.sys.dbg.win_ezer= window.open(
+//        `./ezer3.3/dbg3.php?err=1&app=${Ezer.root}&src=${fname}&file=${pos.file}&pick=${line}`,'dbg',
+//        position+',resizable=1,titlebar=0,menubar=0');
       if ( Ezer.sys.dbg.win_ezer ) {
 //        dbg_reload(pos.file);
         Ezer.sys.dbg.file= pos.file;
@@ -143,10 +147,115 @@ function dbg_onshiftclick(block) {
   }
   return false;
 }
-//// -------------------------------------------------------------------------------- dbg_onclick_text
-//function dbg_onclick_text(el) {
-//  return 1;
-//}
+// -------------------------------------------------------------------------------- dbg source_line
+function dbg_source_line(cmd) {
+  var to_return= 0;
+  switch (cmd) {
+    case 'stmnt': {
+      let cc= this.code[this.c];
+      if (!Ezer.dbg.state && Ezer.dbg.stops.length) { // nejsme na stopce?
+        let file, ln, fl;
+        [file, ln]= cc.flc.split(',');
+        fl= `${file},${ln}`;
+        if (Ezer.dbg.stops.includes(fl)) {
+          Ezer.continuation= this;
+          this.step= true;
+          if ( Ezer.sys.dbg.win_ezer ) {
+            Ezer.sys.dbg.win_ezer.dbg_trace_buttons(true);
+          }
+//          jQuery('.logoContinue').css({display:'block'});
+//          jQuery('#maskContinue').css({display:'block'});
+          Ezer.dbg.state= 1; // defaultně krokování
+          Ezer.dbg.depth= this.calls.length;
+          Ezer.dbg.process= this.process;
+        }
+      }
+      if (Ezer.dbg.state) {
+//        let click= `onclick="dbg_trace_source('${cc.flc}','line-show')"`,
+//            line= ` <span ${click} style='background:yellow;cursor:alias'>${cc.flc}</span>`
+//              +` ${cc.cmnt} depth=${this.calls.length}`
+//              +`, Ezer.dbg.depth=${Ezer.dbg.depth}, process=${this.process}`;
+        if (Ezer.dbg.process==this.process) {
+          if (Ezer.dbg.state==1) {
+//            Ezer.trace('*',` ? ${line}`);
+//            Ezer.sys.dbg.win_ezer.dbg_trace_line(` ? ${line}`);
+            Ezer.sys.dbg.win_ezer.dbg_trace_stmnt(' ?',cc.flc,'line-show');
+            dbg_file_line_show(cc.flc,'line-break'); // funkce v ezer_lib3 volající dbg3
+            this.c++;
+            to_return= 1;
+          }
+          else if (this.calls.length==Ezer.dbg.depth) { // Ezer.dbg.state==2
+//            Ezer.trace('*',` ? ${line}`);
+//            Ezer.sys.dbg.win_ezer.dbg_trace_line(` ? ${line}`);
+            Ezer.sys.dbg.win_ezer.dbg_trace_stmnt(' ?',cc.flc,'line-show');
+            dbg_file_line_show(cc.flc,'line-break'); // funkce v ezer_lib3 volající dbg3
+            Ezer.dbg.state= 1;
+            this.c++;
+            to_return= 1;
+          }
+          else {
+//            Ezer.trace('*',` . ${line}`);
+            Ezer.sys.dbg.win_ezer.dbg_trace_line(` . ${line}`);
+          }
+        }
+        else {
+          let indent= " -".repeat(this.process - Ezer.dbg.process);
+//          Ezer.trace('*',` ${indent} ${line}`);
+//          Ezer.sys.dbg.win_ezer.dbg_trace_line(` ${indent} ${line}`);
+          Ezer.sys.dbg.win_ezer.dbg_trace_stmnt(` ${indent}`,cc.flc,'line-show');
+        }
+      }
+      break;
+    }
+    case 'func_beg': {
+      let desc= this.proc.desc,
+          flc= `${desc.file_},${desc._lc}`;
+//          typ= desc.options.code;
+//          click= `onclick="dbg_trace_source('${flc}','line-show')"`,
+//          line= ` <span ${click} style='background:yellow;cursor:alias'>${flc}</span>`
+//            +` <b>${typ} ${desc.options.name}</b> process=${this.process}`
+//          +`, depth=${this.calls.length}, process=${this.process}`;
+      if (Ezer.dbg.process==this.process) {
+//        Ezer.trace('*',` . ${line}`);
+//        Ezer.sys.dbg.win_ezer.dbg_trace_line(` . ${line}`);
+        Ezer.sys.dbg.win_ezer.dbg_trace_stmnt(' .',flc,'line-show');
+        dbg_file_line_show(flc,'line-break'); // funkce v ezer_lib3 volající dbg3
+      }
+      else {
+        let indent= " -".repeat(this.process - Ezer.dbg.process);
+//        Ezer.trace('*',` ${indent} ${line}`);
+//        Ezer.sys.dbg.win_ezer.dbg_trace_line(` ${indent} ${line}`);
+        Ezer.sys.dbg.win_ezer.dbg_trace_stmnt(` ${indent}`,flc,'line-show');
+        dbg_file_line_show(flc,'line-break'); // funkce v ezer_lib3 volající dbg3
+      }
+      break;
+    }
+    case 'func_end': {
+      let desc= this.proc.desc,
+          flc= `${desc.file_},${desc.lc_}`;
+//          typ= desc.options.code,
+//          click= `onclick="dbg_trace_source('${flc}','line-show')"`,
+//          line= ` <span ${click} style='background:yellow;cursor:alias'>${flc}</span>`
+//            +` <b>end ${typ} ${desc.options.name}</b> process=${this.process}`
+//          +`, depth=${this.calls.length}, process=${this.process}`;
+      if (Ezer.dbg.process==this.process) {
+//        Ezer.trace('*',` . ${line}`);
+//        Ezer.sys.dbg.win_ezer.dbg_trace_line(` . ${line}`);
+        Ezer.sys.dbg.win_ezer.dbg_trace_stmnt(' .',flc,'line-show');
+        dbg_file_line_show(flc,'line-break'); // funkce v ezer_lib3 volající dbg3
+      }
+      else {
+        let indent= " -".repeat(this.process - Ezer.dbg.process);
+//        Ezer.trace('*',` ${indent} ${line}`);
+//        Ezer.sys.dbg.win_ezer.dbg_trace_line(` ${indent} ${line}`);
+        Ezer.sys.dbg.win_ezer.dbg_trace_stmnt(` ${indent}`,flc,'line-show');
+        dbg_file_line_show(flc,'line-break'); // funkce v ezer_lib3 volající dbg3
+      }
+      break;
+    }
+  }
+  return to_return;
+}
 // ----------------------------------------------------------------------------------- dbg proc_stop
 // DBG - voláno z intepreta po vytvoření aktivačního záznamu v zásobníku
 // Ezer.continuation obsahuje aktuální stav interpreta
@@ -174,11 +283,21 @@ function dbg_line_show(lc,bckg) {
 // ------------------------------------------------------------------------------ dbg file_line_show
 // DBG - voláno z intepreta po kroku ladění
 function dbg_file_line_show(flc,bckg) {
-    if ( Ezer.sys.dbg.win_ezer ) {
-      let file,ln;
-      [file,ln]= flc.split(',');
-      Ezer.sys.dbg.win_ezer.dbg_show_line(ln,bckg??'pick',undefined,false,file);
-    }
+  if ( Ezer.sys.dbg.win_ezer ) {
+    let file,ln;
+    [file,ln]= flc.split(',');
+    Ezer.sys.dbg.win_ezer.dbg_show_line(ln,bckg??'pick',undefined,false,file);
+  }
+}
+// ---------------------------------------------------------------------------------- dbg error_show
+// DBG - voláno z intepreta po chybě
+function dbg_error_show(flc,msg) {
+  if ( Ezer.sys.dbg.win_ezer ) {
+    let file,ln;
+    [file,ln]= flc.split(',');
+    Ezer.sys.dbg.win_ezer.dbg_show_line(ln,'line-break',undefined,false,file);
+    Ezer.sys.dbg.win_ezer.dbg_write (`ERROR ${msg}`);
+  }
 }
 // ------------------------------------------------------------------------------- dbg_onclick_start
 //function dbg_onclick_start(win) {
