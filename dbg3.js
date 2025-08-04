@@ -1463,7 +1463,7 @@ function dbg_make_tree(cg) {
               dbg_mode('php');
               dbg.wphp.show();
               dbg.lines.addClass('upper');
-              dbg_reload_php(fce);
+              dbg_reload_php(strtolower(fce));
             }
           }
         }

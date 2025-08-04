@@ -163,30 +163,20 @@ function dbg_source_line(cmd) {
           if ( Ezer.sys.dbg.win_ezer ) {
             Ezer.sys.dbg.win_ezer.dbg_trace_buttons(true);
           }
-//          jQuery('.logoContinue').css({display:'block'});
-//          jQuery('#maskContinue').css({display:'block'});
           Ezer.dbg.state= 1; // defaultně krokování
           Ezer.dbg.depth= this.calls.length;
           Ezer.dbg.process= this.process;
         }
       }
       if (Ezer.dbg.state) {
-//        let click= `onclick="dbg_trace_source('${cc.flc}','line-show')"`,
-//            line= ` <span ${click} style='background:yellow;cursor:alias'>${cc.flc}</span>`
-//              +` ${cc.cmnt} depth=${this.calls.length}`
-//              +`, Ezer.dbg.depth=${Ezer.dbg.depth}, process=${this.process}`;
         if (Ezer.dbg.process==this.process) {
           if (Ezer.dbg.state==1) {
-//            Ezer.trace('*',` ? ${line}`);
-//            Ezer.sys.dbg.win_ezer.dbg_trace_line(` ? ${line}`);
             Ezer.sys.dbg.win_ezer.dbg_trace_stmnt(' ?',cc.flc,'line-show');
             dbg_file_line_show(cc.flc,'line-break'); // funkce v ezer_lib3 volající dbg3
             this.c++;
             to_return= 1;
           }
           else if (this.calls.length==Ezer.dbg.depth) { // Ezer.dbg.state==2
-//            Ezer.trace('*',` ? ${line}`);
-//            Ezer.sys.dbg.win_ezer.dbg_trace_line(` ? ${line}`);
             Ezer.sys.dbg.win_ezer.dbg_trace_stmnt(' ?',cc.flc,'line-show');
             dbg_file_line_show(cc.flc,'line-break'); // funkce v ezer_lib3 volající dbg3
             Ezer.dbg.state= 1;
@@ -194,14 +184,11 @@ function dbg_source_line(cmd) {
             to_return= 1;
           }
           else {
-//            Ezer.trace('*',` . ${line}`);
             Ezer.sys.dbg.win_ezer.dbg_trace_line(` . ${line}`);
           }
         }
         else {
           let indent= " -".repeat(this.process - Ezer.dbg.process);
-//          Ezer.trace('*',` ${indent} ${line}`);
-//          Ezer.sys.dbg.win_ezer.dbg_trace_line(` ${indent} ${line}`);
           Ezer.sys.dbg.win_ezer.dbg_trace_stmnt(` ${indent}`,cc.flc,'line-show');
         }
       }
@@ -210,21 +197,12 @@ function dbg_source_line(cmd) {
     case 'func_beg': {
       let desc= this.proc.desc,
           flc= `${desc.file_},${desc._lc}`;
-//          typ= desc.options.code;
-//          click= `onclick="dbg_trace_source('${flc}','line-show')"`,
-//          line= ` <span ${click} style='background:yellow;cursor:alias'>${flc}</span>`
-//            +` <b>${typ} ${desc.options.name}</b> process=${this.process}`
-//          +`, depth=${this.calls.length}, process=${this.process}`;
       if (Ezer.dbg.process==this.process) {
-//        Ezer.trace('*',` . ${line}`);
-//        Ezer.sys.dbg.win_ezer.dbg_trace_line(` . ${line}`);
         Ezer.sys.dbg.win_ezer.dbg_trace_stmnt(' .',flc,'line-show');
         dbg_file_line_show(flc,'line-break'); // funkce v ezer_lib3 volající dbg3
       }
       else {
         let indent= " -".repeat(this.process - Ezer.dbg.process);
-//        Ezer.trace('*',` ${indent} ${line}`);
-//        Ezer.sys.dbg.win_ezer.dbg_trace_line(` ${indent} ${line}`);
         Ezer.sys.dbg.win_ezer.dbg_trace_stmnt(` ${indent}`,flc,'line-show');
         dbg_file_line_show(flc,'line-break'); // funkce v ezer_lib3 volající dbg3
       }
@@ -233,21 +211,12 @@ function dbg_source_line(cmd) {
     case 'func_end': {
       let desc= this.proc.desc,
           flc= `${desc.file_},${desc.lc_}`;
-//          typ= desc.options.code,
-//          click= `onclick="dbg_trace_source('${flc}','line-show')"`,
-//          line= ` <span ${click} style='background:yellow;cursor:alias'>${flc}</span>`
-//            +` <b>end ${typ} ${desc.options.name}</b> process=${this.process}`
-//          +`, depth=${this.calls.length}, process=${this.process}`;
       if (Ezer.dbg.process==this.process) {
-//        Ezer.trace('*',` . ${line}`);
-//        Ezer.sys.dbg.win_ezer.dbg_trace_line(` . ${line}`);
         Ezer.sys.dbg.win_ezer.dbg_trace_stmnt(' .',flc,'line-show');
         dbg_file_line_show(flc,'line-break'); // funkce v ezer_lib3 volající dbg3
       }
       else {
         let indent= " -".repeat(this.process - Ezer.dbg.process);
-//        Ezer.trace('*',` ${indent} ${line}`);
-//        Ezer.sys.dbg.win_ezer.dbg_trace_line(` ${indent} ${line}`);
         Ezer.sys.dbg.win_ezer.dbg_trace_stmnt(` ${indent}`,flc,'line-show');
         dbg_file_line_show(flc,'line-break'); // funkce v ezer_lib3 volající dbg3
       }

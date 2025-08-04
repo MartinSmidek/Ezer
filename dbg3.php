@@ -118,7 +118,7 @@ __EOD;
   </script>
   <style>
     html, body { margin: 0; padding: 0; font-size: 8pt; font-family: monospace, consolas;
-      height: 100vh; display: flex; flex-direction: column;}
+      height: 100vh; display: flex; flex-direction: column; overflow:hidden; }
     #layout { flex: 1; display: flex; overflow: hidden; }
     #filnot { border-right: 2px solid silver; overflow-y: auto;
       display: flex; flex-direction: column; gap: 2px; }
@@ -144,7 +144,7 @@ __EOD;
       
       
     #lines { flex: 1; display: flex; flex-direction: column; overflow: hidden;
-      background-color: #fff; box-sizing: border-box; }
+      background: #fff; box-sizing: border-box; }
     #header { background: silver; padding-left: 30px; padding-top: 4px; height: 16px; white-space: nowrap; }
     #TXT { flex: 1; overflow-y: auto; box-sizing: border-box; }
     #TXT ul { margin: 0; padding: 0; list-style: none; }
@@ -152,8 +152,8 @@ __EOD;
     .line { width: 26px; min-width: 26px; text-align: right; margin-right: 6px; background: silver;  }
     .text { flex: 1; }
     #footer { height: 80px; display: flex; flex-direction: column;
-      background-color: #e0e0e0; border-top: 1px solid #bbb; }
-    #grip { height: 20px; background-color: #ccc; text-align: center; line-height: 20px;
+      background: #e0e0e0; border-top: 1px solid #bbb; }
+    #grip { height: 20px; background: #ccc; text-align: center; line-height: 20px;
       cursor: ns-resize; font-weight: bold; user-select: none; border-bottom: 1px solid #aaa; }
     #trace { flex: 1; padding: 6px 10px; overflow-y: auto; color: #333; }
     /* ----------------------- context menu */
@@ -162,49 +162,64 @@ __EOD;
     .ContextMenu3 li { margin:0; padding:0; color:#000; }
     .ContextMenu3 li { display:block; padding:2px 2px 0px 16px; text-decoration:none; }
     .ContextMenu3 li i { margin-left:-15px; }
-    .ContextMenu3 li:hover { background-color:#b2b4bf; }
+    .ContextMenu3 li:hover { background:#b2b4bf; }
     .ContextMenu3 li.disabled3 { color:#ccc; font-style:italic; }
-    .ContextMenu3 li.disabled3:hover { background-color:#eee; }
+    .ContextMenu3 li.disabled3:hover { background:#eee; }
     .ContextMenu3 li span { float: right; font-style: italic; }
-    .ContextFocus3 { background-color:#ffa !important;
+    .ContextFocus3 { background:#ffa !important;
     }
     /* ----------------------- debug */
-    #log { position:absolute; display: none; background-color:#eee; box-shadow:5px 5px 10px #567;
+    #log { position:absolute; display: none; background:#eee; box-shadow:5px 5px 10px #567;
       padding: 5px; z-index: 4; max-height: 300px; overflow: auto; }
-    #prompt { position:absolute; display: none; background-color:#eee; box-shadow:5px 5px 10px #567;
+    #prompt { position:absolute; display: none; background:#eee; box-shadow:5px 5px 10px #567;
       padding: 5px; z-index: 3; }
     #prompt span { display:block; }
     #prompt input { width:200px; font-size: 8pt; font-family: monospace,consolas; }
     div.dbg { font-size:8pt; line-height:13px; position:relative;}
     table.dbg { border-collapse:collapse; margin:1px 0;}
     .dbg td { border:1px solid #aaa; font:x-small Arial;color:#777;padding:1px 3px; line-height:11px; }
-    .dbg td.title { color:#000; background-color:#aaa; }
+    .dbg td.title { color:#000; background:#aaa; }
     .dbg td.label { color:#a33;}
-    .dbg table.dbg_array { background-color:#ddeeff; }
-    .dbg table.dbg_object { background-color:#ffffaa; }
+    .dbg table.dbg_array { background:#ddeeff; }
+    .dbg table.dbg_object { background:#ffffaa; }
     /* ----------------------==> mooTree */
     .mooTree_node { font-family: Verdana, Arial, Helvetica; font-size: 10px; white-space: nowrap; }
     .mooTree_text { padding-top: 3px; height: 15px; cursor: pointer; }
     .mooTree_img { float: left; width: 18px; height: 18px; overflow: hidden; }
-    .mooTree_selected { background-color: #e0f0ff; font-weight: bold; margin-right: 10px; }
+    .mooTree_selected { background: #e0f0ff; font-weight: bold; margin-right: 10px; }
     /* ----------------------- inverzní CG */
     div.inverzniCG .mooTree_node { transform: scaleX(-1); }
     div.inverzniCG .mooTree_text { transform: scaleX(-1); direction: rtl; display: flex; }
     div.inverzniCG div.mooTree_selected { margin-right:0; }
     /* ----------------------- help */
     div#help { position: fixed; display: none; right: 30px; top: 25px; width: 300px; 
-      background-color: #eee; border: 1px solid #aaa; z-index: 2;
+      background: #eee; border: 1px solid #aaa; z-index: 2;
       overflow-y: auto; min-height: 100px; max-height: calc(50% - 30px); 
       box-shadow: 5px 5px 10px #567; }
     /* ----------------------- cg */
     div#cg { position:fixed; display:none; right: 30px; top: 25px; width: 300px; 
       min-height: 100px; height: calc(50% - 30px); max-height: 300px; 
-      background-color: #eee; border: 1px solid #aaa; z-index: 2;
+      background: #eee; border: 1px solid #aaa; z-index: 2;
       box-shadow: 5px 5px 10px #567; }
     div#cg_hdr { height:27px; border-bottom: 3px double #aaa; padding:0 80px 0 3px; }
     button.cg_but { position: absolute; margin: 3px 3px 0 0; width: 20px; padding: 0; }
     div#cg_div { overflow-y: auto; height: calc(100% - 30px); }
     div#cg_grf { overflow-y: auto; width:100%; }
+    /* ----------------------- php source */
+    div#php { padding: 0; top:50%; height: 50%;
+      left: 120px; right: 0px; position: absolute; 
+      background:#e5f2ff; margin-top: 5px; border-top: 3px double black; }
+    body div.CodeMirror { padding: 0; height: 100%; 
+      left: 120px; right: 0px; position: absolute; }
+    div#php-border { width: 100%; top: 0; height: 13px; background:#cce; 
+      padding-left: 30px; border-right: 1px solid #ff00004a; }
+    div#php-border span.edit { color:yellow; font-weight:bold; }
+    #php ul { flex-direction: column; overflow-x: auto; overflow-y: scroll; position:relative;
+      padding: 0; scroll-behavior: smooth; margin:0; height: calc(100% - 19px);}
+    #php ul { display: flex; flex: none; white-space: pre; }
+    #php li span.line { display: inline-block; width: 26px; min-width: 26px; text-align: right; 
+      margin-right: 6px; background: silver; }
+    #php span.call { background:#cce; cursor:pointer; font-weight: bold; }
   </style>
 </head>
 <body>
@@ -239,6 +254,7 @@ __EOD;
       <ul id="notes"></ul>
     </div>
 
+    <textarea id='editor' style="display:none"></textarea>
     <div id="lines">
       <div id="header">Záhlaví komponent</div>
       <div id="TXT">
@@ -281,6 +297,11 @@ __EOD;
     });
   </script>
 
+  <textarea id='php_editor' style="display:none"></textarea>
+  <div id='php' style='display:none'>
+    <div id='php-border'></div>
+    <ul><li>lines</li></ul>
+  </div>
 </body>
 </html>
 __EOD;
