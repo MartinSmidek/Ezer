@@ -129,20 +129,13 @@ __EOD;
     #filnot ul {  margin: 0; padding: 0; overflow-y: auto; }
     #filnot ul li {  white-space: pre; list-style-type: none; height: 13px; cursor: alias; }
     /* ----------------------- trace */
-      
-      
-    /*span.break { background: #ff244861 !important; color: black; }*/
-
     li.line-break, span.break { background: orangered !important; color: black; }
     li.line-show { background: silver !important; color: black; }
- 
     li.stop span { background: #ff2448eb; color: yellow; }
     li.trace span { background: #c0c0c0a6; }
     li.curr { background: orange; }
     li.pick, span.pick { background: yellow; }
     li.pick2, span.pick2 { background: #ff244861; }
-      
-      
     #lines { flex: 1; display: flex; flex-direction: column; overflow: hidden;
       background: #fff; box-sizing: border-box; }
     #header { background: silver; padding-left: 30px; padding-top: 4px; height: 16px; white-space: nowrap; }
@@ -205,12 +198,19 @@ __EOD;
     button.cg_but { position: absolute; margin: 3px 3px 0 0; width: 20px; padding: 0; }
     div#cg_div { overflow-y: auto; height: calc(100% - 30px); }
     div#cg_grf { overflow-y: auto; width:100%; }
+    /* ----------------------- ezer source */
+    .cm-s-ezer.CodeMirror { background: oldlace; overflow-y: auto;
+      font-size: 8pt; font-family: monospace,consolas; 
+      position: absolute; 
+      top: 20px; height: calc(100% - 20px);
+      left: 120px; width: calc(100% - 120px); }
+      
     /* ----------------------- php source */
-    div#php { padding: 0; top:50%; height: 50%;
-      left: 120px; right: 0px; position: absolute; 
+    div#php { padding: 0; top:50%; height: 50%; width: 100%; position: absolute; 
       background:#e5f2ff; margin-top: 5px; border-top: 3px double black; }
-    body div.CodeMirror { padding: 0; height: 100%; 
-      left: 120px; right: 0px; position: absolute; }
+    #php_editor { padding: 0; height: 50%; width: 100%; top: 50%; position: absolute; }
+    div.CodeMirror.cm-s-php { top: calc(50% + 20px); height: calc(50% - 20px); 
+      position: absolute; width: 100%;}
     div#php-border { width: 100%; top: 0; height: 13px; background:#cce; 
       padding-left: 30px; border-right: 1px solid #ff00004a; }
     div#php-border span.edit { color:yellow; font-weight:bold; }
@@ -220,6 +220,79 @@ __EOD;
     #php li span.line { display: inline-block; width: 26px; min-width: 26px; text-align: right; 
       margin-right: 6px; background: silver; }
     #php span.call { background:#cce; cursor:pointer; font-weight: bold; }
+      /* ----------------------- CodeMirror ---------------------- Ezer */
+.cm-s-ezer .CodeMirror-gutters { background: silver; }
+.cm-s-ezer .CodeMirror-linenumber { color:black; }
+
+.cm-s-ezer span.cm-meta { color: #808000; }
+.cm-s-ezer span.cm-number { color: #0000FF; }
+.cm-s-ezer span.cm-keyword { font-weight: bold; text-shadow: 0 0 black; }
+.cm-s-ezer span.cm-keyword-event { font-style: italic; background: lightgreen; text-shadow: 0 0 black; }
+.cm-s-ezer span.cm-keyword-func { background: #ffdf6b; }
+.cm-s-ezer span.cm-keyword-skill { background: lightsalmon; }
+.cm-s-ezer span.cm-atom { font-weight: bold; color: #000080; }
+.cm-s-ezer span.cm-def { color: #000000; }
+.cm-s-ezer span.cm-variable { color: black; }
+.cm-s-ezer span.cm-variable-2 { color: black; }
+.cm-s-ezer span.cm-variable-3, .cm-s-ezer span.cm-type { color: black; }
+.cm-s-ezer span.cm-property { color: black; }
+.cm-s-ezer span.cm-operator { color: black; }
+.cm-s-ezer span.cm-comment { color: #999999; }
+.cm-s-ezer span.cm-string { color: #008000; }
+.cm-s-ezer span.cm-string-2 { color: #008000; }
+.cm-s-ezer span.cm-qualifier { color: #555; }
+.cm-s-ezer span.cm-error { color: #FF0000; }
+.cm-s-ezer span.cm-attribute { color: #0000FF; }
+.cm-s-ezer span.cm-tag { color: #000080; }
+.cm-s-ezer span.cm-link { color: #0000FF; }
+
+.cm-s-ezer span.cm-builtin { color: #30a; }
+.cm-s-ezer span.cm-bracket { color: #cc7; }
+
+.cm-s-ezer .CodeMirror-matchingbracket { outline:1px solid cyan; color:black !important; }
+.cm-s-ezer .CodeMirror-nonmatchingbracket { outline:1px solid red; color:black !important; }
+.cm-s-ezer .CodeMirror-activeline-gutter { background: #ffff00; }
+.cm-s-ezer .CodeMirror-activeline-background { background: #ffffaa; }
+
+.CodeMirror-hints.ezer { font-family: Consolas; color: #616569; background-color: #ebf3fd !important; }
+.CodeMirror-hints.ezer .CodeMirror-hint-active { background-color: #a2b8c9 !important; color: #5c6065 !important; }      
+      
+      /* ----------------------- CodeMirror ---------------------- PHP */
+.cm-s-php span.cm-meta { color: #808000; }
+.cm-s-php span.cm-number { color: #0000FF; }
+.cm-s-php span.cm-keyword { font-weight: bold; text-shadow: 0 0 black; }
+.cm-s-php span.cm-keyword-event { font-style: italic; background: lightgreen; text-shadow: 0 0 black; }
+.cm-s-php span.cm-keyword-func { background: #ffdf6b; }
+.cm-s-php span.cm-keyword-skill { background: lightsalmon; }
+.cm-s-php span.cm-atom { font-weight: bold; color: #000080; }
+.cm-s-php span.cm-def { color: #000000; }
+.cm-s-php span.cm-variable { color: black; }
+.cm-s-php span.cm-variable-2 { color: black; }
+.cm-s-php span.cm-variable-3, .cm-s-php span.cm-type { color: black; }
+.cm-s-php span.cm-property { color: black; }
+.cm-s-php span.cm-operator { color: black; }
+.cm-s-php span.cm-comment { color: #999999; }
+.cm-s-php span.cm-string { color: #008000; }
+.cm-s-php span.cm-string-2 { color: #008000; }
+.cm-s-php span.cm-qualifier { color: #555; }
+.cm-s-php span.cm-error { color: #FF0000; }
+.cm-s-php span.cm-attribute { color: #0000FF; }
+.cm-s-php span.cm-tag { color: #000080; }
+.cm-s-php span.cm-link { color: #0000FF; }
+
+body .cm-s-php.CodeMirror { background: #e5f2ff; }
+.cm-s-php .CodeMirror-gutters { background: #cce; }
+.cm-s-php .CodeMirror-linenumber { color:black; }
+.cm-s-php .CodeMirror-activeline-gutter { background: #ffff00; }
+.cm-s-php .CodeMirror-activeline-background { background: #ffffaa; }
+
+.cm-s-php span.cm-builtin { color: #30a; }
+.cm-s-php span.cm-bracket { color: #cc7; }
+
+.cm-s-php  { font-size: 8pt; font-family: monospace,consolas; }
+
+.cm-s-php .CodeMirror-matchingbracket { outline:1px solid cyan; color:black !important; }
+.cm-s-php .CodeMirror-nonmatchingbracket { outline:1px solid red; color:black !important; }
   </style>
 </head>
 <body>

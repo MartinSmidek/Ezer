@@ -131,7 +131,8 @@ function dbg_onclick_start(file) {
           }
           // -------------------------------------- zahájení editace ezerscriptu
           editor.val(doc.Ezer.sys.dbg.files[doc.Ezer.sys.dbg.file].lines.join("\n"));
-          lines.hide(); help.hide(); wcg.hide(); 
+          /*lines.hide();*/
+          help.hide(); wcg.hide(); 
           editor.show(); 
           CodeMirror_init();
           let cm= CodeMirror.fromTextArea(editor[0],{
@@ -1463,7 +1464,7 @@ function dbg_make_tree(cg) {
               dbg_mode('php');
               dbg.wphp.show();
               dbg.lines.addClass('upper');
-              dbg_reload_php(strtolower(fce));
+              dbg_reload_php(fce.toLowerCase());
             }
           }
         }
