@@ -28,7 +28,11 @@ var mode='ezer',  // ezer|ezer_edit|php|php_edit
     old_ff= window.navigator.userAgent.match(/Firefox\/([0-9]+)\./);
     old_ff= (old_ff ? parseInt(old_ff[1])<53 : 0);
 
-function dbg_mode(_mode) { doc.Ezer.fce.echo('mode: ',mode,' -> ',_mode); mode= _mode; }
+function dbg_mode(_mode) { 
+//  doc.Ezer.fce.echo('mode: ',mode,' -> ',_mode); 
+  dbg_trace_line(`mode: ${mode} -> ${_mode}`);
+  mode= _mode; 
+}
 function dbg_onclick_start(file) {
   // inicializace ladění
   dbg_trace_init(); 
@@ -772,8 +776,7 @@ function dbg_trace_stmnt(prefix,flc) {
       click= `onclick="dbg_trace_source('${flc}','line-show')"`,
       src= dbg.src[ln].find('span.text').text(),
       pos= ` <span ${click} style='cursor:alias'>${flc} ${src}</span>`;
-  dbg.trace.append(`${prefix} ${pos}<br>`);
-  dbg.trace.scrollTop(dbg.trace[0].scrollHeight);
+  dbg_trace_line(`${prefix} ${pos}`);
 }
 // =======================================================================================> DEBUGGER
 jQuery.fn.extend({
@@ -863,7 +866,7 @@ function dbg_reload_php(fce) {
   dbg_ask({cmd:'source_php',app:app,fce:fce},dbg_reload_php_);
 }
 function dbg_reload_php_(y) {
-  doc.Ezer.fce.clear(); // doc.Ezer.fce.echo(debug(y,'y'));
+//  doc.Ezer.fce.clear(); // doc.Ezer.fce.echo(debug(y,'y'));
   php.path= y.path;
   php.ln_begin= y.begin;
   php.ln_function= y.func;
@@ -893,7 +896,7 @@ function dbg_save_load(file_fce,type,value) {
 }
 function dbg_save_load_(y,file) {
 //  dbg_write(y.msg);
-  doc.Ezer.fce.echo('MSG:'+y.msg);
+  dbg_trace_line('MSG:'+y.msg);
   switch (y.type) {
     case 'ezer': // ------------------ ezer
       if (!y.err)
@@ -1369,7 +1372,7 @@ function dbg_get_ezer_cg () {
   dbg_ask({cmd:'reload_cg',app:app,item:CG.item,inverzni:CG.cg_gc,sys_fce:CG.sysphp},dbg_get_ezer_cg_);
 }
 function dbg_get_ezer_cg_(y) {
-  doc.Ezer.fce.echo(`done`);
+  dbg_trace_line(`done`);
   dbg.cg= y.cg;
   dbg.wcg_hdr.html(y.item);
   dbg.wcg_grf.empty();
@@ -1450,7 +1453,7 @@ function dbg_make_tree(cg) {
           CG.item= fce;
           if ( context ) {
             window.event.preventDefault();
-            doc.Ezer.fce.echo('context:',fce,';',ndata);
+            dbg_trace_line(`context: ${fce}; ${ndata}`);
           }
           else {
             if (node.data.ezer) {
@@ -1609,7 +1612,7 @@ function dbg_ask(x,then,arg) {
         else if ( y.error )
           dbg_error(y.error,'C');
         else {
-          if ( y.trace ) doc.Ezer.trace('u',y.trace);
+          if ( y.trace ) dbg_trace_line(y.trace);
           if ( then )
             then(y,arg);
         }
@@ -1633,7 +1636,7 @@ function doc_ask (fce,args,then,x) {
       else if ( y.error )
         doc.Ezer.error(y.error,'C');
       else {
-        if ( y.trace ) doc.Ezer.trace('u',y.trace);
+        if ( y.trace ) dbg_trace_line(y.trace);
         then(y);
       }
     },
