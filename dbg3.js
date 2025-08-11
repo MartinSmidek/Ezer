@@ -319,6 +319,31 @@ function dbg_onclick_start(file) {
 //                    },menu_el);
 //                return false;
 //            }],
+            ["=[fa-play] hodnota lokální proměnné", function(el) {
+                if (doc.Ezer.continuation) { // aktivní stopadresa?
+                  dbg_prompt(`proměnná je v kontextu procedury ${elem.id}`,'i',
+                      function(name){
+                        let proc= doc.Ezer.continuation.proc,
+                            msg= `kontext funkce ${proc._id}`;
+                        dbg.dbg_write(`${msg}: ${name}=`);
+                        for (const [id,offset] of Object.entries(proc.desc.var)) {
+                          dbg.dbg_write(`<br>${id} offset ${offset}`,1);  
+                          if (id==name) {
+                            let val= doc.Ezer.continuation.stack[doc.Ezer.continuation.act-offset];
+                            dbg.dbg_write(`<br>${id}=${val}`,1);  
+                          }
+                          else {
+                            dbg.dbg_write(`<br>funkce ${proc._id} nemá proměnnou ${name}`,1);  
+                          }
+                        }
+                        return false;
+                      },menu_el);
+                }
+                else {
+                  dbg.dbg_write('zjištění lokální hodnoty lze jen u zastopované funkce');
+                }
+                return false;
+            }],
             ["=[fa-play] vyhodnoť tělo func", function(el) {
                 dbg_prompt(`výraz je v kontextu procedury ${elem.id}`,dbg_last_script,
                     function(script){
@@ -1313,6 +1338,7 @@ function dbg_touch(value,e) {
 }
 // -------------------------------------------------------------------------------------- dbg prompt
 // přečte hodnotu
+// txt=prompt, deflt=default, ret_fce=funkce zavolaná na vstup (null=identita), e=kontext volání
 function dbg_prompt(txt,deflt,ret_fce,e) {
   dbg.prompt.css({display:'block',top:e.pageY||e.page.y,left:e.pageX||e.page.x});
   dbg.prompt.find('span').html(txt);

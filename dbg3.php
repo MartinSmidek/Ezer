@@ -93,7 +93,8 @@ __EOD;
     opener.doc= doc= opener;
     opener.dbg= dbg= window;
     // zapamatované elementy DOM
-    trace=  jQuery('#trace');
+    trace=  jQuery('#trace-left');
+    watch=  jQuery('#trace-right');
     log=    jQuery('#log');
     header= jQuery('#header');
     prompt= jQuery('#prompt');
@@ -132,7 +133,7 @@ __EOD;
     li.line-break, span.break { background: orangered !important; color: black; }
     li.line-show { background: silver !important; color: black; }
     li.stop span { background: #ff2448eb; color: yellow; }
-    li.trace span { background: #c0c0c0a6; }
+    li.trace-left span { background: #c0c0c0a6; }
     li.curr { background: orange; }
     li.pick, span.pick { background: yellow; }
     li.pick2, span.pick2 { background: #ff244861; }
@@ -149,6 +150,35 @@ __EOD;
     #grip { height: 20px; background: #ccc; text-align: center; line-height: 20px;
       cursor: ns-resize; font-weight: bold; user-select: none; border-bottom: 1px solid #aaa; }
     #trace { flex: 1; padding: 6px 10px; overflow-y: auto; color: #333; }
+      
+#trace.split {
+  display: grid;
+  grid-template-columns: var(--left-size, 50%) var(--divider, 6px) 1fr;
+  grid-template-rows: 100%;
+  height: 100%;
+  min-height: 200px;
+  overflow: hidden;
+}
+
+#trace .pane {
+  min-width: 0;
+  overflow: auto;
+}
+
+#trace .pane--left  { grid-column: 1; }
+#trace .pane--right { grid-column: 3; }
+
+#trace .divider {
+  grid-column: 2;
+  cursor: col-resize;
+  background:
+    linear-gradient(90deg, transparent 0, transparent 2px, rgba(0,0,0,0.15) 2px, transparent 4px)
+    center/6px 100% no-repeat;
+  user-select: none;
+  touch-action: none;
+}
+
+      
     /* ----------------------- context menu */
     .ContextMenu3 { border:1px solid #ccc; padding:2px; background:#fff; width:200px; list-style-type:none;
       display:none; position:absolute; box-shadow:5px 5px 10px #567,inset 20px 0 0 0px #ccc; cursor:default; }
@@ -340,7 +370,17 @@ body .cm-s-php.CodeMirror { background: #e5f2ff; }
 
   <div id="footer">
     <div id="grip"><i class="fa fa-arrows-v" title="Uchop a táhni"></i></div>
-    <div id="trace"></div>
+    <!-- div id="trace"></div -->
+    <div id="trace" class="split">
+      <div id="trace-left" class="pane pane--left">
+        <!-- obsah levého panelu -->
+      </div>
+      <div class="divider" role="separator" aria-orientation="vertical" tabindex="0"></div>
+      <div id="trace-right" class="pane pane--right">
+        <!-- obsah pravého panelu -->
+      </div>
+    </div>
+
   </div>
 
   <script>
@@ -375,7 +415,53 @@ body .cm-s-php.CodeMirror { background: #e5f2ff; }
     <div id='php-border'></div>
     <ul><li>lines</li></ul>
   </div>
-</body>
+<script>
+(() => {
+  const el = document.getElementById('trace');
+  const divider = el.querySelector('.divider');
+  const MIN_LEFT = 160, MIN_RIGHT = 220, DIVIDER_WIDTH = 6;
+
+  const initial = localStorage.getItem('trace.left.size') || '50%';
+  el.style.setProperty('--left-size', initial);
+  el.style.setProperty('--divider', DIVIDER_WIDTH + 'px');
+
+  const clamp = (val, min, max) => Math.max(min, Math.min(max, val));
+  function setLeft(px) {
+    const w = el.getBoundingClientRect().width;
+    const max = w - DIVIDER_WIDTH - MIN_RIGHT;
+    const val = clamp(px, MIN_LEFT, max);
+    const percent = (val / w) * 100;
+    el.style.setProperty('--left-size', percent.toFixed(2) + '%');
+    localStorage.setItem('trace.left.size', percent.toFixed(2) + '%');
+  }
+
+  let drag = false;
+  divider.addEventListener('pointerdown', e => {
+    drag = true;
+    divider.setPointerCapture(e.pointerId);
+    document.addEventListener('pointermove', move);
+    document.addEventListener('pointerup', up);
+  });
+  function move(e) {
+    if (!drag) return;
+    const rect = el.getBoundingClientRect();
+    setLeft(e.clientX - rect.left);
+  }
+  function up(e) {
+    drag = false;
+    divider.releasePointerCapture(e.pointerId);
+    document.removeEventListener('pointermove', move);
+    document.removeEventListener('pointerup', up);
+  }
+
+  divider.addEventListener('dblclick', () => {
+    const w = el.getBoundingClientRect().width;
+    setLeft((w - DIVIDER_WIDTH) / 2);
+  });
+})();
+</script>
+
+  </body>
 </html>
 __EOD;
   echo $html;
