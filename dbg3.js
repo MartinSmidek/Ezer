@@ -265,16 +265,16 @@ function dbg_onclick_start(file) {
                 dbg_cg_gc();
                 return false;
             }],
-            ['[fa-film] nastav trasování', function(el) {
-                elem.proc_trace(1);
-                touch('trace',1);
-                return false;
-            }],
-            ['[fa-times] zruš trasování', function(el) {
-                elem.proc_trace(0);
-                touch('trace',0);
-                return false;
-            }],
+//            ['[fa-film] nastav trasování', function(el) {
+//                elem.proc_trace(1);
+//                touch('trace',1);
+//                return false;
+//            }],
+//            ['[fa-times] zruš trasování', function(el) {
+//                elem.proc_trace(0);
+//                touch('trace',0);
+//                return false;
+//            }],
             ['-[fa-hand-stop-o] stop na řádku', function(el) {
                 let ln= Number(jQuery(el).parent().attr('id'));
                 doc.Ezer.dbg.stops.push(`${app_ezer.indexOf(doc.Ezer.sys.dbg.file)},${ln}`);
@@ -319,32 +319,63 @@ function dbg_onclick_start(file) {
 //                    },menu_el);
 //                return false;
 //            }],
-            ["=[fa-play] hodnota lokální proměnné", function(el) {
-                if (doc.Ezer.continuation) { // aktivní stopadresa?
-                  dbg_prompt(`proměnná je v kontextu procedury ${elem.id}`,'i',
-                      function(name){
-                        let proc= doc.Ezer.continuation.proc,
-                            msg= `kontext funkce ${proc._id}`;
-                        dbg.dbg_write(`${msg}: ${name}=`);
-                        for (const [id,offset] of Object.entries(proc.desc.var)) {
-                          dbg.dbg_write(`<br>${id} offset ${offset}`,1);  
-                          if (id==name) {
-                            let val= doc.Ezer.continuation.stack[doc.Ezer.continuation.act-offset];
-                            dbg.dbg_write(`<br>${id}=${val}`,1);  
-                          }
-                          else {
-                            dbg.dbg_write(`<br>funkce ${proc._id} nemá proměnnou ${name}`,1);  
-                          }
-                        }
-                        return false;
-                      },menu_el);
-                }
-                else {
-                  dbg.dbg_write('zjištění lokální hodnoty lze jen u zastopované funkce');
-                }
-                return false;
-            }],
-            ["=[fa-play] vyhodnoť tělo func", function(el) {
+//            ["=[fa-question] zobraz aktivační záznamy", function(el) {
+//                if (doc.Ezer.continuation) { // aktivní stopadresa?
+//                  dbg.dbg_watch_locals();
+//                 let c= doc.Ezer.continuation;
+//                 // stopa volání
+//                 dbg.dbg_watch_write('<dl>');
+//                 dbg.dbg_watch_act(c.proc,c.act);
+//                 for (let i= c.calls.length-1; i>0; i--) {
+//                   let call= c.calls[i];
+//                   dbg.dbg_watch_act(call.proc,call.act);
+//                 }
+//                 dbg.dbg_watch_write('</dl>',1);
+//                  let proc= doc.Ezer.continuation.proc,
+//                      msg= `kontext funkce ${proc._id}`;
+//                  dbg.dbg_watch_write(`${msg}: ${name}=`);
+//                  for (const [id,offset] of Object.entries(proc.desc.var)) {
+//                    dbg.dbg_watch_write(`<br>${id} offset ${offset}`,1);  
+//                    if (id==name) {
+//                      let val= doc.Ezer.continuation.stack[doc.Ezer.continuation.act-offset];
+//                      dbg.dbg_watch_write(`<br>${id}=${val}`,1);  
+//                    }
+//                    else {
+//                      dbg.dbg_watch_write(`<br>funkce ${proc._id} nemá proměnnou ${name}`,1);  
+//                    }
+//                  }
+//                }
+//                else {
+//                  dbg.dbg_watch_write('zjištění lokálních hodnot lze jen v krokovém režimu');
+//                }
+//                return false;
+//            }],
+//            ["=[fa-play] hodnota lokální proměnné", function(el) {
+//                if (doc.Ezer.continuation) { // aktivní stopadresa?
+//                  dbg_prompt(`proměnná je v kontextu procedury ${elem.id}`,'i',
+//                      function(name){
+//                        let proc= doc.Ezer.continuation.proc,
+//                            msg= `kontext funkce ${proc._id}`;
+//                        dbg.dbg_watch_write(`${msg}: ${name}=`);
+//                        for (const [id,offset] of Object.entries(proc.desc.var)) {
+//                          dbg.dbg_watch_write(`<br>${id} offset ${offset}`,1);  
+//                          if (id==name) {
+//                            let val= doc.Ezer.continuation.stack[doc.Ezer.continuation.act-offset];
+//                            dbg.dbg_watch_write(`<br>${id}=${val}`,1);  
+//                          }
+//                          else {
+//                            dbg.dbg_watch_write(`<br>funkce ${proc._id} nemá proměnnou ${name}`,1);  
+//                          }
+//                        }
+//                        return false;
+//                      },menu_el);
+//                }
+//                else {
+//                  dbg.dbg_watch_write('zjištění lokální hodnoty lze jen u zastopované funkce');
+//                }
+//                return false;
+//            }],
+            ["-[fa-play] vyhodnoť tělo func", function(el) {
                 dbg_prompt(`výraz je v kontextu procedury ${elem.id}`,dbg_last_script,
                     function(script){
                       dbg_last_script= script;
@@ -744,18 +775,36 @@ function dbg_find_block(name,l,c) {
     elem:found_elem,msg:msg};
 }
 // =============================================================================> ladění a trasování
+function dbg_trace_start() {
+  dbg.dbg_trace_buttons(true);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'F10') {
+      const btn = document.getElementById('dbg_step');
+      if (btn && !btn.disabled) {
+        btn.click();
+        e.preventDefault(); // zabrání výchozímu chování F10
+      }
+    }
+  });
+}
+function dbg_trace_stop() {
+  dbg_trace_buttons(false,true);
+  doc.Ezer.dbg.state= 0;  // ukončení ladění
+  dbg.dbg_watch_clear();
+  dbg.jQuery('li.line-break').removeClass('line-break');
+}
 function dbg_trace_buttons(on,cont_too=true) {
   if (cont_too) jQuery('#dbg_cont').prop('disabled',on?false:true);
   jQuery('#dbg_step').prop('disabled',on?false:true);
   jQuery('#dbg_over').prop('disabled',on?false:true);
 }
 function dbg_trace_init() {
-  dbg.trace.dblclick( () => dbg.trace.empty() );
+  dbg.trace.dblclick( () => { dbg.trace.empty(); dbg.watch.empty(); } );
   jQuery('#dbg_cont').off('click').prop('disabled',true).on('click', () => {
     dbg_trace_buttons(false);
     if ( doc.Ezer.dbg.state ) {
       doc.dbg_proc_stop(false); // funkce v ezer_lib3 volající dbg3
-      doc.Ezer.dbg.state= 0;  // ukončení ladění
+      dbg.dbg_trace_stop();  // ukončení ladění
       doc.Ezer.continuation.step= false; // dokončení výpočtu
       doc.Ezer.continuation.eval();
       doc.Ezer.continuation= null;
@@ -764,8 +813,7 @@ function dbg_trace_init() {
   });
   jQuery('#dbg_step').off('click').prop('disabled',true).on('click', () => {
     if (doc.Ezer.continuation.calls.length==0) { // je konec?
-      dbg_trace_buttons(false,true);
-      doc.Ezer.dbg.state= 0;  // ukončení ladění
+      dbg.dbg_trace_stop();
     }
     else {
       doc.Ezer.dbg.state= 1; // krokování
@@ -775,8 +823,7 @@ function dbg_trace_init() {
   });
   jQuery('#dbg_over').off('click').prop('disabled',true).on('click', () => {
     if (doc.Ezer.continuation.calls.length==0) { // je konec?
-      dbg_trace_buttons(false,true);
-      doc.Ezer.dbg.state= 0;  // ukončení ladění
+      dbg.dbg_trace_stop();
     }
     else {
       doc.Ezer.dbg.state= 2; // přeskakování
@@ -802,6 +849,50 @@ function dbg_trace_stmnt(prefix,flc) {
       src= dbg.src[ln].find('span.text').text(),
       pos= ` <span ${click} style='cursor:alias'>${flc} ${src}</span>`;
   dbg_trace_line(`${prefix} ${pos}`);
+}
+// ------------------------------------------------------------------------------------------- WATCH
+// smaže watch
+function dbg_watch_clear () {
+  dbg.watch.empty();
+}
+// napíše (pro append=1 přidá) text do okna help
+function dbg_watch_write (msg,append=false) {
+  if ( append ) {
+    dbg.watch.html(dbg.watch.html()+msg);
+  }
+  else {
+    dbg.watch.html(msg);
+  }
+}
+// vypíše aktivační záznam
+function dbg_watch_locals () {
+  let c= doc.Ezer.continuation;
+  // stopa volání
+  dbg.dbg_watch_write('<dl>');
+  dbg.dbg_watch_act(c.proc,c.act);
+  for (let i= c.calls.length-1; i>0; i--) {
+    let call= c.calls[i];
+    dbg.dbg_watch_act(call.proc,call.act);
+  }
+  dbg.dbg_watch_write('</dl>',1);
+}
+// vypíše aktivační záznam
+function dbg_watch_act (proc,act) {
+  let msg= `<dt>${proc._id}`;
+  for (const [id,offset] of Object.entries(proc.desc.par)) {
+    msg+= `<dd style='margin-left:0px'>* ${id}=`;  
+    let val= doc.Ezer.continuation.stack[act-offset];
+    msg+= doc.Ezer.continuation.val(val);  
+    msg+= `</dd>`;  
+  }
+  for (const [id,offset] of Object.entries(proc.desc.var)) {
+    msg+= `<dd>${id}=`;  
+    let val= doc.Ezer.continuation.stack[act-offset];
+    msg+= doc.Ezer.continuation.val(val);  
+    msg+= `</dd>`;  
+  }
+  msg+= `</dt>`;
+  dbg.dbg_watch_write(msg,1);
 }
 // =======================================================================================> DEBUGGER
 jQuery.fn.extend({

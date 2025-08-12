@@ -1436,7 +1436,8 @@ function gen2($pars,$vars,$c) {
     else {
       $code= gen_setter($left,$expr($c->right)); 
     }
-    if ($TEST_DBG==2) $prefix_op($code,$gen2_lc,'asgn');
+    if ($TEST_DBG==2) $prefix_op($code,$c->lc,'asgn');
+//    if ($TEST_DBG==2) $prefix_op($code,$gen2_lc,'asgn');
     break;
   // -------------------------------------- id '++' | id '--'
   case 'inc':

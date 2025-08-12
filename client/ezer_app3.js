@@ -2063,7 +2063,7 @@ class Eval {
           // reakce na stop
           if ( Ezer.dbg.stop ) {
             throw 'stop';
-            return;
+            return; // asynchronní čekání na spuštění z mini menu
           }
           this.value= null;
           if ( back ) {
@@ -2093,7 +2093,7 @@ class Eval {
             case '*': {
               Ezer.dbg.last_flc= cc.flc; // pro zobrazení případné následující chyby
               if (dbg_source_line.call(this,'stmnt')) 
-                return;
+                return; // asynchronní čekání na debugger
               else
                 break;
             }
@@ -2447,7 +2447,8 @@ class Eval {
               val= obj.apply(null,args);
               this.simple= false;
               if ( Ezer.options.to_speed ) this.speed(eval_start);
-              return; }
+              return; // asynchronní čekání na ukončení kódu řídící struktury !!! OBSOLETE !!!
+            }
             // funkce na serveru přes 'ask': na zásobníku jsou argumenty - po volání hodnota funkce 'i'
             case 'e': {
               val= false;
@@ -2460,7 +2461,8 @@ class Eval {
               this.c= c;
               this.simple= false;
               if ( Ezer.options.to_speed ) this.speed(eval_start);
-              return; }
+              return; // asynchronní čekání na onComplete
+            }
             // metoda: na zásobníku jsou argumenty a pod nimi objekt - po volání hodnota metody 'i'
             case 'm': {
               Ezer.value= false;
@@ -2520,7 +2522,7 @@ class Eval {
                 obj.continuation= this;  // pokračování zajistí nějaká metoda z kontextu
                 this.simple= false;
                 if ( Ezer.options.to_speed ) this.speed(eval_start);
-                return;
+                return; // asynchronní čekání na obj.continuation.eval.apply(obj.continuation,[0,1])
               }
               else {
                 // pokud ne, vrať 0 jako výsledek
@@ -2545,7 +2547,7 @@ class Eval {
                 Ezer.modal_fce.push(this);  // pokračování se zajistí voláním eval(this.step,true)
                 this.simple= false;
                 if ( Ezer.options.to_speed ) this.speed(eval_start);
-                return;
+                return; // asynchronní čekání na Ezer.modal_fce.pop().eval.apply(...)
               }
               else {
                 // pokud ne, vrať 0 jako výsledek
@@ -2581,7 +2583,7 @@ class Eval {
                   this.simple= false;
                   if ( Ezer.is_trace.q ) this.trace('wait...');  // trasování operace
                   if ( Ezer.options.to_speed ) this.speed(eval_start);
-                  return;
+                  return; // asynchronní čekání na onComplete
                 }
               }
               // pokud první část funkce selže, dej 0 na zásobník - jinak 1

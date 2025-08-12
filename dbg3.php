@@ -154,10 +154,7 @@ __EOD;
 #trace.split {
   display: grid;
   grid-template-columns: var(--left-size, 50%) var(--divider, 6px) 1fr;
-  grid-template-rows: 100%;
-  height: 100%;
-  min-height: 200px;
-  overflow: hidden;
+  grid-template-rows: 100%; overflow: hidden;
 }
 
 #trace .pane {
@@ -165,9 +162,10 @@ __EOD;
   overflow: auto;
 }
 
-#trace .pane--left  { grid-column: 1; }
+#trace .pane--left  { grid-column: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #trace .pane--right { grid-column: 3; }
-
+#trace .pane--right dd { margin-left: 11px; }
+      
 #trace .divider {
   grid-column: 2;
   cursor: col-resize;
@@ -370,7 +368,6 @@ body .cm-s-php.CodeMirror { background: #e5f2ff; }
 
   <div id="footer">
     <div id="grip"><i class="fa fa-arrows-v" title="Uchop a táhni"></i></div>
-    <!-- div id="trace"></div -->
     <div id="trace" class="split">
       <div id="trace-left" class="pane pane--left">
         <!-- obsah levého panelu -->
@@ -408,59 +405,58 @@ body .cm-s-php.CodeMirror { background: #e5f2ff; }
       isResizing = false;
       document.body.style.cursor = 'default';
     });
-  </script>
+
+    // rozdělení patičky na trace | watch [ (c) Copilot ]
+      
+    const el = document.getElementById('trace');
+    const divider = el.querySelector('.divider');
+    const MIN_LEFT = 100, MIN_RIGHT = 100, DIVIDER_WIDTH = 6;
+
+    const initial = localStorage.getItem('trace.left.size') || '50%';
+    el.style.setProperty('--left-size', initial);
+    el.style.setProperty('--divider', DIVIDER_WIDTH + 'px');
+
+    const clamp = (val, min, max) => Math.max(min, Math.min(max, val));
+    function setLeft(px) {
+      const w = el.getBoundingClientRect().width;
+      const max = w - DIVIDER_WIDTH - MIN_RIGHT;
+      const val = clamp(px, MIN_LEFT, max);
+      const percent = (val / w) * 100;
+      el.style.setProperty('--left-size', percent.toFixed(2) + '%');
+      localStorage.setItem('trace.left.size', percent.toFixed(2) + '%');
+    }
+
+    let drag = false;
+    divider.addEventListener('pointerdown', e => {
+      drag = true;
+      divider.setPointerCapture(e.pointerId);
+      document.addEventListener('pointermove', move);
+      document.addEventListener('pointerup', up);
+    });
+    function move(e) {
+      if (!drag) return;
+      const rect = el.getBoundingClientRect();
+      setLeft(e.clientX - rect.left);
+    }
+    function up(e) {
+      drag = false;
+      divider.releasePointerCapture(e.pointerId);
+      document.removeEventListener('pointermove', move);
+      document.removeEventListener('pointerup', up);
+    }
+
+    divider.addEventListener('dblclick', () => {
+      const w = el.getBoundingClientRect().width;
+      setLeft((w - DIVIDER_WIDTH) / 2);
+    });
+
+ </script>
 
   <textarea id='php_editor' style="display:none"></textarea>
   <div id='php' style='display:none'>
     <div id='php-border'></div>
     <ul><li>lines</li></ul>
   </div>
-<script>
-(() => {
-  const el = document.getElementById('trace');
-  const divider = el.querySelector('.divider');
-  const MIN_LEFT = 160, MIN_RIGHT = 220, DIVIDER_WIDTH = 6;
-
-  const initial = localStorage.getItem('trace.left.size') || '50%';
-  el.style.setProperty('--left-size', initial);
-  el.style.setProperty('--divider', DIVIDER_WIDTH + 'px');
-
-  const clamp = (val, min, max) => Math.max(min, Math.min(max, val));
-  function setLeft(px) {
-    const w = el.getBoundingClientRect().width;
-    const max = w - DIVIDER_WIDTH - MIN_RIGHT;
-    const val = clamp(px, MIN_LEFT, max);
-    const percent = (val / w) * 100;
-    el.style.setProperty('--left-size', percent.toFixed(2) + '%');
-    localStorage.setItem('trace.left.size', percent.toFixed(2) + '%');
-  }
-
-  let drag = false;
-  divider.addEventListener('pointerdown', e => {
-    drag = true;
-    divider.setPointerCapture(e.pointerId);
-    document.addEventListener('pointermove', move);
-    document.addEventListener('pointerup', up);
-  });
-  function move(e) {
-    if (!drag) return;
-    const rect = el.getBoundingClientRect();
-    setLeft(e.clientX - rect.left);
-  }
-  function up(e) {
-    drag = false;
-    divider.releasePointerCapture(e.pointerId);
-    document.removeEventListener('pointermove', move);
-    document.removeEventListener('pointerup', up);
-  }
-
-  divider.addEventListener('dblclick', () => {
-    const w = el.getBoundingClientRect().width;
-    setLeft((w - DIVIDER_WIDTH) / 2);
-  });
-})();
-</script>
-
   </body>
 </html>
 __EOD;

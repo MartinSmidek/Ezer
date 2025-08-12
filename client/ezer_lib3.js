@@ -161,7 +161,7 @@ function dbg_source_line(cmd) {
           Ezer.continuation= this;
           this.step= true;
           if ( Ezer.sys.dbg.win_ezer ) {
-            Ezer.sys.dbg.win_ezer.dbg_trace_buttons(true);
+            Ezer.sys.dbg.win_ezer.dbg_trace_start();
           }
           Ezer.dbg.state= 1; // defaultně krokování
           Ezer.dbg.depth= this.calls.length;
@@ -184,13 +184,15 @@ function dbg_source_line(cmd) {
             to_return= 1;
           }
           else {
-            Ezer.sys.dbg.win_ezer.dbg_trace_line(` . ${line}`);
+            // není potlačené mezitrasování
+            Ezer.sys.dbg.win_ezer.dbg_trace_stmnt(' .',cc.flc,'line-show');
           }
         }
         else {
           let indent= " -".repeat(this.process - Ezer.dbg.process);
           Ezer.sys.dbg.win_ezer.dbg_trace_stmnt(` ${indent}`,cc.flc,'line-show');
         }
+        Ezer.sys.dbg.win_ezer.dbg_watch_locals();
       }
       break;
     }
@@ -220,6 +222,7 @@ function dbg_source_line(cmd) {
         Ezer.sys.dbg.win_ezer.dbg_trace_stmnt(` ${indent}`,flc,'line-show');
         dbg_file_line_show(flc,'line-break'); // funkce v ezer_lib3 volající dbg3
       }
+      Ezer.sys.dbg.win_ezer.dbg_watch_locals();
       break;
     }
   }
