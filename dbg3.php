@@ -53,6 +53,7 @@
 __EOD;
   }
   if (1)
+  $FONT= 'font-size: 11px; font-family: monospace, consolas;';
   $html= <<<__EOD
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="cs" dir="ltr">
@@ -118,17 +119,18 @@ __EOD;
 // =========================================================================================> STYLES
   </script>
   <style>
-    html, body { margin: 0; padding: 0; font-size: 8pt; font-family: monospace, consolas;
+    html, body { margin: 0; padding: 0; $FONT
       height: 100vh; display: flex; flex-direction: column; overflow:hidden; }
     #layout { flex: 1; display: flex; overflow: hidden; }
     #filnot { border-right: 2px solid silver; overflow-y: auto;
       display: flex; flex-direction: column; gap: 2px; }
     #buttons { display: flex; gap: 8px; padding: 4px; height: 32px; }
     #filnot button { width: 100%; padding: 2px; }
-    #filnot select { background: silver; height: 20px; width: 120px; border: none;
-      font-size: unset; font-family: unset; }
+    #filnot button:disabled { opacity: 0.4; cursor: not-allowed; }
+    #filnot select { background: silver; height: 20px; border: none; $FONT }
     #filnot ul {  margin: 0; padding: 0; overflow-y: auto; }
     #filnot ul li {  white-space: pre; list-style-type: none; height: 13px; cursor: alias; }
+      
     /* ----------------------- trace */
     li.line-break, span.break { background: orangered !important; color: black; }
     li.line-show { background: silver !important; color: black; }
@@ -143,49 +145,43 @@ __EOD;
     #TXT { flex: 1; overflow-y: auto; box-sizing: border-box; }
     #TXT ul { margin: 0; padding: 0; list-style: none; }
     #TXT li { display: flex; flex: none; white-space: pre; }
+      
     /* ----------------------- stop na řádku */
     span.line { width: 26px; min-width: 26px; text-align: right; margin-right: 6px; 
       background: silver; cursor:pointer; user-select: none; position: relative; }
     span.line:hover::after, span.line:hover::before { opacity: 1; /* zobrazí tooltip při hover */ }
-    span.line::after { content: "dvojklik"; position: absolute; bottom: -7px;  left: 33px;
-    background: #ff000096; color: #fff; padding: 5px 8px; border-radius: 4px;
-    font-size: 10px; opacity: 0; pointer-events: none; }
-    span.line::before { content: ""; position: absolute; left:22px; bottom:0px; 
-    /* trojúhelník */ border-width: 5px; border-style: solid; border-color: transparent #ff000096 transparent transparent;
-    opacity: 0; transition: opacity 0.2s ease; }
+    span.line::after { content: "dvojklik"; position: absolute; bottom: -5px;  left: 33px;
+      background: #ff000096; color: #fff; padding: 5px 8px; border-radius: 4px;
+      opacity: 0; pointer-events: none; }
+    span.line::before { content: ""; position: absolute; left:22px; bottom:2px; 
+      /* trojúhelník */ border-width: 5px; border-style: solid; border-color: transparent #ff000096 transparent transparent;
+      opacity: 0; transition: opacity 0.2s ease; }
+      
     /* ----------------------- zdrojový text */
     .text { flex: 1; }
     #footer { height: 80px; display: flex; flex-direction: column;
       background: #e0e0e0; border-top: 1px solid #bbb; }
     #grip { height: 20px; background: #ccc; text-align: center; line-height: 20px;
       cursor: ns-resize; font-weight: bold; user-select: none; border-bottom: 1px solid #aaa; }
+ 
+    /* ----------------------- trace | watch */
     #trace { flex: 1; padding: 6px 10px; overflow-y: auto; color: #333; }
-      
-#trace.split {
-  display: grid;
-  grid-template-columns: var(--left-size, 50%) var(--divider, 6px) 1fr;
-  grid-template-rows: 100%; overflow: hidden;
-}
-
-#trace .pane {
-  min-width: 0;
-  overflow: auto;
-}
-
-#trace .pane--left  { grid-column: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-#trace .pane--right { grid-column: 3; }
-#trace .pane--right dd { margin-left: 11px; }
-      
-#trace .divider {
-  grid-column: 2;
-  cursor: col-resize;
-  background:
-    linear-gradient(90deg, transparent 0, transparent 2px, rgba(0,0,0,0.15) 2px, transparent 4px)
-    center/6px 100% no-repeat;
-  user-select: none;
-  touch-action: none;
-}
-
+    #trace.split { display: grid; 
+      grid-template-columns: var(--left-size, 50%) var(--divider, 6px) 1fr;
+      grid-template-rows: 100%; overflow: hidden; }
+    #trace .pane { min-width: 0; overflow: auto; }
+    #trace .pane--left  { grid-column: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    #trace .divider { grid-column: 2; cursor: col-resize;
+      background: linear-gradient(90deg, transparent 0, transparent 2px, rgba(0,0,0,0.15) 2px, 
+          transparent 4px) center/6px 100% no-repeat;
+      user-select: none; touch-action: none; }
+    
+    /* ----------------------- watch */
+    #trace .pane--right { grid-column: 3; }
+    #trace .pane--right dd { margin-left: 11px; text-indent: -11px; }
+    #trace .pane--right .func { background: silver; font-weight: bold; color: black; }
+    #trace .pane--right .par { font-weight: bold; color: black; }
+    #trace .pane--right .var { font-weight: bold; color: black; }
       
     /* ----------------------- context menu */
     .ContextMenu3 { border:1px solid #ccc; padding:2px; background:#fff; width:200px; list-style-type:none;
@@ -199,34 +195,39 @@ __EOD;
     .ContextMenu3 li span { float: right; font-style: italic; }
     .ContextFocus3 { background:#ffa !important;
     }
+
     /* ----------------------- debug */
     #log { position:absolute; display: none; background:#eee; box-shadow:5px 5px 10px #567;
       padding: 5px; z-index: 4; max-height: 300px; overflow: auto; }
     #prompt { position:absolute; display: none; background:#eee; box-shadow:5px 5px 10px #567;
       padding: 5px; z-index: 3; }
     #prompt span { display:block; }
-    #prompt input { width:200px; font-size: 8pt; font-family: monospace,consolas; }
-    div.dbg { font-size:8pt; line-height:13px; position:relative;}
+    #prompt input { width:200px; $FONT }
+    div.dbg { line-height:13px; position:relative;}
     table.dbg { border-collapse:collapse; margin:1px 0;}
     .dbg td { border:1px solid #aaa; font:x-small Arial;color:#777;padding:1px 3px; line-height:11px; }
     .dbg td.title { color:#000; background:#aaa; }
     .dbg td.label { color:#a33;}
     .dbg table.dbg_array { background:#ddeeff; }
     .dbg table.dbg_object { background:#ffffaa; }
+      
     /* ----------------------==> mooTree */
-    .mooTree_node { font-family: Verdana, Arial, Helvetica; font-size: 10px; white-space: nowrap; }
+    .mooTree_node { $FONT white-space: nowrap; }
     .mooTree_text { padding-top: 3px; height: 15px; cursor: pointer; }
     .mooTree_img { float: left; width: 18px; height: 18px; overflow: hidden; }
     .mooTree_selected { background: #e0f0ff; font-weight: bold; margin-right: 10px; }
+      
     /* ----------------------- inverzní CG */
     div.inverzniCG .mooTree_node { transform: scaleX(-1); }
     div.inverzniCG .mooTree_text { transform: scaleX(-1); direction: rtl; display: flex; }
     div.inverzniCG div.mooTree_selected { margin-right:0; }
+      
     /* ----------------------- help */
     div#help { position: fixed; display: none; right: 30px; top: 25px; width: 300px; 
       background: #eee; border: 1px solid #aaa; z-index: 2;
       overflow-y: auto; min-height: 100px; max-height: calc(50% - 30px); 
       box-shadow: 5px 5px 10px #567; }
+      
     /* ----------------------- cg */
     div#cg { position:fixed; display:none; right: 30px; top: 25px; width: 300px; 
       min-height: 100px; height: calc(50% - 30px); max-height: 300px; 
@@ -236,11 +237,10 @@ __EOD;
     button.cg_but { position: absolute; margin: 3px 3px 0 0; width: 20px; padding: 0; }
     div#cg_div { overflow-y: auto; height: calc(100% - 30px); }
     div#cg_grf { overflow-y: auto; width:100%; }
+      
     /* ----------------------- ezer source */
-    .cm-s-ezer.CodeMirror { background: oldlace; overflow-y: auto;
-      font-size: 8pt; font-family: monospace,consolas; 
-      position: absolute; 
-      top: 20px; height: calc(100% - 20px);
+    .cm-s-ezer.CodeMirror { background: oldlace; overflow-y: auto; $FONT
+      position: absolute;  top: 20px; height: calc(100% - 20px);
       left: 120px; width: calc(100% - 120px); }
       
     /* ----------------------- php source */
@@ -258,79 +258,80 @@ __EOD;
     #php li span.line { display: inline-block; width: 26px; min-width: 26px; text-align: right; 
       margin-right: 6px; background: silver; }
     #php span.call { background:#cce; cursor:pointer; font-weight: bold; }
-      /* ----------------------- CodeMirror ---------------------- Ezer */
-.cm-s-ezer .CodeMirror-gutters { background: silver; }
-.cm-s-ezer .CodeMirror-linenumber { color:black; }
-
-.cm-s-ezer span.cm-meta { color: #808000; }
-.cm-s-ezer span.cm-number { color: #0000FF; }
-.cm-s-ezer span.cm-keyword { font-weight: bold; text-shadow: 0 0 black; }
-.cm-s-ezer span.cm-keyword-event { font-style: italic; background: lightgreen; text-shadow: 0 0 black; }
-.cm-s-ezer span.cm-keyword-func { background: #ffdf6b; }
-.cm-s-ezer span.cm-keyword-skill { background: lightsalmon; }
-.cm-s-ezer span.cm-atom { font-weight: bold; color: #000080; }
-.cm-s-ezer span.cm-def { color: #000000; }
-.cm-s-ezer span.cm-variable { color: black; }
-.cm-s-ezer span.cm-variable-2 { color: black; }
-.cm-s-ezer span.cm-variable-3, .cm-s-ezer span.cm-type { color: black; }
-.cm-s-ezer span.cm-property { color: black; }
-.cm-s-ezer span.cm-operator { color: black; }
-.cm-s-ezer span.cm-comment { color: #999999; }
-.cm-s-ezer span.cm-string { color: #008000; }
-.cm-s-ezer span.cm-string-2 { color: #008000; }
-.cm-s-ezer span.cm-qualifier { color: #555; }
-.cm-s-ezer span.cm-error { color: #FF0000; }
-.cm-s-ezer span.cm-attribute { color: #0000FF; }
-.cm-s-ezer span.cm-tag { color: #000080; }
-.cm-s-ezer span.cm-link { color: #0000FF; }
-
-.cm-s-ezer span.cm-builtin { color: #30a; }
-.cm-s-ezer span.cm-bracket { color: #cc7; }
-
-.cm-s-ezer .CodeMirror-matchingbracket { outline:1px solid cyan; color:black !important; }
-.cm-s-ezer .CodeMirror-nonmatchingbracket { outline:1px solid red; color:black !important; }
-.cm-s-ezer .CodeMirror-activeline-gutter { background: #ffff00; }
-.cm-s-ezer .CodeMirror-activeline-background { background: #ffffaa; }
-
-.CodeMirror-hints.ezer { font-family: Consolas; color: #616569; background-color: #ebf3fd !important; }
-.CodeMirror-hints.ezer .CodeMirror-hint-active { background-color: #a2b8c9 !important; color: #5c6065 !important; }      
       
-      /* ----------------------- CodeMirror ---------------------- PHP */
-.cm-s-php span.cm-meta { color: #808000; }
-.cm-s-php span.cm-number { color: #0000FF; }
-.cm-s-php span.cm-keyword { font-weight: bold; text-shadow: 0 0 black; }
-.cm-s-php span.cm-keyword-event { font-style: italic; background: lightgreen; text-shadow: 0 0 black; }
-.cm-s-php span.cm-keyword-func { background: #ffdf6b; }
-.cm-s-php span.cm-keyword-skill { background: lightsalmon; }
-.cm-s-php span.cm-atom { font-weight: bold; color: #000080; }
-.cm-s-php span.cm-def { color: #000000; }
-.cm-s-php span.cm-variable { color: black; }
-.cm-s-php span.cm-variable-2 { color: black; }
-.cm-s-php span.cm-variable-3, .cm-s-php span.cm-type { color: black; }
-.cm-s-php span.cm-property { color: black; }
-.cm-s-php span.cm-operator { color: black; }
-.cm-s-php span.cm-comment { color: #999999; }
-.cm-s-php span.cm-string { color: #008000; }
-.cm-s-php span.cm-string-2 { color: #008000; }
-.cm-s-php span.cm-qualifier { color: #555; }
-.cm-s-php span.cm-error { color: #FF0000; }
-.cm-s-php span.cm-attribute { color: #0000FF; }
-.cm-s-php span.cm-tag { color: #000080; }
-.cm-s-php span.cm-link { color: #0000FF; }
+    /* ----------------------- CodeMirror ---------------------- Ezer */
+    .cm-s-ezer .CodeMirror-gutters { background: silver; }
+    .cm-s-ezer .CodeMirror-linenumber { color:black; }
 
-body .cm-s-php.CodeMirror { background: #e5f2ff; }
-.cm-s-php .CodeMirror-gutters { background: #cce; }
-.cm-s-php .CodeMirror-linenumber { color:black; }
-.cm-s-php .CodeMirror-activeline-gutter { background: #ffff00; }
-.cm-s-php .CodeMirror-activeline-background { background: #ffffaa; }
+    .cm-s-ezer span.cm-meta { color: #808000; }
+    .cm-s-ezer span.cm-number { color: #0000FF; }
+    .cm-s-ezer span.cm-keyword { font-weight: bold; text-shadow: 0 0 black; }
+    .cm-s-ezer span.cm-keyword-event { font-style: italic; background: lightgreen; text-shadow: 0 0 black; }
+    .cm-s-ezer span.cm-keyword-func { background: #ffdf6b; }
+    .cm-s-ezer span.cm-keyword-skill { background: lightsalmon; }
+    .cm-s-ezer span.cm-atom { font-weight: bold; color: #000080; }
+    .cm-s-ezer span.cm-def { color: #000000; }
+    .cm-s-ezer span.cm-variable { color: black; }
+    .cm-s-ezer span.cm-variable-2 { color: black; }
+    .cm-s-ezer span.cm-variable-3, .cm-s-ezer span.cm-type { color: black; }
+    .cm-s-ezer span.cm-property { color: black; }
+    .cm-s-ezer span.cm-operator { color: black; }
+    .cm-s-ezer span.cm-comment { color: #999999; }
+    .cm-s-ezer span.cm-string { color: #008000; }
+    .cm-s-ezer span.cm-string-2 { color: #008000; }
+    .cm-s-ezer span.cm-qualifier { color: #555; }
+    .cm-s-ezer span.cm-error { color: #FF0000; }
+    .cm-s-ezer span.cm-attribute { color: #0000FF; }
+    .cm-s-ezer span.cm-tag { color: #000080; }
+    .cm-s-ezer span.cm-link { color: #0000FF; }
 
-.cm-s-php span.cm-builtin { color: #30a; }
-.cm-s-php span.cm-bracket { color: #cc7; }
+    .cm-s-ezer span.cm-builtin { color: #30a; }
+    .cm-s-ezer span.cm-bracket { color: #cc7; }
 
-.cm-s-php  { font-size: 8pt; font-family: monospace,consolas; }
+    .cm-s-ezer .CodeMirror-matchingbracket { outline:1px solid cyan; color:black !important; }
+    .cm-s-ezer .CodeMirror-nonmatchingbracket { outline:1px solid red; color:black !important; }
+    .cm-s-ezer .CodeMirror-activeline-gutter { background: #ffff00; }
+    .cm-s-ezer .CodeMirror-activeline-background { background: #ffffaa; }
 
-.cm-s-php .CodeMirror-matchingbracket { outline:1px solid cyan; color:black !important; }
-.cm-s-php .CodeMirror-nonmatchingbracket { outline:1px solid red; color:black !important; }
+    .CodeMirror-hints.ezer { font-family: Consolas; color: #616569; background-color: #ebf3fd !important; }
+    .CodeMirror-hints.ezer .CodeMirror-hint-active { background-color: #a2b8c9 !important; color: #5c6065 !important; }      
+      
+    /* ----------------------- CodeMirror ---------------------- PHP */
+    .cm-s-php span.cm-meta { color: #808000; }
+    .cm-s-php span.cm-number { color: #0000FF; }
+    .cm-s-php span.cm-keyword { font-weight: bold; text-shadow: 0 0 black; }
+    .cm-s-php span.cm-keyword-event { font-style: italic; background: lightgreen; text-shadow: 0 0 black; }
+    .cm-s-php span.cm-keyword-func { background: #ffdf6b; }
+    .cm-s-php span.cm-keyword-skill { background: lightsalmon; }
+    .cm-s-php span.cm-atom { font-weight: bold; color: #000080; }
+    .cm-s-php span.cm-def { color: #000000; }
+    .cm-s-php span.cm-variable { color: black; }
+    .cm-s-php span.cm-variable-2 { color: black; }
+    .cm-s-php span.cm-variable-3, .cm-s-php span.cm-type { color: black; }
+    .cm-s-php span.cm-property { color: black; }
+    .cm-s-php span.cm-operator { color: black; }
+    .cm-s-php span.cm-comment { color: #999999; }
+    .cm-s-php span.cm-string { color: #008000; }
+    .cm-s-php span.cm-string-2 { color: #008000; }
+    .cm-s-php span.cm-qualifier { color: #555; }
+    .cm-s-php span.cm-error { color: #FF0000; }
+    .cm-s-php span.cm-attribute { color: #0000FF; }
+    .cm-s-php span.cm-tag { color: #000080; }
+    .cm-s-php span.cm-link { color: #0000FF; }
+
+    body .cm-s-php.CodeMirror { background: #e5f2ff; }
+    .cm-s-php .CodeMirror-gutters { background: #cce; }
+    .cm-s-php .CodeMirror-linenumber { color:black; }
+    .cm-s-php .CodeMirror-activeline-gutter { background: #ffff00; }
+    .cm-s-php .CodeMirror-activeline-background { background: #ffffaa; }
+
+    .cm-s-php span.cm-builtin { color: #30a; }
+    .cm-s-php span.cm-bracket { color: #cc7; }
+
+    .cm-s-php  { $FONT }
+
+    .cm-s-php .CodeMirror-matchingbracket { outline:1px solid cyan; color:black !important; }
+    .cm-s-php .CodeMirror-nonmatchingbracket { outline:1px solid red; color:black !important; }
   </style>
 </head>
 <body>

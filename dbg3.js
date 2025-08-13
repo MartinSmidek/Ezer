@@ -902,33 +902,33 @@ function dbg_watch_write (msg,append=false) {
 }
 // vypíše aktivační záznam
 function dbg_watch_locals () {
-  let c= doc.Ezer.continuation;
+  let c= doc.Ezer.continuation, html;
   // stopa volání
-  dbg.dbg_watch_write('<dl>');
-  dbg.dbg_watch_act(c.proc,c.act);
+  html= '<dl>';
+  html+= dbg.dbg_watch_act(c.proc,c.act);
   for (let i= c.calls.length-1; i>0; i--) {
     let call= c.calls[i];
-    dbg.dbg_watch_act(call.proc,call.act);
+    html+= dbg.dbg_watch_act(call.proc,call.act);
   }
-  dbg.dbg_watch_write('</dl>',1);
+  html+= '</dl>';
+  dbg.dbg_watch_write(html);
 }
 // vypíše aktivační záznam
 function dbg_watch_act (proc,act) {
-  let msg= `<dt>${proc._id}`;
+  let msg= `<dt class="func">${proc._id}</dt>`;
   for (const [id,offset] of Object.entries(proc.desc.par)) {
-    msg+= `<dd style='margin-left:0px'>* ${id}=`;  
+    msg+= `<dd><span class="par">* ${id}</span>=`;  
     let val= doc.Ezer.continuation.stack[act-offset];
     msg+= doc.Ezer.continuation.val(val);  
     msg+= `</dd>`;  
   }
   for (const [id,offset] of Object.entries(proc.desc.var)) {
-    msg+= `<dd>${id}=`;  
+    msg+= `<dd><span class="var">${id}</span>=`;  
     let val= doc.Ezer.continuation.stack[act-offset];
     msg+= doc.Ezer.continuation.val(val);  
     msg+= `</dd>`;  
   }
-  msg+= `</dt>`;
-  dbg.dbg_watch_write(msg,1);
+  return msg;
 }
 // =======================================================================================> DEBUGGER
 jQuery.fn.extend({
