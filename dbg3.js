@@ -1,4 +1,4 @@
-/* global dbg, doc, Cookie, Ezer, dbg_onclick_start, app_ezer, 
+/* global dbg, doc, Cookie, Ezer, dbg_start, app_ezer, 
           CodeMirror, define,
           editor, php_editor, wphp, lines, wcg, help, pick */
 "use strict";
@@ -33,7 +33,8 @@ function dbg_mode(_mode) {
   dbg_trace_line(`mode: ${mode} -> ${_mode}`);
   mode= _mode; 
 }
-function dbg_onclick_start(file) {
+// inicializace DBG3 - proběhne jen jednou
+function dbg_start(file) {
   // inicializace ladění
   dbg_trace_init(); 
   // -----------------------------------==> .. periodické ujištění o existenci laděné aplikace
@@ -63,6 +64,12 @@ function dbg_onclick_start(file) {
     // -----------------------------------==> .. dvojclick na zdrojový text
     .dblclick( el => {
       if (mode!='ezer') return false;
+      const li = jQuery(el.target).closest('span.line', this);
+      if (li.length) {
+        el.preventDefault();
+        dbg_stopline (li.text(),0); // alternuj stopřádek
+        return false;
+      }
       var l= dbg_context(el.target),
           sel= window.getSelection(),
           range= sel.getRangeAt(0),
@@ -166,30 +173,6 @@ function dbg_onclick_start(file) {
           return false; 
         }
       ];
-      let touch= function(type,on,ln) {
-        let elem= type=='break' ? 'stops' : 'traces',
-            list= doc.Ezer.sys.dbg.files[doc.Ezer.sys.dbg.file][elem];
-//        dbg_touch('proc '+elem.id,menu_el);
-        if (type=='break') {
-          if (on) {
-//                dbg.src[l].find('span.text').addClass(type);
-            dbg.src[ln].find('span.line').addClass(type);
-          }
-          else {
-//                dbg.src[l].find('span.text').removeClass(type);
-            dbg.src[ln].find('span.line').removeClass(type);
-          }
-        }
-        else if ( on ) {
-          dbg.src[l].addClass(type);
-          list.push(l);
-        }
-        else {
-          dbg.src[l].removeClass(type);
-          let i= list.indexOf(l);
-          if ( i>-1 ) list.splice(i);
-        }
-      }
       switch (elem ? elem.type : null) {
         case 'var':
         case 'const':
@@ -222,12 +205,12 @@ function dbg_onclick_start(file) {
             }],
             ['-[fa-film] zahaj hlídání změny', function(el) {
                 elem.block_trace(1);
-                touch('trace',1);
+                dbg_touch_line('trace',1);
                 return false;
             }],
             ['[fa-times] zruš hlídání změny', function(el) {
                 elem.block_trace(0);
-                touch('trace',0);
+                dbg_touch_line('trace',0);
                 return false;
             }]
           ],menu_el);
@@ -277,16 +260,22 @@ function dbg_onclick_start(file) {
 //            }],
             ['-[fa-hand-stop-o] stop na řádku', function(el) {
                 let ln= Number(jQuery(el).parent().attr('id'));
-                doc.Ezer.dbg.stops.push(`${app_ezer.indexOf(doc.Ezer.sys.dbg.file)},${ln}`);
-                touch('break',1,ln);
+                dbg_stopline (ln,1);
+//                doc.Ezer.dbg.stops.push(`${app_ezer.indexOf(doc.Ezer.sys.dbg.file)},${ln}`);
+//                touch('break',1,ln);
+                return false;
+            }],
+            ['[fa-question] seznam stopřádků', function(el) {
+                dbg_touch(doc.Ezer.fce.debug(doc.Ezer.dbg.stops,`state=${doc.Ezer.dbg.state}`),menu_el);
                 return false;
             }],
             ['[fa-times] uvolni stop', function(el) {
-                let ln= Number(jQuery(el).parent().attr('id')),
-                    i= doc.Ezer.dbg.stops.indexOf(`${app_ezer.indexOf(doc.Ezer.sys.dbg.file)},${ln}`);
-                if (i!==-1)
-                  doc.Ezer.dbg.stops.splice(i,1);
-                touch('break',0,ln);
+                let ln= Number(jQuery(el).parent().attr('id'));
+                dbg_stopline (ln,-1);
+//                    i= doc.Ezer.dbg.stops.indexOf(`${app_ezer.indexOf(doc.Ezer.sys.dbg.file)},${ln}`);
+//                if (i!==-1)
+//                  doc.Ezer.dbg.stops.splice(i,1);
+//                touch('break',0,ln);
                 return false;
             }],
 //            ['-[fa-anchor] zastopuj proceduru', function(el) {
@@ -775,18 +764,64 @@ function dbg_find_block(name,l,c) {
     elem:found_elem,msg:msg};
 }
 // =============================================================================> ladění a trasování
+// značení řádků
+function dbg_touch_line (type,on,ln) {
+  let elem= type=='break' ? 'stops' : 'traces',
+      list= doc.Ezer.sys.dbg.files[doc.Ezer.sys.dbg.file][elem];
+  if (type=='break') {
+    if (on) {
+      dbg.src[ln].find('span.line').addClass(type);
+    }
+    else {
+      dbg.src[ln].find('span.line').removeClass(type);
+    }
+  }
+  else if ( on ) {
+    dbg.src[l].addClass(type);
+    list.push(l);
+  }
+  else {
+    dbg.src[l].removeClass(type);
+    let i= list.indexOf(l);
+    if ( i>-1 ) list.splice(i);
+  }
+}
+// on=1 přidá stopřádek, on=-1 odebere, on=0 změní na opak
+function dbg_stopline (ln, change) {
+  let i= doc.Ezer.dbg.stops.indexOf(`${app_ezer.indexOf(doc.Ezer.sys.dbg.file)},${ln}`);
+  if (change==0) { // změníme stav
+    change= i==-1 ? 1 : -1;
+  }
+  if (change==1 && i==-1) { // přidáme stopřádek
+    doc.Ezer.dbg.stops.push(`${app_ezer.indexOf(doc.Ezer.sys.dbg.file)},${ln}`);
+    dbg_touch_line('break',1,ln);
+  }
+  else if (change==-1 && i!==-1) { // odebereme stopřádek
+    doc.Ezer.dbg.stops.splice(i,1);
+    dbg_touch_line('break',0,ln);
+  }
+}               
 function dbg_trace_start() {
   dbg.dbg_trace_buttons(true);
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'F10') {
-      const btn = document.getElementById('dbg_step');
-      if (btn && !btn.disabled) {
-        btn.click();
-        e.preventDefault(); // zabrání výchozímu chování F10
-      }
+
+  // Zamezí duplicitním handlerům při opakovaném volání
+  jQuery(document).off('keydown.dbg_trace').on('keydown.dbg_trace', function (e) {
+    let $btn = null;
+
+    switch (e.key) {
+      case 'F8':  $btn = jQuery('#dbg_cont'); break;
+      case 'F10': $btn = jQuery('#dbg_over'); break;
+      case 'F11': $btn = jQuery('#dbg_into'); break;
+      default: return; // ostatní klávesy ignoruj
+    }
+
+    if ($btn.length && !$btn.prop('disabled')) {
+      $btn.trigger('click');
+      e.preventDefault(); // zamezí výchozímu chování F-kláves
     }
   });
 }
+
 function dbg_trace_stop() {
   dbg_trace_buttons(false,true);
   doc.Ezer.dbg.state= 0;  // ukončení ladění
@@ -795,29 +830,20 @@ function dbg_trace_stop() {
 }
 function dbg_trace_buttons(on,cont_too=true) {
   if (cont_too) jQuery('#dbg_cont').prop('disabled',on?false:true);
-  jQuery('#dbg_step').prop('disabled',on?false:true);
   jQuery('#dbg_over').prop('disabled',on?false:true);
+  jQuery('#dbg_into').prop('disabled',on?false:true);
 }
 function dbg_trace_init() {
   dbg.trace.dblclick( () => { dbg.trace.empty(); dbg.watch.empty(); } );
   jQuery('#dbg_cont').off('click').prop('disabled',true).on('click', () => {
     dbg_trace_buttons(false);
     if ( doc.Ezer.dbg.state ) {
-      doc.dbg_proc_stop(false); // funkce v ezer_lib3 volající dbg3
       dbg.dbg_trace_stop();  // ukončení ladění
-      doc.Ezer.continuation.step= false; // dokončení výpočtu
-      doc.Ezer.continuation.eval();
-      doc.Ezer.continuation= null;
-    }
-    return false;
-  });
-  jQuery('#dbg_step').off('click').prop('disabled',true).on('click', () => {
-    if (doc.Ezer.continuation.calls.length==0) { // je konec?
-      dbg.dbg_trace_stop();
-    }
-    else {
-      doc.Ezer.dbg.state= 1; // krokování
-      doc.Ezer.continuation.eval();
+      if (doc.Ezer.continuation) {
+        doc.Ezer.continuation.step= false; // dokončení výpočtu
+        doc.Ezer.continuation.eval();
+        doc.Ezer.continuation= null;
+      }
     }
     return false;
   });
@@ -828,6 +854,16 @@ function dbg_trace_init() {
     else {
       doc.Ezer.dbg.state= 2; // přeskakování
       doc.Ezer.dbg.depth= doc.Ezer.continuation.calls.length; // výška zásobníku aktivačních záznamů procedur
+      doc.Ezer.continuation.eval();
+    }
+    return false;
+  });
+  jQuery('#dbg_into').off('click').prop('disabled',true).on('click', () => {
+    if (doc.Ezer.continuation.calls.length==0) { // je konec?
+      dbg.dbg_trace_stop();
+    }
+    else {
+      doc.Ezer.dbg.state= 1; // krokování
       doc.Ezer.continuation.eval();
     }
     return false;
@@ -846,7 +882,7 @@ function dbg_trace_source(flc,bckg) {
 function dbg_trace_stmnt(prefix,flc) {
   let [file,ln,c]= flc.split(','),
       click= `onclick="dbg_trace_source('${flc}','line-show')"`,
-      src= dbg.src[ln].find('span.text').text(),
+      src= htmlentities(dbg.src[ln].find('span.text').text()),
       pos= ` <span ${click} style='cursor:alias'>${flc} ${src}</span>`;
   dbg_trace_line(`${prefix} ${pos}`);
 }

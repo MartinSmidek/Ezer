@@ -113,7 +113,7 @@ __EOD;
       dbg.dbg_onunload('ezer');
     });
     // inicializace 
-    dbg_onclick_start('$file');
+    dbg_start('$file');
   });
 // =========================================================================================> STYLES
   </script>
@@ -123,7 +123,7 @@ __EOD;
     #layout { flex: 1; display: flex; overflow: hidden; }
     #filnot { border-right: 2px solid silver; overflow-y: auto;
       display: flex; flex-direction: column; gap: 2px; }
-    #buttons { display: flex; gap: 8px; padding: 4px; }
+    #buttons { display: flex; gap: 8px; padding: 4px; height: 32px; }
     #filnot button { width: 100%; padding: 2px; }
     #filnot select { background: silver; height: 20px; width: 120px; border: none;
       font-size: unset; font-family: unset; }
@@ -143,7 +143,17 @@ __EOD;
     #TXT { flex: 1; overflow-y: auto; box-sizing: border-box; }
     #TXT ul { margin: 0; padding: 0; list-style: none; }
     #TXT li { display: flex; flex: none; white-space: pre; }
-    .line { width: 26px; min-width: 26px; text-align: right; margin-right: 6px; background: silver;  }
+    /* ----------------------- stop na řádku */
+    span.line { width: 26px; min-width: 26px; text-align: right; margin-right: 6px; 
+      background: silver; cursor:pointer; user-select: none; position: relative; }
+    span.line:hover::after, span.line:hover::before { opacity: 1; /* zobrazí tooltip při hover */ }
+    span.line::after { content: "dvojklik"; position: absolute; bottom: -7px;  left: 33px;
+    background: #ff000096; color: #fff; padding: 5px 8px; border-radius: 4px;
+    font-size: 10px; opacity: 0; pointer-events: none; }
+    span.line::before { content: ""; position: absolute; left:22px; bottom:0px; 
+    /* trojúhelník */ border-width: 5px; border-style: solid; border-color: transparent #ff000096 transparent transparent;
+    opacity: 0; transition: opacity 0.2s ease; }
+    /* ----------------------- zdrojový text */
     .text { flex: 1; }
     #footer { height: 80px; display: flex; flex-direction: column;
       background: #e0e0e0; border-top: 1px solid #bbb; }
@@ -347,9 +357,9 @@ body .cm-s-php.CodeMirror { background: #e5f2ff; }
       <select id="files" onchange="dbg_reload(this.value);"></select>
 
       <div id="buttons">
-        <button id="dbg_cont"><i class="fa fa-share" title="continue"></i></button>
-        <button id="dbg_step"><i class="fa fa-step-forward" title="step"></i></button>
-        <button id="dbg_over"><i class="fa fa-play" title="over"></i></button>
+        <button id="dbg_cont"><img src="client/img/dbg_cont.png" title="continue (F8)"></button>
+        <button id="dbg_over"><img src="client/img/dbg_over.png" title="step over (F10)"></button>
+        <button id="dbg_into"><img src="client/img/dbg_into.png" title="step into (F11)"></button>
       </div>
 
       <ul id="notes"></ul>

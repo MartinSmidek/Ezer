@@ -2821,8 +2821,9 @@ class Eval {
         // konec tohoto kódu
         if ( this.calls.length>0 ) {
           // pokud je to konec vnořené procedury, odstraň argumenty
+          let to_return= 0;
           if ( Ezer.is_trace['*'] && Ezer.dbg.state) { // zobrazovat ladění
-            dbg_source_line.call(this,'func_end');
+            to_return= dbg_source_line.call(this,'func_end');
           }
           if ( Ezer.is_trace.T && this.proc.trace )
             this.trace_proc(cc.s,'&lt;'+this.context.id+(cc.o=='C'?'.desc.':'.')+this.proc.id,
@@ -2863,6 +2864,8 @@ class Eval {
           }
           else
             this.c= last.c+1;
+          if (to_return) 
+            return; // asynchronní čekání na debugger
         }
         else break;
       }

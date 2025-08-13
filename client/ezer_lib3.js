@@ -152,12 +152,13 @@ function dbg_source_line(cmd) {
   var to_return= 0;
   switch (cmd) {
     case 'stmnt': {
-      let cc= this.code[this.c];
-      if (!Ezer.dbg.state && Ezer.dbg.stops.length) { // nejsme na stopce?
-        let file, ln, fl;
-        [file, ln]= cc.flc.split(',');
-        fl= `${file},${ln}`;
-        if (Ezer.dbg.stops.includes(fl)) {
+      let cc= this.code[this.c], file, ln, fl;
+      [file, ln]= cc.flc.split(',');
+      fl= `${file},${ln}`;
+      // nejsme na stopce?
+      if (Ezer.dbg.stops.length && Ezer.dbg.stops.includes(fl)) {
+        // začíná tím ladění?
+        if (!Ezer.dbg.state) {
           Ezer.continuation= this;
           this.step= true;
           if ( Ezer.sys.dbg.win_ezer ) {
@@ -167,8 +168,13 @@ function dbg_source_line(cmd) {
           Ezer.dbg.depth= this.calls.length;
           Ezer.dbg.process= this.process;
         }
+        Ezer.sys.dbg.win_ezer.dbg_trace_stmnt(' ?',cc.flc,'line-show');
+        Ezer.sys.dbg.win_ezer.dbg_watch_locals();
+        dbg_file_line_show(cc.flc,'line-break'); // funkce v ezer_lib3 volající dbg3
+        this.c++;
+        to_return= 1;
       }
-      if (Ezer.dbg.state) {
+      else if (Ezer.dbg.state) {
         if (Ezer.dbg.process==this.process) {
           if (Ezer.dbg.state==1) {
             Ezer.sys.dbg.win_ezer.dbg_trace_stmnt(' ?',cc.flc,'line-show');
@@ -179,7 +185,7 @@ function dbg_source_line(cmd) {
           else if (this.calls.length==Ezer.dbg.depth) { // Ezer.dbg.state==2
             Ezer.sys.dbg.win_ezer.dbg_trace_stmnt(' ?',cc.flc,'line-show');
             dbg_file_line_show(cc.flc,'line-break'); // funkce v ezer_lib3 volající dbg3
-            Ezer.dbg.state= 1;
+//            Ezer.dbg.state= 1;
             this.c++;
             to_return= 1;
           }
@@ -214,8 +220,12 @@ function dbg_source_line(cmd) {
       let desc= this.proc.desc,
           flc= `${desc.file_},${desc.lc_}`;
       if (Ezer.dbg.process==this.process) {
-        Ezer.sys.dbg.win_ezer.dbg_trace_stmnt(' .',flc,'line-show');
-        dbg_file_line_show(flc,'line-break'); // funkce v ezer_lib3 volající dbg3
+        Ezer.sys.dbg.win_ezer.dbg_trace_stmnt(' ?',flc,'line-show');
+        if (Ezer.dbg.state==1) {
+          dbg_file_line_show(flc,'line-break'); // funkce v ezer_lib3 volající dbg3
+          this.c++;
+          to_return= 1;
+        }
       }
       else {
         let indent= " -".repeat(this.process - Ezer.dbg.process);
@@ -271,26 +281,6 @@ function dbg_error_show(flc,msg) {
     Ezer.sys.dbg.win_ezer.dbg_write (`ERROR ${msg}`);
   }
 }
-// ------------------------------------------------------------------------------- dbg_onclick_start
-//function dbg_onclick_start(win) {
-//  win= win ? win : window;
-//  var dbg_src= win.document.getElementById('dbg_src');
-//  if ( dbg_src ) {
-//    dbg_src.addEvents({
-//      click: function(el) {
-//        var chs= el.target.getParent().getChildren(), x= 0;
-//        for (var i=0; i<chs.length; i++) {
-//          if ( chs[i]==el.target ) {
-//            x= i+1;
-//            break;
-//          }
-//        }
-//        Ezer.fce.echo("line=",x);
-//        return x;
-//      }
-//    });
-//  }
-//}
 // ===================================================================================> Užitečné fce
 // heap s oddělovači sep obsahuje string
 function contains(heap, string, sep){
