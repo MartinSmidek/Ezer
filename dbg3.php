@@ -94,7 +94,7 @@ __EOD;
     opener.doc= doc= opener;
     opener.dbg= dbg= window;
     // zapamatované elementy DOM
-    trace=  jQuery('#trace-left');
+    trace=  jQuery('#kuk');
     watch=  jQuery('#trace-right');
     log=    jQuery('#log');
     header= jQuery('#header');
@@ -135,7 +135,7 @@ __EOD;
     li.line-break, span.break { background: orangered !important; color: black; }
     li.line-show { background: silver !important; color: black; }
     li.stop span { background: #ff2448eb; color: yellow; }
-    li.trace-left span { background: #c0c0c0a6; }
+    li.kuk span { background: #c0c0c0a6; }
     li.curr { background: orange; }
     li.pick, span.pick { background: yellow; }
     li.pick2, span.pick2 { background: #ff244861; }
@@ -159,22 +159,40 @@ __EOD;
       
     /* ----------------------- zdrojový text */
     .text { flex: 1; }
-    #footer { height: 80px; display: flex; flex-direction: column;
+    #footer { height: 50%; display: flex; flex-direction: column;
       background: #e0e0e0; border-top: 1px solid #bbb; }
-    #grip { height: 20px; background: #ccc; text-align: center; line-height: 20px;
-      cursor: ns-resize; font-weight: bold; user-select: none; border-bottom: 1px solid #aaa; }
- 
+    #grip { height: 16px; background: #ccc; text-align: center; line-height: 20px;
+      /*cursor: col-resize;*/ font-weight: bold; user-select: none; border-bottom: 1px solid #aaa; }
+    #grip span { cursor: pointer; padding: 4px 5px 1px 5px; }
+    #grip span.grip_trace_on { background:#f00; }
+
     /* ----------------------- trace | watch */
     #trace { flex: 1; padding: 6px 10px; overflow-y: auto; color: #333; }
     #trace.split { display: grid; 
       grid-template-columns: var(--left-size, 50%) var(--divider, 6px) 1fr;
       grid-template-rows: 100%; overflow: hidden; }
     #trace .pane { min-width: 0; overflow: auto; }
-    #trace .pane--left  { grid-column: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    #trace .pane--left  { grid-column: 1; white-space: nowrap; text-overflow: ellipsis; }
     #trace .divider { grid-column: 2; cursor: col-resize;
       background: linear-gradient(90deg, transparent 0, transparent 2px, rgba(0,0,0,0.15) 2px, 
           transparent 4px) center/6px 100% no-repeat;
       user-select: none; touch-action: none; }
+    #kuk div.source { color:blue; font-weight: bold; }
+      
+    /* ----------------------- kopie trasování aplikace */
+    #kuk table, .dbg table { border-collapse:collapse; margin:1px 0;}
+    #kuk td, .dbg td { border:1px solid #aaa; font:x-small Arial;color:#777;padding:1px 3px; line-height:11px; }
+    #kuk td.title, .dbg td.title { color:#000; background-color:#aaa; }
+    #kuk td.label, .dbg td.label { color:#a33;}
+    .dbg table.dbg_array { background-color:#ddeeff; }
+    .dbg table.dbg_object { background-color:#ffffaa; }
+    .ae_switch_on { background-color:#fb6; color:navy;  }
+    .ae_switch_sel { background-color:#fb6; color:white;  }
+    #kuk div.trace { margin-left:70px; color:#000; padding:0; white-space:pre-wrap; }
+    #kuk div.trace_hide { margin-left:70px; color:#777; height:16px; overflow:hidden; white-space:pre-line; }
+    #kuk span.trace_on { color:#777; width:69px; margin:0; padding:0; float:left; left:0;
+      background: url(client/skins/default/tree.png) no-repeat 55px -104px; }
+    #kuk span.trace_click { background-color:#ddd; }
     
     /* ----------------------- watch */
     #trace .pane--right { grid-column: 3; }
@@ -378,9 +396,9 @@ __EOD;
   <span id='prompt'><span></span><input></span>
 
   <div id="footer">
-    <div id="grip"><i class="fa fa-arrows-v" title="Uchop a táhni"></i></div>
+    <div id="grip"><!-- i class="fa fa-arrows-v" title="Uchop a táhni"></i --></div>
     <div id="trace" class="split">
-      <div id="trace-left" class="pane pane--left">
+      <div id="kuk" class="pane pane--left">
         <!-- obsah levého panelu -->
       </div>
       <div class="divider" role="separator" aria-orientation="vertical" tabindex="0"></div>

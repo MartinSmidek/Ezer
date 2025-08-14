@@ -834,6 +834,22 @@ function dbg_trace_buttons(on,cont_too=true) {
   jQuery('#dbg_into').prop('disabled',on?false:true);
 }
 function dbg_trace_init() {
+  // kopie trasování z aplikace
+  let $bar= jQuery('#grip');
+  for (const id of doc.Ezer.sys.dbg.trace) {
+    doc.Ezer.is_trace[id]= doc.Ezer.app.options.ae_trace.indexOf(id)>=0;
+    jQuery(`<span class="${doc.Ezer.is_trace[id]?'grip_trace_on':''}">${id}</span>`)
+      .dblclick( e => {
+          let on= doc.Ezer.is_trace[id], $elem= jQuery(e.target);
+          doc.Ezer.app._setTraceOnOff(id,!on);
+          $elem.toggleClass('grip_trace_on');
+          doc.Ezer.app.send_status();
+          e.preventDefault();
+          return false;
+        })
+      .appendTo($bar);
+  }
+  // specifické trasování
   dbg.trace.dblclick( () => { dbg.trace.empty(); dbg.watch.empty(); } );
   jQuery('#dbg_cont').off('click').prop('disabled',true).on('click', () => {
     dbg_trace_buttons(false);
@@ -870,7 +886,12 @@ function dbg_trace_init() {
   });
 }
 function dbg_trace_line(line) {
-  dbg.trace.append(line+'<br>');
+  dbg.dbg_trace_append(`<div class="source">${line}</div>`);
+//  dbg.trace.append(line+'<br>');
+//  dbg.trace.scrollTop(dbg.trace[0].scrollHeight);
+}
+function dbg_trace_append(div) {
+  dbg.trace.append(div);
   dbg.trace.scrollTop(dbg.trace[0].scrollHeight);
 }
 // podbarvi řádek na pozici flc

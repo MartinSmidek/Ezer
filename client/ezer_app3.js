@@ -56,6 +56,7 @@ Ezer.sys= {
   options:Ezer.options,
   dbg: {                    // stav debugeru DBG3
     win_ezer:null,            // - window se zobrazenými moduly ezerscriptu nebo null
+    trace:['U','u','M','a','x','X','q'], // výběr trasování pro okno DBG
     file:'',                  // - aktuálně zobrazený soubor
     files:{},                 // - všechny soubory se stavem
     path:[Ezer.root]          // - cesta ke zdrojovým souborům doplnitelná přes Ezer.options.dbg
@@ -1874,7 +1875,7 @@ class Eval {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  trace
   trace (str) {
     var tr;
-    if ( Ezer.to_trace ) {
+    if ( Ezer.to_trace || Ezer.sys.dbg.win_ezer ) {
       if ( str ) {
         tr= str;
       }
@@ -1892,13 +1893,13 @@ class Eval {
         }
       }
       tr= this.trace_stack(tr);                                 // trasování zásobníku
-      Ezer.trace('',tr);
+      Ezer.trace('q',tr);
     }
   }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  trace_end
   trace_end () {
     var tr;
-    if ( Ezer.to_trace ) {
+    if ( Ezer.to_trace || Ezer.sys.dbg.win_ezer ) {
       tr= padStr(this.proc ? this.proc.id : this.id,16);        // poloha
       tr+= Ezer.eval_jump+padNum(this.c,2)+': end';             // instrukce
       tr= this.trace_stack(tr);                                 // trasování zásobníku
@@ -2574,8 +2575,10 @@ class Eval {
               if ( typeof(fce)!='function' )
                 this.say_error('EVAL: '+cc.i+' není metoda '+obj.type,'S',this.proc,last_lc);
               val= fce.apply(obj,args);
-              if ( Ezer.to_trace && Ezer.is_trace.x ) this.trace_fce(cc.s,obj.id+'.'+cc.i,obj,args,'x1');
-              if ( Ezer.to_trace && Ezer.is_trace.X ) this.trace_debug(val,'fx:'+cc.i+'>',cc.i);
+              if ( (Ezer.to_trace  || Ezer.sys.dbg.win_ezer) 
+                && Ezer.is_trace.x ) this.trace_fce(cc.s,obj.id+'.'+cc.i,obj,args,'x1');
+              if ( (Ezer.to_trace || Ezer.sys.dbg.win_ezer) 
+                && Ezer.is_trace.X ) this.trace_debug(val,'fx:'+cc.i+'>',cc.i);
               if ( typeof(val)=='object' ) {
                 if ( val && val.cmd ) {
                   this.askx(obj,cc.i,val);
@@ -5724,7 +5727,8 @@ Ezer.fce.DOM.error= function (str,nonl) {
 // -------------------------------------------------------------------------------------- trace
 // b označuje (nepovinný) blok, který je ukázán při kliknutí na trasovací řádek
 Ezer.trace= function (typ,msg,b,ms) {
-  if ( Ezer.to_trace && (!typ || Ezer.App.options.ae_trace.indexOf(typ)>=0) ) {
+  if ((Ezer.to_trace || Ezer.sys.dbg.win_ezer)
+      && (!typ || Ezer.App.options.ae_trace.indexOf(typ)>=0) ) {
     Ezer.trace.n++;
     var t= typ=='U' ? 'x' : typ=='u' ? 'c' : typ=='q' ? 'q' : typ=='E' ? 'q'  : typ=='f' ? 'q'
          : typ=='M' ? 'c' : typ=='m' ? 'q' : typ=='x' ? 'q' : typ=='a' ? 'q' : '-';
@@ -5748,17 +5752,21 @@ Ezer.trace= function (typ,msg,b,ms) {
             Ezer.fce.source(this.data('block'));
           }
         });
-      kuk
-        .append(
-          jQuery(`<div>`)
-            .append(span)
-            .append(`<div class="trace${c}">${msg}</div>`)
-          )
-        .scrollTop(kuk.scrollHeight);
-    }
-    // pokud je aktivováno zobrazení zdrojového textu
-    if ( b && window.top.dbg ) {
-      span.data('block',b).addClass('trace_click');
+      let $div= jQuery(`<div>`).append(span).append(`<div class="trace${c}">${msg}</div>`);
+      // pokud je otevřený debuger, zobrazíme i tam
+      if (Ezer.sys.dbg.win_ezer && Ezer.sys.dbg.trace.indexOf(typ)>=0) {
+        let $div_dbg= $div.clone(true);
+        Ezer.sys.dbg.win_ezer.dbg_trace_append($div_dbg[0]);
+      }
+      if (Ezer.to_trace) {
+        kuk
+          .append($div)
+          .scrollTop(kuk.scrollHeight);
+      }
+      // pokud je aktivováno zobrazení zdrojového textu
+      if ( b && window.top.dbg ) {
+        span.data('block',b).addClass('trace_click');
+      }
     }
   }
 };
