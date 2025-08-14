@@ -216,7 +216,8 @@ __EOD;
 
     /* ----------------------- debug */
     #log { position:absolute; display: none; background:#eee; box-shadow:5px 5px 10px #567;
-      padding: 5px; z-index: 4; max-height: 300px; overflow: auto; }
+      padding: 5px; z-index: 4; overflow: auto; border: solid 1px grey;
+      max-width: calc(100% - 235px); max-height: calc(100% - 100px); }
     #prompt { position:absolute; display: none; background:#eee; box-shadow:5px 5px 10px #567;
       padding: 5px; z-index: 3; }
     #prompt span { display:block; }

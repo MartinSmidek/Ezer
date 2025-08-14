@@ -944,12 +944,25 @@ function dbg_watch_act (proc,act) {
     msg+= `</dd>`;  
   }
   for (const [id,offset] of Object.entries(proc.desc.var)) {
-    msg+= `<dd><span class="var">${id}</span>=`;  
-    let val= doc.Ezer.continuation.stack[act-offset];
+    let istack= act-offset,
+        onclick= `onclick="dbg_show_val(${istack},'${id}')"`,
+        val= doc.Ezer.continuation.stack[istack];
+    msg+= `<dd><span class="var" ${onclick}>${id}</span>=`;  
     msg+= doc.Ezer.continuation.val(val);  
     msg+= `</dd>`;  
   }
   return msg;
+}
+// zobrazí hodnotu
+function dbg_show_val (istack,id) {
+  let value= doc.Ezer.continuation.stack[istack];
+  if ( typeof value == "object" )
+    value= doc.Ezer.fce.debug(value,id,3);
+  else
+    value= id+'='+value;
+  dbg.log
+    .css({display:'block',top:50,left:190})
+    .html(value);
 }
 // =======================================================================================> DEBUGGER
 jQuery.fn.extend({
