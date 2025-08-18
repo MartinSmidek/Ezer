@@ -195,7 +195,7 @@ function git_exec($par) {
     chdir(".");
   else
     fce_error('chybná aktuální složka');
-  debug($par,"git_make(...), ezer_version=EZER_VERSION, bean=$bean, ezer_path=$ezer_path, cwd=".getcwd());
+  debug($par,"git_make(...), ezer_version=".EZER_VERSION.", bean=$bean, ezer_path=$ezer_path, cwd=".getcwd());
   // proveď příkaz Git
   $state= 0;
   $branch= $folder=='ezer' ? 'ezer'.EZER_VERSION 
@@ -206,12 +206,14 @@ function git_exec($par) {
       $exec= "git $cmd";
       display($exec);
       exec($exec,$lines,$state);
+      debug($lines,"$state:$exec");
       $msg.= "$state:$exec\n";
       break;
     case 'pull':
       $exec= "git pull origin $branch";
       display($exec);
       exec($exec,$lines,$state);
+      debug($lines,"$state:$exec");
       $msg.= "$state:$exec\n";
       break;
     case 'fetch':
@@ -221,10 +223,12 @@ function git_exec($par) {
         $exec= "git pull origin $branch";
         display($exec);
         exec($exec,$lines,$state);
+        debug($lines,"$state:$exec");
         $msg.= "$state:$exec\n";
         $exec= "git reset --hard origin/$branch";
         display($exec);
         exec($exec,$lines,$state);
+        debug($lines,"$state:$exec");
         $msg.= "$state:$exec\n";
       }
       break;
