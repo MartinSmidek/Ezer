@@ -122,13 +122,13 @@ __EOD;
     html, body { margin: 0; padding: 0; $FONT
       height: 100vh; display: flex; flex-direction: column; overflow:hidden; }
     #layout { flex: 1; display: flex; overflow: hidden; }
-    #filnot { border-right: 2px solid silver; overflow-y: auto;
+    #filnot { width: 150px; border-right: 2px solid silver; overflow-y: auto;
       display: flex; flex-direction: column; gap: 2px; }
     #buttons { display: flex; gap: 8px; padding: 4px; height: 32px; }
     #filnot button { width: 100%; padding: 2px; }
     #filnot button:disabled { opacity: 0.4; cursor: not-allowed; }
     #filnot select { background: silver; height: 20px; border: none; $FONT }
-    #filnot ul {  margin: 0; padding: 0; overflow-y: auto; }
+    #filnot ul { height: 100%; margin: 0; padding: 0; overflow-y: auto; }
     #filnot ul li {  white-space: pre; list-style-type: none; height: 13px; cursor: alias; }
       
     /* ----------------------- trace */
@@ -159,7 +159,7 @@ __EOD;
       
     /* ----------------------- zdrojový text */
     .text { flex: 1; }
-    #footer { height: 50%; display: flex; flex-direction: column;
+    #footer { height: 30%; display: flex; flex-direction: column;
       background: #e0e0e0; border-top: 1px solid #bbb; }
     #grip { height: 16px; background: #ccc; text-align: center; line-height: 20px;
       /*cursor: col-resize;*/ font-weight: bold; user-select: none; border-bottom: 1px solid #aaa; }
