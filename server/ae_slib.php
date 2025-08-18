@@ -213,7 +213,7 @@ function git_exec($par) {
       $exec= "git pull origin $branch";
       display($exec);
       exec($exec,$lines,$state);
-      debug($lines,"$state:$exec");
+      debug($lines,"$state:$exec:".getcwd());
       $msg.= "$state:$exec\n";
       break;
     case 'fetch':
