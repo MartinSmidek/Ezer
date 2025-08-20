@@ -152,8 +152,8 @@ function dbg_source_line(cmd) {
   var to_return= 0;
   switch (cmd) {
     case 'stmnt': {
-      let cc= this.code[this.c], file, ln, fl;
-      [file, ln]= cc.flc.split(',');
+      let cc= this.code[this.c], ln, fl;
+      [ln]= cc.lc.split(',');
       fl= `${this.dbg_act_file},${ln}`;
       Ezer.dbg.last_flc= fl; // pro zobrazení případné následující chyby
       // nejsme na stopce?

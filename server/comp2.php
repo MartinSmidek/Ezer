@@ -1331,7 +1331,7 @@ function add_call_php($name,$lc='',$ask=0) {
 function gen_func($c,&$desc,$name) {
   global $error_code_context, $error_code_lc, $code_top, $begs, $ends, $func, $func_name, $returns;
   global $pragma_names, $proc_path, $depth, $call_ezer, $func_name_lc;
-  global $TEST_DBG, $gen2_file;
+  global $TEST_DBG;
 //                                                 debug($c,"gen_proc: $name");
   $func= $c;
   $func_name= explode('.',$name);
@@ -1361,7 +1361,6 @@ function gen_func($c,&$desc,$name) {
   $call_ezer[$func_name_lc]= array();
   // prázdná procedura obsahuje jen return
   $depth= $returns= $begs= $ends= 0;
-  if ($TEST_DBG) $gen2_file= $c->file_;
   $code= $c->code ? gen2($c->par,$c->var,$c->code) : array((object)array('o'=>'f','i'=>'stop'));
   if ($func->options->type && !$returns)
     comp_error("CODE: ve funkci '$func_name' s typem chybí return");
@@ -1375,7 +1374,7 @@ function gen_func($c,&$desc,$name) {
 #   $depth je hloubka zanoření cyklů a switch - používá se pro doplnění překladu break a continue
 function gen2($pars,$vars,$c) {
   global $code_top, $call_php, $begs, $ends, $func, $func_name, $func_expr, $returns;
-  global $TEST_DBG, $gen2_lc, $gen2_file;
+  global $TEST_DBG, $gen2_lc;
   $expr= function ($c,$ref=false) use ($vars,$pars) {
     if ( $c->expr=='name' ) {
       $right= name_split($c->name,$pars,$vars);
@@ -1387,8 +1386,7 @@ function gen2($pars,$vars,$c) {
     return $value;
   };
   if ($TEST_DBG) $prefix_op= function(&$code,$lc,$cmnt) { 
-    global $gen2_file;
-    array_unshift($code,(object)['o'=>'*','flc'=>"$gen2_file,$lc",'cmnt'=>$cmnt]);
+      array_unshift($code,(object)['o'=>'*','lc'=>$lc,'cmnt'=>$cmnt]);
   }; 
   $func_expr= $c;
   switch ( $c->expr ) {
