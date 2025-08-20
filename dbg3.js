@@ -481,12 +481,9 @@ function dbg_start(file) {
 // ---------------------------------------------------------------------------------- saveTextAsFile
 // https://stackoverflow.com/questions/51315044/how-do-i-save-the-content-of-the-editor-not-the-whole-html-page
 function saveTextAsFile(textToWrite,fileNameToSaveAs) {
-//  var textToWrite = editor.getValue();
   var textFileAsBlob = new Blob([textToWrite], {
     type: "text/plain;charset=utf-8"
   });
-//  var fileNameToSaveAs = "myfile.txt";
-
   var downloadLink = document.createElement("a");
   downloadLink.download = fileNameToSaveAs;
   downloadLink.innerHTML = "Download File";
@@ -502,8 +499,11 @@ function saveTextAsFile(textToWrite,fileNameToSaveAs) {
     downloadLink.style.display = "none";
     document.body.appendChild(downloadLink);
   }
-
   downloadLink.click();
+}
+// funkce pro odstranění odkazu z DOMu po kliknutí
+function destroyClickedElement(event) {
+    document.body.removeChild(event.target);
 }
 // ------------------------------------------------------------------------------------ dbg_onunload
 // DBG - voláno z dbg3.php
@@ -777,23 +777,25 @@ function dbg_touch_line (type,on,ln) {
     }
   }
   else if ( on ) {
-    dbg.src[l].addClass(type);
-    list.push(l);
+    dbg.src[ln].addClass(type);
+    list.push(ln);
   }
   else {
-    dbg.src[l].removeClass(type);
-    let i= list.indexOf(l);
+    dbg.src[ln].removeClass(type);
+    let i= list.indexOf(ln);
     if ( i>-1 ) list.splice(i);
   }
 }
 // on=1 přidá stopřádek, on=-1 odebere, on=0 změní na opak
 function dbg_stopline (ln, change) {
-  let i= doc.Ezer.dbg.stops.indexOf(`${app_ezer.indexOf(doc.Ezer.sys.dbg.file)},${ln}`);
+//  let i= doc.Ezer.dbg.stops.indexOf(`${app_ezer.indexOf(doc.Ezer.sys.dbg.file)},${ln}`);
+  let i= doc.Ezer.dbg.stops.indexOf(`${doc.Ezer.sys.dbg.file},${ln}`);
   if (change==0) { // změníme stav
     change= i==-1 ? 1 : -1;
   }
   if (change==1 && i==-1) { // přidáme stopřádek
-    doc.Ezer.dbg.stops.push(`${app_ezer.indexOf(doc.Ezer.sys.dbg.file)},${ln}`);
+//    doc.Ezer.dbg.stops.push(`${app_ezer.indexOf(doc.Ezer.sys.dbg.file)},${ln}`);
+    doc.Ezer.dbg.stops.push(`${doc.Ezer.sys.dbg.file},${ln}`);
     dbg_touch_line('break',1,ln);
   }
   else if (change==-1 && i!==-1) { // odebereme stopřádek
@@ -827,6 +829,7 @@ function dbg_trace_stop() {
   doc.Ezer.dbg.state= 0;  // ukončení ladění
   dbg.dbg_watch_clear();
   dbg.jQuery('li.line-break').removeClass('line-break');
+  doc.Ezer.sys.dbg.files[doc.Ezer.sys.dbg.file].stopped= 0;
 }
 function dbg_trace_buttons(on,cont_too=true) {
   if (cont_too) jQuery('#dbg_cont').prop('disabled',on?false:true);
@@ -1015,7 +1018,7 @@ function dbg_reload_(y,clear) {
   doc.Ezer.sys.dbg.file= y.file;
   let files= doc.Ezer.sys.dbg.files;
   if (files[y.file]==undefined) {
-    files[y.file]= {pick:Number(y.line),stop:0,traces:[],stops:[],lines:[],mtime:0};
+    files[y.file]= {pick:Number(y.line),stopped:0,stop:0,traces:[],stops:[],lines:[],mtime:0};
   }
   files[y.file].lines= y.lines;
   files[y.file].mtime= y.mtime;
@@ -1027,17 +1030,28 @@ function dbg_reload_(y,clear) {
   }
   dbg_show_text(y.lines,y.cg); // obnoví src a not
   dbg.focus();
-  // -----------------------------------==> .. obnovení stavu
   dbg.header.html('VIEW '+dbg.name);
-  for (let ln of files[y.file].stops) {
-    dbg.src[ln].addClass('break');
+  // -----------------------------------==> .. obnovení stavu zobrazení stop adres
+  let file,ln;
+  for (let fl of doc.Ezer.dbg.stops) {
+    [file,ln]= fl.split(',');
+    if (file==y.file) {
+      dbg_touch_line('break',1,ln);
+    }
   }
-  for (let ln of files[y.file].traces) {
-    dbg.src[ln].addClass('trace');
+  if ( (ln= files[y.file].stopped) ) {
+    dbg.src[ln].addClass('line-break');
   }
-  if ( files[y.file].stop ) {
-    dbg.src[files[y.file].stop].addClass('stop');
-  }
+  Ezer.sys.dbg.files[file].stopped= ln;
+//  for (let ln of files[y.file].stops) {
+//    dbg.src[ln].addClass('break');
+//  }
+//  for (let ln of files[y.file].traces) {
+//    dbg.src[ln].addClass('trace');
+//  }
+//  if ( files[y.file].stop ) {
+//    dbg.src[files[y.file].stop].addClass('stop');
+//  }
   // pokud není definovaná line použij zapamatovanou
   let line= Number(y.line) ? Number(y.line) : files[y.file].pick;
   dbg.dbg_show_line(line,'pick',undefined,clear);
@@ -1409,7 +1423,7 @@ function htmlentities(h) {
 // ------------------------------------------------------------------------------==> . dbg show_line
 // zobrazení textu ve struktuře
 // ln= řádek[.index souboru]
-function dbg_show_line(ln,css='pick',el=undefined,clear=true,file=0) {
+function dbg_show_line(ln,css='pick',el=undefined,clear=true,file='') {
   if (el!=undefined) 
     el.stopImmediatePropagation();
   else if (window.event!=undefined) 
@@ -1418,7 +1432,7 @@ function dbg_show_line(ln,css='pick',el=undefined,clear=true,file=0) {
   if (clear) dbg.dbg_clear();
   dbg.lines.find(`li.${css}`).removeClass(css);
   // je zobrazený stejný soubor jako je cílový?
-  let name= file ? app_ezer[file] : doc.Ezer.sys.dbg.file;
+  let name= file ? file : doc.Ezer.sys.dbg.file;
   if (typeof ln === 'string') {
     let lns= ln.split('.');
     ln= lns[0];

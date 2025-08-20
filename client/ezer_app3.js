@@ -2091,8 +2091,7 @@ class Eval {
             case 0: {
               break;
             }
-            case '*': {
-              Ezer.dbg.last_flc= cc.flc; // pro zobrazení případné následující chyby
+            case '*': if (this.dbg_act_file) {
               if (dbg_source_line.call(this,'stmnt')) 
                 return; // asynchronní čekání na debugger
               else
@@ -2344,6 +2343,10 @@ class Eval {
                 this.say_error('nenalezena procedura '+cc.i+' v "'+this.context.type+' '+this.context.id+'"',
                   'S',this.proc,last_lc);
               this.proc= obj[0];
+              // pokud ladíme, zjistíme soubor funkce
+              if (Ezer.sys.dbg.win_ezer) {
+                this.dbg_act_file= this.proc?.owner.app_file()?.file;
+              }
               // pro C použijeme kód z popisu formuláře
               this.code= cc.o=='c' ? this.proc.code : this.proc.desc.code;
               this.c= 0;

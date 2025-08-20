@@ -213,7 +213,8 @@ function git_exec($par) {
       $exec= "git pull origin $branch";
       display($exec);
       exec($exec,$lines,$state);
-      debug($lines,"$state:$exec:".getcwd());
+      debug($lines,"$state:$exec:".getcwd().":".get_current_user());
+      if (function_exists('posix_getegid')) debug(posix_getegid());
       $msg.= "$state:$exec\n";
       break;
     case 'fetch':
