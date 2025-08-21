@@ -2091,11 +2091,12 @@ class Eval {
             case 0: {
               break;
             }
-            case '*': if (this.dbg_act_file) {
-              if (dbg_source_line.call(this,'stmnt')) 
-                return; // asynchronní čekání na debugger
-              else
-                break;
+            case '*':  {
+              if (this.dbg_act_file) {
+                if (dbg_source_line.call(this,'stmnt')) 
+                  return; // asynchronní čekání na debugger
+              } 
+              break;
             }
             case 'v': {
               this.stack[++this.top]= cc.v;
