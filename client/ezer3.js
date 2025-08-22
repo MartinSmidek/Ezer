@@ -795,9 +795,10 @@ class Block {
 //   extend=='rewrite' pro přepsání bloků
 //   extend=='include' pro přidání vnitřních bloků
 //   extend=='dom_only' pro pouhý přepis DOM - volá se reinitialize
+//   file je zdrojový text pro vkládaný blok, pokud je odlišný ... nastává pro use x: form y { ... }
 //a: wrap_fce - nepovinná funkce, která je volána po zapojení části do celku
 //s: system
-  subBlocks (desc0,DOM,wrap_fce,extend) {
+  subBlocks (desc0,DOM,wrap_fce,extend,file) {
     // vložení případných vnořených částí, pokud na to je dostatečné oprávnění
 //    let desc0= {};
 //    jQuery.extend(desc0,desc00);
@@ -808,6 +809,9 @@ class Block {
       if ( !extend || this.part===undefined ) this.part= {};
       for (var name in desc0.part) {
         var desc= desc0.part[name];
+        if (file) {
+          desc._file= file;
+        }
 //                                                 Ezer.trace('L','subBlocks of '+this.type+' '+this.id+': '+desc.type+' '+name);
         if ( this.part && this.part[name] && this.part[name].type=='proc') {
           // přepis kódu procedury v use
@@ -979,7 +983,10 @@ class Block {
                   else Ezer.error("area není vnořena do panelu");
                 }
                 // vložení případných podčástí (např. přepisu těl procedur)
-                part.subBlocks(desc,this.DOM_Block,null,true);
+                if (desc.part) {
+                  let pos= this.app_file();
+                  part.subBlocks(desc,this.DOM_Block,null,true,pos.file);
+                }
                 break;
 
             // s potenciální vizualizací

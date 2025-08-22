@@ -1042,7 +1042,7 @@ function dbg_reload_(y,clear) {
   if ( (ln= files[y.file].stopped) ) {
     dbg.src[ln].addClass('line-break');
   }
-  Ezer.sys.dbg.files[file].stopped= ln;
+//  doc.Ezer.sys.dbg.files[file].stopped= ln;
 //  for (let ln of files[y.file].stops) {
 //    dbg.src[ln].addClass('break');
 //  }
