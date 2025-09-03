@@ -152,9 +152,10 @@ function dbg_source_line(cmd) {
   var to_return= 0;
   switch (cmd) {
     case 'stmnt': {
-      let cc= this.code[this.c], ln, fl;
+      let cc= this.code[this.c], ln, fl, flc;
       [ln]= cc.lc.split(',');
       fl= `${this.dbg_act_file},${ln}`;
+      flc= `${this.dbg_act_file},${cc.lc}`;
       Ezer.dbg.last_flc= fl; // pro zobrazení případné následující chyby
       // nejsme na stopce?
       if (Ezer.dbg.stops.length && Ezer.dbg.stops.includes(fl)) {
@@ -169,7 +170,7 @@ function dbg_source_line(cmd) {
           Ezer.dbg.depth= this.calls.length;
           Ezer.dbg.process= this.process;
         }
-        Ezer.sys.dbg.win_ezer.dbg_trace_stmnt(' ?',fl,'line-show');
+        Ezer.sys.dbg.win_ezer.dbg_trace_stmnt(' ?',flc,'line-show');
         Ezer.sys.dbg.win_ezer.dbg_watch_locals();
         dbg_file_line_show(fl); // funkce v ezer_lib3 volající dbg3
         this.c++;
@@ -178,13 +179,13 @@ function dbg_source_line(cmd) {
       else if (Ezer.dbg.state) {
         if (Ezer.dbg.process==this.process) {
           if (Ezer.dbg.state==1) {
-            Ezer.sys.dbg.win_ezer.dbg_trace_stmnt(' ?',fl,'line-show');
+            Ezer.sys.dbg.win_ezer.dbg_trace_stmnt(' ?',flc,'line-show');
             dbg_file_line_show(fl); // funkce v ezer_lib3 volající dbg3
             this.c++;
             to_return= 1;
           }
           else if (this.calls.length==Ezer.dbg.depth) { // Ezer.dbg.state==2
-            Ezer.sys.dbg.win_ezer.dbg_trace_stmnt(' ?',fl,'line-show');
+            Ezer.sys.dbg.win_ezer.dbg_trace_stmnt(' ?',flc,'line-show');
             dbg_file_line_show(fl); // funkce v ezer_lib3 volající dbg3
 //            Ezer.dbg.state= 1;
             this.c++;
@@ -192,12 +193,12 @@ function dbg_source_line(cmd) {
           }
           else {
             // není potlačené mezitrasování
-            Ezer.sys.dbg.win_ezer.dbg_trace_stmnt(' .',fl,'line-show');
+            Ezer.sys.dbg.win_ezer.dbg_trace_stmnt(' .',flc,'line-show');
           }
         }
         else {
           let indent= " -".repeat(this.process - Ezer.dbg.process);
-          Ezer.sys.dbg.win_ezer.dbg_trace_stmnt(` ${indent}`,fl,'line-show');
+          Ezer.sys.dbg.win_ezer.dbg_trace_stmnt(` ${indent}`,flc,'line-show');
         }
         Ezer.sys.dbg.win_ezer.dbg_watch_locals();
       }

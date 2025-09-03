@@ -80,7 +80,8 @@ function comp_file ($name,$root='',$_list_only='',$_comp_php=false) {  #trace();
   $define_used= array();
   $ezer_path_code= "$ezer_path_root/$root/code$ezer_version";
   comp_ezer_list(); // naplní $app_ezers
-  $file_= array_search($name,$app_ezers);
+  $file_= $name;
+//  $file_= array_search($name,$app_ezers);
   $list_only= $_list_only;
   $comp_php= $_comp_php;
   $errors= 0;
@@ -3923,9 +3924,10 @@ function get_if_the_key ($key,&$lc) {
 }
 # ---------------------------------------------------------------------------------------- delimiter
 # zjistí následuje-li v textu oddělovač, jestli ano přečte jej
+# 250826 '$' v tomto dotazu odsouhlasíme jako oddělovač
 function get_if_delimiter ($del) {
   global $head, $lex, $typ;
-  $ok= $typ[$head]=='del' && $lex[$head]==$del;
+  $ok= $lex[$head]==$del && ($typ[$head]=='del' || $del=='$');
   if ( $ok ) {
     $head++;
   }

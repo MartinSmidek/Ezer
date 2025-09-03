@@ -905,9 +905,12 @@ function dbg_trace_source(flc,bckg) {
 }
 function dbg_trace_stmnt(prefix,flc) {
   let [file,ln,c]= flc.split(','),
-      click= `onclick="dbg_trace_source('${flc}','line-show')"`,
-      src= htmlentities(dbg.src[ln].find('span.text').text()),
-      pos= ` <span ${click} style='cursor:alias'>${flc} ${src}</span>`;
+      click= `onclick="dbg_trace_source('${file},${ln}','line-show')"`,
+      src= htmlentities(dbg.src[ln].find('span.text').text()), pos;
+  if (c>12) {
+    src= '… '+src.slice(c-1);
+  }
+  pos= ` <span ${click} style='cursor:alias'>${file}/${ln} ${src}</span>`;
   dbg_trace_line(`${prefix} ${pos}`);
 }
 // ------------------------------------------------------------------------------------------- WATCH
@@ -940,19 +943,23 @@ function dbg_watch_locals () {
 // vypíše aktivační záznam
 function dbg_watch_act (proc,act) {
   let msg= `<dt class="func">${proc._id}</dt>`;
-  for (const [id,offset] of Object.entries(proc.desc.par)) {
-    msg+= `<dd><span class="par">* ${id}</span>=`;  
-    let val= doc.Ezer.continuation.stack[act-offset];
-    msg+= doc.Ezer.continuation.val(val);  
-    msg+= `</dd>`;  
+  if (proc.desc.par) {
+    for (const [id,offset] of Object.entries(proc.desc.par)) {
+      msg+= `<dd><span class="par">* ${id}</span>=`;  
+      let val= doc.Ezer.continuation.stack[act-offset];
+      msg+= doc.Ezer.continuation.val(val);  
+      msg+= `</dd>`;  
+    }
   }
-  for (const [id,offset] of Object.entries(proc.desc.var)) {
-    let istack= act-offset,
-        onclick= `onclick="dbg_show_val(${istack},'${id}')"`,
-        val= doc.Ezer.continuation.stack[istack];
-    msg+= `<dd><span class="var" ${onclick}>${id}</span>=`;  
-    msg+= doc.Ezer.continuation.val(val);  
-    msg+= `</dd>`;  
+  if (proc.desc.var) {
+    for (const [id,offset] of Object.entries(proc.desc.var)) {
+      let istack= act-offset,
+          onclick= `onclick="dbg_show_val(${istack},'${id}')"`,
+          val= doc.Ezer.continuation.stack[istack];
+      msg+= `<dd><span class="var" ${onclick}>${id}</span>=`;  
+      msg+= doc.Ezer.continuation.val(val);  
+      msg+= `</dd>`;  
+    }
   }
   return msg;
 }

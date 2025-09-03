@@ -360,7 +360,7 @@ function comp_module($name,$root,&$state) {
   global $code, $option_source, $option_list, $lst;
 //   $trace= $option_state;
 //  echo("option_list=$option_list, trace=$trace ... {$_GET['trace']}");
-  global $totrace; $totrace= 'u';
+//  global $totrace; $totrace= 'u';
   $state= comp_file($name,$root,$option_list,true);
 //    echo($lst);
   $ln= 0;

@@ -9809,6 +9809,7 @@ class Browse extends Block {
 //*f: Browse-DOM.DOM_addEvents ()
 //      připojí (nebo odpojí) události
   DOM_addEvents () {
+    let clickTimeout;
     // přidání událostí myši
     for (var i= 1; i<=this.tmax; i++) {
       this.DOM_row[i][0].addEventListener('touchend',function(el){
@@ -9828,19 +9829,22 @@ class Browse extends Block {
       }.bind(this));
       this.DOM_row[i]
         .click( el => {
-          if ( el.shiftKey ) return dbg_onshiftclick(this); /* browse */
-          if ( this.enabled ) {
-            Ezer.fce.touch('block',this,'click');         // informace do _touch na server
-            var tr= el.target.tagName=='TD' ? el.target.parentNode : el.target;
-            var i= jQuery(tr).data('i');
-            if ( i && i <= this.tlen ) {
-              this.DOM_focus();
-              this.DOM_hi_row(this.t+i-1,0,0,el.ctrlKey);
-              if ( el.ctrlKey ) {
-                this.DOM_riseEvent('keydown_insert');
+          clearTimeout(clickTimeout); // zruš předchozí timeout, pokud existuje
+          clickTimeout= setTimeout(() => {
+            if ( el.shiftKey ) return dbg_onshiftclick(this); /* browse */
+            if ( this.enabled ) {
+              Ezer.fce.touch('block',this,'click');         // informace do _touch na server
+              var tr= el.target.tagName=='TD' ? el.target.parentNode : el.target;
+              var i= jQuery(tr).data('i');
+              if ( i && i <= this.tlen ) {
+                this.DOM_focus();
+                this.DOM_hi_row(this.t+i-1,0,0,el.ctrlKey);
+                if ( el.ctrlKey ) {
+                  this.DOM_riseEvent('keydown_insert');
+                }
               }
             }
-          }
+          },250)
         });
     }
     // přidání událostí klávesnice
@@ -9901,6 +9905,7 @@ class Browse extends Block {
       });
     this.DOM_table
       .dblclick( el => { // dvojklik na datovém řádku vyvolá onsubmit
+        clearTimeout(clickTimeout); // zruš čekání na click
         el.stopPropagation();
         if ( this.enabled ) {
           Ezer.fce.touch('block',this,'dblclick');     // informace do _touch na server
@@ -9908,9 +9913,8 @@ class Browse extends Block {
           var i= jQuery(tr).data('i');
           if ( i && i <= this.tlen ) {
             // dblclick na datovém řádku
-            this.tact= i;
             this.DOM_focus();
-            this.DOM_hi_row(this.t+i-1,1);
+            this.DOM_hi_row(this.t+i-1,0); // a vyvolá onrowclick
             this.fire('onsubmit',[this.keys[this.t+i-1-this.b],el.ctrlKey?1:0]);
           }
         }

@@ -2346,7 +2346,8 @@ class Eval {
               this.proc= obj[0];
               // pokud ladíme, zjistíme soubor funkce
               if (Ezer.sys.dbg.win_ezer) {
-                this.dbg_act_file= this.proc?.owner.app_file()?.file;
+                this.dbg_act_file= this.proc?.app_file()?.file;
+//                this.dbg_act_file= this.proc?.owner.app_file()?.file;
               }
               // pro C použijeme kód z popisu formuláře
               this.code= cc.o=='c' ? this.proc.code : this.proc.desc.code;
@@ -2921,7 +2922,7 @@ class Eval {
             this.say_error('Ezerscript error in '+this.id+msg,'s',this.proc);
           }
           else {
-            if ( Ezer.browser=='CH' ) {
+            if ( ['CH','EG'].includes(Ezer.browser) ) {
 //               var astack= e.stack.split("\n");
 //               this.say_error(e?'Javascript '+(astack[0]+astack[1]||e):'error in eval','E',e);
               this.say_error(e ? 'Javascript '+(e.message||'')+e.stack : 'error in eval','E',e);
