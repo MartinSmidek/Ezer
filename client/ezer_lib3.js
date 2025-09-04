@@ -197,7 +197,8 @@ function dbg_source_line(cmd) {
           }
         }
         else {
-          let indent= " -".repeat(this.process - Ezer.dbg.process);
+          let dif= this.process - Ezer.dbg.process,
+              indent= " -".repeat(dif>0 ? dif : 1);
           Ezer.sys.dbg.win_ezer.dbg_trace_stmnt(` ${indent}`,flc,'line-show');
         }
         Ezer.sys.dbg.win_ezer.dbg_watch_locals();
@@ -212,7 +213,8 @@ function dbg_source_line(cmd) {
         dbg_file_line_show(flc); // funkce v ezer_lib3 volající dbg3
       }
       else {
-        let indent= " -".repeat(this.process - Ezer.dbg.process);
+          let dif= this.process - Ezer.dbg.process,
+              indent= " -".repeat(dif>0 ? dif : 1);
         Ezer.sys.dbg.win_ezer.dbg_trace_stmnt(` ${indent}`,flc,'line-show');
         dbg_file_line_show(flc); // funkce v ezer_lib3 volající dbg3
       }
@@ -230,7 +232,8 @@ function dbg_source_line(cmd) {
         }
       }
       else {
-        let indent= " -".repeat(this.process - Ezer.dbg.process);
+        let dif= this.process - Ezer.dbg.process,
+            indent= " -".repeat(dif>0 ? dif : 1);
         Ezer.sys.dbg.win_ezer.dbg_trace_stmnt(` ${indent}`,flc,'line-show');
         dbg_file_line_show(flc); // funkce v ezer_lib3 volající dbg3
       }
