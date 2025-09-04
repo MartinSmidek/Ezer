@@ -162,7 +162,7 @@ __EOD;
     #footer { height: 30%; display: flex; flex-direction: column;
       background: #e0e0e0; border-top: 1px solid #bbb; }
     #grip { height: 16px; background: #ccc; text-align: center; line-height: 20px;
-      /*cursor: col-resize;*/ font-weight: bold; user-select: none; border-bottom: 1px solid #aaa; }
+      cursor: row-resize; font-weight: bold; user-select: none; border-bottom: 1px solid #aaa; }
     #grip span { cursor: pointer; padding: 4px 5px 1px 5px; }
     #grip span.grip_trace_on { background:#f00; }
 
