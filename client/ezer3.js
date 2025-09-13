@@ -8360,6 +8360,7 @@ class Browse extends Block {
     this.enabled= true;                        // akce myší jsou povoleny
     // stavové informace pro další funkce
     this.get_query_pipe='';                    // případné modifikátory pro formát q@
+    this.clickTimeout= null;                   // rozeznání dblclick od click
   }
 //// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  start
 //  start (codes,oneval) {
@@ -9809,7 +9810,7 @@ class Browse extends Block {
 //*f: Browse-DOM.DOM_addEvents ()
 //      připojí (nebo odpojí) události
   DOM_addEvents () {
-    let clickTimeout;
+//    let clickTimeout;
     // přidání událostí myši
     for (var i= 1; i<=this.tmax; i++) {
       this.DOM_row[i][0].addEventListener('touchend',function(el){
@@ -9829,8 +9830,8 @@ class Browse extends Block {
       }.bind(this));
       this.DOM_row[i]
         .click( el => {
-          clearTimeout(clickTimeout); // zruš předchozí timeout, pokud existuje
-          clickTimeout= setTimeout(() => {
+          clearTimeout(this.clickTimeout); // zruš předchozí timeout, pokud existuje
+          this.clickTimeout= setTimeout(() => {
             if ( el.shiftKey ) return dbg_onshiftclick(this); /* browse */
             if ( this.enabled ) {
               Ezer.fce.touch('block',this,'click');         // informace do _touch na server
@@ -9905,7 +9906,7 @@ class Browse extends Block {
       });
     this.DOM_table
       .dblclick( el => { // dvojklik na datovém řádku vyvolá onsubmit
-        clearTimeout(clickTimeout); // zruš čekání na click
+        clearTimeout(this.clickTimeout); // zruš čekání na click
         el.stopPropagation();
         if ( this.enabled ) {
           Ezer.fce.touch('block',this,'dblclick');     // informace do _touch na server
@@ -10917,6 +10918,7 @@ class Show extends Elem {
           .dblclick( el => {
             el.stopPropagation();
             var td= jQuery(el.target), tr= td.parent(), show= this, browse= this.owner;
+            clearTimeout(browse.clickTimeout); // zruš čekání na click
             if ( browse.enabled ) {
               let i= jQuery(tr).data('i');
               if ( i && i <= browse.tlen ) {
