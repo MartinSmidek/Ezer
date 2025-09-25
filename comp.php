@@ -78,6 +78,7 @@ define("EZER_VERSION","3.3");
     $checks.= "<br>\n$s=$v";
   }
   $checks.= "<br>\n<input type='submit' value='obnova tabulek' onclick='go_tables();' />";
+  $checks.= "<br>\n<input type='submit' value='obnova složky vendor' onclick='go_vendor();' />";
   $checks.= "<br>\n<input type='submit' value='PHPinfo' onclick='go_phpinfo();' />";
   $ip= "<br>remote:{$_SERVER["REMOTE_ADDR"]}";
   $ip.= isset($_SERVER["HTTP_X_FORWARDED_FOR"]) ? "<br>forwarded:{$_SERVER["HTTP_X_FORWARDED_FOR"]}" : '';
@@ -149,6 +150,16 @@ define("EZER_VERSION","3.3");
     $sel.= "<option$jo>$appl</option>";
   }
   $sel.= "</select>";
+  // --------------------------------------------------------------------------------- obnova vendor
+  if ( isset($_GET['refresh']) && $_GET['refresh']=='vendor' ) {
+    chdir("./server");
+    $command = 'composer update';
+    $output = [];
+    $returnCode = 0;
+    exec($command, $output, $returnCode);
+    $lst.= "<b>$command</b> ".($returnCode===0?'ok':"error $returnCode");
+    $lst.= '<p>'.implode("<br>", $output).'</p>';
+  }
   // -------------------------------------------------------------------------------- obnova tabulek
   if ( isset($_GET['refresh']) && $_GET['refresh']=='tables' ) {
     if (!isset($_SESSION[$ezer_root]['abs_root'])) { 
@@ -317,6 +328,10 @@ echo <<<__EOF
        +(option_state?'&trace='+option_state:'')
        //+(option_cpp?'&cpp=1':'')
        +(option_source?'&source=1':'');
+      location.href= url;
+    }
+    function go_vendor() {
+      var url= "$url"+"?root=$root"+"&refresh=vendor";
       location.href= url;
     }
     function go_phpinfo() {
