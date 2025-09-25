@@ -7,7 +7,7 @@ $ezer_localhost= preg_match('/^localhost|^192\.168\./',$_SERVER["SERVER_NAME"])?
 $ezer_local= $ezer_localhost || preg_match('/^\w+\.(bean|doma)/',$_SERVER["SERVER_NAME"])?1:0;
 
 // pokud není ladící, musí mít moji IP
-if (!$ezer_local && !in_array(my_ip(),array('192.168.7.8','217.64.3.170','127.0.0.1',
+if (!$ezer_local && !in_array(my_ip(),array('192.168.7.5','192.168.7.8','217.64.3.170','127.0.0.1',
     '86.49.250.80','88.103.194.219','85.163.152.170')) )
   die(my_ip());
 
