@@ -3903,9 +3903,10 @@ function get_if_the_key ($key,&$lc) {
 }
 # ---------------------------------------------------------------------------------------- delimiter
 # zjistí následuje-li v textu oddělovač, jestli ano přečte jej
+# 250826 '$' v tomto dotazu odsouhlasíme jako oddělovač
 function get_if_delimiter ($del) {
   global $head, $lex, $typ;
-  $ok= $typ[$head]=='del' && $lex[$head]==$del;
+  $ok= $lex[$head]==$del && ($typ[$head]=='del' || $del=='$');
   if ( $ok ) {
     $head++;
   }

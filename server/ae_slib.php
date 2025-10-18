@@ -556,7 +556,7 @@ function table_lock($mode,$table='',$idt=0) {
         }
         else {
           list($forename,$surname)= select('forename,surname','_user',"id_user='$idu2'");
-          $time= date('Y-m-d')==date('Y-m-d',$time2) ? date('H:i') : date('j.n.Y');
+          $time= date('Y-m-d')==date('Y-m-d',$time2) ? date('H:i',$time2) : date('j.n.Y',$time2);
           $ret->info= "$table/$idt upravuje od $time $forename $surname";
           $ret->note= "$table/$idt already locked by $idu2 ";
         }
@@ -570,7 +570,7 @@ function table_lock($mode,$table='',$idt=0) {
           $ret->ok= 0;
           pdo_qry("DELETE FROM _lock WHERE `table`='$table' AND id_table='$idt' ");
           list($forename,$surname)= select('forename,surname','_user',"id_user='$idu2'");
-          $time= date('Y-m-d')==date('Y-m-d',$time2) ? date('H:i') : date('j.n.Y');
+          $time= date('Y-m-d')==date('Y-m-d',$time2) ? date('H:i',$time2) : date('j.n.Y',$time2);
           $ret->info= "celou tabulku $table zamknul od $time $forename $surname";
           $ret->note= "$table has table lock by $idu2 ";
         }
@@ -587,7 +587,7 @@ function table_lock($mode,$table='',$idt=0) {
 //        }
 //        else {
           list($forename,$surname)= select('forename,surname','_user',"id_user='$idu2'");
-          $time= date('Y-m-d')==date('Y-m-d',$time2) ? date('H:i') : date('j.n.Y');
+          $time= date('Y-m-d')==date('Y-m-d',$time2) ? date('H:i',$time2) : date('j.n.Y',$time2);
           $ret->info= "tabulka $table již má od $time zámek od $forename $surname";
           $ret->note= "entire $table already locked by $idu2 ";
 //        }
@@ -602,7 +602,7 @@ function table_lock($mode,$table='',$idt=0) {
           pdo_qry("DELETE FROM _lock WHERE `table`='$table' AND id_table=0 ");
           list($idu2,$time2)= select('id_user,time','_lock',"`table`='$table'");
           list($forename,$surname)= select('forename,surname','_user',"id_user='$idu2'");
-          $time= date('Y-m-d')==date('Y-m-d',$time2) ? date('H:i') : date('j.n.Y');
+          $time= date('Y-m-d')==date('Y-m-d',$time2) ? date('H:i',$time2) : date('j.n.Y',$time2);
           $ret->info= "nelze zamknout tabulku - $table/$idt upravuje od $time $forename $surname";
           $ret->note= "$table has records locks by $idu2 ";
         }
@@ -1878,7 +1878,7 @@ function Excel2007($desc) {
 function Excel5($desc,$gen=1,&$wb=null,$dir='',$excel='xls') {  #trace();
   global $ezer_path_root, $ezer_version;
   // natáhneme knihovny
-//  require_once "ezer$ezer_version/server/vendor/autoload.php";
+  require_once "ezer$ezer_version/server/vendor/autoload.php";
   // pro testování a vývoj
   $list= false;
   if (!$desc || $desc=='0') {
