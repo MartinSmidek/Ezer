@@ -14,7 +14,7 @@
  *   pro gmail službou Google_Service_Gmail_Message 
  *   jinak $mail->Send
  */
-define("EZER_VERSION","3.3");  
+//define("EZER_VERSION","3.3");  
 
 spl_autoload_register(function ($class) {
   global $abs_root;
