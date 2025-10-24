@@ -1,15 +1,14 @@
 <?php # (c) 2008-2025 Martin Smidek <martin@smidek.eu>
-define("EZER_VERSION","3.3");  
 
 /** =====================================================================================> CALLGRAPH */
 # -------------------------------------------------------------------------------------- doc metrics
 # seznam JS modulů, jejich fcí a metod
 # používá client/licensed/count-functions.js vytvořeného s pomocí chatGPT
 function doc_js_fce($src = '') {
-  global $ezer_root, $ezer_root_js;
+  global $ezer_root, $ezer_root_js, $ezer_version;
   $root= $ezer_root_js ?: $ezer_root;
   $src= $src ?: $root;
-  $script = 'ezer'.EZER_VERSION."/client/count-functions.js";
+  $script = "ezer$ezer_version/client/count-functions.js";
   $cmd= "node " . escapeshellarg($script) . " " . escapeshellarg($src);
   display($cmd);
   $lst= shell_exec($cmd);

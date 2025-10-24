@@ -1,5 +1,4 @@
 <?php # (c) 2008-2025 Martin Smidek <martin@smidek.eu>
-define("EZER_VERSION","3.3");  
 
   # ----------------------------------------------------------------------------------- obsluha chyb
   $err= isset($_COOKIE['error_reporting']) ? $_COOKIE['error_reporting'] : 1;
@@ -47,10 +46,10 @@ define("EZER_VERSION","3.3");
   }
   # -------------------------------------------------------------------------- test verze jádra EZER
   # při zjištění staré verze jádra v SESSION je vynucen restart 
-  elseif ( isset($_SESSION[$ezer_root]['ezer']) && $_SESSION[$ezer_root]['ezer']!=EZER_VERSION ) {
+  elseif ( isset($_SESSION[$ezer_root]['ezer']) && $_SESSION[$ezer_root]['ezer']!='3.3' ) {
     header('Content-type: application/json; charset=UTF-8');
     $y= (object)array('session_none'=>1,
-        'error'=>"nepovolený souběh se starou verzí {$_SESSION[$ezer_root]['ezer']}");
+        'error'=>"nepovolený souběh verze 3.3 se starou verzí {$_SESSION[$ezer_root]['ezer']}");
     $yjson= json_encode($y);
     echo $yjson;
     exit;

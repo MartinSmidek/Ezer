@@ -529,12 +529,12 @@ panel users [,,,543] {type:'right', title:'Uživatelé', _sys:'uzi', skill:'a|a'
     // seznamm oprávnění
     label [5,161,100,15] { title:'oprávnění' }
     label missing [60,161,360,15]
-    view s: table _skill
+//    view s: table _skill
     browse seznam [5,172,180,198] { rows:sys_users_skills, qry_rows:1, buf_rows:100
-      show id { data:s.id_skill }
-      show abb [,,50,] { data:s.skill_abbr, title:'kód', format:'utsq*', skill:'a|m'
+      show id { data:_skill.id_skill }
+      show abb [,,50,] { data:_skill.skill_abbr, title:'kód', format:'utsq*', skill:'a|m'
         proc onsubmit() { this.save } }
-      show dsc [,,343,] { data:s.skill_desc, title:'popis oprávnění', format:'uts+q$', skill:'a|m'
+      show dsc [,,343,] { data:_skill.skill_desc, title:'popis oprávnění', format:'uts+q$', skill:'a|m'
         proc onsubmit() { this.save } }
       # ----------------------------------------------==> ... kontext.menu
       menu { type:'context'
@@ -546,14 +546,14 @@ panel users [,,,543] {type:'right', title:'Uživatelé', _sys:'uzi', skill:'a|a'
           proc onclick() {
             eq(sel.get,'ignore');
             seznam.browse_seek(conc('id_skill=',
-              s.insert_record(
+              _skill.insert_record(
                 object('skill_abbr',conc(abb.get,'?'),'skill_desc',conc(dsc.get,'.?')))));
           | confirm('Pro přidávání musí seznam opravnění zobrazovat všechny položky. Přepnout?');
             seznam.selected("ignore"); sel.set('ignore'); seznam.browse_load
         } }
         item { title:'odebrat běžný řádek', skill:'m|m'
           proc onclick() { confirm('opravdu odebrat oprávnění ',abb.get,':',dsc.get,'?');
-            s.delete_record(conc('id_skill=',id.get));
+            _skill.delete_record(conc('id_skill=',id.get));
             seznam.browse_load } }
         item { title:'-zobrazit vybrané'
           proc onclick() { seznam.selected("use"); sel.set('use'); seznam.browse_load } }
