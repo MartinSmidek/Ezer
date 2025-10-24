@@ -1,7 +1,7 @@
 <?php
 /**
- * (c) 2025 Martin Smidek <martin@smidek.eu> - rozšíření PHPMailer pro framework Ezer
- * 
+ * (c) 2025 Martin Smidek <martin@smidek.eu> - rozšíření PHPMailer pro framework Ezer3.2
+ *                                                                                -------
  * $mail= new Ezer_PHPMailer($x)
  *   pro gmail 
  *     $x= {Host:smtp.google.com,Username,files_path:cesta k creditals a tokens}
@@ -16,8 +16,8 @@
  */
 
 spl_autoload_register(function ($class) {
-  global $abs_root, $ezer_version;
-  $server= "$abs_root/ezer$ezer_version/server";
+  global $abs_root;
+  $server= "$abs_root/ezer3.2/server";
   $phpmailer_path= "$server/licensed/phpmailer";
   $map = [
       'PHPMailer' => "$phpmailer_path/class.phpmailer.php",
