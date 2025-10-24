@@ -1,6 +1,6 @@
 <?php # (c) 2008-2025 Martin Smidek <martin@smidek.eu>
-define("EZER_VERSION","3.3");  
-$ezer_version= EZER_VERSION;
+
+$ezer_version= '3.3';
 
 # -------------------------------------------------------------------- identifikace ladícího serveru
 $ezer_localhost= preg_match('/^localhost|^192\.168\./',$_SERVER["SERVER_NAME"])?1:0;
@@ -80,7 +80,7 @@ if ( isset($_GET['op']) ) {
 render:
 $all= true;
 $icon= $ezer_local 
-    ? "ezer".EZER_VERSION."/client/img/ses_local.png" : "ezer".EZER_VERSION."/client/img/ses.png";
+    ? "ezer$ezer_version/client/img/ses_local.png" : "ezer$ezer_version/client/img/ses.png";
 
 $cms= '<br>'.debug($_GET,'GET').'<br/>';
 $cms.= debug($_POST,'POST').'<br/>';

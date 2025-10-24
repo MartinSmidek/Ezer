@@ -1,5 +1,6 @@
 <?php # (c) 2008-2025 Martin Smidek <martin@smidek.eu>
-define("EZER_VERSION","3.3");  
+
+$this_ezer_version= '3.3';
 
 /**
  * $app_name      - zobrazený název aplikace
@@ -24,8 +25,8 @@ define("EZER_VERSION","3.3");
   $ezer_root= $app_root;
   
   // ověření korektnosti předaných hodnot
-  if ($ezer_version!=EZER_VERSION) 
-    die("konflikt verzí jádra - požadováno $ezer_version, použito ".EZER_VERSION);
+  if ($ezer_version!=$this_ezer_version) 
+    die("konflikt verzí jádra - požadováno $ezer_version, použito ".$this_ezer_version);
   
   // platí buďto isnull($ezer_local) nebo isnull($ezer_server)
   global $ezer_local, $ezer_server;

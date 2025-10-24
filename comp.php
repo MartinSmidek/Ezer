@@ -1,5 +1,4 @@
 <?php # (c) 2008-2025 Martin Smidek <martin@smidek.eu>
-define("EZER_VERSION","3.3");  
 
 # screen=1 zobrazí rozměr klientské části
 
@@ -33,7 +32,7 @@ define("EZER_VERSION","3.3");
   $_SESSION[$root]['test_version']= $test_version;
   
   // verze použitého jádra Ezeru
-  $ezer_version= EZER_VERSION; 
+  $ezer_version= '3.3'; 
   
   global $display, $trace, $json, $ezer_path_serv, $ezer_path_appl, $ezer_path_code, $ezer_root;
 
