@@ -16,10 +16,9 @@
  */
 
 spl_autoload_register(function ($class) {
-  global $abs_root;
-  $server= "$abs_root/ezer3.2/server";
+  global $abs_root, $ezer_version;
+  $server= "$abs_root/ezer$ezer_version/server";
   $phpmailer_path= "$server/licensed/phpmailer";
-//  $phpmailer_path = $_SERVER['DOCUMENT_ROOT'] . "/ezer3.2/server/licensed/phpmailer";
   $map = [
       'PHPMailer' => "$phpmailer_path/class.phpmailer.php",
       'SMTP'      => "$phpmailer_path/class.smtp.php",
@@ -84,8 +83,8 @@ class Ezer_PHPMailer extends PHPMailer {
 
   // Vytvoří a nastaví nový Google_Client pro OAuth2.
   protected function createOAuthClient($serverConfig) {
-    global $abs_root;
-    $server= "$abs_root/ezer3.2/server";
+    global $abs_root, $ezer_version;
+    $server= "$abs_root/ezer$ezer_version/server";
     $gmail_api_library= "$server/licensed/google_api/vendor/autoload.php";
     require_once $gmail_api_library;
     // získání údajů pro autentizaci
@@ -142,12 +141,12 @@ class Ezer_PHPMailer extends PHPMailer {
         $msg= "ok";
       } 
       catch (Google_Service_Exception $e) {
+        $msg= "CHYBA gmail/G: ".$e->getCode().' = '.$e->getMessage();
         $this->log_e($e);
-        $msg= "CHYBA gmail/G: $e->getCode() = $e->getMessage()";
       } 
       catch (Exception $e) {
+        $msg= "CHYBA gmail/E: ".$e->getMessage();
         $this->log_e($e);
-        $msg= "CHYBA gmail/E: $e->getMessage()";
       }
       return $msg;
     }
@@ -158,13 +157,9 @@ class Ezer_PHPMailer extends PHPMailer {
           goto end;
         }
       } 
-      catch (Google_Service_Exception $e) {
-        $this->log_e($e);
-        $msg= "CHYBA gmail/G: $e->getCode() = $e->getMessage()";
-      } 
       catch (Exception $e) {
+        $msg= "CHYBA smtp/E: ".$e->getMessage();
         $this->log_e($e);
-        $msg= "CHYBA gmail/E: $e->getMessage()";
       }
     }
   end:
