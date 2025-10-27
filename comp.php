@@ -175,7 +175,7 @@
     }
     $dir= getcwd();
     $cmd= $_GET['git'];
-    debug($_GET);
+//    debug($_GET);
     $lst.= "připraven příkaz: cd $dir | git $cmd<br>";
     if ($ezer_local) {
       $lst.= "<br>v lokálním běhu nebude proveden<br><br>";
@@ -183,7 +183,9 @@
     else {
       $exec= "git $cmd";
       exec($exec,$lines,$state);
-      debug($lines,"$state:$exec:".getcwd().":".get_current_user());
+      display("$state:$exec:".getcwd().":".get_current_user());
+      display($lines);
+//      debug($lines,"$state:$exec:".getcwd().":".get_current_user());
       if (function_exists('posix_getegid')) debug(posix_getegid());
       $lst.= "$state:$exec\n";
     }
