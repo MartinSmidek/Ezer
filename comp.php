@@ -183,13 +183,10 @@
     else {
       $exec= "git $cmd";
       exec($exec,$lines,$state);
-      $lst.= "<br>$state:$exec";
-      $lst.= "<br>IN ".getcwd()." AS ".get_current_user()."<br><br>OUTPUT<br>";
+      $lst.= "<br>IN ".getcwd()." AS ".get_current_user()." EXEC <b>$exec</b> "
+          ."<br>RETURNS $state AND OUTPUTS:<br><br>";
       $lst.= implode('<br>',$lines);
-//      debug($lines,"$state:$exec:".getcwd().":".get_current_user());
-      if (function_exists('posix_getegid')) debug(posix_getegid());
     }
-    $lst.= "<hr>$trace";
   }
   // -------------------------------------------------------------------------------- obnova tabulek
   if ( isset($_GET['refresh']) && $_GET['refresh']=='tables' ) {
