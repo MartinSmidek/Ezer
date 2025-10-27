@@ -183,11 +183,11 @@
     else {
       $exec= "git $cmd";
       exec($exec,$lines,$state);
-      display("$state:$exec:".getcwd().":".get_current_user());
-      display($lines);
+      $lst.= "<br>$state:$exec";
+      $lst.= "<br>IN ".getcwd()." AS ".get_current_user()."<br><br>OUTPUT<br>";
+      $lst.= implode('<br>',$lines);
 //      debug($lines,"$state:$exec:".getcwd().":".get_current_user());
       if (function_exists('posix_getegid')) debug(posix_getegid());
-      $lst.= "$state:$exec\n";
     }
     $lst.= "<hr>$trace";
   }
