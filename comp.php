@@ -167,12 +167,15 @@
   }
   // -------------------------------------------------------------------------------------- git pull
   if ( isset($_GET['refresh']) && $_GET['refresh']=='git' ) {
+    global $trace, $totrace;
+    $totrace= 'u';
     chdir($_SERVER['DOCUMENT_ROOT']);
     if ( file_exists("$root/.git")) {
       chdir("./$root");
     }
     $dir= getcwd();
     $cmd= $_GET['git'];
+    debug($_GET);
     $lst.= "připraven příkaz: cd $dir | git $cmd<br>";
     if ($ezer_local) {
       $lst.= "<br>v lokálním běhu nebude proveden<br><br>";
@@ -184,6 +187,7 @@
       if (function_exists('posix_getegid')) debug(posix_getegid());
       $lst.= "$state:$exec\n";
     }
+    $lst.= "<hr>$trace";
   }
   // -------------------------------------------------------------------------------- obnova tabulek
   if ( isset($_GET['refresh']) && $_GET['refresh']=='tables' ) {
