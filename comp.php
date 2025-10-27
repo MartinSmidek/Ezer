@@ -183,8 +183,8 @@
     else {
       $exec= "git $cmd";
       exec($exec,$lines,$state);
-      $lst.= "<br>IN ".getcwd()." AS ".get_current_user()." EXEC <b>$exec</b> "
-          ."<br>RETURNS $state AND OUTPUTS:<br><br>";
+      $lst.= "<br><b>IN</b> ".getcwd()." <b>AS</b> ".get_current_user()." <b>EXEC</b> $exec "
+          ."<b>RETURNS</b> $state <b>OUTPUTS</b>:<br><br>";
       $lst.= implode('<br>',$lines);
     }
   }
