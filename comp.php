@@ -8,7 +8,8 @@
   $pwd= getcwd();
 
   # identifikace ostrého serveru
-  $ezer_local= preg_match('/^\w+\.bean/',$_SERVER["SERVER_NAME"]);
+  $ezer_localhost= preg_match('/^localhost|^192\.168\./',$_SERVER["SERVER_NAME"])?1:0;
+  $ezer_local= $ezer_localhost || preg_match('/^.+\.bean/',$_SERVER["SERVER_NAME"])?1:0;
   $favicon= $ezer_local ? "comp_local.png" : "comp.png";
 
   if ( isset($_GET['spec']) ) {
@@ -78,6 +79,11 @@
   }
   $checks.= "<br>\n<input type='submit' value='obnova tabulek' onclick='go_tables();' />";
   $checks.= "<br>\n<input type='submit' value='obnova složky vendor' onclick='go_vendor();' />";
+  $checks.= "<br>\ngit: 
+    <input type='submit' value='status' onclick=\"go_git('status');\" />
+    <input type='submit' value='log' onclick=\"go_git('log');\" />
+    <input type='submit' value='pull' onclick=\"go_git('pull');\" />
+    ";
   $checks.= "<br>\n<input type='submit' value='PHPinfo' onclick='go_phpinfo();' />";
   $ip= "<br>remote:{$_SERVER["REMOTE_ADDR"]}";
   $ip.= isset($_SERVER["HTTP_X_FORWARDED_FOR"]) ? "<br>forwarded:{$_SERVER["HTTP_X_FORWARDED_FOR"]}" : '';
@@ -158,6 +164,26 @@
     exec($command, $output, $returnCode);
     $lst.= "<b>$command</b> ".($returnCode===0?'ok':"error $returnCode");
     $lst.= '<p>'.implode("<br>", $output).'</p>';
+  }
+  // -------------------------------------------------------------------------------------- git pull
+  if ( isset($_GET['refresh']) && $_GET['refresh']=='git' ) {
+    chdir($_SERVER['DOCUMENT_ROOT']);
+    if ( file_exists("$root/.git")) {
+      chdir("./$root");
+    }
+    $dir= getcwd();
+    $cmd= $_GET['git'];
+    $lst.= "připraven příkaz: cd $dir | git $cmd<br>";
+    if ($ezer_local) {
+      $lst.= "<br>v lokálním běhu nebude proveden<br><br>";
+    }
+    else {
+      $exec= "git $cmd";
+      exec($exec,$lines,$state);
+      debug($lines,"$state:$exec:".getcwd().":".get_current_user());
+      if (function_exists('posix_getegid')) debug(posix_getegid());
+      $lst.= "$state:$exec\n";
+    }
   }
   // -------------------------------------------------------------------------------- obnova tabulek
   if ( isset($_GET['refresh']) && $_GET['refresh']=='tables' ) {
@@ -333,6 +359,10 @@ echo <<<__EOF
       var url= "$url"+"?root=$root"+"&refresh=vendor";
       location.href= url;
     }
+    function go_git(op) {
+      var url= "$url"+"?root=$root"+"&refresh=git&git="+op;
+      location.href= url;
+    }
     function go_phpinfo() {
       var url= "$url"+"?root=$root"+"&spec=phpinfo";
       location.href= url;
@@ -370,14 +400,13 @@ echo <<<__EOF
 __EOF;
 /** ************************************************************************************************ procedury */
 function comp_module($name,$root,&$state) {
-  global $display, $trace, $json, $ezer_path_appl, $ezer_path_code;
-  global $code, $option_source, $option_list, $lst;
+  global $ezer_path_appl, $option_source, $option_list;
 //   $trace= $option_state;
 //  echo("option_list=$option_list, trace=$trace ... {$_GET['trace']}");
 //  global $totrace; $totrace= 'u';
   $state= comp_file($name,$root,$option_list,true);
 //    echo($lst);
-  $ln= 0;
+//  $ln= 0;
   $txt= '';
   if ( $option_source ) {
     $lines= file("$ezer_path_appl/$name.ezer");
@@ -410,7 +439,7 @@ function comp_module($name,$root,&$state) {
 // kompilace modulů aplikace 
 //   err= i s chybou; yes= neaktuální; any= úplně všechny
 function comp_application($root,&$state,$errs=false,$all=false) {
-  global $files, $display, $trace, $err, $errors;
+  global $files, $trace;
   $txt= '';
   foreach($files as $name=>$status) {
     if ( $all || $status=='old' || ($errs && $status=='err') ) {
