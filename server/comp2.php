@@ -38,6 +38,7 @@ function comp_ezer_list() { trace();
   }
 //  // přidání případných modulů z jiné složky
   foreach($ezer_ezer as $fname) {
+    $files= null;
     doc_ezer_state($fname,$files);
   }
   sort($app_ezers);
@@ -74,7 +75,7 @@ function comp_file ($name,$root='',$_list_only='',$_comp_php=false) {  #trace();
   global $pragma_library, $pragma_syntax, $pragma_attrs, $pragma_names, $pragma_get, $pragma_prefix,
     $pragma_group, $pragma_box, $pragma_if, $pragma_switch, $pragma_nogen;
   global $call_php, $call_ezer, $call_elem;
-  global $app_ezers, $file_, $define, $define_used, $metrics;
+  global $file_, $define, $define_used, $metrics;
   
   $metrics= (object)array('func'=>0,'proc'=>0);
   $define_used= array();
@@ -413,7 +414,7 @@ function list_parts($x) {
 function dbg_context_load ($ctx) {  #trace();
   $log= "";
   // části funkce comp2:comp_file
-  global $ezer_version, $ezer_path_root, $ezer_path_code, $including, $code, $context, $errors, $includes;
+  global $ezer_version, $ezer_path_code, $including, $code, $context, $errors, $includes;
   global $call_php, $call_ezer, $define_used;
   require_once("ezer$ezer_version/server/comp2.php");
   $define_used= $call_php= $call_ezer= array();
@@ -421,7 +422,7 @@ function dbg_context_load ($ctx) {  #trace();
   try {
     // definice kompilačního prostředí
     $name= $ctx->file;
-    $root= $ctx->app;
+//    $root= $ctx->app;
     // natažení kontextu
     $context= array();
     $context_id= array();
@@ -822,8 +823,8 @@ function proc(&$c,$name,$block) { #trace();
             $inc= (object)array('file'=>"{$ids[0]}/$iname",'block'=>$block,'include'=>$typ);
           }
           else {
-            $path= substr($iname,0,$islash);
-            $file= substr($iname,$islash);
+//            $path= substr($iname,0,$islash);
+//            $file= substr($iname,$islash);
             $inc= (object)array('file'=>"$iname",'block'=>$block,'include'=>$typ);
           }
         }
@@ -1320,7 +1321,7 @@ function add_call($proc,$lc='',$name='') {
 # ------------------------------------------------------------------------------------- add call_php
 # přidá ezer-fce volání do CG
 # lc označuje začátek php.name pro ask=0 nebo ask('name pro ask=1
-function add_call_php($name,$lc='',$ask=0) {
+function add_call_php($name,$lc='',$ask=0) { 
   global $call_ezer, $func_name_lc;
   // vložíme do seznamu ezer-funkcí
   if ($lc) {
@@ -1335,7 +1336,7 @@ function add_call_php($name,$lc='',$ask=0) {
 function gen_func($c,&$desc,$name) {
   global $error_code_context, $error_code_lc, $code_top, $begs, $ends, $func, $func_name, $returns;
   global $pragma_names, $proc_path, $depth, $call_ezer, $func_name_lc;
-  global $TEST_DBG;
+//  global $TEST_DBG;
 //                                                 debug($c,"gen_proc: $name");
   $func= $c;
   $func_name= explode('.',$name);
@@ -1515,7 +1516,7 @@ function gen2($pars,$vars,$c) {
     if ( $c->op=='ask' ) {
       $ask= $c->par[0]->value;
       $ask_lc= $c->par[0]->lc;
-      add_call_php($ask,$ask_lc);
+      add_call_php($ask,$ask_lc,$c->par[0]->subtype=='php' ? 0 : 1);
       if ( !in_array($ask,$call_php) )
         $call_php[]= $ask;
       for ($i= 1; $i<$npar; $i++) {
@@ -3354,7 +3355,7 @@ function get_if_block ($root,&$block,&$id) {
         if ( in_array('arg'  ,$specs[$key]) && get_if_args($args)  ) $block->arg= $args;
         if ( in_array('coord',$specs[$key]) && get_if_coord($block) )  $skip= 0;
         if ( in_array('coor+',$specs[$key]) && get_if_coorp($block) )  $skip= 0;
-        if ( in_array('const',$specs[$key]) && get_def3($id,$value,$type,$indx) ) {
+        if ( in_array('const',$specs[$key]) && get_def3($value,$type,$indx) ) {
           if ( $indx )
             $block->options->$indx= $value;
           $block->_of= $type;
@@ -3365,7 +3366,7 @@ function get_if_block ($root,&$block,&$id) {
           // další konstanty
           while ( $ok ) {
             if ( !$cid ) get_id($cid);
-            get_def3($cid,$value,$type,$indx);
+            get_def3($value,$type,$indx);
             $cblock= new stdClass;
             $cblock->type= 'const';
             if ( !isset($cblock->options) ) $cblock->options= (object)array();
@@ -3477,12 +3478,12 @@ function get_if_block ($root,&$block,&$id) {
 # attr :: id [':' val | ':' id] 
 # defaultní val=1
 function get_if_attrib ($root,&$id,&$val) {
-  global $attribs1, $attribs2, $errors;
+  global $attribs1, $errors;
   if ( $errors ) return false;
   $val= 1;
   $ok= get_if_id_not_keyword($id);
   if ( $ok ) {
-    if ( isset($attribs1[$root]) && (false!==($i= array_search($id,$attribs1[$root]))) ) {
+    if ( isset($attribs1[$root]) && (false!==array_search($id,$attribs1[$root])) ) {
         get_delimiter(':');
         $val= null;
         // atribut type musí být konstantní
@@ -3654,7 +3655,6 @@ function get_numvalue (&$val,&$id) {
 function get_vars (&$root,$id,$lc) {
   // připojí proměnné do bloku, id je identifikátor první proměnné
   global $last_lc;
-  $types= array('n'=>'number','s'=>'text','o'=>'object','a'=>'array');
   $root= array();
   while (1) {
     $block= new stdClass;
@@ -3667,11 +3667,6 @@ function get_vars (&$root,$id,$lc) {
       get_expr4(null,$val);
       $block->options= (object)array();
       $block->options->value= $val;
-//      $val= $typval= null;
-//      get_value($val,$typval);
-//      $block->options= (object)array();
-//      $block->options->value= $val;
-//      $block->_of= $types[$typval];
     }
     // proměnná bez inicializace a s typem
     else {
@@ -3695,7 +3690,7 @@ function get_vars (&$root,$id,$lc) {
 # consts      :: 'const' constlist
 # constlist   :: constdef | constdef ',' constlist
 # constdef    :: id ':' type | id '=' expr4
-function get_def3 ($id,&$value,&$type,&$indx) {
+function get_def3 (&$value,&$type,&$indx) {
 //  global $const_list;
   $value= null; //$type= 'global';
   $ok= get_if_delimiter('=');
@@ -3708,62 +3703,6 @@ function get_def3 ($id,&$value,&$type,&$indx) {
     get_type($type);
     $indx= '';
   }
-  return true;
-}
-# -------------------------------------------------------------------------------------------- const
-# consts      :: 'const' constlist
-# constlist   :: constdef | constdef ',' constlist
-# constdef    :: id ':' type | id '=' const_value
-# const_value :: 
-//# (a) const :: 'const' id '=' cvalue            -- začátek
-//# (b) const :: (';'|',') id '=' cvalue          -- pokračování
-#     cvalue :: const | nvalue
-#     nvalue :: number | nid | nvalue [ ('+'|'-') nvalue ] -- kde nid je jméno kontrolované za běhu
-function get_def ($id,&$value,&$type,&$is_expr) {
-//  global $const_list;
-  $value= null; //$type= 'global';
-  $id1= null;
-  $ok= get_if_delimiter('=');
-  if ( $ok ) {
-    $ok= get_if_id_not_keyword($id1);
-    if ( $ok ) {
-//      $value= $const_list[$id1]['value'];
-//      $type= $const_list[$id1]['type'];
-    }
-    else {
-      get_value($value,$type,true);
-      $ok= true;
-    }
-    // případné rozšíření?
-    $op= get_if_delimiter('+') ? '+' : (get_if_delimiter('-') ? '-' : false);
-    if ( $op ) {
-      $is_expr= true;
-      $value= array($id1 ? array('k',$value,$id1) : array('n',$value));
-      while ( $op ) {
-        // další sčítanec
-        $value2= $id2= null;
-        get_numvalue ($value2,$id2);
-        $expr= $id2
-          ? ($op==='-' ? array('k',$value2,$id2,'-') : array('k',$value2,$id2))
-          : ($op==='-' ? array('n',-$value2) : array('n',$value2));
-        $value[]= $expr;
-  //      $const_list[$id]= array('_expr'=>$value,'type'=>$type);
-        $op= get_if_delimiter('+') ? '+' : (get_if_delimiter('-') ? '-' : false);
-      }
-    }
-  }
-  else {
-    get_delimiter(':');
-    get_type($type);
-  }
-//  // přidání do seznamu konstant (povoluje se přepsání stejnou hodnotou)
-//  elseif ( !isset($const_list[$id])
-//    || $const_list[$id]['value']==$value && $const_list[$id]['type']==$type ) {
-//    $const_list[$id]= array('value'=>$value,'type'=>$type);
-//    $is_expr= false;
-//  }
-//  else
-//    comp_error("SYNTAX: konstanta $id má duplicitní definici ($id={$const_list[$id]['value']})");
   return true;
 }
 # ------------------------------------------------------------------------------------------- coord+
@@ -4826,10 +4765,10 @@ function get_call2_id($context,&$expr,$id,$valued) {
   $expr= (object)array('expr'=>'call','value'=>$valued);
   $fce= explode('.',$id);
   $par= array();
-  if ( $fce[0]=='php' ) { // funkce na serveru
+  if ( $fce[0]=='php' ) { // funkce na serveru -- předej subtype=php kvůli pozici v CG
     if ( $fce[2]??0 ) comp_error("SYNTAX: jméno funkce v PHP nesmí být složené ");
     $op= 'ask';
-    $par[]= (object)array('expr'=>'value','value'=>$fce[1],'type'=>'s','lc'=>$last_lc);
+    $par[]= (object)array('expr'=>'value','value'=>$fce[1],'type'=>'s','subtype'=>'php','lc'=>$last_lc);
   }
   elseif ( $fce[0]=='js' ) { // funkce javascriptu
     if ( $fce[2] ) comp_error("SYNTAX: jméno funkce v javascriptu nesmí být složené ");
@@ -5071,7 +5010,7 @@ function get_expr($context,&$expr) {
 # ------------------------------------------------------------------------------------ lex_analysis2
 # $dbg = false nebo pro debugger proc|func
 function lex_analysis2 ($dbg=false) {
-  global $tok2lex, $ezer, $keywords, $specs, $lex, $typ, $pos, $not, $gen_source, $debugger, $head, 
+  global $tok2lex, $ezer, $keywords, $specs, $lex, $typ, $pos, $not, $gen_source, $head, 
       $define, $define_used;
 
   $skip= 0; $skip_tag= '';
