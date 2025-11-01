@@ -444,7 +444,7 @@ function call_stack($act,$n,$hloubka=2,$show_call=1) { #$this->debug($act,'call_
 #   gettype=1 -- ve třetím sloupci bude gettype(hodnoty)
 function debug($gt,$label=false,$options=null) {
   global $totrace, $trace, $debug_level;
-  if (strpos($totrace,'u')===false ) return '';
+  if (strpos($totrace??'','u')===false ) return '';
   $debug_level= 0;
   $html= ($options && isset($options->html)) ? $options->html : 0;
   $depth= ($options && isset($options->depth)) ? $options->depth : 64;

@@ -256,6 +256,8 @@ __EOD;
     button.cg_but { position: absolute; margin: 3px 3px 0 0; width: 20px; padding: 0; }
     div#cg_div { overflow-y: auto; height: calc(100% - 30px); }
     div#cg_grf { overflow-y: auto; width:100%; }
+    li span.go { background-color: #ffdf6b; cursor:pointer;   }
+    li span.cg { background-color: #e5f2ff; cursor:pointer;   }
       
     /* ----------------------- ezer source */
     .cm-s-ezer.CodeMirror { background: oldlace; overflow-y: auto; $FONT

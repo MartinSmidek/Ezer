@@ -307,7 +307,7 @@ function doc_php($app_phps='*',$sys_phps='',$update=1) { trace();
               function($o) use ($fce) {return $o->lang==='php' && $o->name===$fce;}, $tab_fce),true)?:0;
           if (preg_match('/auto/',$fce)) { display("$fce ... $idf"); }
           if ($idf==0) {
-            $idf= max(array_keys($tab_fce))+1;
+            $idf= count(array_keys($tab_fce)) ? max(array_keys($tab_fce))+1 : 0;
             $tab_fce[$idf]= (object)['id_fce'=>$idf,'lang'=>'php','name'=>$fce];
           }
           $tab_fce[$idf] = (object)array_merge((array)$tab_fce[$idf], 
@@ -378,7 +378,7 @@ function doc_php($app_phps='*',$sys_phps='',$update=1) { trace();
         foreach ($fce as $col => $val) {
           if (in_array($col,['alive','cout'])) continue;
           $cols[] = "`$col`";
-          $escaped = addslashes($val);
+          $escaped = addslashes($val??'');
           $vals[] = "'$escaped'";
           $updates[] = "`$col` = VALUES(`$col`)";
         }
@@ -621,7 +621,7 @@ function doc_php_cg ($app_php='*',$sys_php0='',$restore=false) { trace();
     $ts= array();
     $ts0= token_get_all(file_get_contents($fname));
     $endline= 99990;
-    for ($i= count($ts0); $i>0; $i--) {
+    for ($i= count($ts0)-1; $i>0; $i--) {
       if (is_array($ts0[$i])) {
         $endline= $ts0[$i][2];
         break;
@@ -641,7 +641,7 @@ function doc_php_cg ($app_php='*',$sys_php0='',$restore=false) { trace();
       // vynechání mezer
 //      if ( is_array($ts[$i]) && $ts[$i][0]==T_WHITESPACE ) continue;
       // seznam funkcí
-      if ( !is_array($ts[$i]) ) continue;
+      if ( !is_array($ts[$i]??0) ) continue;
       if ( $ts[$i][0]==T_OBJECT_OPERATOR ) {  // vynecháme objekt->člen pokud není poslední
         if ($ts[$i+1][0]!==T_FUNCTION) $i+= 1;
       }
@@ -657,7 +657,7 @@ function doc_php_cg ($app_php='*',$sys_php0='',$restore=false) { trace();
         $prev= $last;
       }
       // volání funkce
-      elseif ( $ts[$i][0]==T_STRING && $ts[$i+1]=='('
+      elseif ( $ts[$i][0]==T_STRING && ($ts[$i+1]??0)=='('
         && in_array($u= strtolower($ts[$i][1]),$usr) ) {
         if ( isset($fce[$u]) ) {
           // pokud není mezi vynechávanými
@@ -690,7 +690,7 @@ function doc_php_cg ($app_php='*',$sys_php0='',$restore=false) { trace();
       if (!count($list)) continue;
       $efcei= "$efce:$isource";
       foreach ($list as $pfce) {
-        list($pfce,$imodul)= explode(':',$pfce);
+        list($pfce,$imodul)= explode(':',$pfce.':');
         list($pfce)= explode('-',$pfce);
         if ($pfce[0]=='$') {
           // volání PHP fcí

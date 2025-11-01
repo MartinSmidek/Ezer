@@ -259,7 +259,7 @@ function pdo_fetch_all($rs) {
 function pdo_real_escape_string($inp) {
   return str_replace(
       array('\\', "\0", "\n", "\r", "'", '"', "\x1a"), 
-      array('\\\\', '\\0', '\\n', '\\r', "\\'", '\\"', '\\Z'), $inp); 
+      array('\\\\', '\\0', '\\n', '\\r', "\\'", '\\"', '\\Z'), $inp??''); 
 }
 // pdo_query je netrasovaný dotaz - náhrada mysql_query
 // pro INSERT|UPDATE|DELETE vrací počet modifikovaných řádků

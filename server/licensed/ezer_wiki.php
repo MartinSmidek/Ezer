@@ -35,7 +35,24 @@
  */
 
 class EzerWiki {
-	
+	public $reference_wiki;
+	public $image_uri;
+	public $ignore_images;
+	private $first_h1;
+	private $first_h2;
+	private $preformat;
+	private $emphasis;
+	private $redirect;
+	private $nowikis;
+	private $list_level_types;
+	private $list_level;
+	private $deflist;
+	private $linknumber;
+	private $suppress_linebreaks;
+	private $page_title;
+	private $stop;
+	private $stop_all;
+
 	function WikiParser() {
 		$this->reference_wiki = '';
 		$this->image_uri = '';
@@ -75,7 +92,7 @@ class EzerWiki {
 		$newlevel = ($close) ? 0 : strlen($matches[1]);
 		
 		while ($this->list_level!=$newlevel) {
-			$listchar = substr($matches[1],-1);
+			$listchar = substr($matches[1]??'',-1);
 			$listtype = $listtypes[$listchar];
 			
 			//$output .= "[".$this->list_level."->".$newlevel."]";

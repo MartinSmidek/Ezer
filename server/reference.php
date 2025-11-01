@@ -1329,6 +1329,7 @@ function sys_db_append($table,$cond) {
   // vytvoř header a nalezni primární klíč
   $ths= $key= '';  $n= 0;
 //  $ths.= "<th>?</th>";
+  if (!$sys_db_info->tables->$table) goto end;
   list($flds)= explode('|',$sys_db_info->tables->$table);
   $flds= explode(',',$flds);
   foreach ($flds as $f) {
