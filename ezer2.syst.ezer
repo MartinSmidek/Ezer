@@ -362,15 +362,13 @@ panel users [,,,543] {type:'right', title:'Uživatelé', _sys:'uzi', skill:'a|a'
   use uzivatel: form user_ [610,7,,]
   use cmd: form butt [22,sys_users_cmd,,],
 
-  proc onfirstfocus() {
-    watch_css;
-#   }
-#   proc onstart () {
-    last_par.set(see.all.actives.par);
-    sel.set('use');
-    refresh;
-    uzivatel.get.display(sys('options','watch_access'),'ac');
-    uzivatel.get.display(sys('options','watch_ip'),'ip');
+  func onfirstfocus() {
+    watch_css();
+    last_par= see.all.actives.par;
+    sel= 'use';
+    refresh();
+    uzivatel.display(sys('options','watch_access')>0,'ac');
+    uzivatel.display(sys('options','watch_ip'),'ip');
     cmd.watch_key.display(sys('options','watch_key'));
   }
   # ==> ... uložení uživatele s kontrolou
@@ -397,21 +395,23 @@ panel users [,,,543] {type:'right', title:'Uživatelé', _sys:'uzi', skill:'a|a'
   # test položek před uložením
   var msg:text
   func u_test(id) {
-    if (!sys('options','watch_access')) return 1;
-    msg= php.sys_user_access(sys('options','watch_access'),uzivatel.org.key(),uzivatel.access.key());
-    if (msg) { alert(msg); return(1) }
-    // access je v pořádku
     if (!id) { // nový musí mít odlišné jméno i zkratku
       msg= php.sys_user_unique(id,uzivatel.username,uzivatel.znacka);
       if (msg) { alert(msg); return(1) }
     }
-    // testy prošly - uprav změny pro uložení - ukládáme klíče
-    if (!uzivatel.access.key() || !uzivatel.org.key()) { alert("doplň organizaci i přístup"); return 1 };
-    if (uzivatel.access.changed()) { uzivatel.access= uzivatel.access.key(); uzivatel.access.change() };
-    if (uzivatel.org.changed()) { uzivatel.org= uzivatel.org.key(); uzivatel.org.change() };
-    if (uzivatel.password.changed()) { 
-      msg= php.sys_hash_password(uzivatel.password); 
-      uzivatel.password= msg; uzivatel.password.change();
+    if (!sys('options','watch_access')) return 1;
+    if (sys('options','watch_access')>0) {
+      msg= php.sys_user_access(sys('options','watch_access'),uzivatel.org.key(),uzivatel.access.key());
+      if (msg) { alert(msg); return(1) }
+      // access je v pořádku
+      // testy prošly - uprav změny pro uložení - ukládáme klíče
+      if (!uzivatel.access.key() || !uzivatel.org.key()) { alert("doplň organizaci i přístup"); return 1 };
+      if (uzivatel.access.changed()) { uzivatel.access= uzivatel.access.key(); uzivatel.access.change() };
+      if (uzivatel.org.changed()) { uzivatel.org= uzivatel.org.key(); uzivatel.org.change() };
+      if (uzivatel.password.changed()) { 
+        msg= php.sys_hash_password(uzivatel.password); 
+        uzivatel.password= msg; uzivatel.password.change();
+      }
     }
     return 0;
   }
@@ -574,11 +574,16 @@ panel users [,,,543] {type:'right', title:'Uživatelé', _sys:'uzi', skill:'a|a'
         item { title:'-zobrazit historii změn'
           proc onclick() { Track.back_show('_user',uzivatele.lst.user.get) } }
       }
-      proc onchoice() {
-        uzivatel.skills.set(ask('sys_ids2skills',this.selected('get')));
-        uzivatel.skills.change;
-        cmd.get.enable(1,'c');
+      func onchoice() {
+        uzivatel.skills= php.sys_ids2skills(this.selected('get'));
+        uzivatel.skills.change();
+        cmd.enable(1,'c');
       }
+//      proc onchoice() {
+//        uzivatel.u_skills.set(ask('sys_ids2skills',this.selected('get')));
+//        uzivatel.skills.change;
+//        cmd.get.enable(1,'c');
+//      }
     }
   }
   # ----------------------------------------------------------------==> ... cmd
@@ -610,7 +615,10 @@ panel users [,,,543] {type:'right', title:'Uživatelé', _sys:'uzi', skill:'a|a'
       func onclick () {
         if (uzivatel.u.key()) { uzivatel.u.load(); cmd.enable(0,'c');}
     } }
-//    button [800,12,,] { title:'idu?' func onclick () { echo(`onclick: id_user=${uzivatel.u.key()}`);} }
+//    button [800,12,,] { title:'?' func onclick () { 
+//      echo(`onclick: id_user=${uzivatel.u.key()}`);
+//      echo(uzivatel.same() ? 'same' : '!same');
+//    } }
     button vytvor_clena [851,12,,] { type:'html', title:'[fa-heart] Vytvořit'
       func onclick () {
         cmd.enable(0,'c');
