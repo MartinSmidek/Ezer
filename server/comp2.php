@@ -1439,8 +1439,8 @@ function gen2($pars,$vars,$c) {
     else {
       $code= gen_setter($left,$expr($c->right)); 
     }
-    if ($TEST_DBG==2) $prefix_op($code,$c->lc,'asgn');
-//    if ($TEST_DBG==2) $prefix_op($code,$gen2_lc,'asgn');
+    if ($TEST_DBG) $prefix_op($code,$c->lc,'asgn');
+//    if ($TEST_DBG) $prefix_op($code,$gen2_lc,'asgn');
     break;
   // -------------------------------------- id '++' | id '--'
   case 'inc':
@@ -1450,7 +1450,7 @@ function gen2($pars,$vars,$c) {
     $code[]= (object)array('o'=>'v','v'=>$c->inc);
     $code[]= (object)array('o'=>'f','i'=>'sum','a'=>2);
     $code= gen_setter($id,$code); 
-    if ($TEST_DBG==2) $prefix_op($code,$gen2_lc,'inc');
+    if ($TEST_DBG) $prefix_op($code,$gen2_lc,'inc');
     break;
   // -------------------------------------- expr || expr ... 
   case 'cor':
@@ -1505,6 +1505,7 @@ function gen2($pars,$vars,$c) {
     }
     else 
       $code[]= (object)array('o'=>'u','a'=>0);
+    if ($TEST_DBG) $prefix_op($code,$c->lc,'return');
     break;
 
   // -------------------------------------- id ( expr1, ... ) ? value
@@ -1571,7 +1572,7 @@ function gen2($pars,$vars,$c) {
     }
     if ( !$c->value ) {
       $code[]= (object)array('o'=>'z','i'=>1);
-      if ($TEST_DBG==2) $prefix_op($code,$call_lc,"call/$call_op");
+      if ($TEST_DBG) $prefix_op($code,$call_lc,"call/$call_op");
     }
     break;
 
@@ -1617,7 +1618,7 @@ function gen2($pars,$vars,$c) {
     // výpočet všech částí test-then
     $code= array();
     $tests= array(gen2($pars,$vars,$c->test));
-    if ($TEST_DBG) $if_lc= $gen2_lc;
+//    if ($TEST_DBG) $if_lc= $c->lc;
     $thens= array(gen2($pars,$vars,$c->then));
     if ( isset($c->elif) ) { // if then elseif+ [else]
       foreach ( $c->elif as $e ) {
@@ -1637,7 +1638,7 @@ function gen2($pars,$vars,$c) {
       $go= (object)array('o'=>0,'go'=>$toend+1);
       $code[]= array($tests[$i],$iff,$thens[$i],$go);
     }
-    if ($TEST_DBG==2) $prefix_op($code,$if_lc,'if');
+    if ($TEST_DBG) $prefix_op($code,$c->lc,'if');
     if ( isset($c->else) ) { // if then else
       $code[]= $else;
     }
@@ -1669,6 +1670,7 @@ function gen2($pars,$vars,$c) {
     $back= (object)array('o'=>0,'go'=>$continue,'end'=>$begs,'beg'=>$continue);
     $code[]= array($init,$test,$iff,$stmnt,$incr,$back);
     $begs--; $ends--;
+    if ($TEST_DBG) $prefix_op($code,$c->lc,'for');
     break;
   // -------------------------------------- for ( var of expr ) { stmnts }
   case 'for-of':
@@ -1688,6 +1690,7 @@ function gen2($pars,$vars,$c) {
     $go= (object)array('o'=>0,'go'=>$continue,'end'=>$begs,'beg'=>$continue);
     $code[]= array($expr,$inic,$test,$stmnt,$go);      // pro pole i objekty
     $begs--; $ends--;
+    if ($TEST_DBG) $prefix_op($code,$c->lc,'for-of');
     break;
   // -------------------------------------- while ( expr ) { stmnts }
   case 'while':
@@ -1702,6 +1705,7 @@ function gen2($pars,$vars,$c) {
     $go= (object)array('o'=>0,'go'=>$continue,'end'=>$begs,'beg'=>$continue);
     $code[]= array($expr,$test,$stmnt,$go);
     $begs--; $ends--;
+    if ($TEST_DBG) $prefix_op($code,$c->lc,'while');
     break;
   // -------------------------------------- switch ( expr ) { case val: stmnt ... break .. }
   case 'switch':
@@ -1736,6 +1740,7 @@ function gen2($pars,$vars,$c) {
     }
     $code[]= (object)array('o'=>'z','i'=>1,'end'=>$ends);  // pop expr
     $begs--; $ends--;
+    if ($TEST_DBG) $prefix_op($code,$c->lc,'switch');
     break;
   // -------------------------------------- break
   case 'break':
@@ -1745,6 +1750,7 @@ function gen2($pars,$vars,$c) {
     else
       $go= (object)array('o'=>0,'continue'=>$begs);
     $code[]= $go;
+    if ($TEST_DBG) $prefix_op($code,$c->lc,'break');
     break;
   }
   $pc= array();
@@ -4222,6 +4228,7 @@ function get_slist($context,&$st) {
 # elseif  :: 'elseif' '(' expr4 ')' stmnt       --> {expr:elif,test:G(expr4),then:G(st1)}
 function get_stmnt($context,&$st) {
   global $last_lc;
+  $this_lc= $last_lc;
 //  display("stmnt beg - $last_lc");
   $ok= false;
   $id= '';
@@ -4232,6 +4239,7 @@ function get_stmnt($context,&$st) {
   }
   elseif ( get_if_id_or_keyword($id) ) {
     # 'return' [ '(' [ expr4 ] ')' ] --> {expr:return,par:G(expr)/[]}
+    $this_lc= $last_lc;
     if ( $id=='return' ) { // může mít vynechané parametry
       $arg= array();
 //      if ( get_if_delimiter('(') && !get_if_delimiter(')') ) {
@@ -4326,7 +4334,7 @@ function get_stmnt($context,&$st) {
           else
             $elifs= false;
         }
-        $st= (object)array('expr'=>'if','test'=>$test,'then'=>$then,'lc'=>$last_lc);
+        $st= (object)array('expr'=>'if','test'=>$test,'then'=>$then,'lc'=>$this_lc);
         if ( count($elif) )
           $st->elif= $elif;
         if ( get_if_id_or_key('else') ) {
@@ -4342,7 +4350,7 @@ function get_stmnt($context,&$st) {
         get_delimiter('{');
         get_cases($context,$cases);
         get_delimiter('}');
-        $st= (object)array('expr'=>'switch','of'=>$expr,'cases'=>$cases,'lc'=>$last_lc);
+        $st= (object)array('expr'=>'switch','of'=>$expr,'cases'=>$cases,'lc'=>$this_lc);
       }
       elseif ( $id=='for' ) {
         $stmnts= $var= $expr= $inc= null;
@@ -4361,7 +4369,7 @@ function get_stmnt($context,&$st) {
           get_delimiter('{');
           get_slist($context,$stmnts);
           get_delimiter('}');
-          $st= (object)array('expr'=>'for','init'=>$init,'test'=>$expr,'incr'=>$inc,'stmnt'=>$stmnts,'lc'=>$last_lc);
+          $st= (object)array('expr'=>'for','init'=>$init,'test'=>$expr,'incr'=>$inc,'stmnt'=>$stmnts,'lc'=>$this_lc);
           $ok= true;
         }
         else {
@@ -4373,7 +4381,7 @@ function get_stmnt($context,&$st) {
           get_delimiter('{');
           get_slist($context,$stmnts);
           get_delimiter('}');
-          $st= (object)array('expr'=>'for-of','var'=>$var,'of'=>$expr,'stmnt'=>$stmnts,'lc'=>$last_lc);
+          $st= (object)array('expr'=>'for-of','var'=>$var,'of'=>$expr,'stmnt'=>$stmnts,'lc'=>$this_lc);
           $ok= true;
         }
       }
@@ -4385,7 +4393,7 @@ function get_stmnt($context,&$st) {
         get_delimiter('{');
         get_slist($context,$stmnts);
         get_delimiter('}');
-        $st= (object)array('expr'=>'while','while'=>$expr,'stmnt'=>$stmnts,'lc'=>$last_lc);
+        $st= (object)array('expr'=>'while','while'=>$expr,'stmnt'=>$stmnts,'lc'=>$this_lc);
       }
       # call2 --> G(call2)
       else {
