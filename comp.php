@@ -8,7 +8,8 @@
   $pwd= getcwd();
 
   # identifikace ostrého serveru
-  $ezer_local= preg_match('/^\w+\.bean/',$_SERVER["SERVER_NAME"]);
+  $ezer_localhost= preg_match('/^localhost|^192\.168\./',$_SERVER["SERVER_NAME"])?1:0;
+  $ezer_local= $ezer_localhost || preg_match('/^.+\.bean/',$_SERVER["SERVER_NAME"])?1:0;
   $favicon= $ezer_local ? "comp_local.png" : "comp.png";
 
   if ( isset($_GET['spec']) ) {

@@ -2,7 +2,7 @@
 
 # -------------------------------------------------------------------- identifikace ladícího serveru
 $ezer_localhost= preg_match('/^localhost|^192\.168\./',$_SERVER["SERVER_NAME"])?1:0;
-$ezer_local= $ezer_localhost || preg_match('/^\w+\.bean/',$_SERVER["SERVER_NAME"])?1:0;
+$ezer_local= $ezer_localhost || preg_match('/^.+\.bean/',$_SERVER["SERVER_NAME"])?1:0;
 
 // pokud není ladící, musí mít moji IP
 if (!$ezer_local && !in_array(my_ip(),array('217.64.3.170','127.0.0.1','86.49.253.146',
