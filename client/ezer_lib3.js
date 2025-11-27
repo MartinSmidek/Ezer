@@ -1,8 +1,17 @@
 /* global Ezer, dbg */
 
+// ----------------------------------------------------------------------------------- browse unsort
+// zruší značky směru řazení a nastaví browse jako neřazený
 function browse_unsort(browse) {
- browse.order= null;
- browse.order_by= null;
+  browse.order= null;
+  browse.order_by= null;
+  for ( let is in browse.part ) {
+    let show= browse.part[is];
+    if (show.type=='show' && show.sorting) {
+      show.sorting= 'n';
+      show.DOM_sort();
+    }
+  }
 }
 
 // ===========================================================================================> LIB3
