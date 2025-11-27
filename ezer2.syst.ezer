@@ -488,6 +488,7 @@ panel users [,,,543] {type:'right', title:'Uživatelé', _sys:'uzi', skill:'a|a'
     view t: table _track { join_type:'NONE', join:"ON abbr=kdo" }
     view t2: table _touch { join_type:'NONE', join:"ON abbr=user" }
     label [6,4,89,15] { title:'Uživatelé' css:'karta' style:"color:white;font-size:14px" }
+    label legenda [290,21,400,] { title:'' }
     browse lst [4,37,0,54] { rows:sys_users_list, qry_rows:1, buf_rows:100, group_by:'abbr'
       show idu [,,27,] { title:'č.', help:'jednoznačné číslo uživatele',
         data:u.id_user, format:'rsq=' }
@@ -508,6 +509,7 @@ panel users [,,,543] {type:'right', title:'Uživatelé', _sys:'uzi', skill:'a|a'
       show rn [,,0,] { title:'dřív',    expr:"0", format:'rtsq*' }
       func track(on) { 
         if (on) {
+          legenda= "roční změny dat (track) - přepočet kontextovým menu";
           js.waiting(1);
           t.set_attrib('join_type','LEFT');
           r0.set_attrib('expr',"SUM(IF(YEAR(t.kdy)=YEAR(NOW()),1,0))");
@@ -525,6 +527,7 @@ panel users [,,,543] {type:'right', title:'Uživatelé', _sys:'uzi', skill:'a|a'
       }
       func xtouch(on) { 
         if (on) {
+          legenda= "roční aktivita (touch) - přepočet kontextovým menu";
           js.waiting(1);
           t2.set_attrib('join_type','LEFT');
           r0.set_attrib('expr',"SUM(IF(YEAR(t2.day)=YEAR(NOW()),1,0))");
@@ -542,14 +545,16 @@ panel users [,,,543] {type:'right', title:'Uživatelé', _sys:'uzi', skill:'a|a'
       }
       func onclick () {
         if (r0.width()) { // po rocích zobraz organizaci
+          legenda= '';
           r0.width(0); r1.width(0); r2.width(0); rn.width(0);
           org.width(19); access.width(29); skills.width(230)
         }
         elseif (org.width()) { // po organizaci zobraz skill
+          legenda= '';
           org.width(0); access.width(0); skills.width(280)
         }
         else { // po skill zobraz roky
-          alert("zobrazení roční aktivity je vypočítáno kontextovým menu v oprávněních");
+          alert("zobrazení je vypočítáno kontextovým menu v oprávněních");
           show_track();
         }
       }
@@ -604,9 +609,9 @@ panel users [,,,543] {type:'right', title:'Uživatelé', _sys:'uzi', skill:'a|a'
         func onsubmit() { this.save() } }
       # ----------------------------------------------==> ... kontext.menu
       menu { type:'context'
-        item { title:'zobrazit roční změny'
+        item { title:'zobrazit roční změny (track)'
           func onclick() { js.browse_unsort(uzivatele.lst); uzivatele.lst.xtouch(0); uzivatele.lst.track(1) } }
-        item { title:'zobrazit roční přístupy'
+        item { title:'zobrazit roční aktivitu (touch)'
           func onclick() { js.browse_unsort(uzivatele.lst); uzivatele.lst.track(0); uzivatele.lst.xtouch(1) } }
         item { title:'odebrat všechna oprávnění'
           func onclick() { seznam.selected("clear"); cmd.enable(1,'c'); } }
