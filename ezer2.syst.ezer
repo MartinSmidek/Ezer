@@ -1,7 +1,7 @@
 #pragma library
 
 // Systém Ezer - knihovní modul System
-// (c) 2008-2021 Martin Šmídek <martin@smidek.eu>*/
+// (c) 2008-2025 Martin Šmídek <martin@smidek.eu>*/
 
 func the_formsave (f:ezer,b:ezer) {
   if ( not(f.same()) ) {
@@ -507,12 +507,14 @@ panel users [,,,543] {type:'right', title:'Uživatelé', _sys:'uzi', skill:'a|a'
       show rn [,,0,] { title:'dřív',    expr:"0", format:'rtsq*' }
       func track(on) { 
         if (on) {
+          js.waiting(1);
           t.set_attrib('join_type','LEFT');
           r0.set_attrib('expr',"SUM(IF(YEAR(t.kdy)=YEAR(NOW()),1,0))");
           r1.set_attrib('expr',"SUM(IF(YEAR(t.kdy)=YEAR(NOW())-1,1,0))");
           r2.set_attrib('expr',"SUM(IF(YEAR(t.kdy)=YEAR(NOW())-2,1,0))");
           rn.set_attrib('expr',"SUM(IF(YEAR(t.kdy)<YEAR(NOW())-2,1,0))");
-          show_track(); refresh()
+          show_track(); refresh();
+          js.waiting(0);
         }
         else {
           t.set_attrib('join_type','NONE');
