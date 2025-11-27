@@ -486,6 +486,7 @@ panel users [,,,543] {type:'right', title:'Uživatelé', _sys:'uzi', skill:'a|a'
   form users_ [,,587,470] { css:'ae_work'
     view u: table _user
     view t: table _track { join_type:'NONE', join:"ON abbr=kdo" }
+    view t2: table _touch { join_type:'NONE', join:"ON abbr=user" }
     label [6,4,89,15] { title:'Uživatelé' css:'karta' style:"color:white;font-size:14px" }
     browse lst [4,37,0,54] { rows:sys_users_list, qry_rows:1, buf_rows:100, group_by:'abbr'
       show idu [,,27,] { title:'č.', help:'jednoznačné číslo uživatele',
@@ -518,6 +519,23 @@ panel users [,,,543] {type:'right', title:'Uživatelé', _sys:'uzi', skill:'a|a'
         }
         else {
           t.set_attrib('join_type','NONE');
+          r0.set_attrib('expr',"0"); r1.set_attrib('expr',"0");
+          r2.set_attrib('expr',"0"); rn.set_attrib('expr',"0")
+        }
+      }
+      func xtouch(on) { 
+        if (on) {
+          js.waiting(1);
+          t2.set_attrib('join_type','LEFT');
+          r0.set_attrib('expr',"SUM(IF(YEAR(t2.day)=YEAR(NOW()),1,0))");
+          r1.set_attrib('expr',"SUM(IF(YEAR(t2.day)=YEAR(NOW())-1,1,0))");
+          r2.set_attrib('expr',"SUM(IF(YEAR(t2.day)=YEAR(NOW())-2,1,0))");
+          rn.set_attrib('expr',"SUM(IF(YEAR(t2.day)<YEAR(NOW())-2,1,0))");
+          show_track(); refresh();
+          js.waiting(0);
+        }
+        else {
+          t2.set_attrib('join_type','NONE');
           r0.set_attrib('expr',"0"); r1.set_attrib('expr',"0");
           r2.set_attrib('expr',"0"); rn.set_attrib('expr',"0")
         }
@@ -586,8 +604,10 @@ panel users [,,,543] {type:'right', title:'Uživatelé', _sys:'uzi', skill:'a|a'
         func onsubmit() { this.save() } }
       # ----------------------------------------------==> ... kontext.menu
       menu { type:'context'
-        item { title:'zobrazit roční aktivitu'
-          func onclick() { uzivatele.lst.track(1) } }
+        item { title:'zobrazit roční změny'
+          func onclick() { js.browse_unsort(uzivatele.lst); uzivatele.lst.xtouch(0); uzivatele.lst.track(1) } }
+        item { title:'zobrazit roční přístupy'
+          func onclick() { js.browse_unsort(uzivatele.lst); uzivatele.lst.track(0); uzivatele.lst.xtouch(1) } }
         item { title:'odebrat všechna oprávnění'
           func onclick() { seznam.selected("clear"); cmd.enable(1,'c'); } }
         item { title:'-přidat nový řádek', skill:'m|m'
@@ -1146,4 +1166,9 @@ table _track { key_id:'id_track'
   text op { help:'operace' }
   text old { help:'původní hodnota' }
   text val { help:'původní hodnota' }
+}
+table _touch { key_id:'id_touch'
+  number id_touch { key:'primary' }
+  date day { help:'datum přístupu' }
+  text user { help:'abbr' }
 }

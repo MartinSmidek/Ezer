@@ -1,5 +1,10 @@
 /* global Ezer, dbg */
 
+function browse_unsort(browse) {
+ browse.order= null;
+ browse.order_by= null;
+}
+
 // ===========================================================================================> LIB3
 "use strict";
 // ====================================================================> run-time konstanty a r_expr
