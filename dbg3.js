@@ -839,6 +839,7 @@ function dbg_trace_buttons(on,cont_too=true) {
 function dbg_trace_init() {
   // kopie trasování z aplikace
   let $bar= jQuery('#grip');
+  if (doc.Ezer.sys.dbg.trace) {
   for (const id of doc.Ezer.sys.dbg.trace) {
     doc.Ezer.is_trace[id]= doc.Ezer.app.options.ae_trace.indexOf(id)>=0;
     jQuery(`<span class="${doc.Ezer.is_trace[id]?'grip_trace_on':''}">${id}</span>`)
@@ -851,6 +852,7 @@ function dbg_trace_init() {
           return false;
         })
       .appendTo($bar);
+  }
   }
   // specifické trasování
   dbg.trace.dblclick( () => { dbg.trace.empty(); dbg.watch.empty(); } );
@@ -954,22 +956,61 @@ function dbg_watch_act (proc,act) {
   if (proc.desc.var) {
     for (const [id,offset] of Object.entries(proc.desc.var)) {
       let istack= act-offset,
-          onclick= `onclick="dbg_show_val(${istack},'${id}')"`,
+          onclick= `onclick="dbg_show_local_val(${istack},'${id}')"`,
           val= doc.Ezer.continuation.stack[istack];
       msg+= `<dd><span class="var" ${onclick}>${id}</span>=`;  
       msg+= doc.Ezer.continuation.val(val);  
       msg+= `</dd>`;  
     }
   }
+  if (proc.code) {
+    let vars= '',
+        ids= [],
+        types= ['var','const','field','field.date','field.list','label','radio','check',
+                'select','select.map','select.map0','select.auto'];
+//        types= ['check'];
+    for (const cmd of proc.code) {
+      if (cmd.o=='o' && !ids.includes(cmd.i)) {
+        let obj= [], 
+            name= doc.Ezer.run_name(cmd.i,doc.Ezer.continuation.context,obj);
+        if (name==1 && types.includes(obj[0].type)) {
+          if (obj[0].id) {
+            let onclick= `onclick="dbg_show_global_val('${cmd.i}')"`;
+            vars+= ` <span class="var" title="${cmd.i}" ${onclick}>${obj[0].id}</span>`;  
+          }
+          else {
+            vars+= ` <span style="color:red">${cmd.i}</span>`;  
+          }
+          ids.push(cmd.i);
+        }
+      }
+    }
+    if (vars) {
+      msg+= `<dd>globals: ${vars}</dd>`;  
+    }
+  }
   return msg;
 }
-// zobrazí hodnotu
-function dbg_show_val (istack,id) {
+// zobrazí hodnotu lokální proměnné
+function dbg_show_local_val (istack,id) {
   let value= doc.Ezer.continuation.stack[istack];
   if ( typeof value == "object" )
     value= doc.Ezer.fce.debug(value,id,3);
   else
     value= id+'='+value;
+  dbg.log
+    .css({display:'block',top:50,left:190})
+    .html(value);
+}
+// zobrazí hodnotu globální proměnné
+function dbg_show_global_val (id) {
+  let obj= [], value;
+  doc.Ezer.run_name(id,doc.Ezer.continuation.context,obj);
+  value= obj[0].value;
+  if ( typeof value == "object" )
+    value= doc.Ezer.fce.debug(value,obj[0].id,3);
+  else
+    value= obj[0].id+'='+value;
   dbg.log
     .css({display:'block',top:50,left:190})
     .html(value);

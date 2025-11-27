@@ -8,7 +8,7 @@ $ezer_local= $ezer_localhost || preg_match('/^\w+\.(bean|doma)/',$_SERVER["SERVE
 
 // pokud není ladící, musí mít moji IP
 if (!$ezer_local && !in_array(my_ip(),array('192.168.7.5','192.168.7.8','217.64.3.170','127.0.0.1',
-    '86.49.250.80','88.103.194.219','85.163.152.170')) )
+    '86.49.250.80','88.103.194.219','85.163.152.170','192.168.99.119')) )
   die(my_ip());
 
 //error_reporting(E_ALL & ~E_NOTICE);

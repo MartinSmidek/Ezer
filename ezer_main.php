@@ -18,8 +18,8 @@ $this_ezer_version= '3.3';
  */
 
   // redefine OBSOLETE
-  if (isset($abs_roots)) $abs_root= $abs_roots[$ezer_server];
-  if (isset($rel_roots)) $rel_root= $rel_roots[$ezer_server];
+  if (isset($abs_roots) && !isset($abs_root)) $abs_root= $abs_roots[$ezer_server];
+  if (isset($rel_roots) && !isset($rel_root)) $rel_root= $rel_roots[$ezer_server];
 
   global $app_root, $ezer_root, $api_key, $const, $appl_version, $ezer_version; 
   $ezer_root= $app_root;
@@ -100,6 +100,7 @@ $this_ezer_version= '3.3';
 
   $http_rel_root= $rel_root; //isset($ezer_server) ? $rel_roots[$ezer_server] : $rel_roots[$ezer_local];
   list($http,$rel_root)= explode('://',$http_rel_root);
+  $_SESSION[$app]['http']= $http;
   $_SESSION[$app]['rel_root']= $rel_root;
   
   $_SESSION[$app]['app_path']= "";

@@ -34,7 +34,7 @@
   $file= isset($_GET['file']) ? $_GET['file'] : '';
 
   $app= $_GET['app'];
-  $rel_root= isset($_SERVER['HTTPS']) && $_SERVER['HTTPS']=='on' ? 'https://' : 'http://';
+  $rel_root= $_SESSION[$app]['http'].'://'; //isset($_SERVER['HTTPS']) && $_SERVER['HTTPS']=='on' ? 'https://' : 'http://';
   $rel_root.= $_SESSION[$app]['rel_root'];
   $ezer_version= $_SESSION[$app]['ezer'];
   

@@ -1064,15 +1064,17 @@ function i_doc_show($chapter,$section,$class) {
 # --------------------------------------------------------------------------------------- i_doc_menu
 # vygeneruje menu pro danou kapitolu ve formátu pro menu_fill
 # values:[{group:id,entries:[{entry:id,keys:[k1,...]}, ...]}, ...]
-# $chapters (seznam jmen),
+# $chapter ´reference|aplication
 # $section,$class udávají počáteční stav
-function i_doc_menu($chapters,$section0,$class0) {
+function i_doc_menu($chapter) {
   global $mysql_db; 
   $mn= (object)array('type'=>'menu.left'
       ,'options'=>(object)array(),'part'=>(object)array());
   ezer_connect($mysql_db);
-  $qry= "SELECT DISTINCT section FROM _doc
-         WHERE FIND_IN_SET(chapter,'$chapters') GROUP BY sorting,section ";
+//  $qry= "SELECT DISTINCT section FROM _doc
+//         WHERE FIND_IN_SET(chapter,'$chapters') GROUP BY sorting,section ";
+  $qry= "SELECT section FROM _doc
+         WHERE chapter='$chapter' GROUP BY sorting,section ";
   $res= mysql_qry($qry);
   while ( $res && ($row= pdo_fetch_assoc($res)) ) {
     $id= $section= $row['section'];
@@ -1080,8 +1082,11 @@ function i_doc_menu($chapters,$section0,$class0) {
     $gr= (object)array('type'=>'menu.group'
       ,'options'=>(object)array('title'=>$section),'part'=>(object)array());
     $mn->part->$id= $gr;
+//    $qry2= "SELECT class, title FROM _doc
+//            WHERE FIND_IN_SET(chapter,'$chapters') AND section='$section'
+//            GROUP BY class ORDER BY sorting, class";
     $qry2= "SELECT class, title FROM _doc
-            WHERE FIND_IN_SET(chapter,'$chapters') AND section='$section'
+            WHERE chapter='$chapter' AND section='$section'
             GROUP BY class ORDER BY sorting, class";
     $res2= mysql_qry($qry2);
     while ( $res2 && ($row2= pdo_fetch_assoc($res2)) ) {
@@ -1094,7 +1099,7 @@ function i_doc_menu($chapters,$section0,$class0) {
       if ( $id ) $gr->part->$id= $tm;
     }
   }
-//                                                 debug($mn);
+                                                 debug($mn);
   return $mn;
 }
 # ------------------------------------------------------------------------------- i_doc_table_struct
