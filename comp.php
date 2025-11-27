@@ -242,7 +242,8 @@
     if ( $name ) {
       $txt= comp_module($name,$ezer_root,$state);
       $compiled= $name;
-      $lst.= $trace;
+      if (substr($state,0,2)=='ok')
+        $lst.= $trace;
       $lst.= $display;
       $lst.= $err;
     }
@@ -286,13 +287,13 @@ __EOD
         $del= ',';
       }
     }
-    if ($option_source && isset($call_ezer) && $call_ezer) {
-      $calls.= "<br><br><b>seznam funkcí ezerscriptu</b> "; $del= '';
-      foreach($call_ezer as $fce=>$called) {
-        $calls.= "$del $fce (".implode(',',$called).')';
-        $del= ';';
-      }
-    }
+//    if ($option_source && isset($call_ezer) && $call_ezer) {
+//      $calls.= "<br><br><b>seznam funkcí ezerscriptu</b> "; $del= '';
+//      foreach($call_ezer as $fce=>$called) {
+//        $calls.= "$del $fce (".implode(',',$called).')';
+//        $del= ';';
+//      }
+//    }
     // ? debug a trace
     $lst.= $calls;
   }
@@ -403,10 +404,11 @@ echo <<<__EOF
 __EOF;
 /** ************************************************************************************************ procedury */
 function comp_module($name,$root,&$state) {
-  global $ezer_path_appl, $option_source, $option_list;
-//   $trace= $option_state;
+  global $ezer_path_appl, $option_source, $option_list, $option_state;
+  global $trace, $totrace; 
+  $totrace= $option_state ? 'u' : '';
+//  $trace= $option_state;
 //  echo("option_list=$option_list, trace=$trace ... {$_GET['trace']}");
-//  global $totrace; $totrace= 'u';
   $state= comp_file($name,$root,$option_list,true);
 //    echo($lst);
 //  $ln= 0;
@@ -435,7 +437,7 @@ function comp_module($name,$root,&$state) {
 //    $lst.= nl2br($src).'<hr>';
 //  }
 //   debug($code,"COMPILED $name");
-  display($state);
+//  display($state);
   return $txt;
 }
 

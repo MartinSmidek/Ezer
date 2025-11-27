@@ -317,7 +317,7 @@ function comp_file ($name,$root='',$_list_only='',$_comp_php=false) {  #trace();
 //     $dbg= debugx($loads->code);
     $lst= xlist($loads->code,0,$list_only);
     $lst= "<pre>$lst</pre><hr>";
-    display($dbg.$lst);
+//    display($dbg.$lst);
   }
   unset($loads->code);
 //                                                         debug($loads,"ENVIRONMENT $myname");
@@ -2338,6 +2338,7 @@ function gen_setter($s,$value,$index=null) {
     break;
   default:
     display("CODE: tohle setter neumí přeložit");
+//    comp_error("CODE: tohle setter neumí přeložit");
   }
   return $code;
 }
