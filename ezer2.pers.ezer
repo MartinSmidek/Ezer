@@ -1,42 +1,45 @@
 #pragma library,test
 
 # Systém Ezer2 - panel osobního nastavení
-# (c) 2010-2017 Martin Šmídek <martin@smidek.eu>
+# (c) 2010-2025 Martin Šmídek <martin@smidek.eu>
 
 var the_user: number
-var last_item: object
+var last_item: ezer
 
 use rp: form right [12,4,,]
 use ch: form _chng [12,70,,]
 use msg: form _msg [12,70,,]
 
-proc onfirstfocus () {
-  echo('ONFIRSTFOCUS'); the_user.set(sys('user','id_user')); m.g.i.click; }
+func onfirstfocus () {
+  echo('ONFIRSTFOCUS'); the_user= sys('user','id_user'); m.g.i.click(); 
+}
 
-proc onstart() {
-  echo('ONSTART'); the_user.set(sys('user','id_user'));
-  has_skill('a'); rp.id_user.key(the_user.get); }
+func onstart() {
+  echo('ONSTART'); the_user= sys('user','id_user');
+  if (has_skill('a')) rp.id_user.key(the_user); 
+}
 
 menu m {type:'left',
   menu g { title:"Přehled osobních nastavení", type:'group'
-    item i { title:"osobní záznam"              ,par:°{typ:'oso'} }
-    item   { title:"m: zobrazení funkce sys"    ,par:°{typ:'sys'}, skill:'m' }
-    item   { title:"m: zobrazení Ezer.options"  ,par:°{typ:'opt'}, skill:'m' }
-    item   { title:"m: zobrazení _SESSION"      ,par:°{typ:'ses'}, skill:'m' }
-    item   { title:"m: zobrazení USER"          ,par:°{typ:'use'}, skill:'m' }
-    item   { title:"m: zobrazení EZER"          ,par:°{typ:'eze'}, skill:'m' }
-    proc onclick(i) {
-      last_item.set(i);
-      rp.fill(conc(i.owner.title,' - ',i.title),' ');
-      ch.get.display(0); msg.get.display(1);
-      switch(i.par.typ,
-      'oso',{msg.txt.set(ask('sys_user_record',the_user.get))},
-      'foo',{msg.txt.set(ask('sys_user_record',the_user.get))},
-      'sys',{msg.txt.set(debug(sys))},
-      'opt',{msg.txt.set(debug(javascript('Ezer.options')))},
-      'use',{msg.txt.set(ask('sys_user'))},
-      'eze',{msg.txt.set(ask('sys_ezer'))},
-      'ses',{msg.txt.set(ask('sys_session'))}) }
+    item i { title:"osobní záznam"              ,par:{typ:'oso'} }
+    item   { title:"m: zobrazení funkce sys"    ,par:{typ:'sys'}, skill:'m' }
+    item   { title:"m: zobrazení Ezer.options"  ,par:{typ:'opt'}, skill:'m' }
+    item   { title:"m: zobrazení _SESSION"      ,par:{typ:'ses'}, skill:'m' }
+    item   { title:"m: zobrazení USER"          ,par:{typ:'use'}, skill:'m' }
+    item   { title:"m: zobrazení EZER"          ,par:{typ:'eze'}, skill:'m' }
+    func onclick(i:ezer) {
+      last_item= i;
+      rp.header(i);
+      ch.display(0); msg.display(1);
+      switch (i.par.typ) {
+        case 'oso': msg.txt= php.sys_user_record(the_user); break;
+        case 'sys': msg.txt= debug(sys()); break;
+        case 'opt': msg.txt= debug(javascript('Ezer.options')); break;
+        case 'ses': msg.txt= php.sys_session(); break;
+        case 'use': msg.txt= php.sys_user(); break;
+        case 'eze': msg.txt= php.sys_ezer(); break;
+      }
+    }
   }
   menu {title:"Změna osobního nastavení", type:'group', _sys:'jm'
     item { title:"změna emailové adresy"      ,par:{typ:'opt',fld:'email'} }
@@ -50,10 +53,10 @@ menu m {type:'left',
     item { title:"změna přihlašovacího jména" ,par:{typ:'fld',fld:'username'} }
     item { title:"m: změna položky 'state'"   ,par:{typ:'fld',fld:'state'}, skill:'m' }
   }
-  proc onclick (i) {
-    last_item.set(i);
-    ch.get.display(1); msg.get.display(0);
-    rp.fill(conc(i.owner.title,' - ',i.title),' ');
+  func onclick (i:ezer) {
+    last_item= i;
+    ch.display(1); msg.display(0);
+    rp.header(i); 
     ch._load(i,i.par);
   }
 }
@@ -66,9 +69,9 @@ form _msg [,,700,500] {
 # -------------------------------------------------------------------------------------------------- _chng
 # formulář pro změnu jedné položky
 form _chng [,,700,120] { style:'z-index:2'
-  var the_itm: object
+  var the_itm: ezer
   var the_par: object
-  proc onchanged () { _form_state('bc','bn') }
+  func onchanged() { _form_state('bc','bn') }
   field ops [110,0,200,]  { tag:'p', title:'stará hodnota:', format:'pnt' }
   field old [110,0,200,]  { tag:'o', title:'stará hodnota:', format:'o' }
   field new [110,30,200,] { tag:'o', title:'nová hodnota:', format:'' }
@@ -79,67 +82,69 @@ form _chng [,,700,120] { style:'z-index:2'
   label     [0,141,100,14]  { tag:'f', title:'nová patička:', format:'r' }
   edit  fo2 [110,142,500,183] { tag:'f', type:'html' }
 # procedury
-  proc _form_state(on,off) { form.enable(1,on); form.enable(0,off); }
-  proc _form_show(on,off) { form.display(1,on); form.display(0,off); }
-  proc _init() { _form_state('bn','bc'); new.init }
-//  func _load(i:ezer,par:object) {
-//    the_itm= i; _init();
-//    the_par= par;
-//    switch (par.typ) {
-//      case 'fld': _form_show('o','p|f'); old= php.sys_user_get(the_user,par.typ,par.fld); break; 
-//      case 'opt': _form_show('o','p|f'); old= php.sys_user_get(the_user,par.typ,par.fld); break;
-//      case 'oop': _form_show('o','p|f'); old= php.sys_user_get(the_user,par.typ,par.fld); break;
-//      case 'txt': _form_show('f','p|o'); fo1= php.sys_user_get(the_user,par.typ,par.fld); fo2= fo1; break;
-//      case 'pas': _form_show('p','o|f'); break;
-//    }
-//  }
-  proc _load(i,par) {
-    the_itm.set(i); _init;
-    the_par.set(par);
-    switch(par.typ,
-    'fld',{ _form_show('o','p|f'); old.set(ask('sys_user_get',the_user.get,par.typ,par.fld)) },
-    'opt',{ _form_show('o','p|f'); old.set(ask('sys_user_get',the_user.get,par.typ,par.fld)) },
-    'oop',{ _form_show('o','p|f'); old.set(ask('sys_user_get',the_user.get,par.typ,par.fld)) },
-    'txt',{ _form_show('f','p|o'); fo1.set(ask('sys_user_get',the_user.get,par.typ,par.fld)); fo2.set(fo1.get) },
-    'pas',{ _form_show('p','o|f') },
-    {stop}) }
+  func _form_state(on,off) { form.enable(1,on); form.enable(0,off); }
+  func _form_show(on,off) { form.display(1,on); form.display(0,off); }
+  func _init() { _form_state('bn','bc'); new.init() }
+  func _load(i:ezer,par:object) {
+    the_itm= i; _init();
+    the_par= par;
+    switch (the_par.typ) {
+      case 'fld': _form_show('o','p|f'); old= php.sys_user_get(the_user,the_par.typ,the_par.fld); break; 
+      case 'opt': _form_show('o','p|f'); old= php.sys_user_get(the_user,the_par.typ,the_par.fld); break;
+      case 'oop': _form_show('o','p|f'); old= php.sys_user_get(the_user,the_par.typ,the_par.fld); break;
+      case 'txt': _form_show('f','p|o'); fo1= php.sys_user_get(the_user,the_par.typ,the_par.fld); fo2= fo1; break;
+      case 'pas': _form_show('p','o|f'); break;
+    }
+  }
   # tlačítka
-  proc _init() { _form_state('bn','bc'); form.init }
-  button    [20,70,,]  { tag:'bc', title:'Uložit změnu',
+  func _init() { _form_state('bn','bc'); form.init() }
+  button [20,70,,]  { tag:'bc', title:'Uložit změnu',
     help:'zapsat novou hodnotu do osobního nastavení'
-    proc onclick () {
-      var t: text var f: text
-      t.set(the_par.get('typ')); f.set(the_par.get('fld'));
-      switch(t,
-      'fld',{ _form_show('o','p|f'); rp.fill('',ask('sys_user_change',the_user.get,t,f,new.get)); new.plain },
-      'opt',{ _form_show('o','p|f'); rp.fill('',ask('sys_user_change',the_user.get,t,f,new.get)); new.plain },
-      'oop',{ _form_show('o','p|f'); rp.fill('',ask('sys_user_change',the_user.get,t,f,new.get)); new.plain },
-      'txt',{ _form_show('f','p|o'); rp.fill('',ask('sys_user_change',the_user.get,t,f,fo2.get)); fo2.plain },
-      'pas',{ _form_show('p','o|f'); rp.fill('',ask('sys_user_change',the_user.get,t,'',nps.get,ops.get,rep.get));
-              _init });
-  } }
-  button    [110,70,,] { tag:'bc', title:' Zpět ',
+    func onclick () {
+      var t:text, f:text
+      t= the_par.typ; f= the_par.fld;
+      switch (t) {
+        case 'fld': 
+          _form_show('o','p|f'); rp.append(php.sys_user_change(the_user,t,f,new)); new.plain(); break;
+        case 'opt':
+          _form_show('o','p|f'); rp.append(php.sys_user_change(the_user,t,f,new)); new.plain(); break;
+        case 'oop': 
+          _form_show('o','p|f'); rp.append(php.sys_user_change(the_user,t,f,new)); new.plain(); break;
+        case 'txt':
+          _form_show('f','p|o'); rp.append(php.sys_user_change(the_user,t,f,fo2)); fo2.plain(); break;
+        case 'pas':
+          _form_show('p','o|f'); rp.append(php.sys_user_change(the_user,t,'',nps,ops,rep)); _init(); break;
+      }
+    } 
+  }
+  button [110,70,,] { tag:'bc', title:' Zpět ',
     help:'ponechat starou hodnotu osobního nastavení'
-    proc onclick () { the_itm.click } }
+    func onclick () { the_itm.click() } }
 }
-# -------------------------------------------------------------------------------------------------- rightf
+# -------------------------------------------------------------------------------------------- right
 # formulář pro levostranné menu s postupným zápisem
 form right [,,*,50] {
   label head [0,0,*,50]  { title:' ' }
   select id_user [-20,5,100,20] { type:'map', options:user.surname, format:'xt', skill:'a|a'
     help:'výběr uživatele'
-    proc onchanged () {
-      echo('vybráno:',id_user.get,',',id_user.key);
-      the_user.set(id_user.key);
-      last_item.click
-  } }
-  label note [0,170,*,550] { title:' ' }
-  proc fill(h,n) {
-    [ h; head.set(conc("<div class='karta'>",h,"</div>")) ];
-    [ n; note.set(n) ]
+    func onchanged () {
+      echo('vybráno:',id_user,',',id_user.key());
+      the_user= id_user.key();
+      last_item.click();
+    } 
   }
-  proc append(n) {
-    note.set(conc(note.get,n))
+  label note [0,170,*,550] { title:' ' }
+  func header(i:ezer) { var i_owner:ezer
+    clear(); i_owner= i.owner();
+    head= replace_fa(`<div class='karta'>${i_owner.title} - ${i.title}</div>`);
+    note= '';
+  }
+  func fill(x,y) {
+    if (x) head= `<div class='karta'>${replace_fa(x)}</div>`;
+    if (y) note= y
+  }
+  func append(y) {
+    if (y) note= conc(note,y)
   }
 }
 

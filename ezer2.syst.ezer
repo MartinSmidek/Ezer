@@ -3,14 +3,23 @@
 // Systém Ezer - knihovní modul System
 // (c) 2008-2021 Martin Šmídek <martin@smidek.eu>*/
 
-proc the_formsave (f,b) {
-  f.same
-| f.key; f.save; { b.browse_seek; f.load | f.init }
-| f.insert; f.load;
-  b.raise('onrowclick',b.browse_seek(conc(f.id_key,'=',f.key)))
+func the_formsave (f:ezer,b:ezer) {
+  if ( not(f.same()) ) {
+    if ( f.key() ) {
+      f.save(); 
+      if ( b.browse_seek() ) 
+        f.load() 
+      else 
+        f.init() 
+    }
+    else {
+      f.insert(); f.load();
+      b.raise('onrowclick',b.browse_seek(conc(f.id_key(),'=',f.key())))
+    }
+  }
 }
-proc reaccess() { #==> reaccess - změna
-  users.refresh
+func reaccess() { #==> reaccess - změna
+  users.refresh()
 }
 
 # ==========================================================================================> UPDATE
@@ -72,10 +81,14 @@ panel upd {type:'right', title:'[fa-download] Update', _sys:'str', skill:'m'
 panel cis [,,,*] {type:'right', title:'Číselníky', _sys:'cis', skill:'m|m'
   use u: form _tit [12,4,,]
   menu {type:'left', active:*, format:'f-'
-    proc onstart() {
-      [ sys('options','group_db')     | h.g.enable(0) ];
-      [ sys('options','curr_version') | h.k.enable(0) ];
+    func onstart() {
+      if (!sys('options','group_db')) h.g.enable(0);
+      if (!sys('options','curr_version')) h.k.enable(0);
     }
+//    proc onstart() {
+//      [ sys('options','group_db')     | h.g.enable(0) ];
+//      [ sys('options','curr_version') | h.k.enable(0) ];
+//    }
     menu h {title:'Editace nápovědy', type:'group'
       item a {title:'[fa-question] číselník aplikace',                par:°{level:'a',db:''} }
       item g {title:'[fa-question-circle] číselník skupiny aplikací', par:°{level:'g',db:'ezer_group'} }
@@ -110,22 +123,36 @@ panel cis [,,,*] {type:'right', title:'Číselníky', _sys:'cis', skill:'m|m'
   var novy: text,
   var cis_druh: text,
   var cis_id: number
-  proc onfirstfocus () {
-    druh_cond.set("druh='_meta_'");
-    cis_druh.set('_meta_');
-    reload_meta }
-  proc reload_meta () {
-    mklice.lst.browse_load("druh='_meta_'");
-    mklice.lst.raise('onrowclick'); mklice.lst.browse_focus
-  | klic.key_novy;
+  func onfirstfocus () {
+    druh_cond= "druh='_meta_'";
+    cis_druh= '_meta_';
+    reload_meta() }
+  func reload_meta () {
+    if (mklice.lst.browse_load("druh='_meta_'")) {
+      mklice.lst.raise('onrowclick'); mklice.lst.browse_focus()
+    }
+    else 
+      klic.key_novy();
   }
-  proc reload_keys () {
-    klice.lst.browse_load(druh_cond.get);
-    klice.lst.raise('onrowclick'); klice.lst.browse_focus
-  | klic.key_novy;
+//  proc reload_meta () {
+//    mklice.lst.browse_load("druh='_meta_'");
+//    mklice.lst.raise('onrowclick'); mklice.lst.browse_focus
+//  | klic.key_novy;
+//  }
+  func reload_keys () {
+    if (klice.lst.browse_load(druh_cond)) {
+      klice.lst.raise('onrowclick'); klice.lst.browse_focus()
+    }
+    else 
+      klic.key_novy();
   }
-  proc reload_key () {
-    klic.key_load }
+//  proc reload_keys () {
+//    klice.lst.browse_load(druh_cond.get);
+//    klice.lst.raise('onrowclick'); klice.lst.browse_focus
+//  | klic.key_novy;
+//  }
+  func reload_key () {
+    klic.key_load() }
   # -------------------------------------------------------------------------------------==>_mklice
   form _mklice [0,0,200,200] {
     label [0,0,1060,130] { css:'parm' }
@@ -138,9 +165,9 @@ panel cis [,,,*] {type:'right', title:'Číselníky', _sys:'cis', skill:'m|m'
       show zkratka [,,120,] { title:'zkratka', data:k.zkratka, format:'qs' }
       show hodnota [,,190,] { title:'hodnota', data:k.hodnota, format:'qs' }
       show popis [,,150,] { title:'popis', data:k.popis, format:'qs' }
-      proc onrowclick() {
-        druh_cond.set(conc("druh='",zkratka.get,"'"));
-        mklic.load(id.get); reload_keys }
+      func onrowclick() {
+        druh_cond= conc("druh='",zkratka,"'");
+        mklic.load(id); reload_keys() }
     }
   }
   # --------------------------------------------------------------------------------------==>_klice
@@ -157,12 +184,16 @@ panel cis [,,,*] {type:'right', title:'Číselníky', _sys:'cis', skill:'m|m'
       show ikona   [,,50,] { title:'ikona', data:k.ikona, format:'qs' }
       show barva   [,,50,] { title:'barva', data:k.barva, format:'qs' }
       show popis   [,,50,] { title:'popis', data:k.popis, format:'qs' }
-      proc onrowclick () {
-        reload_key }
-      proc onsubmit () {
-        eq(druh.get,'_meta_');
-        mklice.lst.browse_seek(conc("zkratka='",zkratka.get,"'"));
+      func onrowclick () {
+        reload_key() }
+      func onsubmit () {
+        if (!druh=='_meta_') return;
+        mklice.lst.browse_seek(conc("zkratka='",zkratka,"'"));
         mklice.lst.raise('onrowclick'); }
+//      proc onsubmit () {
+//        eq(druh.get,'_meta_');
+//        mklice.lst.browse_seek(conc("zkratka='",zkratka.get,"'"));
+//        mklice.lst.raise('onrowclick'); }
     }
   }
   # --------------------------------------------------------------------------------------==>_mklic
@@ -170,10 +201,10 @@ panel cis [,,,*] {type:'right', title:'Číselníky', _sys:'cis', skill:'m|m'
     # data
     view k: table _cis,
     edit popis [4,17,300,103] { data:k.popis, title:'^dokumentace číselníku', format:'' }
-    button [315,18,,] { title:'Uložit změnu', proc onclick () {
-      form.same; alert('nebyla provedena žádná změna');
-    | the_formsave(form,mklice.lst); }}
-    button [315,48,,] { title:'Meta číselník', proc onclick () {
+    button [315,18,,] { title:'Uložit změnu', func onclick () {
+      if (form.same()) alert('nebyla provedena žádná změna');
+      else the_formsave(form,mklice.lst); }}
+    button [315,48,,] { title:'Meta číselník', func onclick () {
       mklice.lst.browse_seek("zkratka='_meta_'") }}
   }
   # ---------------------------------------------------------------------------------------==>_klic
@@ -221,25 +252,25 @@ panel cis [,,,*] {type:'right', title:'Číselníky', _sys:'cis', skill:'m|m'
 //      poradi.set(sum(count.get,1)); poradi.change;
 //      kdata.set(poradi.get); kdata.change;
 //    }
-    proc key_load () {
-      form.load(/*id_self.get.get*/klice.lst.id.get)
+    func key_load () {
+      form.load(klice.lst.id)
     }
-    proc key_uloz () {
-      form.same; alert('nebyla provedena žádná změna'); klice.lst.browse_focus
-    | the_formsave(form,klice.lst/*brow_self.get*/); klice.lst.browse_focus
+    func key_uloz () {
+      if (form.same()) { alert('nebyla provedena žádná změna'); klice.lst.browse_focus() }
+      else { the_formsave(form,klice.lst); klice.lst.browse_focus() }
     }
-    proc key_smaz () {
-      _cis.delete_record(conc("id_cis=",id.get)); reload_keys
+    func key_smaz () {
+      _cis.delete_record(conc("id_cis=",id)); reload_keys()
     }
     # události
-    proc onsubmit () { key_uloz }
+    func onsubmit () { key_uloz() }
     # operace
     label [4,370,103,30] { css:'parm' }
-    button save [13,376,,] { type:'submit',_sys:'ulo', title:'Uložit', proc onclick () { key_uloz } }
-    button cancel [64,376,,] { title:'Zpět', proc onclick () { key_load } }
+    button save [13,376,,] { type:'submit',_sys:'ulo', title:'Uložit', func onclick () { key_uloz() } }
+    button cancel [64,376,,] { title:'Zpět', func onclick () { key_load() } }
     label [285,370,114,30] { css:'parm' }
-    button create [294,376,,] { title:'Nový', proc onclick () { key_novy } }
-    button delete [340,376,,] { title:'Smazat', proc onclick () { key_smaz } }
+    button create [294,376,,] { title:'Nový', func onclick () { key_novy() } }
+    button delete [340,376,,] { title:'Smazat', func onclick () { key_smaz() } }
   }
   # ------------------------------------------------------------------------ _tit
   form _tit [,,*,30] {
@@ -318,12 +349,12 @@ panel act [,,*,] {type:'right', title:'Aktivita', _sys:'akt', skill:'a|a;aa|aa'
     menu opt { title:'Nastavení',type:'group',skill:'m'
       item { title:'bez programátorů'    par:{s:'skip',c:'1'}}
       item { title:'včetně programátorů' par:{s:'skip',c:'0'}}
-      proc onclick(i) { skip.set(i.par.c) }
+      func onclick(i:ezer) { skip= i.par.c; }
     }
     menu sur { title:'Přehledy',type:'group',skill:'a'
       item { title:'tabulka oprávnění'}
-      proc onclick() {
-        ask('sys_user_skills','skills');
+      func onclick() {
+        php.sys_user_skills('skills');
         alert("soubor lze stáhnout <a href='docs/skills.xlsx'>zde</a>");
       }
     }
@@ -416,13 +447,20 @@ panel users [,,,543] {type:'right', title:'Uživatelé', _sys:'uzi', skill:'a|a'
     return 0;
   }
   # obnovení seznamu uživatelů
-  proc refresh() { var see_access:text
-    see_access.set(cconc(sys('options','watch_access_opt'),conc(" AND access&",sys('user','access')),""));
-    uzivatele.lst.browse_load(conc(last_par.get('cond'),see_access));
-    cmd.enable(1,last_par.get('on'));
-    cmd.enable(0,last_par.get('off'));
-    watch_css;
+  func refresh() { var see_access:text
+    see_access= cconc(sys('options','watch_access_opt'),conc(" AND access&",sys('user','access')),"");
+    uzivatele.lst.browse_load(conc(last_par.cond,see_access));
+    cmd.enable(1,last_par.on);
+    cmd.enable(0,last_par.off);
+    watch_css();
   }
+//  proc refresh() { var see_access:text
+//    see_access.set(cconc(sys('options','watch_access_opt'),conc(" AND access&",sys('user','access')),""));
+//    uzivatele.lst.browse_load(conc(last_par.get('cond'),see_access));
+//    cmd.enable(1,last_par.get('on'));
+//    cmd.enable(0,last_par.get('off'));
+//    watch_css;
+//  }
   # kompozice obarvení z Ezer.options.watch_access_opt.css (je-li)
   func watch_css() { var opt:object
     if (!sys('options','watch_access_opt')) return;
@@ -435,13 +473,13 @@ panel users [,,,543] {type:'right', title:'Uživatelé', _sys:'uzi', skill:'a|a'
   # ----------------------------------------------------------------==> ... menu
   menu see { type:'left', active:*, format:'f-'
     menu all { title:'přehled',type:'group'
-      item actives { title:'[fa-user-plus] aktivní uživatelé', par:°{on:'h',off:'u',cond:"LEFT(deleted,1)!='H'"}}
-      item         { title:'[fa-user-times] skrytí uživatelé', par:°{on:'u',off:'h',cond:"deleted LIKE 'H%'"}}
-      item         { title:'[fa-user] všichni uživatelé',      par:°{on:'h|u',off:'',cond:1}}
+      item actives { title:'[fa-user-plus] aktivní uživatelé', par:{on:'h',off:'u',cond:"LEFT(deleted,1)!='H'"}}
+      item         { title:'[fa-user-times] skrytí uživatelé', par:{on:'u',off:'h',cond:"deleted LIKE 'H%'"}}
+      item         { title:'[fa-user] všichni uživatelé',      par:{on:'h|u',off:'',cond:1}}
     }
-    proc onclick (i) {
-      last_par.set(i.par);
-      refresh;
+    func onclick (i:ezer) {
+      last_par= i.par;
+      refresh();
     }
   }
   # ----------------------------------------------------------------==> ... uživatelé
@@ -462,32 +500,40 @@ panel users [,,,543] {type:'right', title:'Uživatelé', _sys:'uzi', skill:'a|a'
       show access [,,0,] { title:'přístup', data:u.access, format:'rtsq*' }
       show skills [,,280,] { title:'oprávnění', help:'seznam kódů funkčních oprávnění',
         data:u.skills, format:'utsq*'
-        proc onsubmit() { this.save } }
+        func onsubmit() { this.save() } }
       show r0 [,,0,] { title:'letos',   expr:"0", format:'rtsq*' }
       show r1 [,,0,] { title:'loni',    expr:"0", format:'rtsq*' }
       show r2 [,,0,] { title:'předloni',expr:"0", format:'rtsq*' }
       show rn [,,0,] { title:'dřív',    expr:"0", format:'rtsq*' }
-      proc track(on) { on;
-        t.set_attrib('join_type','LEFT');
-        r0.set_attrib('expr',"SUM(IF(YEAR(t.kdy)=YEAR(NOW()),1,0))");
-        r1.set_attrib('expr',"SUM(IF(YEAR(t.kdy)=YEAR(NOW())-1,1,0))");
-        r2.set_attrib('expr',"SUM(IF(YEAR(t.kdy)=YEAR(NOW())-2,1,0))");
-        rn.set_attrib('expr',"SUM(IF(YEAR(t.kdy)<YEAR(NOW())-2,1,0))");
-        show_track; refresh
-      | t.set_attrib('join_type','NONE');
-        r0.set_attrib('expr',"0"); r1.set_attrib('expr',"0");
-        r2.set_attrib('expr',"0"); rn.set_attrib('expr',"0")
+      func track(on) { 
+        if (on) {
+          t.set_attrib('join_type','LEFT');
+          r0.set_attrib('expr',"SUM(IF(YEAR(t.kdy)=YEAR(NOW()),1,0))");
+          r1.set_attrib('expr',"SUM(IF(YEAR(t.kdy)=YEAR(NOW())-1,1,0))");
+          r2.set_attrib('expr',"SUM(IF(YEAR(t.kdy)=YEAR(NOW())-2,1,0))");
+          rn.set_attrib('expr',"SUM(IF(YEAR(t.kdy)<YEAR(NOW())-2,1,0))");
+          show_track(); refresh()
+        }
+        else {
+          t.set_attrib('join_type','NONE');
+          r0.set_attrib('expr',"0"); r1.set_attrib('expr',"0");
+          r2.set_attrib('expr',"0"); rn.set_attrib('expr',"0")
+        }
       }
-      proc onclick () {
-        r0.width; // po rocích zobraz organizaci
-        r0.width(0); r1.width(0); r2.width(0); rn.width(0);
-        org.width(19); access.width(29); skills.width(230)
-      | org.width; // po organizaci zobraz skill
-        org.width(0); access.width(0); skills.width(280)
-      | // po skill zobraz roky
-        show_track
+      func onclick () {
+        if (r0.width()) { // po rocích zobraz organizaci
+          r0.width(0); r1.width(0); r2.width(0); rn.width(0);
+          org.width(19); access.width(29); skills.width(230)
+        }
+        elseif (org.width()) { // po organizaci zobraz skill
+          org.width(0); access.width(0); skills.width(280)
+        }
+        else { // po skill zobraz roky
+          alert("zobrazení roční aktivity je vypočítáno kontextovým menu v oprávněních");
+          show_track();
+        }
       }
-      proc show_track() {
+      func show_track() {
         r0.width(70); r1.width(69); r2.width(69); rn.width(69);
         skills.width(0); org.width(0); access.width(0)
       }
@@ -510,7 +556,7 @@ panel users [,,,543] {type:'right', title:'Uživatelé', _sys:'uzi', skill:'a|a'
   # ----------------------------------------------------------------==> ... _user
   form user_ [,,433,470] { css:'ae_work', // style:"z-index:2"
     view u: table _user
-    proc onchanged() { cmd.get.enable(1,'c') }
+    func onchanged() { cmd.enable(1,'c') }
     label [5,4,89,15] { title:'Uživatel' css:'karta' style:"color:white;font-size:14px" }
     field skills [2,46,146,] { data:u.skills, format:'n' }
     field username [5,48,60,] { data:u.username, title:'^username' }
@@ -533,46 +579,49 @@ panel users [,,,543] {type:'right', title:'Uživatelé', _sys:'uzi', skill:'a|a'
     browse seznam [5,172,180,198] { rows:sys_users_skills, qry_rows:1, buf_rows:100
       show id { data:_skill.id_skill }
       show abb [,,50,] { data:_skill.skill_abbr, title:'kód', format:'utsq*', skill:'a|m'
-        proc onsubmit() { this.save } }
+        func onsubmit() { this.save() } }
       show dsc [,,343,] { data:_skill.skill_desc, title:'popis oprávnění', format:'uts+q$', skill:'a|m'
-        proc onsubmit() { this.save } }
+        func onsubmit() { this.save() } }
       # ----------------------------------------------==> ... kontext.menu
       menu { type:'context'
         item { title:'zobrazit roční aktivitu'
-          proc onclick() { uzivatele.lst.track(1) } }
+          func onclick() { uzivatele.lst.track(1) } }
         item { title:'odebrat všechna oprávnění'
-          proc onclick() { seznam.selected("clear"); cmd.enable(1,'c'); } }
+          func onclick() { seznam.selected("clear"); cmd.enable(1,'c'); } }
         item { title:'-přidat nový řádek', skill:'m|m'
-          proc onclick() {
-            eq(sel.get,'ignore');
-            seznam.browse_seek(conc('id_skill=',
-              _skill.insert_record(
-                object('skill_abbr',conc(abb.get,'?'),'skill_desc',conc(dsc.get,'.?')))));
-          | confirm('Pro přidávání musí seznam opravnění zobrazovat všechny položky. Přepnout?');
-            seznam.selected("ignore"); sel.set('ignore'); seznam.browse_load
-        } }
+          func onclick() {
+            if (sel=='ignore') 
+              seznam.browse_seek(conc('id_skill=',
+                _skill.insert_record({skill_abbr:conc(abb,'?'),skill_desc:conc(dsc,'.?')})));
+            elseif (confirm('Pro přidávání musí seznam opravnění zobrazovat všechny položky. Přepnout?')) {
+              seznam.selected("ignore"); sel= 'ignore'; seznam.browse_load()
+            }
+          } 
+        }
         item { title:'odebrat běžný řádek', skill:'m|m'
-          proc onclick() { confirm('opravdu odebrat oprávnění ',abb.get,':',dsc.get,'?');
-            _skill.delete_record(conc('id_skill=',id.get));
-            seznam.browse_load } }
+          func onclick() { 
+            if (!confirm('opravdu odebrat oprávnění ',abb,':',dsc,'?')) return;
+            _skill.delete_record(conc('id_skill=',id));
+            seznam.browse_load() } }
         item { title:'-zobrazit vybrané'
-          proc onclick() { seznam.selected("use"); sel.set('use'); seznam.browse_load } }
+          func onclick() { seznam.selected("use"); sel= 'use'; seznam.browse_load() } }
         item { title:'zobrazit vše'
-          proc onclick() { seznam.selected("ignore"); sel.set('ignore'); seznam.browse_load } }
+          func onclick() { seznam.selected("ignore"); sel= 'ignore'; seznam.browse_load() } }
         item { title:'-zkontrolovat konzistentnost'
-          proc onclick() { alert(ask('sys_user_skills')) } }
+          func onclick() { alert(php.sys_user_skills()) } }
         item { title:'exportovat přehledovou tabulku'
-          proc onclick() { ask('sys_user_skills','skills');
+          func onclick() { php.sys_user_skills('skills');
             alert("soubor lze stáhnout <a href='docs/skills.xlsx'>zde</a>"); } }
         item { title:'nositelé nastaveného oprávnění'
-          proc onclick() {
+          func onclick() {
             uzivatele.lst.selected('clear');
-            uzivatele.lst.selected('set',ask('sys_user_skilled',abb.get))
+            uzivatele.lst.selected('set',php.sys_user_skilled(abb))
           } }
         item { title:'-zobrazit user.options'
-          proc onclick() { alert(ask('sys_user_options',uzivatele.lst.user.get)) } }
+          func onclick() { alert(php.sys_user_options(uzivatele.lst.idu)) } 
+        }
         item { title:'-zobrazit historii změn'
-          proc onclick() { Track.back_show('_user',uzivatele.lst.user.get) } }
+          func onclick() { Track.back_show('_user',uzivatele.lst.idu) } }
       }
       func onchoice() {
         uzivatel.skills= php.sys_ids2skills(this.selected('get'));
@@ -591,17 +640,19 @@ panel users [,,,543] {type:'right', title:'Uživatelé', _sys:'uzi', skill:'a|a'
     # -------------------------------- úpravy uživatelů
     label  [0,6,561,30] { css:'ae_parm' }
     button zrus_clena [11,12,,] { tag:'h', type:'html', title:'[fa-plug fa-rotate-180 fa-red] Skrýt'
-      proc onclick() { confirm("Opravdu znemožnit přihlášení uživateli ",uzivatel.username.get,'?');
-        alert(ask('sys_user_hide',uzivatele.lst.user.get,1)); refresh
+      func onclick() { 
+        if (!confirm("Opravdu znemožnit přihlášení uživateli ",uzivatel.username,'?')) return;
+        alert(php.sys_user_hide(uzivatele.lst.idu,1)); refresh()
     }}
     button obnov_clena [71,12,,] { tag:'u', type:'html', title:'[fa-plug] Obnovit'
-      proc onclick() { confirm("Opravdu obnovit uživatele ",uzivatel.username.get,'?');
-        alert(ask('sys_user_hide',uzivatele.lst.user.get,0)); refresh
+      func onclick() { 
+        if (!confirm("Opravdu obnovit uživatele ",uzivatel.username,'?')) return;
+        alert(ask('sys_user_hide',uzivatele.lst.idu,0)); refresh()
     }}
     button watch_key [195,12,,] { title:'Vygenerovat klíč', format:'n'
-      proc onclick() {
-        confirm("Vygenerování nového klíče znemožní přístup současným uživatelům. Pokračovat?");
-        watch_ref.set(ask('sys_watch_key'))
+      func onclick() {
+        if (!confirm("Vygenerování nového klíče znemožní přístup současným uživatelům. Pokračovat?")) return;
+        watch_ref= php.sys_watch_key();
       }
     }
     label watch_ref [316,15,250,15]
@@ -640,21 +691,20 @@ panel needs [,,770,] {type:'right', title:'Požadavky', _sys:'poz', skill:'sp'
   const sys_needs_todo = 10
   var global_cond: text
   var do_notify: number                         // zasílat notifikační maily
-  proc get_conds() {
-    var conds: object
-    conds.set(ask('sys_todo_conds'));
-    global_cond.set(conds.cond_browse);
+  func get_conds() { var conds: object
+    conds= php.sys_todo_conds();
+    global_cond= conds.cond_browse;
     u.cast.selects(0,conds.cond_select);
   }
-  proc onstart() {
-    get_conds;
-    left.over.news.click;
+  func onstart() {
+    get_conds();
+    left.over.news.click();
     u.kdo_zadal.enable(has_skill('spk'));       // oprávnění změnit zadavatele (pochopitelně se souhlasem)
     u.kdo_kontrola.enable(has_skill('spk'));    // oprávnění zadat kontrolujícícho (třeba potvrzení mailem)
-    do_notify.set(not(eq(sys('ezer','todo','notify'),'none')));
-    u.display(do_notify.get,'notify')       // povol/potlač notifikační maily
+    do_notify= sys('ezer','todo','notify')!='none';
+    u.display(do_notify,'notify')               // povol/potlač notifikační maily
   }
-  proc onfirstfocus() { left.over.news.click }
+  func onfirstfocus() { left.over.news.click() }
   menu left { type:'left'
     menu over { title:'Celkové přehledy',type:'group',par:°{cond:""}
       item news { title:"všechny požadavky"       par:°{cond:''}}
@@ -681,9 +731,9 @@ panel needs [,,770,] {type:'right', title:'Požadavky', _sys:'poz', skill:'sp'
       item { title:'vlastnosti po květnu 2010'    par:°{cond:'AND wiki=0 AND typ=3'}}
       item { title:"změny před květnem 2010"      par:°{cond:'AND wiki=1'}}
     }
-    proc onclick (i) {
-      u.fill(conc(i.owner.title,' - ',i.title),''); u.drop_init;
-      u.todo.browse_load(conc(global_cond.get,' ',i.owner.par.cond,' ',i.par.cond));
+    func onclick (i:ezer) {
+      u.fill(conc(i.owner().title,' - ',i.title),''); u.drop_init();
+      u.todo.browse_load(conc(global_cond,' ',i.owner().par.cond,' ',i.par.cond));
    }
   }
   use u: form pozadavek [12,4,,],
@@ -725,31 +775,47 @@ panel needs [,,770,] {type:'right', title:'Požadavky', _sys:'poz', skill:'sp'
       show kdo_dela     [,,0,] { title:'r.', data:t.kdo_dela, map_pipe:user.abbr, format:'q#s' }
       show kdy_kontrola [,,65,] { title:'kontrola', data:t.kdy_kontrola, format:'rqs' }
       show kdo_kontrola [,,45,] { title:'k.', data:t.kdo_kontrola, map_pipe:user.abbr, format:'q#s' }
-      proc onrowclick () {
-        form.key(id.get); form.load; nono.init;
-        { attach.get; drop.set(ask('sys_todo_refs',attach.get)) | drop.set('') };
-        { email.get | email.set(sys('ezer','options','mail')) };
-        { eq(typ.get,'vlastnost'); // je to vlastnost
+      func onrowclick () {
+        form.key(id); form.load(); nono.init();
+        drop= attach ? php.sys_todo_refs(attach) : '';
+        if (!email) email= sys('ezer','options','mail');
+        if (typ=='vlastnost') { // je to vlastnost
           vlastnosti(1);
-          form.odhad_hodin.enable(not(form.kdy_schvalil.get));
-        | vlastnosti(0); // je to oprava nebo úprava
-        };
-        show_diskuse(je_diskuse.get);
-        form.prace_hodin.enable(not(kdy_skoncil.get));
+          form.odhad_hodin.enable(!form.kdy_schvalil);
+        }
+        else
+          vlastnosti(0); // je to oprava nebo úprava
+        show_diskuse(je_diskuse);
+        form.prace_hodin.enable(!kdy_skoncil);
       }
-      proc onclick () {
-        eq(zadani.width,261);
-        zadani.width(225);      kdy_zadal.width(0);     kdo_zadal.width(0);     // proces schvalování
-        odhad_hodin.width(40);  /*kdy_schvalil.width(65); kdo_schvalil.width(45);*/
-        kdy_zacal.width(65);    kdy_skoncil.width(65);  prace_hodin.width(40);  kdo_dela.width(45);
-        kdy_kontrola.width(0);  kdo_kontrola.width(0);
-      | zadani.width(261);      kdy_zadal.width(65);    kdo_zadal.width(45);    // základní
-        odhad_hodin.width(0);   /*kdy_schvalil.width(0);  kdo_schvalil.width(0);*/
-        kdy_zacal.width(0);     kdy_skoncil.width(0);   prace_hodin.width(0);   kdo_dela.width(0);
-        kdy_kontrola.width(65); kdo_kontrola.width(45);
+//      proc onrowclick () {
+//        form.key(id.get); form.load; nono.init;
+//        { attach.get; drop.set(ask('sys_todo_refs',attach.get)) | drop.set('') };
+//        { email.get | email.set(sys('ezer','options','mail')) };
+//        { eq(typ.get,'vlastnost'); // je to vlastnost
+//          vlastnosti(1);
+//          form.odhad_hodin.enable(not(form.kdy_schvalil.get));
+//        | vlastnosti(0); // je to oprava nebo úprava
+//        };
+//        show_diskuse(je_diskuse.get);
+//        form.prace_hodin.enable(not(kdy_skoncil.get));
+//      }
+      func onclick () {
+        if (zadani==261) {
+          zadani.width(225);      kdy_zadal.width(0);     kdo_zadal.width(0);     // proces schvalování
+          odhad_hodin.width(40);  /*kdy_schvalil.width(65); kdo_schvalil.width(45);*/
+          kdy_zacal.width(65);    kdy_skoncil.width(65);  prace_hodin.width(40);  kdo_dela.width(45);
+          kdy_kontrola.width(0);  kdo_kontrola.width(0);
+        }
+        else {
+          zadani.width(261);      kdy_zadal.width(65);    kdo_zadal.width(45);    // základní
+          odhad_hodin.width(0);   /*kdy_schvalil.width(0);  kdo_schvalil.width(0);*/
+          kdy_zacal.width(0);     kdy_skoncil.width(0);   prace_hodin.width(0);   kdo_dela.width(0);
+          kdy_kontrola.width(65); kdo_kontrola.width(45);
+        }
       }
     }
-    proc vlastnosti (ok) {
+    func vlastnosti (ok) {
       v1.display(ok); v2.display(ok); v3.display(ok); /*v4.display(ok);*/
       odhad_hodin.display(ok); /*prace_hodin.display(ok);*/
       kdy_schvalil.display(ok); kdo_schvalil.display(ok);
@@ -785,16 +851,23 @@ panel needs [,,770,] {type:'right', title:'Požadavky', _sys:'poz', skill:'sp'
     label [640,T+0,60,] {title:'přílohy'}
     field attach {data:t.attach}
     label drop [640,T+15,83,60] { style:'overflow:hidden' }
-    proc ondrop(fileinfo) {
+    func ondrop(fileinfo) {
       drop.set_css('','drop_area drop_area_hover');
-      drop.set(ask('sys_todo_attach',form.key,fileinfo));
+      drop.set(ask('sys_todo_attach',form.key(),fileinfo));
       drop.set_css('','drop_area drop_area_hover drop_area_run');
-      [ nono.get | do_notify.get; ask('sys_todo_notify','att',form.key,form.json(1)) ];
-      drop_init;
+      if (!nono && do_notify) php.sys_todo_notify('att',form.key(),form.json(1));
+      drop_init();
     }
-    proc drop_init() {
-      ask('set_limits',10,300);                           // max=10MB,300sec
-      form.file_drop(drop,°{css_hover:'drop_area_hover',css_run:'drop_area_run',transfer:'base64'});
+//    proc ondrop(fileinfo) {
+//      drop.set_css('','drop_area drop_area_hover');
+//      drop.set(ask('sys_todo_attach',form.key,fileinfo));
+//      drop.set_css('','drop_area drop_area_hover drop_area_run');
+//      [ nono.get | do_notify.get; ask('sys_todo_notify','att',form.key,form.json(1)) ];
+//      drop_init;
+//    }
+    func drop_init() {
+      php.set_limits(10,300);                           // max=10MB,300sec
+      form.file_drop(drop,{css_hover:'drop_area_hover',css_run:'drop_area_run',transfer:'base64'});
     }
 
     // notifikační maily - pokud není $EZER->todo->notify=="none"
@@ -803,7 +876,7 @@ panel needs [,,770,] {type:'right', title:'Požadavky', _sys:'poz', skill:'sp'
     label [533,308,41,] {tag:'notify', title:'bude-li', format:'n' }
     select notify [577,305,91,]  {tag:'notify', type:'map0', data:t.email_kdyz, format:'n',
       map_pipe:cis_s_todo_email.hodnota, options:cis_s_todo_email.hodnota
-      proc onchanged() { email.change // aby se zapsala adresa
+      func onchanged() { email.change() // aby se zapsala adresa
     }}
     check nono [668,303,77,] {tag:'notify', title:'ale teď ne', format:'nt', value:'0'}
 
@@ -814,10 +887,14 @@ panel needs [,,770,] {type:'right', title:'Požadavky', _sys:'poz', skill:'sp'
     label v3 [388,T+107,60,] {title:'schváleno:'}
     field kdy_schvalil [452,T+104,80,] { type:'date', data:t.kdy_schvalil, sql_pipe:'sql_date1',
         format:'r', skill:'sp|spv'
-      proc onchanged () {
-        { this.get; kdo_schvalil.key(sys('user','id_user')) | kdo_schvalil.key(0) };
-        kdo_schvalil.change;
+      func onchanged () {
+        kdo_schvalil.key(this ? sys('user','id_user') : 0);
+        kdo_schvalil.change();
       }
+//      proc onchanged () {
+//        { this.get; kdo_schvalil.key(sys('user','id_user')) | kdo_schvalil.key(0) };
+//        kdo_schvalil.change;
+//      }
     }
     select kdo_schvalil [542,T+104,50,] { type:'map', format:'d', data:t.kdo_schvalil,
       map_pipe:user.abbr, options:user.abbr }
@@ -825,15 +902,15 @@ panel needs [,,770,] {type:'right', title:'Požadavky', _sys:'poz', skill:'sp'
     // Řešení s případnou diskusí
     label [5,T+100,100,] {title:'<h1>Řešení</h1>'}
     check je_diskuse [60,T+98,100,] {title:'s diskusí', data:t.je_diskuse, value:'0'
-      proc onchange() { show_diskuse(this.get); }
+      func onchange() { show_diskuse(this); }
     }
     label [0,T+128,732,115] {title:' ', css:'ae_work' }
     // zahájení
     label [5,T+130,139,] {title:'zahájení realizace'}
     field  kdy_zacal [5,T+145,83,] { type:'date', data:t.kdy_zacal, sql_pipe:'sql_date1', format:'r'
-      proc onchanged () {
-        { this.get; kdo_dela.key(sys('user','id_user')) | kdo_dela.key(0) };
-        kdo_dela.change;
+      func onchanged () {
+        kdo_dela.key(this ? sys('user','id_user') : 0);
+        kdo_dela.change();
       }
     }
     select kdo_dela [93,T+145,50,] { type:'map', format:'d', data:t.kdo_dela, map_pipe:user.abbr, options:user.abbr }
@@ -845,9 +922,9 @@ panel needs [,,770,] {type:'right', title:'Požadavky', _sys:'poz', skill:'sp'
     // kontrola
     label [5,T+200,100,] {title:'zkontrolováno'}
     field  kdy_kontrola [5,T+215,83,] { type:'date', data:t.kdy_kontrola, sql_pipe:'sql_date1', format:'r'
-      proc onchanged () {
-        { this.get; kdo_kontrola.key(sys('user','id_user')) | kdo_kontrola.key(0) };
-        kdo_kontrola.change;
+      func onchanged () {
+        kdo_kontrola.key(this ? sys('user','id_user') : 0);
+        kdo_kontrola.change();
       }
     }
     select kdo_kontrola [93,T+215,50,] { type:'map', format:'d', data:t.kdo_kontrola,
@@ -856,58 +933,84 @@ panel needs [,,770,] {type:'right', title:'Požadavky', _sys:'poz', skill:'sp'
     edit  zprava [155,T+145,565,90] { data:t.zprava }
 
     //  příkazy
-    button [150,280,,] {title:'Nový požadavek', proc onclick() {
-      form.init(1); drop.set('');
-      email.set(sys('ezer','options','mail')); email.change; // z osobního nastavení
-      [ do_notify.get; notify.key(2); notify.change ]; // změna stavu
-      typ.key(1); typ.change; cast.key(1); cast.change; zadani.change; show_diskuse(je_diskuse.get);
-      kdy_zadal.set(now); kdy_zadal.change; kdo_zadal.key(sys('user','id_user')); kdo_zadal.change;
+    button [150,280,,] {title:'Nový požadavek', 
+      func onclick() {
+        form.init(1); drop= '';
+        email= sys('ezer','options','mail'); email.change(); // z osobního nastavení
+        if (do_notify) { notify.key(2); notify.change() }; // změna stavu
+        typ.key(1); typ.change(); cast.key(1); cast.change(); zadani.change(); 
+        show_diskuse(je_diskuse);
+        kdy_zadal= now(); kdy_zadal.change(); 
+        kdo_zadal.key(sys('user','id_user')); kdo_zadal.change();
+      }
+//      proc onclick() {
+//        form.init(1); drop.set('');
+//        email.set(sys('ezer','options','mail')); email.change; // z osobního nastavení
+//        [ do_notify.get; notify.key(2); notify.change ]; // změna stavu
+//        typ.key(1); typ.change; cast.key(1); cast.change; zadani.change; show_diskuse(je_diskuse.get);
+//        kdy_zadal.set(now); kdy_zadal.change; kdo_zadal.key(sys('user','id_user')); kdo_zadal.change;
+//      }
+    }
+    button[150,Tc,,] {type:'submit', title:'Uložit změny', 
+      func onclick() { var fields:object, old_notify:number
+        old_notify= !nono;
+        if (form.same()) return;
+        if (form.key()) {  // změna požadavku
+          form.save(); form.key(todo.browse_seek()); form.load();
+          if (do_notify && old_notify) php.sys_todo_notify('upd',form.key(),form.json(1));
+        }
+        else { // nový požadavek
+          fields= form.json(1); form.insert(); form.load();
+          todo.raise('onrowclick',todo.browse_seek(conc(form.id_key,'=',form.key())));
+          if (do_notify && notify) php.sys_todo_notify('new',form.key(),fields);
+        }
+      }
+//      proc onclick() {
+//        var fields: object
+//        var old_notify: number
+//        old_notify.set(not(nono.get));
+//        form.same
+//      | form.key;
+//        // změna požadavku
+//        form.save; form.key(todo.browse_seek); form.load;
+//        [ do_notify; old_notify; ask('sys_todo_notify','upd',form.key,form.json(1)) ];
+//      | // nový požadavek
+//        fields.set(form.json(1)); form.insert; form.load;
+//        todo.raise('onrowclick',todo.browse_seek(conc(form.id_key,'=',form.key)));
+//        [ do_notify; notify; ask('sys_todo_notify','new',form.key,fields) ]
+//      }
+    }
+    button [461,Tc,,] {title:'Smazat', skill:'m|m', func onclick() {
+      if (!confirm("opravdu smazat požadavek č.",form.key())) return;
+      _todo.delete_record(conc("id_todo=",form.key()));
+      left.over.news.click()
     }}
-    button[150,Tc,,] {type:'submit', title:'Uložit změny', proc onclick() {
-      var fields: object
-      var old_notify: number
-      old_notify.set(not(nono.get));
-      form.same
-    | form.key;
-      // změna požadavku
-      form.save; form.key(todo.browse_seek); form.load;
-      [ do_notify; old_notify; ask('sys_todo_notify','upd',form.key,form.json(1)) ];
-    | // nový požadavek
-      fields.set(form.json(1)); form.insert; form.load;
-      todo.raise('onrowclick',todo.browse_seek(conc(form.id_key,'=',form.key)));
-      [ do_notify; notify; ask('sys_todo_notify','new',form.key,fields) ]
+    button [535,Tc,,] {title:'Odložit', func onclick() {
+      stav= 1; stav.change(); the_formsave(form,todo);
     }}
-    button [461,Tc,,] {title:'Smazat', skill:'m|m', proc onclick() {
-      confirm("opravdu smazat požadavek č.",form.key);
-      _todo.delete_record(conc("id_todo=",form.key));
-      left.over.news.click
+    button [603,Tc,,] {title:'Zrušit', func onclick() {
+      stav= 2; stav.change(); the_formsave(form,todo);
     }}
-    button [535,Tc,,] {title:'Odložit', proc onclick() {
-      stav.set(1); stav.change; the_formsave (form,todo);
-    }}
-    button [603,Tc,,] {title:'Zrušit', proc onclick() {
-      stav.set(2); stav.change; the_formsave (form,todo);
-    }}
-    button [663,Tc,,] {title:'Obnovit', proc onclick() {
-      stav.set(0); stav.change; the_formsave (form,todo);
+    button [663,Tc,,] {title:'Obnovit', func onclick() {
+      stav= 0; stav.change(); the_formsave(form,todo);
     }}
     // Případná diskuse
     label [5,Tc+5,100,] {tag:'d', format:'n', title:'<h1>Diskuse</h1>'}
     label [0,Tc+30,732,193] {tag:'d', format:'n', title:' ', css:'ae_work' }
     field kdy_diskuse {data:t.kdy_diskuse}
     chat diskuse [7,Tc+37,714,176] {tag:'d', format:'n', divide:70, data:t.diskuse
-      proc onchanged() {
-        kdy_diskuse.set(now_sql); kdy_diskuse.change;
+      func onchanged() {
+        kdy_diskuse= now_sql(); kdy_diskuse.change();
     }}
     // fce
-    proc fill(h,n) {
-      [ h; head.set(conc("<div class='karta'>",h,"</div>")) ];
-      [ n; note.set(n) ]
+    func fill(h,n) {
+      if (h) head= conc("<div class='karta'>",h,"</div>");
+      if (n) note= n
     }
-    proc append(n) {
-      note.set(conc(note.get,n))
+    func append(n) {
+      note= conc(note,n);
     }
-    proc show_diskuse (on) {
+    func show_diskuse (on) {
       form.display(on,'d'); /*[ on; panel.property(°{height:'*',min_height:770}) ]*/
     }
   }
