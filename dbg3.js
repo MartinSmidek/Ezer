@@ -1,4 +1,4 @@
-/* global dbg, doc, Cookie, Ezer, dbg_start, app_ezer, 
+/* global dbg, doc, Cookie, Ezer, dbg_start, app_ezer, Block, 
           CodeMirror, define,
           editor, php_editor, wphp, lines, wcg, help, pick */
 "use strict";
@@ -994,8 +994,21 @@ function dbg_watch_act (proc,act) {
 // zobrazí hodnotu lokální proměnné
 function dbg_show_local_val (istack,id) {
   let value= doc.Ezer.continuation.stack[istack];
-  if ( typeof value == "object" )
-    value= doc.Ezer.fce.debug(value,id,3);
+  if ( typeof value == "object" ) {
+    if ('desc' in value && value.desc.type!==undefined && 'options' in value) {
+      let ovalue= {
+        type:value.desc.type,
+        _id:value._id,
+        options:value.options
+      };
+      if ('changed' in value) ovalue.changed= value._changed;
+      if ('value' in value) ovalue.value= 'get' in value ? value.get() : value.value ;
+      value= doc.Ezer.fce.debug(ovalue,`${id}:ezer`,3);
+    }
+    else {
+      value= doc.Ezer.fce.debug(value,id,3);
+    }
+  }
   else
     value= id+'='+value;
   dbg.log
@@ -1007,8 +1020,9 @@ function dbg_show_global_val (id) {
   let obj= [], value;
   doc.Ezer.run_name(id,doc.Ezer.continuation.context,obj);
   value= obj[0].value;
-  if ( typeof value == "object" )
+  if ( typeof value == "object" ) {
     value= doc.Ezer.fce.debug(value,obj[0].id,3);
+  }
   else
     value= obj[0].id+'='+value;
   dbg.log
