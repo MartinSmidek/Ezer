@@ -1003,6 +1003,7 @@ function dbg_show_local_val (istack,id) {
       };
       if ('changed' in value) ovalue.changed= value._changed;
       if ('value' in value) ovalue.value= 'get' in value ? value.get() : value.value ;
+      if ('fixed_value' in value) ovalue.fixed_value= value.fixed_value;
       value= doc.Ezer.fce.debug(ovalue,`${id}:ezer`,3);
     }
     else {
