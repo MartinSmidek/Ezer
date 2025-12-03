@@ -1110,6 +1110,7 @@ __JS
 # ----------------------------------------------------------------------------------- sys day_logins
 # vygeneruje přehled přihlášení pro daný den
 #   $sign= 'all' => všechno
+# od 2025/12/03 je v inside verze ezer včetně version.php
 function sys_day_logins($skip,$day,$sign='=') {
 //                                                         display("sys_day_logins($day,$sign)");
   global $user_options, $USER, $watch_access_opt;
@@ -1118,7 +1119,7 @@ function sys_day_logins($skip,$day,$sign='=') {
   $and=  $skip ? "AND NOT FIND_IN_SET(user,'$skip')" : '';
   $html.= '<br><table>';
   $cond= $sign=='all' ? '1' : "day$sign'$day'";
-  $qry= "SELECT org, id_touch, msg, day, time, user, menu
+  $qry= "SELECT org, id_touch, msg, day, time, user, menu, inside
          FROM _touch
          LEFT JOIN _user ON abbr=user
          WHERE $cond AND msg!='' AND menu IN ('login','acount?','ip?') $and
@@ -1154,7 +1155,7 @@ function sys_day_logins($skip,$day,$sign='=') {
     }
     ezer_browser($b_short,$b_long,$platform,$browser);
     $html.= "<tr title='$browser'><td>$typ</td><td>$when</td>
-               <td class='$cls'><b>$user</b></td>
+               <td class='$cls'><b>$user</b></td><td>$t->inside</td>
                <td><b>$ip</b></td><td>$screen</td><td>$plat</td><td>$b_long</td></tr>";
   }
   $html.= '</table>';
