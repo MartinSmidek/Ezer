@@ -1449,8 +1449,11 @@
         // zapiš do aktivity - ale jen pro user_login nebo první user_prelogin
         if ( $x->cmd=='user_login' || !isset($_SESSION[$ezer_root]['USER']) ) {
           ezer_connect($mysql_db);
-          $qry= "INSERT _touch (day,time,hits,user,module,menu,msg)
-                 VALUES ('$day','$time',0,'{$USER->abbr}','app','login','$info')";
+          $abs_root= $_SESSION[$ezer_root]['abs_root'];
+          require "$abs_root/ezer3.2/version.php";
+          $v= "ezer3.2.$version";
+          $qry= "INSERT _touch (day,time,hits,user,module,menu,msg,inside)
+                 VALUES ('$day','$time',0,'{$USER->abbr}','app','login','$info','$v')";
           $_SESSION[$ezer_root]['note'].= $qry;
           $res= pdo_query($qry);
         }
