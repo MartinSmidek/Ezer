@@ -370,7 +370,7 @@ panel act [,,*,] {type:'right', title:'Aktivita', _sys:'akt', skill:'a|a;aa|aa'
   form _touch [,,*,50] {
     check track1 [-300,2,100,18] { title:'změny dat', format:'nt', value:'1',             
         style:'z-index:2;color:white'}
-    check track2 [-200,2,120,18] { title:'změny i jako tabulka', format:'t', value:'0', 
+    check track2 [-200,2,135,18] { title:'změny i jako tabulka', format:'t', value:'0', 
         style:'z-index:2;color:white'}
     field den [-20,4,85,18] { type:'date', style:'z-index:2', format:'Rrt', 
         title:'nastavený&nbsp;den', css:'v_karte' }
