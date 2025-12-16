@@ -8291,6 +8291,8 @@ class Browse extends Block {
 //-
 //i: Browse.onrowclick - klik na řádku (parametrem je index řádku, první má index 1)
 //-
+//i: Browse.onempty - pokud browse_load vrátí 0 řádků (například po interaktivním výběru)
+//-
 //i: Browse.onchange - interaktivní změna dotazu (v qry_rows)
 //-
 //i: Browse.onchoice - výběr řádku klávesou Ins
