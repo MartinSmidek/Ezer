@@ -9247,12 +9247,20 @@ class Browse extends Block {
   }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  _row_move+
 // funkce zajistí viditelnost záznamu r (0..slen-1)
+// pokud je noevent=0 a buffer je prázdný aktivuje se nová událost onempty 
 // pokud je noevent=1 a nedojde ke čtení ze serveru nebude vyvolána událost onrowclick
 // pokud je scrollLock=1 zůstane běžný řádek nezměněný, pokud je ve viditelné oblasti               ToDo
   _row_move  (r,noevent,scrollLock) {
     var b= this.b, blen= this.blen, t= this.t, tlen= this.tlen, slen= this.slen;
     r= Math.min(Math.max(r,0),slen-1);
-    if ( r!=this.r ) {
+    // pokud je buffer vyprázdněný
+    if ( !blen ) {
+//      this.DOM_hi_row(r,noevent,true);
+      if ( !noevent ) {
+        this.fire('onempty',[]);
+      }
+    }
+    else if ( r!=this.r ) {
       // pokud je pohyb uvnitř souboru a nová poloha je jiná než současná
       if ( t<=r && r<t+tlen ) {
         // pohyb v rámci tabulky                        // Ezer.trace('*','smarter row_move ['+b+'['+t+'[*'+r+'*]'+(t+tlen)+']'+(this.b+this.blen)+']'+slen+' - g');
