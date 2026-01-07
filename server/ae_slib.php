@@ -1241,7 +1241,7 @@ function sql_date1 ($datum,$user2sql=0,$del='.') {
     if ( $datum ) {
       $datum= str_replace(' ','',$datum);
       list($d,$m,$y)= explode('.',$datum);
-      $text= $y.'-'.str_pad($m,2,'0',STR_PAD_LEFT).'-'.str_pad($d,2,'0',STR_PAD_LEFT);
+      $text= $y.'-'.str_pad($m?:'',2,'0',STR_PAD_LEFT).'-'.str_pad($d?:'',2,'0',STR_PAD_LEFT);
     }
   }
   else {
@@ -1274,7 +1274,7 @@ function sql_date_year ($datum,$user2sql=0,$del='.') {
     elseif ( $datum ) {
       $datum= str_replace(' ','',$datum);
       list($d,$m,$y)= explode('.',$datum);
-      $text= $y.'-'.str_pad($m,2,'0',STR_PAD_LEFT).'-'.str_pad($d,2,'0',STR_PAD_LEFT);
+      $text= $y.'-'.str_pad($m?:'',2,'0',STR_PAD_LEFT).'-'.str_pad($d?:'',2,'0',STR_PAD_LEFT);
     }
   }
   else {
@@ -1301,7 +1301,7 @@ function sql_date ($datum,$user2sql=0,$del='.') {
     if ( $datum ) {
       $datum= trim($datum);
       list($d,$m,$y)= explode('.',$datum);
-      $text= $y.'-'.str_pad($m,2,'0',STR_PAD_LEFT).'-'.str_pad($d,2,'0',STR_PAD_LEFT);
+      $text= $y.'-'.str_pad($m?:'',2,'0',STR_PAD_LEFT).'-'.str_pad($d?:'',2,'0',STR_PAD_LEFT);
     }
   }
   else {
@@ -1354,9 +1354,9 @@ function sql_time ($datetime,$user2sql=0,$del=' ') {
       $i= count($wdt)>2 ? 1 : 0;
       list($d,$m,$y)= explode('.',$wdt[$i]);
       list($h,$i,$s)= explode(':',$wdt[$i+1]);
-      $text= $y.'-'.str_pad($m,2,'0',STR_PAD_LEFT).'-'.str_pad($d,2,'0',STR_PAD_LEFT);
-      $text.= ' '.str_pad($h,2,'0',STR_PAD_LEFT).':'.str_pad($i,2,'0',STR_PAD_LEFT).
-        ':'.str_pad(($s?$s:0),2,'0',STR_PAD_LEFT);
+      $text= $y.'-'.str_pad($m?:'',2,'0',STR_PAD_LEFT).'-'.str_pad($d?:'',2,'0',STR_PAD_LEFT);
+      $text.= ' '.str_pad($h?:'',2,'0',STR_PAD_LEFT).':'.str_pad($i?:'',2,'0',STR_PAD_LEFT).
+        ':'.str_pad($s?:'',2,'0',STR_PAD_LEFT);
     }
   }
   else {
@@ -1388,9 +1388,9 @@ function sql_time1 ($datetime,$user2sql=0,$del=' ') {
       $i= count($wdt)>2 ? 1 : 0;
       list($d,$m,$y)= explode('.',$wdt[$i]);
       list($h,$i,$s)= explode(':',$wdt[$i+1]);
-      $text= $y.'-'.str_pad($m,2,'0',STR_PAD_LEFT).'-'.str_pad($d,2,'0',STR_PAD_LEFT);
-      $text.= ' '.str_pad($h,2,'0',STR_PAD_LEFT).':'.str_pad($i,2,'0',STR_PAD_LEFT).
-        ':'.str_pad(($s?$s:0),2,'0',STR_PAD_LEFT);
+      $text= $y.'-'.str_pad($m?:'',2,'0',STR_PAD_LEFT).'-'.str_pad($d?:'',2,'0',STR_PAD_LEFT);
+      $text.= ' '.str_pad($h?:'',2,'0',STR_PAD_LEFT).':'.str_pad($i?:'',2,'0',STR_PAD_LEFT).
+        ':'.str_pad($s?:'',2,'0',STR_PAD_LEFT);
     }
   }
   else {
