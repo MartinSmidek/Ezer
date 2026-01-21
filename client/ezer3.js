@@ -282,7 +282,7 @@ class Block {
     if ( name=='help' && block.DOM_Block ) {
       let dom= block.DOM_Block;
       if ( !(dom instanceof jQuery) ) dom= jQuery(dom);
-      let input= dom.find('input');
+      let input= dom.is('button') ? dom : dom.find('input');
       if (input.length) input.attr('title',val).attr('placeholder',val);
     }
     // promítni změnu do DOM pro: popup.title (nesmí být prázdné)
