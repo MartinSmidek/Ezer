@@ -6,7 +6,13 @@
   session_start();
   
   $CodeMirror= 1;
+  $ZOOM= 1;    
 
+  // úprava CSS podle ZOOM
+  switch ($ZOOM) {
+    case 0: $font_size= 11; $width_1= 26; break;
+    case 1: $font_size= 13; $width_1= 30; break;
+  }
   // nastavení zobrazení PHP-chyb klientem při &err=1
   if ( isset($_GET['err']) && $_GET['err'] ) {
     error_reporting(E_ALL & ~E_NOTICE);
@@ -52,8 +58,7 @@
     <script src="$rel_root/ezer$ezer_version/client/licensed/codemirror/addon/selection/active-line.js"></script>
 __EOD;
   }
-  if (1)
-  $FONT= 'font-size: 11px; font-family: monospace, consolas;';
+  $FONT= "font-size: {$font_size}px; font-family: monospace, consolas;";
   $html= <<<__EOD
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="cs" dir="ltr">
@@ -147,7 +152,7 @@ __EOD;
     #TXT li { display: flex; flex: none; white-space: pre; }
       
     /* ----------------------- stop na řádku */
-    span.line { width: 26px; min-width: 26px; text-align: right; margin-right: 6px; 
+    span.line { width: {$width_1}px; min-width: {$width_1}px; text-align: right; margin-right: 6px; 
       background: silver; cursor:pointer; user-select: none; position: relative; }
     span.line:hover::after, span.line:hover::before { opacity: 1; /* zobrazí tooltip při hover */ }
     span.line::after { content: "dvojklik"; position: absolute; bottom: -5px;  left: 33px;
@@ -276,7 +281,7 @@ __EOD;
     #php ul { flex-direction: column; overflow-x: auto; overflow-y: scroll; position:relative;
       padding: 0; scroll-behavior: smooth; margin:0; height: calc(100% - 19px);}
     #php ul { display: flex; flex: none; white-space: pre; }
-    #php li span.line { display: inline-block; width: 26px; min-width: 26px; text-align: right; 
+    #php li span.line { display: inline-block; width: {$width_1}px; min-width: {$width_1}px; text-align: right; 
       margin-right: 6px; background: silver; }
     #php span.call { background:#cce; cursor:pointer; font-weight: bold; }
       
