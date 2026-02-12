@@ -539,6 +539,7 @@ function debugx(&$gt,$label=false,$html=0,$depth=64,$length=64,$win1250=0,$getty
 #               pokud je již někým jiným zamknutý, ok=0 a info=text; nelze opakovat bez uvolnění
 # mode=off    - odstraní (případný) zámek daného řádku přihlášeného uživatele resp. zámek tabulky
 # mode=none   - odstraní všechny zámky přihlášeného uživatele, případně jen zámky dané tabulky
+#               a všechny záznamy v _lock starší jak 24 hodin
 # variantu s mode=none lze použít i když databáze neobsahuje tabulku _lock (vhodné po přihlášení)
 # tabulka _lock musí mít index typu UNIQUE(table,id_table)
 function table_lock($mode,$table='',$idt=0) {
@@ -628,6 +629,8 @@ function table_lock($mode,$table='',$idt=0) {
         $n= pdo_qry("DELETE FROM _lock WHERE id_user='$idu' $AND");
         $ret->ok= 1;
         $ret->note= ($table ? "$table " : "all ")."unlocked by $idu ".($n?'':'(not needed)');
+        // odstranění všech záznamů starších 24h
+        pdo_qry("DELETE FROM _lock WHERE time < UNIX_TIMESTAMP() - (24 * 60 * 60)");
       }
       break;
   }
