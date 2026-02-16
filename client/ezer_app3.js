@@ -1,7 +1,8 @@
 /* části app.js a ezer_dom1.js portované z mootools do jQuery */
 /* Ezer3.x                             (C) 2017 Martin Šmídek */
 /* Ezer3.x        (C) 2009 Martin Šmídek */
-/* global Object, Ezer, Browser, gapi, Cookie, Function, args, Block, ListRow, Form, List, Browse, self, Menu, Panel, CKEDITOR, PanelPopup, Var */
+/* global Object, Ezer, Browser, gapi, Cookie, Function, args, Block, ListRow, Form, List, 
+          Browse, self, Menu, Panel, CKEDITOR, PanelPopup, Var, bodyLoad */
 
 "use strict";
 // <editor-fold defaultstate="collapsed" desc="++++++++++++++++++++++++++ EZER inicializace">
@@ -92,8 +93,8 @@ Ezer.ajax= function (options) {
     success: function(y){  
       // je vráceno ezer2.php, pokud není dobře definováno $_SESSION
       if ( y.session_none ) {
-        Ezer.fce.alert(y.error);
-        Ezer.App.bar_clock_break();
+        Ezer.App.session_off= true; // SESSION už vypršela
+        Ezer.fce.DOM.alert(y.error,Ezer.App.bar_clock_break);
       }
       else if ( options.origin_success ) 
         options.origin_success(y);
@@ -273,6 +274,7 @@ class Application {
     //                                          -- clock --
     this.clock_tics= 0;                           // minutky: počet tiků (minut) od minulé činnosti
     this.session_tics= 0;                         // minutky: počet tiků (minut) od minulé obnovy SESSION
+    this.session_off= false;                      // true => SESSION už vypršela
     this.hits= 0;                                 // počet uživatelských interakcí (button, menu, ...)
     this.last_hits= 0;                            // počet interakcí v minulé minutě
     this.waiting= false;                          // je zobrazena výzva k prodloužení
@@ -832,7 +834,10 @@ class Application {
         this.clock_tics= 1;
         this.last_hits= this.hits;
       }
-      if ( this.waiting && this.clock_tics > Ezer.App.options.login_interval + wait ) {
+      if (this.session_off) {
+        this.bar_clock_break();
+      }
+      else if ( this.waiting && this.clock_tics > Ezer.App.options.login_interval + wait ) {
         // je zobrazena výzva a čas vypršel, cookie zanikne zavřením browseru
         let v= 'odhlaseno '+ae_datum(1)+' po '+this.clock_tics+' min. necinosti';
         document.cookie= Ezer.root+'_logoff' + '=' + encodeURIComponent(v);
@@ -929,10 +934,8 @@ class Application {
   bar_clock_break () {
     let v= 'odhlaseno '+ae_datum(1)+' po expiraci SESSION';
     document.cookie= Ezer.root+'_logoff' + '=' + encodeURIComponent(v);
-    // 250729 odhlásit
-    this.logout();
-//    // server bude už nedostupný, takže odchod přímo
-//    location.replace(window.location.href);
+    // server bude už nedostupný, takže odchod přímo
+    Ezer.App.logout();
   }
   // ----------------------------------------------------------------------------- bar_chat
   // udržuje se serverem konverzaci
@@ -951,7 +954,10 @@ class Application {
     Ezer.ajax({data:x,
       success: function(y) {
         if ( !y ) {
-          Ezer.error('EVAL: syntaktická chyba na serveru:'+y,'E');
+          if (Ezer.App.session_off)
+            Ezer.App.logout();
+          else
+            Ezer.error('EVAL: syntaktická chyba na serveru ','E');
         }
         else {
           if ( y.op=='sysmsg?' && y.msg ) {
@@ -1083,8 +1089,7 @@ class Application {
   }
   // ------------------------------------------------------------------------------------- logout
   logout () {
-    this.clear();
-    this.loginDomOpen('logged','','');      // zavolá this.logged(odpověď serveru)
+    window.location.reload(true);
   }
   // ------------------------------------------------------------------------------------- login
   login() {
@@ -4422,7 +4427,7 @@ Ezer.fce.stop= function () {
   return 1;
 };
 // =======================================================================================> . system
-// ------------------------------------------------------------------------------------ logout
+// ------------------------------------------------------------------------------------ call_func
 //ff: fce system.call_func (fullname,arg1,...)
 //      zavolá funkci z bloku zadaném úplným jménem začínajícícm $ a předá argumenty arg1,...
 //s: funkce

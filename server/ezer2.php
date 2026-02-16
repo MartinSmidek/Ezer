@@ -36,10 +36,11 @@
   session_start(); // defaultní práce se session
   # ------------------------------------------------------------------------- test existence SESSION
   # po uplynutí gc_maxlifetime je session zrušena (runtimem PHP) => vrátit informaci do klienta
-  if ( !isset($_SESSION[$ezer_root])) {
-    $_SESSION[$ezer_root]['off']= 1;
+  if ( !isset($_SESSION[$ezer_root])) { 
+    $_SESSION[$ezer_root]= [];
+    $_SESSION[$ezer_root]['sess_state']= 'off';
     header('Content-type: application/json; charset=UTF-8');
-    $y= (object)array('session_none'=>1,'error'=>'odhlášeno pro nečinnost','POST'=>$_POST,'GET'=>$_GET);
+    $y= (object)array('session_none'=>1,'error'=>"odhlášeno po dlouhé nečinnosti");
     $yjson= json_encode($y);
     echo $yjson;
     exit;
@@ -47,6 +48,8 @@
   # -------------------------------------------------------------------------- test verze jádra EZER
   # při zjištění staré verze jádra v SESSION je vynucen restart 
   elseif ( isset($_SESSION[$ezer_root]['ezer']) && $_SESSION[$ezer_root]['ezer']!='3.3' ) {
+    $_SESSION[$ezer_root]= [];
+    $_SESSION[$ezer_root]['sess_state']= 'off';
     header('Content-type: application/json; charset=UTF-8');
     $y= (object)array('session_none'=>1,
         'error'=>"nepovolený souběh verze 3.3 se starou verzí {$_SESSION[$ezer_root]['ezer']}");
