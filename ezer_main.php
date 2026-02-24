@@ -57,9 +57,10 @@ $this_ezer_version= '3.3';
   $jQuery=   isset($_GET['jquery'])  ? $_GET['jquery']  : (isset($_COOKIE['jquery']) ? $_COOKIE['jquery']  : '3.3.1');
   $dbg=      isset($_GET['dbg'])     ? $_GET['dbg']     : 0;
   $gapi=     isset($_GET['gapi'])    ? $_GET['gapi']    : 0; //!($ezer_local || $ezer_ksweb);
-  $gmap=     isset($_GET['gmap'])    ? $_GET['gmap']    : (isset($_COOKIE['gmap']) ? $_COOKIE['gmap']  : ($is_local?0:1));
-  $smap=     isset($_GET['smap'])    ? $_GET['smap']    : (isset($_COOKIE['smap']) ? $_COOKIE['smap']  : ($is_local?0:1));
-  $touch=    isset($_GET['touch'])   ? $_GET['touch']   : (isset($_COOKIE['touch']) ? $_COOKIE['touch']  : 0);
+  $gmap=     isset($_GET['gmap'])    ? $_GET['gmap']    : (isset($_COOKIE['gmap']) ? $_COOKIE['gmap']  : 0);
+  $smap=     isset($_GET['smap'])    ? $_GET['smap']    : (isset($_COOKIE['smap']) ? $_COOKIE['smap']  : 0);
+  $omap=     isset($_GET['omap'])    ? $_GET['omap']    : (isset($_COOKIE['omap']) ? $_COOKIE['omap']  : ($is_local?0:1));
+  $touch=    isset($_GET['touch'])   ? $_GET['touch']   : (isset($_COOKIE['touch'])? $_COOKIE['touch'] : 0);
 
   // inicializace SESSION
   if ( !isset($_SESSION) ) {
@@ -164,6 +165,9 @@ $this_ezer_version= '3.3';
       "https://maps.googleapis.com/maps/api/js?libraries=places&key=$api_key") : array(),
     $smap==1 ? array(
       "https://api.mapy.cz/loader.js") : array(),
+    $omap==1 ? array(
+      "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js",
+      "https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js") : array(),
     // uživatelské skripty
       array_map(function($x) use ($http_rel_root,$v_app) {
         return "$http_rel_root/$x$v_app";
@@ -172,6 +176,9 @@ $this_ezer_version= '3.3';
   if ($touch) $app_css[]= "ezer$ezer_version/client/ipad.css";
   $app_css= array_values(array_filter($app_css)); // vynechání všech false
   $css= array_merge(
+    $omap==1 ? array(
+      "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css",
+      "https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css") : array(),
     array("$client/ezer.css$v_sys","$client/ezer3.css$v_sys","$client/ezer3.css.php=skin",  
     $awe==5
       ? "$client/licensed/font-awesome-5/css/all.min.css"

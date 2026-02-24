@@ -39,6 +39,7 @@ $names= array(
  'castka_slovy' => (object)array('op'=>'ff'),
  'cconc' => (object)array('op'=>'ff'),
  'clear' => (object)array('op'=>'ff'),
+ 'clear_out_bounds' => (object)array('op'=>'fm'),
  'click' => (object)array('op'=>'fm'),
  'click_wait' => (object)array('op'=>'fi'),
  'clipboard' => (object)array('op'=>'ff'),
