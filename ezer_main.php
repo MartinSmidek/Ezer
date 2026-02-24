@@ -193,6 +193,7 @@ $this_ezer_version= '3.3';
   // nastavení jádra
   $options= (object)array(              // přejde do Ezer.options...
     'gmap' => $gmap,                    // zda používat mapy Google
+    'omap' => $omap,                    // zda používat mapy OpenStreet
     'watch_git'    => 0,                // sleduj git-verzi aplikace a jádra, při změně navrhni restart
     'curr_version' => 0,                // při přihlášení je nahrazeno nejvyšší ezer_kernel.version
     'curr_users' => $is_local ? 0 : 1,  // zobrazovat v aktuální hodině aktivní uživatele
