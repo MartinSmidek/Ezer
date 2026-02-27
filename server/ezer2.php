@@ -1550,17 +1550,17 @@
 //   # ------------------------------------------------------------------------------------------------ user_logout
 //   # odhlášení uživatele, zrušení v SESSION
 //   # y: ok/ko
-//   case 'user_logout':
-//     $ezer_user_id= $_SESSION[$ezer_root]['user_id']= $y->user_id= 0;
-//     // zapiš do aktivity
-//     $day= date('Y-m-d');
-//     $time= date('H:i:s');
-//     $qry= "INSERT _touch (day,time,hits,user,module,menu) "
-//       . "VALUES ('$day','$time',0,'{$USER->abbr}','app','logout')";
-//     $res= pdo_query($qry);
-//     // zruš session
-//     $y->ok= session_destroy() ? 'ok' : 'ko';    // vynuluje $USER
-//     break;
+  case 'user_logout':
+    // zapiš do aktivity
+    $day= date('Y-m-d');
+    $time= date('H:i:s');
+    $qry= "INSERT _touch (day,time,hits,user,module,menu) "
+      . "VALUES ('$day','$time',0,'{$USER->abbr}','app','logout')";
+    $res= pdo_query($qry);
+    // zruš session
+    $ezer_user_id= $_SESSION[$ezer_root]['user_id']= $y->user_id= 0;
+    $y->ok= session_destroy() ? 'ok' : 'ko';    // vynuluje $USER
+    break;
   # ------------------------------------------------------------------------------------------------ user_status
   # zápis stavu uživatele do _user.state
   case 'user_status':

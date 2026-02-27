@@ -3053,7 +3053,7 @@ class Proc { //extends Block {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  initialize
 //oc: Proc.code - kód procedury
 ////oc: Proc.prior - priorita procedury (jen pro onstart)
-//oc: Proc.context - kontext procedury (pro řešení významu jmen) tj. místo definice
+////oc: Proc.context - kontext procedury (pro řešení významu jmen) tj. místo definice
   constructor (owner,desc,context,id) {
     this.owner= owner;
     if ( id ) this.id= this._id= id;

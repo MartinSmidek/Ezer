@@ -4457,6 +4457,7 @@ Ezer.fce.call_func= function (fullname,...args) {
 Ezer.fce.logout= function () {
   Ezer.fce.touch('logout');
   Ezer.onlogout();
+  Ezer.App.logout();
   return 1;
 };
 // ------------------------------------------------------------------------------------ href
@@ -5079,8 +5080,8 @@ Ezer.fce.touch= function (type,block,args) {
       break;
     case 'logout':
       // odhlásí uživatele
-      Ezer.app.logoff();
-      Ezer.app.logout();
+      Ezer.App.logoff();
+      Ezer.App.logout();
       to_send= true;
       to_logout= true;
       break;
