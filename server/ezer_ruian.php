@@ -2,14 +2,28 @@
 /** =================================================================================== OpenStreet */
 # -------------------------------------------------------------------------------- geocode nominatim
 # zkusí lokalizovat adresu v OpenStreet pomocí služby Nominatim
-# vstup:  adresa - textový tvar adresy 
+# vstup:  adresa - text adresy nebo objekt {ulice,psc,obec}
 #         limit - pro počet vrácených možností
 # výstup: pokud je $json=0 tak pro limit=1 a vrátí jedinou odpověď Nominatim jako objekt, jinak pole
 #         pokud je $json=1 vrací neupravený výsledek Nominatim
 #         kde odpověď je {lat:d,lon:d, display_name:plná adresa},...} 
 #         vrácená jako JSON pro $json=1 nebo jako objekt/pole pro $json=0
-function geocode_nominatim($address,$json=1,$limit=1) {  
-  $address = urlencode($address);
+function geocode_nominatim($adr,$json=1,$limit=1) {  
+  if (is_string($adr)) {
+    $adresa= $adr;
+  }
+  else {
+    $adr= (array)$adr;
+    $ulice= str_replace(["č.p.", "č.pop.", $adr['obec']], "", $adr['ulice']);
+    $psc= $adr['psc'];
+    $obec= $adr['obec'];
+    // pokud v ulici zůstalo jen číslo přehoď tam obec
+    if (is_numeric($ulice)) 
+      $adresa = "$obec $ulice,$psc";
+    else    
+      $adresa = "$ulice,$psc $obec";
+  }
+  $address = urlencode($adresa);
   $url = "https://nominatim.openstreetmap.org/search?q={$address}&format=json&limit=$limit";
   // nastavení User-Agent dle podmínek Nominatim
   // https://operations.osmfoundation.org/policies/nominatim/
@@ -26,6 +40,7 @@ function geocode_nominatim($address,$json=1,$limit=1) {
       $response = $response[0];
     }
   }
+  debug($response,$adresa);
   return $response;
 }
 /** ======================================================================================== RUIAN */
