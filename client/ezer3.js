@@ -5707,15 +5707,17 @@ class LabelMap extends Label {
         this.map.fitBounds(box);
       }
       else if (this.map_type == 'omap') {
-        const markers = [];
+        const layersWithBounds = [];
         this.map.eachLayer(layer => {
-          if (layer instanceof L.Marker || layer instanceof L.CircleMarker) {
-            markers.push(layer);
+          // Zahrneme všechny vrstvy, které mají metodu getBounds (např. polygony, obdélníky)
+          // nebo getLatLng (značky). Vyloučíme dlaždicovou vrstvu.
+          if (typeof layer.getBounds === 'function' || typeof layer.getLatLng === 'function') {
+            layersWithBounds.push(layer);
           }
         });
-        if (markers.length > 0) {
-          const markerGroup = new L.FeatureGroup(markers);
-          this.map.fitBounds(markerGroup.getBounds());
+        if (layersWithBounds.length > 0) {
+          const featureGroup = L.featureGroup(layersWithBounds);
+          this.map.fitBounds(featureGroup.getBounds());
         }
       }
     }

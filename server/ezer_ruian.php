@@ -6,17 +6,19 @@
 #         limit - pro počet vrácených možností
 # výstup: pokud je $json=0 tak pro limit=1 a vrátí jedinou odpověď Nominatim jako objekt, jinak pole
 #         pokud je $json=1 vrací neupravený výsledek Nominatim
-#         kde odpověď je {lat:d,lon:d, display_name:plná adresa},...} 
+#         kde odpověď je {lat:d,lon:d, display_name:plná adresa}, ...} 
 #         vrácená jako JSON pro $json=1 nebo jako objekt/pole pro $json=0
-function geocode_nominatim($adr,$json=1,$limit=1) {  
+#         pokud json=0 a limit=1 je přidána ještě seek:úprava hledané adresy,
+function geocode_nominatim($adr,$json=0,$limit=1) {  
   if (is_string($adr)) {
     $adresa= $adr;
   }
   else {
     $adr= (array)$adr;
-    $ulice= str_replace(["č.p.", "č.pop.", $adr['obec']], "", $adr['ulice']);
+    $obec= $prvni = strtok(trim($adr['obec']), " ");
+//    $ulice= str_ireplace(["č.p.", "č.pop.", $obec], "", $adr['ulice']);
+    $ulice= preg_replace('/č\.p\.|č\.pop\.|'.preg_quote($obec, '/') . '/iu', '', $adr['ulice']);
     $psc= $adr['psc'];
-    $obec= $adr['obec'];
     // pokud v ulici zůstalo jen číslo přehoď tam obec
     if (is_numeric($ulice)) 
       $adresa = "$obec $ulice,$psc";
@@ -30,17 +32,18 @@ function geocode_nominatim($adr,$json=1,$limit=1) {
   $options = ['http' => ['header' => "User-Agent:Ezer/3.3 (martin@smidek.eu)\r\n"]];
   $context = stream_context_create($options);
   $response = file_get_contents($url, false, $context);
-  debug($response);
   if ($response === FALSE) { // Chyba při volání API
     $response = json_encode(['error' => 'Nominatim API call failed.']);
   } 
   if (!$json) {
     $response = json_decode($response);
+//    debug($response,$adresa);
     if ($limit==1 ) {
       $response = $response[0];
+      $response->seek= $adresa;
     }
   }
-  debug($response,$adresa);
+//  debug($response,$adresa);
   return $response;
 }
 /** ======================================================================================== RUIAN */
