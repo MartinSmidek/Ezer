@@ -9,7 +9,9 @@
 #         kde odpověď je {lat:d,lon:d, display_name:plná adresa}, ...} 
 #         vrácená jako JSON pro $json=1 nebo jako objekt/pole pro $json=0
 #         pokud json=0 a limit=1 je přidána ještě seek:úprava hledané adresy,
-function geocode_nominatim($adr,$json=0,$limit=1) {  
+function geocode_nominatim($adr) {  
+  $json= 0;
+  $limit= 1;
   if (is_string($adr)) {
     $adresa= $adr;
   }
@@ -31,20 +33,18 @@ function geocode_nominatim($adr,$json=0,$limit=1) {
   // https://operations.osmfoundation.org/policies/nominatim/
   $options = ['http' => ['header' => "User-Agent:Ezer/3.3 (martin@smidek.eu)\r\n"]];
   $context = stream_context_create($options);
-  $response = file_get_contents($url, false, $context);
-  if ($response === FALSE) { // Chyba při volání API
-    $response = json_encode(['error' => 'Nominatim API call failed.']);
-  } 
-  if (!$json) {
-    $response = json_decode($response);
-//    debug($response,$adresa);
-    if ($limit==1 ) {
-      $response = $response[0];
-      $response->seek= $adresa;
-    }
+  $response = file_get_contents($url, false, $context); // vrací false pokud došlo k chybě při volání API
+//  display($response);
+  if ($json==0 && $limit==1) { // vracíme objekt
+    $ret= $response === false 
+        ? (object)['error'=>'API Nominatim failed','lat'=>0] : json_decode($response)[0];
+    $ret->seek= $adresa;
+  }
+  else {
+    $ret= $response;
   }
 //  debug($response,$adresa);
-  return $response;
+  return $ret;
 }
 /** ======================================================================================== RUIAN */
 # ---------------------------------------------------------------------------------------- ruian_adr
