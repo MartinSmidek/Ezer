@@ -14,8 +14,8 @@ function geocode_nominatim($adr,$spec='') {  trace('','','*');
   $json= 0;
   $limit= 1;
   if ($spec=='psc') {
-    $psc= str_replace(' ','',$adr);
-    $url = "https://nominatim.openstreetmap.org/search?postalcode=$psc&countrycodes=cz,sk&format=json&limit=$limit";
+    $adresa= str_replace(' ','',$adr);
+    $url = "https://nominatim.openstreetmap.org/search?postalcode=$adresa&countrycodes=cz,sk&format=json&limit=$limit";
   }
   else {
     if (is_string($adr)) {
