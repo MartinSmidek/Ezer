@@ -22,14 +22,16 @@ function geocode_nominatim($adr,$spec='') {  trace('','','*');
       $adresa= $adr;
     }
     else {
+      debug($adr,'','','*');
       $adr= (array)$adr;
       // vypustíme zkratky a u obce první slovo
-      $obec= preg_replace('/\b\p{L}+\.(?=\s+\p{L})*/ug', '', $adr['obec']);
+      $obec= preg_replace('/\b\p{L}+\.(?=\s+\p{L})*/u', '', $adr['obec']);
+      display("A {$adr['obec']} >> $obec",'*');
       $obec= $prvni = strtok(trim($obec), " ");
 //      $ulice= preg_replace('/č\.p\.|č\.pop\.|'.preg_quote($obec, '/') . '/iu', '', $adr['ulice']);
-      display($adr['ulice'],'*');
-      $ulice= preg_replace('/\b\p{L}+\.(?=\s+\p{L})*/ug', '', $adr['ulice']);
-      display($ulice,'*');
+      display("B {$adr['ulice']}",'*');
+      $ulice= preg_replace('/\b\p{L}+\.(?=\s+\p{L})*/u', '', $adr['ulice']);
+      display("C $ulice",'*');
 
       $psc= $adr['psc'];
       // pokud v ulici zůstalo jen číslo přehoď tam obec
@@ -37,7 +39,10 @@ function geocode_nominatim($adr,$spec='') {  trace('','','*');
         $adresa = "$obec $ulice,$psc";
       else    
         $adresa = "$ulice,$psc $obec";
+      display("D $adresa",'*');
     }
+//    $ret= (object)['error'=>'no API','lat'=>0];
+//    goto end;
     $address = urlencode($adresa);
     $url = "https://nominatim.openstreetmap.org/search?q={$address}&countrycodes=cz,sk&format=json&limit=$limit";
   }
@@ -55,6 +60,7 @@ function geocode_nominatim($adr,$spec='') {  trace('','','*');
   else {
     $ret= $response;
   }
+end:
   debug($ret,"geocode_nominatim($adresa,$spec)>",'','*');
   return $ret;
 }
