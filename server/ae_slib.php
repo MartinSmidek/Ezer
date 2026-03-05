@@ -365,10 +365,11 @@ function lorem_ipsum($repeat=1) {
   return $lorem;
 }
 # ------------------------------------------------------------------------------------------ display
-function display ($msg) {
+# volitelné when umožňuje zapnout trasování podle nastavení ve stavovém řádku
+function display ($msg,$when='u') {
   global $totrace, $trace;
-  if (!$totrace || strpos($totrace,'u')===false ) return '';
-  $trace.= ($trace?"<br />":'').$msg;
+  if (!$totrace || strpos($totrace,$when)===false ) return '';
+  $trace.= ($trace?"<br />":'').($when=='*'?"<span style='color:red'>* </span>":'').$msg;
 }
 # ----------------------------------------------------------------------------------------- display_
 function display_ ($msg) {
@@ -378,12 +379,13 @@ function display_ ($msg) {
 }
 # -------------------------------------------------------------------------------------------- trace
 # $note je poznámka uvedená za trasovací informací
-function trace($note='',$coding='') {
+# volitelné when umožňuje zapnout trasování podle nastavení ve stavovém řádku
+function trace($note='',$coding='',$when='u') {
   global $totrace, $trace, $trace_parm;
-  if (!$totrace || strpos($totrace,'u')===false ) return '';
+  if (!$totrace || strpos($totrace,$when)===false ) return '';
   $time= date("H:i:s");
   $act= debug_backtrace();
-  $x= ($trace ? "<br/>" : '')."$time ".call_stack($act,1).($note?" / $note":'');
+  $x= ($trace ? "<br/>" : '').($when=='*'?"<span style='color:red'>* </span>":'')."$time ".call_stack($act,1).($note?" / $note":'');
   $x.= $trace_parm;
   $trace_parm= '';
   if ( $coding=='win1250' ) $x= wu($x);
@@ -442,10 +444,12 @@ function call_stack($act,$n,$hloubka=2,$show_call=1) { #$this->debug($act,'call_
 # pokud jsou data v kódování win1250 je třeba použít  debug($s,'s',(object)array('win1250'=>1));
 # options:
 #   gettype=1 -- ve třetím sloupci bude gettype(hodnoty)
-function debug($gt,$label=false,$options=null) {
+# volitelné when umožňuje zapnout trasování podle nastavení ve stavovém řádku
+function debug($gt,$label='',$options=null,$when='u') {
   global $totrace, $trace, $debug_level;
-  if (strpos($totrace??'','u')===false ) return '';
+  if (strpos($totrace??'',$when)===false ) return '';
   $debug_level= 0;
+  if ($when=='*') $label= "<span style='color:red'>*</span> $label";
   $html= ($options && isset($options->html)) ? $options->html : 0;
   $depth= ($options && isset($options->depth)) ? $options->depth : 64;
   $length= ($options && isset($options->length)) ? $options->length : 64;
