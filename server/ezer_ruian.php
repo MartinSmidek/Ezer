@@ -23,8 +23,14 @@ function geocode_nominatim($adr,$spec='') {  trace('','','*');
     }
     else {
       $adr= (array)$adr;
-      $obec= $prvni = strtok(trim($adr['obec']), " ");
-      $ulice= preg_replace('/č\.p\.|č\.pop\.|'.preg_quote($obec, '/') . '/iu', '', $adr['ulice']);
+      // vypustíme zkratky a u obce první slovo
+      $obec= preg_replace('/\b\p{L}+\.(?=\s+\p{L})/u', '', $adr['obec']);
+      $obec= $prvni = strtok(trim($obec), " ");
+//      $ulice= preg_replace('/č\.p\.|č\.pop\.|'.preg_quote($obec, '/') . '/iu', '', $adr['ulice']);
+      display($adr['ulice'],'*');
+      $ulice= preg_replace('/\b\p{L}+\.(?=\s+\p{L})/u', '', $adr['ulice']);
+      display($ulice,'*');
+
       $psc= $adr['psc'];
       // pokud v ulici zůstalo jen číslo přehoď tam obec
       if (is_numeric($ulice)) 
