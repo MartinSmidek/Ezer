@@ -24,11 +24,11 @@ function geocode_nominatim($adr,$spec='') {  trace('','','*');
     else {
       $adr= (array)$adr;
       // vypustíme zkratky a u obce první slovo
-      $obec= preg_replace('/\b\p{L}+\.(?=\s+\p{L})/u', '', $adr['obec']);
+      $obec= preg_replace('/\b\p{L}+\.(?=\s+\p{L})*/ug', '', $adr['obec']);
       $obec= $prvni = strtok(trim($obec), " ");
 //      $ulice= preg_replace('/č\.p\.|č\.pop\.|'.preg_quote($obec, '/') . '/iu', '', $adr['ulice']);
       display($adr['ulice'],'*');
-      $ulice= preg_replace('/\b\p{L}+\.(?=\s+\p{L})/u', '', $adr['ulice']);
+      $ulice= preg_replace('/\b\p{L}+\.(?=\s+\p{L})*/ug', '', $adr['ulice']);
       display($ulice,'*');
 
       $psc= $adr['psc'];
