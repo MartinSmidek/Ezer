@@ -1,40 +1,46 @@
 <?php # (c) 2021 Martin Smidek <martin@smidek.eu>
 /** =================================================================================== OpenStreet */
 # -------------------------------------------------------------------------------- geocode nominatim
-# zkusí lokalizovat adresu v OpenStreet pomocí služby Nominatim
+# zkusí lokalizovat CZ+SK adresu v OpenStreet pomocí služby Nominatim
 # vstup:  adresa - text adresy nebo objekt {ulice,psc,obec}
-#         limit - pro počet vrácených možností
+# vstup pro PSČ: psč jako text, 'psc' 
 # výstup: pokud je $json=0 tak pro limit=1 a vrátí jedinou odpověď Nominatim jako objekt, jinak pole
 #         pokud je $json=1 vrací neupravený výsledek Nominatim
 #         kde odpověď je {lat:d,lon:d, display_name:plná adresa}, ...} 
 #         vrácená jako JSON pro $json=1 nebo jako objekt/pole pro $json=0
 #         pokud json=0 a limit=1 je přidána ještě seek:úprava hledané adresy,
-function geocode_nominatim($adr) {  
+# trasování * vypíše podrobné informace
+function geocode_nominatim($adr,$spec='') {  trace('','','*');
   $json= 0;
   $limit= 1;
-  if (is_string($adr)) {
-    $adresa= $adr;
+  if ($spec=='psc') {
+    $psc= str_replace(' ','',$adr);
+    $url = "https://nominatim.openstreetmap.org/search?postalcode=$psc&countrycodes=cz,sk&format=json&limit=$limit";
   }
   else {
-    $adr= (array)$adr;
-    $obec= $prvni = strtok(trim($adr['obec']), " ");
-//    $ulice= str_ireplace(["č.p.", "č.pop.", $obec], "", $adr['ulice']);
-    $ulice= preg_replace('/č\.p\.|č\.pop\.|'.preg_quote($obec, '/') . '/iu', '', $adr['ulice']);
-    $psc= $adr['psc'];
-    // pokud v ulici zůstalo jen číslo přehoď tam obec
-    if (is_numeric($ulice)) 
-      $adresa = "$obec $ulice,$psc";
-    else    
-      $adresa = "$ulice,$psc $obec";
+    if (is_string($adr)) {
+      $adresa= $adr;
+    }
+    else {
+      $adr= (array)$adr;
+      $obec= $prvni = strtok(trim($adr['obec']), " ");
+      $ulice= preg_replace('/č\.p\.|č\.pop\.|'.preg_quote($obec, '/') . '/iu', '', $adr['ulice']);
+      $psc= $adr['psc'];
+      // pokud v ulici zůstalo jen číslo přehoď tam obec
+      if (is_numeric($ulice)) 
+        $adresa = "$obec $ulice,$psc";
+      else    
+        $adresa = "$ulice,$psc $obec";
+    }
+    $address = urlencode($adresa);
+    $url = "https://nominatim.openstreetmap.org/search?q={$address}&countrycodes=cz,sk&format=json&limit=$limit";
   }
-  $address = urlencode($adresa);
-  $url = "https://nominatim.openstreetmap.org/search?q={$address}&format=json&limit=$limit";
   // nastavení User-Agent dle podmínek Nominatim
   // https://operations.osmfoundation.org/policies/nominatim/
   $options = ['http' => ['header' => "User-Agent:Ezer/3.3 (martin@smidek.eu)\r\n"]];
   $context = stream_context_create($options);
   $response = file_get_contents($url, false, $context); // vrací false pokud došlo k chybě při volání API
-//  display($response);
+  display("geocode_nominatim($url)=$response",'*');
   if ($json==0 && $limit==1) { // vracíme objekt
     $ret= $response === false 
         ? (object)['error'=>'API Nominatim failed','lat'=>0] : json_decode($response)[0];
@@ -43,7 +49,7 @@ function geocode_nominatim($adr) {
   else {
     $ret= $response;
   }
-//  debug($response,$adresa);
+  debug($ret,"geocode_nominatim($adresa,$spec)>",'','*');
   return $ret;
 }
 /** ======================================================================================== RUIAN */
