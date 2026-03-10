@@ -25,12 +25,12 @@ function geocode_nominatim($adr,$spec='') {  trace('','','*');
       debug($adr,'','','*');
       $adr= (array)$adr;
       // vypustíme zkratky a u obce první slovo
-      $obec= preg_replace('/\b\p{L}+\.(?=\s+\p{L})*/u', '', $adr['obec']);
+      $obec= preg_replace('/\b\p{L}+\.(?=\s+\p{L})*/u', '', trim($adr['obec']));
       display("A {$adr['obec']} >> $obec",'*');
       $obec= $prvni = strtok(trim($obec), " ");
 //      $ulice= preg_replace('/č\.p\.|č\.pop\.|'.preg_quote($obec, '/') . '/iu', '', $adr['ulice']);
       display("B {$adr['ulice']}",'*');
-      $ulice= preg_replace('/\b\p{L}+\.(?=\s+\p{L})*/u', '', $adr['ulice']);
+      $ulice= preg_replace('/\b\p{L}+\.(?=\s+\p{L})*/u', '', trim($adr['ulice']));
       display("C $ulice",'*');
 
       $psc= $adr['psc'];
@@ -63,6 +63,20 @@ function geocode_nominatim($adr,$spec='') {  trace('','','*');
 end:
   debug($ret,"geocode_nominatim($adresa,$spec)>",'','*');
   return $ret;
+}
+# ------------------------------------------------------------------------------------ geos distance
+# výpočet vzdálenosti mezi dvěma místy
+function geos_distance($lat1, $lon1, $lat2, $lon2) {
+    $R = 6371; // poloměr Země v km
+    $dLat = deg2rad($lat2 - $lat1);
+    $dLon = deg2rad($lon2 - $lon1);
+
+    $a = sin($dLat/2) * sin($dLat/2) +
+         cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
+         sin($dLon/2) * sin($dLon/2);
+
+    $c = 2 * atan2(sqrt($a), sqrt(1-$a));
+    return $R * $c;
 }
 /** ======================================================================================== RUIAN */
 # ---------------------------------------------------------------------------------------- ruian_adr
