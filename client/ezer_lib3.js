@@ -236,7 +236,8 @@ function dbg_source_line(cmd) {
     }
     case 'func_end': {
       let desc= this.proc.desc,
-          flc= `${this.dbg_act_file},${desc.lc_}`;
+          flc= `${this.proc.desc.file_},${desc.lc_}`;
+//          flc= `${this.dbg_act_file},${desc.lc_}`;
       if (Ezer.dbg.process==this.process) {
         Ezer.sys.dbg.win_ezer.dbg_trace_stmnt(' ?',flc,'line-show');
         if (Ezer.dbg.state==1) {

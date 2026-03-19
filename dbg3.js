@@ -907,9 +907,9 @@ function dbg_trace_source(flc,bckg) {
 }
 function dbg_trace_stmnt(prefix,flc) {
   let [file,ln,c]= flc.split(','),
-      click= `onclick="dbg_trace_source('${file},${ln}','line-show')"`,
-      src= htmlentities(dbg.src[ln].find('span.text').text()), pos;
-  if (c>12) {
+      click= `onclick="dbg_trace_source('${file},${ln}','line-show')"`, pos,
+      src= dbg.src[ln] ? htmlentities(dbg.src[ln].find('span.text').text()) : '???';
+  if (c>12 && dbg.src[ln]) {
     src= '… '+src.slice(c-1);
   }
   pos= ` <span ${click} style='cursor:alias'>${file}/${ln} ${src}</span>`;
@@ -1080,12 +1080,17 @@ function dbg_reload_(y,clear) {
   ezer.path= y.path;
   doc.Ezer.sys.dbg.file= y.file;
   let files= doc.Ezer.sys.dbg.files;
-  if (files[y.file]==undefined) {
-    files[y.file]= {pick:Number(y.line),stopped:0,stop:0,traces:[],stops:[],lines:[],mtime:0};
-  }
+  // -----------------------------------==> .. doplnění seznamu modulů
+  for (let file of y.app_ezer) {
+    if (files[file]==undefined) {
+      files[file]= {pick:Number(y.line),stopped:0,stop:0,traces:[],stops:[],lines:[],mtime:0};
+    }
+  }  
+//  if (files[y.file]==undefined) {
+//    files[y.file]= {pick:Number(y.line),stopped:0,stop:0,traces:[],stops:[],lines:[],mtime:0};
+//  }
   files[y.file].lines= y.lines;
   files[y.file].mtime= y.mtime;
-  // -----------------------------------==> .. doplnění seznamu modulů
   dbg.files.empty();
   for (let file in files) {
     let selected= file==y.file ? ' selected' : '';
@@ -1105,16 +1110,6 @@ function dbg_reload_(y,clear) {
   if ( (ln= files[y.file].stopped) ) {
     dbg.src[ln].addClass('line-break');
   }
-//  doc.Ezer.sys.dbg.files[file].stopped= ln;
-//  for (let ln of files[y.file].stops) {
-//    dbg.src[ln].addClass('break');
-//  }
-//  for (let ln of files[y.file].traces) {
-//    dbg.src[ln].addClass('trace');
-//  }
-//  if ( files[y.file].stop ) {
-//    dbg.src[files[y.file].stop].addClass('stop');
-//  }
   // pokud není definovaná line použij zapamatovanou
   let line= Number(y.line) ? Number(y.line) : files[y.file].pick;
   dbg.dbg_show_line(line,'pick',undefined,clear);
@@ -1484,7 +1479,7 @@ function htmlentities(h) {
   return typeof(h)=='string' ? h.replace(/[<]/g,'&lt;').replace(/[>]/g,'&gt;') : h.toString();
 }
 // ------------------------------------------------------------------------------==> . dbg show_line
-// zobrazení textu ve struktuře
+// zobrazení textu ve struktuře s případným načtením
 // ln= řádek[.index souboru]
 function dbg_show_line(ln,css='pick',el=undefined,clear=true,file='') {
   if (el!=undefined) 
@@ -1503,12 +1498,19 @@ function dbg_show_line(ln,css='pick',el=undefined,clear=true,file='') {
       name= dbg.app_ezer[lns[1]];
     }
   }
+  // pokud je to odkaz do stejného modulu, ukaž jej
+  if (doc.Ezer.sys.dbg.file==name) {
+    dbg_show_line_(ln,css);
+  }
   // pokud je to odkaz do jiného modulu, načti jej
-  if (doc.Ezer.sys.dbg.file!=name) {
+  else if (doc.Ezer.sys.dbg.file!=name) {
     dbg_reload(name,ln,clear);
   }
-  // jinak je to zobrazený soubor
-  else {
+}
+
+// dokončení zobrazením cílového řádku;;
+function dbg_show_line_(ln,css) {
+//  else {
     // označ cílový řádek
     if ( dbg.src[ln] ) {
       dbg.src[ln]
@@ -1534,7 +1536,7 @@ function dbg_show_line(ln,css='pick',el=undefined,clear=true,file='') {
         break;
       }
     }
-  }
+//  }
 }
 //---------------------------------------------------------------------------------- dbg contextmenu
 //ff: fce debug.dbg_contextmenu (menu,el[,id,up=0])

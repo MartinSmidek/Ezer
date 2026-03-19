@@ -2164,7 +2164,7 @@ function gen_caller($s,$pars) {
       $code[]= (object)array('o'=>'o','i'=>$s->bas->nam);
       break;
     default:
-      display("CODE: tohle caller neumí přeložit");
+      comp_error("CODE: tohle caller neumí přeložit");
     }
     if ( $s->rel ) {
       $code[]= (object)array('o'=>'q','i'=>$s->rel);
@@ -2199,7 +2199,7 @@ function gen_getter($s,$index=null,$ref=false) {
     $code[]= (object)array('o'=>'o','i'=>$s->bas->nam);
     break;
   default:
-    display("CODE: tohle getter neumí přeložit");
+    comp_error("CODE: tohle getter neumí přeložit");
   }
   // na zásobníku je nyní hodnota typu bas->_of
   // zpřístupnění přes relativní cestu pro typ e
@@ -2337,8 +2337,8 @@ function gen_setter($s,$value,$index=null) {
         (object)array('o'=>'z','i'=>1));
     break;
   default:
-    display("CODE: tohle setter neumí přeložit");
-//    comp_error("CODE: tohle setter neumí přeložit");
+//    display("CODE: tohle setter neumí přeložit");
+    comp_error("CODE: tohle setter neumí přeložit");
   }
   return $code;
 }

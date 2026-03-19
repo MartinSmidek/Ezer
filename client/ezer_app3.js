@@ -4765,7 +4765,7 @@ Ezer.fce._confirm= function (res) {
   return 1;
 };
 // -------------------------------------------------------------------------------------- prompt2
-//fj: fce dialog.prompt2 (msg[,default=''])
+//fj: fce dialog.prompt2 (msg[,default=''])   OBSOLETE
 //      ve zvláštním okně položí otázku msg a přečte odpověď, kterou vrátí jako výsledek
 //r: zapsaný text - pokud bylo stisknuto Ok
 //   '' - pokud bylo stisknuto Zpět, Esc (nebo byl vrácen prázdný text)
@@ -4775,17 +4775,18 @@ Ezer.fce.prompt2= function (msg,deflt='') {
     {heading:"Zadání textu",input:deflt});
   return 1;
 };
+Ezer.fce.prompt= Ezer.fce.prompt2;
 // -------------------------------------------------------------------------------------- prompt
-//ff: fce dialog.prompt (msg[,default=''])
+//fj: fce dialog.prompt (msg[,default=''])
 //      ve zvláštním okně položí otázku msg a přečte odpověď, kterou vrátí jako výsledek
 //r: odpověď
 //a: msg - text otázky
 //   default - nabídnutá odpověď
 //s: funkce
-Ezer.fce.prompt= function (msg,odpoved) {
-  odpoved= odpoved||'';
-  return prompt(msg,odpoved);
-};
+//Ezer.fce.prompt= function (msg,odpoved) {
+//  odpoved= odpoved||'';
+//  return prompt(msg,odpoved);
+//};
 // ----------------------------------------------------------------------------------- backtrace
 //ff: fce debug.backtrace ([depth=0])
 // vypíše trasovací informaci o vnoření volání, depth=0 zobrazí celý zásobník

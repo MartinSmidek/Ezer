@@ -643,9 +643,10 @@ function table_lock($mode,$table='',$idt=0) {
 # ------------------------------------------------------------------------------------------- select
 # navrácení hodnoty jednoduchého dotazu
 # pokud $expr obsahuje čárku, vrací pole hodnot, pokud $expr je hvězdička vrací objekt, 
-# pokud není definována table, vrací SELECT expr
+# pokud není definována table, vrací SELECT hodnoty expr jako pole
 # příklad 1: $id= select("id","tab","x=13")
 # příklad 2: list($id,$x)= select("id,x","tab","x=13")
+# příklad 3: list($id,$x)= select("SELECT id,x FROM tab WHERE x=13")
 function select($expr,$table='',$cond=1,$db='.main.') {
   if ( !$table ) {
     $result= array();
