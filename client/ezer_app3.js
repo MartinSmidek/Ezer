@@ -4768,10 +4768,10 @@ Ezer.fce._confirm= function (res) {
 //fj: fce dialog.prompt2 (msg[,default=''])   OBSOLETE
 //      ve zvláštním okně položí otázku msg a přečte odpověď, kterou vrátí jako výsledek
 //r: zapsaný text - pokud bylo stisknuto Ok
-//   '' - pokud bylo stisknuto Zpět, Esc (nebo byl vrácen prázdný text)
+//   default      - pokud bylo stisknuto Zpět či Esc                    ZMĚNA 25.3.2026   
 //s: funkce
 Ezer.fce.prompt2= function (msg,deflt='') {
-  Ezer.fce.DOM.confirm(msg,Ezer.fce._confirm,[{tit:'Ok',val:1},{tit:'Zpět',val:0}],
+  Ezer.fce.DOM.confirm(msg,Ezer.fce._confirm,[{tit:'Ok',val:1},{tit:'Zpět',val:0,old:deflt}],
     {heading:"Zadání textu",input:deflt});
   return 1;
 };
@@ -5624,7 +5624,9 @@ Ezer.fce.DOM.clipboard= function (msg) {
 // -------------------------------------------------------------------------------------- confirm
 // obecné řešení jednoduchých dialogů
 // podobu dialogu lze modifikovat pomocí nepovinných částí options
-//     options = {heading:hlavička}
+//     options.heading = hlavička dialogu
+//     options.input   = používá se pouze v prompt2, které má 
+//       butt = [{tit:'Ok',val:1},{tit:'Zpět',val:0,old:deflt}] kde butt.old je defaultní hodnota
 // klávesnicí lze ovládat volby: Enter je první volba, Esc poslední
 Ezer.fce.DOM.confirm= function (str,continuation,butts,options) {
   butts= butts || [];
@@ -5656,12 +5658,12 @@ Ezer.fce.DOM.confirm= function (str,continuation,butts,options) {
     var but= jQuery(`<button>${butt.tit}</button>`)
       .appendTo(pop_tail)
       .click( e => 
-          stop(options.input!==undefined ? (butt.val ? input[0].value : '') : butt.val) );
+          stop(options.input!==undefined ? (butt.val ? input[0].value : butt.old) : butt.val) );
     if ( first_val===null ) {
       first_val= options.input==undefined ? '' : butt.val;
       first_but= but;
     }
-    last_val= options.input==undefined ? '' : butt.val;
+    last_val= options.input==undefined ? '' : (butt.old!==undefined ? butt.old : butt.val);
   }
   // ukaž dialog
   mask.fadeIn(Ezer.options.fade_speed);
@@ -5675,9 +5677,9 @@ Ezer.fce.DOM.confirm= function (str,continuation,butts,options) {
     .keyup( e => { 
       e.preventDefault();
       e.stopPropagation();
-      if (e.keyCode == 13) 
+      if (e.keyCode == 13) // Enter
         stop(options.input!==undefined ? input[0].value : first_val); 
-      else if (e.keyCode == 27) 
+      else if (e.keyCode == 27) // ESC
         stop(last_val); 
       return false;
     })
