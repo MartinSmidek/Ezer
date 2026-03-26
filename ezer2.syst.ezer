@@ -707,6 +707,7 @@ panel users [,,,543] {type:'right', title:'Uživatelé', _sys:'uzi', skill:'a|a'
     } }
   }
 }
+/*
 # =======================================================================================> POŽADAVKY
 # v {root}.ini je možné mít řádky
 #   $EZER->todo->cond_browse= "{skill}:{SQL cond};..."; // např. "p:data IN (2,3)";
@@ -830,21 +831,21 @@ panel needs [,,770,] {type:'right', title:'Požadavky', _sys:'poz', skill:'sp'
       func onclick () {
         if (zadani==261) {
           zadani.width(225);      kdy_zadal.width(0);     kdo_zadal.width(0);     // proces schvalování
-          odhad_hodin.width(40);  /*kdy_schvalil.width(65); kdo_schvalil.width(45);*/
+          odhad_hodin.width(40);  // kdy_schvalil.width(65); kdo_schvalil.width(45);
           kdy_zacal.width(65);    kdy_skoncil.width(65);  prace_hodin.width(40);  kdo_dela.width(45);
           kdy_kontrola.width(0);  kdo_kontrola.width(0);
         }
         else {
           zadani.width(261);      kdy_zadal.width(65);    kdo_zadal.width(45);    // základní
-          odhad_hodin.width(0);   /*kdy_schvalil.width(0);  kdo_schvalil.width(0);*/
+          odhad_hodin.width(0);   // kdy_schvalil.width(0);  kdo_schvalil.width(0);
           kdy_zacal.width(0);     kdy_skoncil.width(0);   prace_hodin.width(0);   kdo_dela.width(0);
           kdy_kontrola.width(65); kdo_kontrola.width(45);
         }
       }
     }
     func vlastnosti (ok) {
-      v1.display(ok); v2.display(ok); v3.display(ok); /*v4.display(ok);*/
-      odhad_hodin.display(ok); /*prace_hodin.display(ok);*/
+      v1.display(ok); v2.display(ok); v3.display(ok); // v4.display(ok);
+      odhad_hodin.display(ok); // prace_hodin.display(ok);
       kdy_schvalil.display(ok); kdo_schvalil.display(ok);
     }
     // tiché položky
@@ -1038,10 +1039,11 @@ panel needs [,,770,] {type:'right', title:'Požadavky', _sys:'poz', skill:'sp'
       note= conc(note,n);
     }
     func show_diskuse (on) {
-      form.display(on,'d'); /*[ on; panel.property(°{height:'*',min_height:770}) ]*/
+      form.display(on,'d'); // [ on; panel.property(°{height:'*',min_height:770}) ]
     }
   }
 }
+*/
 # ==========================================================================================> POPUPS
 # -----------------------------------------------------------------------------------------==> Track
 # přehled provedených změn
