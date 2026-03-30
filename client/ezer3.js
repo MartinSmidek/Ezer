@@ -2976,7 +2976,7 @@ class Var extends Block {
 //      (pokud part neurčuje složku objektu, funkce vrátí '')
   get (part) {
     var v;
-    if ( this.value===null )
+    if ( this.value===null || this.value===false )
       v= 0;
     else if ( part!==undefined ) {
       if ( Array.isArray(this.value) ) {
@@ -5202,8 +5202,9 @@ class LabelMap extends Label {
 // ----------------------------------------------------------------------------------------- set
 //fm: LabelMap.set (gobject)
 // zobrazí v mapě informace předané objektem geo
-//   set({mark:'mark*'[,ezer],clear:0|1...) - zaplní mapu značkami s informacemi podle popisu
+//   set({mark:'mark*'[,ezer],clear:0|1|2...) - zaplní mapu značkami s informacemi podle popisu
 //                               pokud je clear=0 neruší ty předchozí (default je clear=1)
+//                               pokud je clear=2 zruší jen CIRCLE
 //                               k vytvořeným značkám přidá případně objekt ezer
 //   set({poly:'bod+',...})    - doplní do mapy polygon podle seznamu bodů oddělovaných středníky
 //   set({zoom:'bod;bod',...}) - zvětší mapu aby byl právě vidět (nezobrazený) obdélník SW;NE
@@ -5412,8 +5413,9 @@ class LabelMap extends Label {
       const label = this;
       // Zpracování značek (mark)
       if (geo.mark !== undefined) {
+        let co_smazat= geo.clear == 2 ? [L.CircleMarker] : [L.Marker, L.CircleMarker];
         if (geo.clear === undefined || geo.clear !== 0) {
-          this._clearLayersOfType([L.Marker, L.CircleMarker]);
+          this._clearLayersOfType(co_smazat);
           this.mark = {};
         }
         if (geo.mark) {
