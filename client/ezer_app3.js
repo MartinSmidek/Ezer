@@ -4576,7 +4576,7 @@ Ezer.fce.prints= function (width,height,css_file) {
     html+= "\n";
     // klonování elementů
     for (var i= 3; i<arguments.length; i++) {
-      html+= arguments[i].DOM_Block.html();
+      html+= jQuery(arguments[i].DOM_Block).html();
     }
     // dokončení stránky
     html+= "\n</body></html>";
