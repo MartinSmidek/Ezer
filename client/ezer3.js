@@ -5206,7 +5206,8 @@ class LabelMap extends Label {
 //                               pokud je clear=0 neruší ty předchozí (default je clear=1)
 //                               pokud je clear=2 zruší jen CIRCLE
 //                               k vytvořeným značkám přidá případně objekt ezer
-//   set({poly:'bod+',...})    - doplní do mapy polygon podle seznamu bodů oddělovaných středníky
+//   set({poly:'bod+',...})    - doplní do mapy polygony definované seznamem bodů oddělovaných středníky
+//                               může být více polygonů, oodělených znakem |
 //   set({zoom:'bod;bod',...}) - zvětší mapu aby byl právě vidět (nezobrazený) obdélník SW;NE
 //   set({rect:'bod;bod',...}) - zobrazí ohraničující obdélník SW;NE
 // prázdný řetezec předaný pro mark, zoom, rect, poly se interpretuje jako žádost o smazání
@@ -5476,8 +5477,9 @@ class LabelMap extends Label {
       // Zpracování polygonů (poly)
       if (geo.poly !== undefined) {
         this.drawnItems.clearLayers();
-        if (geo.poly) {
-          const latlngs = this._parsePoly(geo.poly);
+        for (const poly of geo.poly.split('|')) {
+          if (!poly) continue;
+          const latlngs = this._parsePoly(poly);
           if (latlngs.length > 0) {
             this.poly = L.polygon(latlngs, { color: '#e83d3d' });
             this.poly.addTo(this.drawnItems);
@@ -5862,7 +5864,12 @@ class LabelMap extends Label {
         } 
       }; 
     }).filter(f => f); return { type: "FeatureCollection", features: fs }; }
-  _parsePoly(s) { return s.split(';').map(p => { const ps = p.split(','); if (ps.length < 2) return null; return [parseFloat(ps[0]), parseFloat(ps[1])]; }).filter(p => p); }
+  _parsePoly(s) { 
+    return s.split(';').map(p => { 
+      const ps = p.split(','); 
+      if (ps.length < 2) return null; 
+      return [parseFloat(ps[0]), parseFloat(ps[1])]; }).filter(p => p); 
+  }
   _parseBounds(s) { const ps = this._parsePoly(s); return ps.length === 2 ? L.latLngBounds(ps[0], ps[1]) : null; }
   _clearLayersOfType(t) { const ts = Array.isArray(t) ? t : [t]; this.map.eachLayer((l) => { for (const type of ts) { if (l instanceof type) { this.map.removeLayer(l); break; } } }); }
 };
