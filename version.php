@@ -1,5 +1,6 @@
 <?php
-  $version=46; // na mapě OpenStreet lze zobrazit více polygonů
+  $version=47; // opravy LabelMap esp. fit_bounds a set mark CIRCLE
+//$version=46; // na mapě OpenStreet lze zobrazit více polygonů
 //$version=45; // oprava funkce prompt tj. prompt2 ... tlačítko Zpět/ESC vrací default
 //$version=44; // oprava hlášen chyby kompilace this=, oprava debugeru 
 //$version=43; // úprava odhlášení uživatele
