@@ -5427,11 +5427,9 @@ class LabelMap extends Label {
               const props = feature.properties;
               if (props.icon) {
                 if (props.icon === 'CIRCLE') {
-                  return L.circleMarker(latlng, {
-                    radius: props.scale || 8, fillColor: props.fillColor || '#e83d3d',
-                    color: props.strokeColor || '#333', weight: 1, fillOpacity: 0.5
-                  });
-                } else {
+                  return L.circleMarker(latlng, props);
+                } 
+                else {
                   const anchor = props.anchor || 5;
                   const iconSize = 2 * anchor + 1;
 
@@ -5446,8 +5444,14 @@ class LabelMap extends Label {
               return L.marker(latlng);
             },
             onEachFeature: (feature, layer) => {
-              if (feature.properties && feature.properties.popupContent) {
-                layer.bindPopup(feature.properties.popupContent);
+//              if (feature.properties && feature.properties.popupContent) {
+//                layer.bindPopup(feature.properties.popupContent);
+//              }
+              if (feature.properties && feature.properties.title) {
+                layer.bindTooltip(feature.properties.title, {
+                  direction: 'top',
+                  opacity: 0.9
+                });
               }
               ret = layer;
               if (geo.ezer) {
@@ -5713,15 +5717,18 @@ class LabelMap extends Label {
       else if (this.map_type == 'omap') {
         const layersWithBounds = [];
         this.map.eachLayer(layer => {
-          // Zahrneme všechny vrstvy, které mají metodu getBounds (např. polygony, obdélníky)
-          // nebo getLatLng (značky). Vyloučíme dlaždicovou vrstvu.
-          if (typeof layer.getBounds === 'function' || typeof layer.getLatLng === 'function') {
+          if (
+            layer instanceof L.Marker ||
+            layer instanceof L.CircleMarker ||
+            layer instanceof L.Polygon ||
+            layer instanceof L.Polyline
+          ) {
             layersWithBounds.push(layer);
           }
         });
         if (layersWithBounds.length > 0) {
-          const featureGroup = L.featureGroup(layersWithBounds);
-          this.map.fitBounds(featureGroup.getBounds());
+          const group = L.featureGroup(layersWithBounds);
+          this.map.fitBounds(group.getBounds());
         }
       }
     }
@@ -5855,14 +5862,25 @@ class LabelMap extends Label {
     const fs = s.split(';').map(m => { 
       const p = m.split(','); 
       if (p.length < 3) return null; 
-      return { 
+      let mark= { 
         type: "Feature", 
         geometry: { type: "Point", coordinates: [parseFloat(p[2]), parseFloat(p[1])] }, 
         properties: { 
-          id: p[0], popupContent: p[3] || '', icon: p[4] || null, 
+          id: p[0], 
+          icon: p[4] || null, 
           anchor: p[5] ? parseFloat(p[5]) : null
         } 
-      }; 
+      };
+      if (p[3]) 
+        mark.properties.title= p[3];
+      if (p[4]=='CIRCLE') {
+        mark.properties.radius= p[7] || 8;
+        mark.properties.fillColor= p[5] || '#e83d3d';
+        mark.properties.color= p[6] || '#333';
+        mark.properties.weight= 1;
+        mark.properties.fillOpacity= 0.5;
+      }
+      return mark; 
     }).filter(f => f); return { type: "FeatureCollection", features: fs }; }
   _parsePoly(s) { 
     return s.split(';').map(p => { 
