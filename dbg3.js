@@ -10,14 +10,16 @@
 async function findFunctionLocation(name) {
   const scripts = [...doc.document.scripts].filter(s => s.src);
 
+  // regulární výraz: function <mezery> name <mezery> (
+  const re = new RegExp(`function\\s+${name}\\s*\\(`);
+
   for (const s of scripts) {
     try {
       const txt = await fetch(s.src).then(r => r.text());
-      const needle = `function ${name}(`;
-      const pos = txt.indexOf(needle);
+      const match = txt.match(re);
 
-      if (pos !== -1) {
-        // spočítáme řádek podle počtu \n před výskytem
+      if (match) {
+        const pos = match.index;
         const line = txt.slice(0, pos).split("\n").length;
         return { file: s.src, line };
       }
