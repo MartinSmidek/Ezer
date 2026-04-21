@@ -127,7 +127,7 @@ __EOD;
     html, body { margin: 0; padding: 0; $FONT
       height: 100vh; display: flex; flex-direction: column; overflow:hidden; }
     #layout { flex: 1; display: flex; overflow: hidden; }
-    #filnot { width: 150px; border-right: 2px solid silver; overflow-y: auto;
+    #filnot { width: 185px; border-right: 2px solid silver; overflow-y: auto;
       display: flex; flex-direction: column; gap: 2px; }
     #buttons { display: flex; gap: 8px; padding: 4px; height: 32px; }
     #filnot button { width: 100%; padding: 2px; }
@@ -263,7 +263,11 @@ __EOD;
     div#cg_grf { overflow-y: auto; width:100%; }
     li span.go { background-color: #ffdf6b; cursor:pointer;   }
     li span.cg { background-color: #e5f2ff; cursor:pointer;   }
-      
+    /* ----------------------- uzly CG */
+    span.fce_php { background-color:#e5f2ff; } 
+    span.fce_js { background-color:#edb0e9; cursor: pointer; } 
+    span.fce_ezer { background-color:#ffdf6b; } 
+    span.elem_ezer { background-color:#afa; }       
     /* ----------------------- ezer source */
     .cm-s-ezer.CodeMirror { background: oldlace; overflow-y: auto; $FONT
       position: absolute;  top: 20px; height: calc(100% - 20px);
@@ -387,6 +391,7 @@ __EOD;
         <button id="dbg_cont"><img src="client/img/dbg_cont.png" title="continue (F8)"></button>
         <button id="dbg_over"><img src="client/img/dbg_over.png" title="step over (F10)"></button>
         <button id="dbg_into"><img src="client/img/dbg_into.png" title="step into (F11)"></button>
+        <button id="dbg_out"><img src="client/img/dbg_back.png" title="step out (Shift+F11)"></button>
       </div>
 
       <ul id="notes"></ul>

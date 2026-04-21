@@ -768,7 +768,7 @@ function proc(&$c,$name,$block) { #trace();
     }
     // vložení do call-elem (zatím pro button)
     $elem= end($context)->ctx;
-    if (isset($elem->type) && ($elem->type=='button')) {
+    if (isset($elem->type) && in_array($elem->type,['button'])) {
       $elem_name_lc= $elem->id.'.'.(str_replace(',','.',$elem->_lc));
       $func_name_lc= $c->options->name.'.'.(str_replace(',','.',$c->_lc));
       if (!isset($call_elem[$func_name_lc]))
@@ -1319,7 +1319,7 @@ function add_call($proc,$lc='',$name='') {
   $call_ezer[$func_name_lc][]= $id_lc.$lc.(isset($proc->file_)?":$proc->file_":'');
 }
 # ------------------------------------------------------------------------------------- add call_php
-# přidá ezer-fce volání do CG
+# přidá php-fce volání do CG
 # lc označuje začátek php.name pro ask=0 nebo ask('name pro ask=1
 function add_call_php($name,$lc='',$ask=0) { 
   global $call_ezer, $func_name_lc;
@@ -1330,6 +1330,19 @@ function add_call_php($name,$lc='',$ask=0) {
     $lc= "-$l.$c";
   }
   $call_ezer[$func_name_lc][]= '$'.$name.$lc;
+}
+# -------------------------------------------------------------------------------------- add call_js
+# přidá js-fce volání do CG
+# lc označuje začátek php.name pro ask=0 nebo ask('name pro ask=1
+function add_call_js($name,$lc='') { 
+  global $call_ezer, $func_name_lc;
+  // vložíme do seznamu ezer-funkcí
+  if ($lc) {
+    list($l,$c)= explode(',',$lc);
+    $c+= 3;
+    $lc= "-$l.$c";
+  }
+  $call_ezer[$func_name_lc][]= '#'.$name.$lc;
 }
 # ----------------------------------------------------------------------------------------- gen func
 # generuje kód funkcí
@@ -1555,6 +1568,10 @@ function gen2($pars,$vars,$c) {
       }
     }
     else {
+      // pokud jde o překlad js.id_fce přidáme id_ice do tabulky
+      if ($c->op=='apply') {
+        add_call_js($c->js,$c->par[0]->lc);
+      }
       $op= name_split($c->op,$pars,$vars,true,$c->lc??'');
       $args= array();
       for ($i= 0; $i<$npar; $i++) {
@@ -4669,6 +4686,7 @@ function get_primary($context,&$expr) {
     if ( get_if_delimiter('(') ) {
       # call2 --> G(call2)
       get_call2_id($context,$expr,$id,1);
+      $expr->lc= $last_lc;
     }
     else if ( get_if_delimiter('[') ) {
       # id '[' expr4 ']' --> {expr:index,name:id,index:G(expr4)}
@@ -4760,7 +4778,7 @@ function get_primary($context,&$expr) {
 }
 # -------------------------------------------------------------------------------------------- call2
 # call2   :: 'php' '.' id args                  --> {expr:call,op:ask,par:G("id")+G(args),value:$valued}
-#          | 'js' '.' id args                   --> {expr:call,op:apply,par:G("id")+G(args),value:$valued}
+#          | 'js' '.' id args                   --> {expr:call,op:#apply,par:G("id")+G(args),value:$valued}
 #          | id  args                           --> {expr:call,op:id,par:G(args),value:$valued}
 #          | id  args (('.' id args )+          --> {expr:call,pipe:[{op:id,par:G(args)],value:$valued}}
 #                      | '.' id )               --> {expr:call,pipe:[ ... {op:id],value:$valued}}
@@ -4782,6 +4800,7 @@ function get_call2_id($context,&$expr,$id,$valued) {
   elseif ( $fce[0]=='js' ) { // funkce javascriptu
     if ( $fce[2] ) comp_error("SYNTAX: jméno funkce v javascriptu nesmí být složené ");
     $op= 'apply';
+    $expr->js= $fce[1];
     $par[]= (object)array('expr'=>'value','value'=>$fce[1],'type'=>'s','lc'=>$last_lc);
   }
   else {

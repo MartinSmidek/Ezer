@@ -2907,7 +2907,7 @@ function save_file($path,$text) {
 # ---------------------------------------------------------------------------------------- item_help
 # typ=ezer|php
 function item_help($typ,$item,$sys_php='') {
-  global $ezer_path_serv, $ezer_path_root, $ezer_root;
+  global $ezer_path_root;
   $item= strtolower($item);
   $ret= (object)array(
     'html'=>$item,
@@ -2938,8 +2938,8 @@ function item_help($typ,$item,$sys_php='') {
   case 'ezer':
     // otevření databáze a tabulky
     $ezer_db= @mysql_connect('localhost','gandi','');
-    $res= @mysql_select_db('ezer_kernel',$ezer_db);
-    @pdo_query("SET NAMES 'utf8'");
+    mysql_select_db('ezer_kernel',$ezer_db);
+    pdo_query("SET NAMES 'utf8'");
     $rt= pdo_query("SELECT * FROM ezer_kernel._doc WHERE '$item' IN (class,part)");
     if ( $rt && $t= pdo_fetch_object($rt) ) {
       $ret->html= $t->text;

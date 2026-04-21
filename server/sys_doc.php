@@ -750,7 +750,7 @@ function doc_php_tree($root,$app_php='*',$sys_php='',$inverzni=0,$restore=false)
   $down= function($xfce) use (&$calls,$ecalls,$ezers,$phps,$lines,&$down,&$drawn) {
     global $ezer_path_root;
     list($fce,$emodul)= explode(':',$xfce);
-    if (isset($emodul)) {
+    if (isset($emodul) && $fce[0]!='#') {
       // volání z ezer funkce - modul může být dán jako jméno ezer-souboru z $ezers
       if (is_numeric($emodul)) {
         $modul= $ezers[$emodul];
@@ -774,7 +774,7 @@ function doc_php_tree($root,$app_php='*',$sys_php='',$inverzni=0,$restore=false)
         }
       }
       // a volání php
-      if (is_array($calls[$fce][0])) {
+      elseif (is_array($calls[$fce][0])) {
         foreach ($calls[$fce][0] as $called_line) {
           list($called,$ln)= explode(';',$called_line);
           if (isset($calls[$called][4])) {
@@ -790,6 +790,12 @@ function doc_php_tree($root,$app_php='*',$sys_php='',$inverzni=0,$restore=false)
           $cg->down[]= $node;
         }
       }
+    }
+    elseif ($fce[0]=='#') {
+      // volání JS funkce
+      $cg= (object)array(
+          'prop'=>(object)array('id'=>substr($fce,1), 'css'=>'fce_js',
+              'data'=>(object)array('js'=>'JS')));
     }
     else {
       // volání z PHP funkce

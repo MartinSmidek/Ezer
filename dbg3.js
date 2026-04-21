@@ -4,6 +4,28 @@
 "use strict";
 // (c) 2020 Martin Smidek <martin@smidek.eu>
 
+// findFunctionLocation("X").then(console.log);
+// najde funkci X
+// její text lze získat jako: doc.X.toString()
+async function findFunctionLocation(name) {
+  const scripts = [...doc.document.scripts].filter(s => s.src);
+
+  for (const s of scripts) {
+    try {
+      const txt = await fetch(s.src).then(r => r.text());
+      const needle = `function ${name}(`;
+      const pos = txt.indexOf(needle);
+
+      if (pos !== -1) {
+        // spočítáme řádek podle počtu \n před výskytem
+        const line = txt.slice(0, pos).split("\n").length;
+        return { file: s.src, line };
+      }
+    } catch (e) {}
+  }
+
+  return null;
+}
 // ================================================================================> DEBUGGER REMOTE
 // funkce debuggeru - volané z dbg3.php
 // ------------------------------------------------------------------------------- dbg onclick_start
@@ -813,7 +835,8 @@ function dbg_trace_start() {
     switch (e.key) {
       case 'F8':  $btn = jQuery('#dbg_cont'); break;
       case 'F10': $btn = jQuery('#dbg_over'); break;
-      case 'F11': $btn = jQuery('#dbg_into'); break;
+      case 'F11': // Shift+F11 je pro "step out", F11 pro "step into"
+                  $btn = e.shiftKey ? jQuery('#dbg_out') : jQuery('#dbg_into'); break;
       default: return; // ostatní klávesy ignoruj
     }
 
@@ -835,6 +858,8 @@ function dbg_trace_buttons(on,cont_too=true) {
   if (cont_too) jQuery('#dbg_cont').prop('disabled',on?false:true);
   jQuery('#dbg_over').prop('disabled',on?false:true);
   jQuery('#dbg_into').prop('disabled',on?false:true);
+//  jQuery('#dbg_out').prop('disabled',on?false:true);
+  jQuery('#dbg_out').prop('disabled',true);
 }
 function dbg_trace_init() {
   // kopie trasování z aplikace
@@ -885,6 +910,17 @@ function dbg_trace_init() {
     }
     else {
       doc.Ezer.dbg.state= 1; // krokování
+      doc.Ezer.continuation.eval();
+    }
+    return false;
+  });
+  jQuery('#dbg_out').off('click').prop('disabled',true).on('click', () => {
+    if (doc.Ezer.continuation.calls.length==0) { // je konec?
+      dbg.dbg_trace_stop();
+    }
+    else {
+      doc.Ezer.dbg.state= 2; // přeskakování
+      doc.Ezer.dbg.depth= doc.Ezer.continuation.calls.length - 1; // výška zásobníku aktivačních záznamů procedur
       doc.Ezer.continuation.eval();
     }
     return false;
@@ -1081,10 +1117,17 @@ function dbg_reload_(y,clear) {
   doc.Ezer.sys.dbg.file= y.file;
   let files= doc.Ezer.sys.dbg.files;
   // -----------------------------------==> .. doplnění seznamu modulů
-  for (let file of y.app_ezer) {
+//  for (let file of y.app_ezer) {
+//    if (files[file]==undefined) {
+//      files[file]= {pick:Number(y.line),stopped:0,stop:0,traces:[],stops:[],lines:[],mtime:0};
+//    }
+//  }  
+  for (let ifile in y.app_ezer) {
+    let file= y.app_ezer[ifile];
     if (files[file]==undefined) {
       files[file]= {pick:Number(y.line),stopped:0,stop:0,traces:[],stops:[],lines:[],mtime:0};
     }
+    files[file].i= ifile;
   }  
 //  if (files[y.file]==undefined) {
 //    files[y.file]= {pick:Number(y.line),stopped:0,stop:0,traces:[],stops:[],lines:[],mtime:0};
@@ -1174,6 +1217,28 @@ function dbg_save_load_(y,file) {
         wphp.show();
       }
       break;
+  }
+}
+// ======================================================================================> source JS
+// --------------------------------------------------------------------------------==> . dbg show_js
+// zobrazení textu JS funkce
+async function dbg_show_js(name) {
+  let ul= dbg.wphp.find('ul');
+  ul.empty();
+  jQuery('#php-border').empty();
+  // zkusíme získat polohu funkce v <script>
+  let start= 0;
+  let fln= await findFunctionLocation(name);
+  if (fln) {
+    jQuery('#php-border').html(`VIEW <b>${name}</b> in ${fln.file} (${fln.line})`);
+    start= fln.line;
+  }
+  if (typeof doc[name] === "function") {
+    let src = doc[name].toString(),     // zdrojový text funkce
+        lines = src.split("\n");        // rozdělíme na řádky
+    lines.forEach((line, i) => {
+      ul.append(`<li><span class='line'>${start + i}</span>${line}</li>`);
+    });
   }
 }
 // =====================================================================================> source PHP
@@ -1376,16 +1441,22 @@ function dbg_show_text(ln,cg=null) {
                 lni_beg= substr_utf8_bytes(lni,0,c),
                 lni_len= lni.length - c - xphp.length,
                 lni_end= substr_utf8_bytes(lni,c+xphp.length,lni_len);
-            lni= lni_beg + "<span class='cg' onclick=\"dbg_find_help('php','"+xphp+"');\">"
+            lni= lni_beg + "<span class='cg' onclick=\"dbg_find_help('php','"+xphp+"',event);\">"
                 + xphp + '</span>' + lni_end;
-//            lni= lni.substr(0,c);
-//            lni+= "<span class='cg' onclick=\"dbg_find_help('php','"+xphp+"');\">"+xphp+'</span>'
-//                +lni.substr(Number(c)+xphp.length);
+          }
+          else if (fce[0][0]=='#') {
+            // volání JS fce
+            let xphp= fce[0].substr(1),
+                lni_beg= substr_utf8_bytes(lni,0,c),
+                lni_len= lni.length - c - xphp.length,
+                lni_end= substr_utf8_bytes(lni,c+xphp.length,lni_len);
+            lni= lni_beg + "<span class='fce_js' onclick=\"dbg_find_help('js','"+xphp+"',event);\">"
+                + xphp + '</span>' + lni_end;
           }
           else {
             // volání Ezer fce - modul se přidá jako "desetinná" část
             let im= subst[i][0][3]===undefined || subst[i][0][3]==='' 
-                ? '' : `.${parseInt(subst[i][0][3])}`,
+                    ? '' : `.${doc.Ezer.sys.dbg.files[subst[i][0][3]].i}`,
                 lni_beg= substr_utf8_bytes(lni,0,c),
                 lni_len= lni.length - c - fce[0].length,
                 lni_end= substr_utf8_bytes(lni,c+fce[0].length,lni_len);
@@ -1649,9 +1720,17 @@ function dbg_get_ezer_cg_(y) {
 }
 // ----------------------------------------------------------------------------------- dbg find_help
 // dotaz na server o help pro daný item
-function dbg_find_help (typ,item) {
-  CG.item= item;
-  dbg.doc_ask('item_help',[typ,item,CG.sysphp?'*':''],dbg_find_help_); // fce z ezer2.php
+function dbg_find_help (typ,item,e) {
+  e.stopPropagation();
+  if (typ=='js' && typeof doc[item] === "function") {
+    dbg.wcg.hide();
+    dbg.wphp.show();
+    dbg_show_js(item);  
+  }
+  else {
+    CG.item= item;
+    dbg.doc_ask('item_help',[typ,item,CG.sysphp?'*':''],dbg_find_help_); // fce z ezer2.php
+  }
 }
 function dbg_find_help_(y) { 
   if ( y.args[0]=='php' ) {
@@ -1726,6 +1805,10 @@ function dbg_make_tree(cg) {
               // ezer
               dbg_reload(node.data.ezer,node.data.line,0); // let CG on screen
               CG.item= node.data.full;
+            }
+            else if (node.data.js) {
+              // JS zatím klik ignorujeme
+              dbg_show_js(node.text);  
             }
             else {
               // PHP
