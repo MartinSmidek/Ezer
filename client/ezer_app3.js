@@ -4691,6 +4691,28 @@ Ezer.fce._wait= function () {
   x.eval.apply(x,[x.step,true]);
   return 1;
 };
+// ---------------------------------------------------------------------------------- debugger
+//fj: fce debug.debugger (line)
+//   otevře okno debugeru a umístí stopadresu na daný řádek
+//s: funkce
+Ezer.fce.debugger= function (stop_line) {
+  let old= dbg_onshiftclick(this,stop_line);
+  if (old==1) 
+    setTimeout(Ezer.fce._debugger,10);
+  else
+    Ezer.sys.dbg.win_ezer.onload= function() {
+      Ezer.fce._debugger();
+//      setTimeout(Ezer.fce._debugger,10000);
+    }
+  return 1;
+};
+Ezer.fce._debugger= function () {
+  // konec modálního dialogu - na zásobník jako hodnotu dej 1
+  var x= Ezer.modal_fce.pop();
+  x.stack[++x.top]= 1;
+  x.eval.apply(x,[x.step,true]);
+  return 1;
+};
 // -------------------------------------------------------------------------------------- exec
 //fj: fce language.exec (proc,arg1,..)
 //   provede proceduru proc(arg1,...) a počká na ukončení (je-li volána z ezerscriptu)
@@ -5770,7 +5792,8 @@ Ezer.trace= function (typ,msg,b,ms) {
       // pokud je otevřený debuger, zobrazíme i tam
       if (Ezer.sys.dbg.win_ezer && Ezer.sys.dbg.trace.indexOf(typ)>=0) {
         let $div_dbg= $div.clone(true);
-        Ezer.sys.dbg.win_ezer.dbg_trace_append($div_dbg[0]);
+        if (Ezer.sys.dbg.win_ezer.dbg_trace_append)
+          Ezer.sys.dbg.win_ezer.dbg_trace_append($div_dbg[0]);
       }
       if (Ezer.to_trace) {
         kuk

@@ -98,51 +98,40 @@ function isElementInViewport(el) {
     rect.top < (window.innerHeight || document. documentElement.clientHeight) /*or $(window).height() */;
 }
 // -------------------------------------------------------------------------------- dbg_onshiftclick
-function dbg_onshiftclick(block) {
+// pokud je zadáno stop_ln umístí na tento řádek stopadresu
+// vrací 2 pokud bylo vytvořeno okno debuggeru 
+// vrací 1 pokud okno již existuje
+function dbg_onshiftclick(block,stop_ln=null) {
   if ( !Ezer.options.dbg ) return false;
   if ( !Ezer.sys.dbg ) fce_error("DBG3 structure missing");
-  var pos= block.app_file(),
+  let old= Ezer.sys.dbg.win_ezer ? 1 : 2, // 1 pokud okno již existuje, 2 pokud bude vytvořeno
+      pos= block.app_file(),
       state0= {stops:[],stop:0,traces:[],pick:0}; // stopadresy - stop, trasování, aktuální ř.
   if ( pos.file && block.desc._lc ) {
     var lc= block.desc._lc;
     lc= lc.split(',');
     let ln= lc[0];
-    var show= function() {
-      var lc= block.desc._lc.split(',');
-      dbg.focus();
-      dbg.dbg_show_line(lc[0],'pick');
-    };
     // zobrazení
     Ezer.sys.dbg.start= block.self();
     if ( pos.file==Ezer.sys.dbg.file ) {
-      show();
+      dbg.focus();
+      dbg.dbg_show_line(ln,'pick');
     }
     else if ( Ezer.sys.dbg.files[pos.file] ) {
       dbg.dbg_reload(pos.file,ln);
-//      show();
     }
     else if ( Ezer.sys.dbg.win_ezer ) {
       Ezer.sys.dbg.files[pos.file]= state0;
       dbg.dbg_reload(pos.file,ln);
-//      show();
     }
     else {
-//      if ( Ezer.sys.dbg.win_ezer ) {
-//        // zavření zobrazeného
-//        Ezer.sys.dbg.win_ezer.noevent= true;
-//        Ezer.sys.dbg.win_ezer.close();
-//      }
-//      if ( !Ezer.sys.dbg.files[pos.file] ) {
       Ezer.sys.dbg.files[pos.file]= state0;
-//      }
       var line= block.desc._lc.split(',')[0];
       var fname= pos.app+'/'+pos.file+'.ezer';
-      //fname= pos.app+'/tut.the.php';  -- test otevření PHP
-      //fname= pos.app+'/i_fce.js';     -- test otevření JS
       // pokud je poloha a rozměr v cookies ezer_dbg_win=l,t,w,h ==> . dbg open
       var ltwh= Ezer.fce.get_cookie('ezer_dbg_win','1*1*770*500');
       var x= ltwh.split('*'), 
-          l= x[0], t= x[1], w= x[2]-16, h= x[3]-67;
+          l= x[0], t= x[1], w= x[2]-16, h= x[3]-73;
       var position= `left=${l},top=${t},width=${w},height=${h}`;
       Ezer.sys.dbg.win_ezer= window.open(
         `./ezer3.3/dbg3.php?err=1&app=${Ezer.root}&src=${fname}&file=${pos.file}&pick=${line}`,
@@ -152,14 +141,17 @@ function dbg_onshiftclick(block) {
 //        `./ezer3.3/dbg3.php?err=1&app=${Ezer.root}&src=${fname}&file=${pos.file}&pick=${line}`,'dbg',
 //        position+',resizable=1,titlebar=0,menubar=0');
       if ( Ezer.sys.dbg.win_ezer ) {
-//        dbg_reload(pos.file);
         Ezer.sys.dbg.file= pos.file;
-//        Ezer.sys.dbg.typ= 'ezer';
         Ezer.sys.dbg.noevent= false;
       }
     }
+    if (stop_ln) {
+      let stop= pos.file+','+stop_ln;
+      if (!Ezer.dbg.stops.includes(stop))
+        Ezer.dbg.stops.push(stop);
+    }
   }
-  return false;
+  return old;
 }
 // -------------------------------------------------------------------------------- dbg source_line
 function dbg_source_line(cmd) {

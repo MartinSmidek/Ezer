@@ -829,11 +829,9 @@ function dbg_stopline (ln, change) {
 }               
 function dbg_trace_start() {
   dbg.dbg_trace_buttons(true);
-
   // Zamezí duplicitním handlerům při opakovaném volání
   jQuery(document).off('keydown.dbg_trace').on('keydown.dbg_trace', function (e) {
     let $btn = null;
-
     switch (e.key) {
       case 'F8':  $btn = jQuery('#dbg_cont'); break;
       case 'F10': $btn = jQuery('#dbg_over'); break;
@@ -841,7 +839,6 @@ function dbg_trace_start() {
                   $btn = e.shiftKey ? jQuery('#dbg_out') : jQuery('#dbg_into'); break;
       default: return; // ostatní klávesy ignoruj
     }
-
     if ($btn.length && !$btn.prop('disabled')) {
       $btn.trigger('click');
       e.preventDefault(); // zamezí výchozímu chování F-kláves
@@ -860,8 +857,8 @@ function dbg_trace_buttons(on,cont_too=true) {
   if (cont_too) jQuery('#dbg_cont').prop('disabled',on?false:true);
   jQuery('#dbg_over').prop('disabled',on?false:true);
   jQuery('#dbg_into').prop('disabled',on?false:true);
-//  jQuery('#dbg_out').prop('disabled',on?false:true);
-  jQuery('#dbg_out').prop('disabled',true);
+  jQuery('#dbg_out').prop('disabled',on?false:true);
+//  jQuery('#dbg_out').prop('disabled',true);
 }
 function dbg_trace_init() {
   // kopie trasování z aplikace
