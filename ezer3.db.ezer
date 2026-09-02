@@ -37,16 +37,26 @@ func tab_track_show(dnu,tab,tid) {
   clear();
   info.stick(php.sys_db_track_show(dnu,tab,tid));
 }
+// uvolni záznam tabulky
+func tab_free(tab,tabid,userid) { var ret:object
+  ret= php.table_lock('off',tab,tabid,userid);
+  append(`<br><hr>${ret.note}`);
+}
 use info: form right [12,4,,] 
 menu mdb {type:'left', active:*, format:'f+'
   menu  {title:'Zobrazení dat aplikace', type:'group', skill:'m;mm'
     item {title:'[fa-question] zobrazení záznamů'
       func onclick (i:ezer) { 
         clear(); info.header(i); info.display(1,'t');
-//        if (!info.tab) {
-          info.tab.selects(php.sys_db_selects());
-          info.tab.key(1);
-//        }
+        info.tab.selects(php.sys_db_selects());
+        info.tab.key(1);
+      }
+    }
+    item {title:'[fa-key] zamknuté záznamy'
+      func onclick (i:ezer) { var ret:object
+        clear(); info.header(i); info.display(0,'t');
+        ret= php.table_lock('list');
+        info.append(ret.note);
       }
     }
   }

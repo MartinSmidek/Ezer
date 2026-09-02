@@ -544,15 +544,30 @@ function debugx(&$gt,$label=false,$html=0,$depth=64,$length=64,$win1250=0,$getty
 # mode=off    - odstraní (případný) zámek daného řádku přihlášeného uživatele resp. zámek tabulky
 # mode=none   - odstraní všechny zámky přihlášeného uživatele, případně jen zámky dané tabulky
 #               a všechny záznamy v _lock starší jak 24 hodin
+# mode=list   - zobrazí všechny zámky 
 # variantu s mode=none lze použít i když databáze neobsahuje tabulku _lock (vhodné po přihlášení)
 # tabulka _lock musí mít index typu UNIQUE(table,id_table)
-function table_lock($mode,$table='',$idt=0) {
+function table_lock($mode,$table='',$idt=0,$idu=0) {
 //  return (object)array('ok'=>1,'info'=>'','note'=>'');
   global $USER;
   $ret= (object)array('ok'=>0,'info'=>'','note'=>'');
-  $idu= $USER->id_user;
+  $idu= $idu ?: $USER->id_user;
   $now= time();
   switch ($mode) {
+    case 'list':  // ------------------ zobrazí všechny zámky
+      $lines= [];
+      $res= pdo_qry("SELECT FROM_UNIXTIME(time),`table`,id_table,id_user,forename,surname 
+        FROM _lock LEFT JOIN _user USING (id_user) ORDER BY time DESC");
+      while ( $res && list($kdy,$tab,$tab_id,$idu,$name,$surname)= pdo_fetch_array($res) ) {
+        // tab_free(tab,tabid,userid)
+        $free= "<a title='*' href='ezer://syst.dat.tab_free/$tab/$tab_id/$idu'>UVOLNIT</a>";
+        $lines[]= "<b>$kdy</b> záznam <b>$tab/$tab_id</b> "
+            . "zamknul <b>$name $surname</b> (id=$idu) &lArr; $free";
+      }
+      $ret->note= $lines 
+          ? "<h3>Aktuálně zamknuté záznamy</h3>" . implode('<br>',$lines) 
+          : "<h3>Aktuálně nejsou žádné zamknuté záznamy</h3>";
+      break;
     case 'on':    // ------------------ pokus o zamknutí table+id+user (lze opakovat)
       if (!$idt) {
         $ret->note= "$table/$idt ignored by $idu (null key)";
@@ -624,7 +639,7 @@ function table_lock($mode,$table='',$idt=0) {
     case 'off':   // ------------------ odstraní zámek table+id+user
       $ret->ok= pdo_qry("DELETE FROM _lock 
           WHERE `table`='$table' AND id_table='$idt' AND id_user='$idu' ");
-      $ret->note= "$table/$idt unlocked by $idu ".($ret->ok?'':'(not needed)');
+      $ret->note= "záznam $table/$idt zamknutý uživatelem s id=$idu je uvolněn ".($ret->ok?'':'(už nebylo potřeba)');
       break;
     case 'none':  // ------------------ odstraní všechna uzamčení (dané tabulky) vlastněná id_user
       $existuje_lock= pdo_num_rows(pdo_qry("SHOW TABLES LIKE '_lock'"));
