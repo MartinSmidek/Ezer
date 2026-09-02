@@ -480,6 +480,7 @@ class Application {
         // v případě hlídání verzí
         ["-alert:  verze",    function(el) { Ezer.app.bar_chat({op:'message?'},true); }],
         ["test verze",    function(el) { Ezer.app.bar_chat({op:'message?'}); }],
+        ["je aktivní XDebug?",function(el) { Ezer.app.bar_chat({op:'xdebug?'},true); }],
         ["-uživatelé",    function(el) { Ezer.app.bar_chat({op:'users?'},true,'_show_users'); }],
         ["zpráva?",       function(el) { Ezer.app.bar_chat({op:'sysmsg?'},true,'_show_users'); }]
         );
@@ -4693,7 +4694,9 @@ Ezer.fce._wait= function () {
 };
 // ---------------------------------------------------------------------------------- debugger
 //fj: fce debug.debugger (line)
-//   otevře okno debugeru a umístí stopadresu na daný řádek
+//   otevře okno debugeru a umístí stopadresu na daný řádek, pro line=0 jen oteře okno
+//   (řádek nemůže být ve stejné funkci jako obsaženo volání funkce debugger)
+//   Příklad: debugger(127); debugger(prompt("zadej č.řádku pro stopadresu",127));
 //s: funkce
 Ezer.fce.debugger= function (stop_line) {
   let old= dbg_onshiftclick(this,stop_line);

@@ -191,6 +191,14 @@
     $answer= (object)array('op'=>$x->op);
     $abbr= isset($_SESSION[$ezer_root]['user_abbr']) ? $_SESSION[$ezer_root]['user_abbr'] : '???';
     switch ( $x->op ) {
+    case 'xdebug?':           // {op:'xdebug?'} 
+      // test jestli je XDebug aktivní
+      $answer->msg= ini_get('xdebug.mode')
+        ? ( function_exists('xdebug_is_debugger_active') && xdebug_is_debugger_active()
+            ? "Xdebug je aktivní" 
+            : "Xdebug není aktivní" ) 
+        : "Xdebug není dostupný";
+      break;
     case 'sysmsg?':           // {op:'sysmsg?'}
       // test tabulky _help na aktuální zprávu pro uživatele
       $answer->msg= '';
