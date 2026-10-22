@@ -378,8 +378,7 @@ class Application {
   }
   // ----------------------------------------------------------------------------- loginDomKey
   // nastaví pro prohlížeč s file_api <span id='watch_key'> - viz fce ae_slib.php:root_php citlivou
-  // pro příjem souboru s klíčem
-//   loginDomKeyObj: {},
+  // pro příjem souboru s klíčem o maximální délce 64B
   loginDomKey  () {
     // Setup the dnd listeners.
     if ( window.File ) {
@@ -419,7 +418,8 @@ class Application {
               dropZone[0].action= document.location.href; // aby se neztratily GET parametry
               dropZone[0].submit();
             };
-            r.readAsText(files[0]);
+            //r.readAsText(files[0]);
+            r.readAsText(files[0].slice(0,64)); // přečteme maximálne 64B ze souboru
           }
         }
       })
