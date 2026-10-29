@@ -159,11 +159,11 @@
       $day= date('Y-m-d');
       $time= date('H:i:s');
       $text1= $text2= '';
-      if ( $x->msg ) {
+      if ( $x->msg ?? false ) {
         $text1= ",msg";
         $text2= ',"'.strtr($x->msg,'"',"'").'"';
       }
-      if ( isset($x->inside) && $x->inside ) {
+      if ( $x->inside ?? false ) {
         $text1.= ",inside";
         $text2.= ',"'.strtr($x->inside,'"',"'").'"';
       }

@@ -286,10 +286,13 @@ __EOD;
       $watch_key= isset($_POST['watch_try']) ? $_POST['watch_try'] : '';
       $abs_root= $_SESSION[$ezer_root]['abs_root'];
       chdir($abs_root);
-      $deep_root= "../files/$ezer_root";
-      $path= @file_exists($deep_root) ? $deep_root : "$ezer_root/code$ezer_version";
+      // absolutní cesty - nezávislé na aktuálním adresáři
+      $deep_root= "$abs_root/../files/$ezer_root";
+      $path= @file_exists($deep_root) ? $deep_root : "$abs_root/$ezer_root/code$ezer_version";
       $watch_lock= @file_get_contents("$path/$ezer_root.key");
-      $ip_ok= $watch_lock==$watch_key;
+      // nenačtený klíč (false) nebo prázdné zadání nesmí projít (false=='' je v PHP true)
+      $ip_ok= $watch_lock!==false && $watch_lock!=='' && $watch_key!==''
+           && $watch_lock===$watch_key;
       $key_msg= !$watch_key || $ip_ok ? '' : '<i><b>správného</b></i>';
     }
     // 3) nakonec zkoumáme, zda bylo použito ověření PINem

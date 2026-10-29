@@ -5246,10 +5246,10 @@ function comp_error ($msg,$code_lc=null) {
   $in_lexi= preg_match("/LEXICAL/",$msg);
   list($line,$clmn)= explode_n(',',$in_code 
       ? ($code_lc ?: $error_code_lc) 
-      : (($in_lexi || $head<count($pos)) ? $pos[$head] : 'na konci'),2,'');
+      : (($in_lexi || $head<count($pos??[])) ? $pos[$head] : 'na konci'),2,'');
   $msg2= "<b>".($in_code ? "SYNTAX " : '')."$msg</b> in $ezer_name;$line,$clmn<br>";
   if ( $ezer_name ) {
-    $msg2.= source_line($ezer_name,$ezer_app,$line,$clmn);
+    $msg2.= source_line($ezer_name,$ezer_app,(int)$line,(int)$clmn);
   }
   $err.= $msg2;
   throw new Exception($msg2);

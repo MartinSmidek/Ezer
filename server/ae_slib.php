@@ -1712,7 +1712,7 @@ function edit_source ($file,$app,$line) { trace();
 }
 # -------------------------------------------------------------------------------------- source line
 # vrátí úsek zdrojového textu $line (+-1) a označí sloupec
-function source_line ($file,$app,$line,$clmn) {
+function source_line (string $file,string $app,int $line,int $clmn) {
   global $ezer_path_root, $ezer_root;
   $app= $app ? $app : $ezer_root;
   $fpath= "$ezer_path_root/$app/$file.ezer";
