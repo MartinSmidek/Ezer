@@ -510,7 +510,8 @@ function sys_backup_into($into,$sign) {   trace();
           catch (Exception $e) {
             // zkusíme podle https://bugs.php.net/bug.php?id=44942
             session_write_close();  //Close the session before proc_open()
-            $proc= proc_open($cmd,"r");
+            $pipes= array();
+            $proc= proc_open($cmd, array(), $pipes);
             //do stuff with pipes...
             //... and close pipes
             $retval= proc_close($proc);
@@ -741,6 +742,7 @@ function sys_activity($k,$to_skip=0,$den=0,$_watch_access_opt='') {
 //                                        debug($watch_access_opt);
   $skip= $to_skip && $EZER->activity->skip ? $EZER->activity->skip : '';
 //  $html= "<div class='CSection CMenu'>";
+  $html= '';
   switch ( "{$k->s} {$k->c}" ) {
   case 'moduly all':
   case 'uzivatele all':
@@ -1110,7 +1112,7 @@ function sys_days_users($skip,$day0,$parm) {
 function sys_bugs($level) {
   global $user_options;
   $n= 0;
-  $html.= '<dl>';
+  $html= '<dl>';
   $qry= "SELECT max(level) as bug, min(id_touch) as id, msg, inside, after,
            group_concat(day,' ',time,' ',user,' ',module,' ',menu) as popis
          FROM _touch WHERE msg!='' AND menu!='ip?'
@@ -1154,7 +1156,7 @@ function sys_day_logins($skip,$day,$sign='=') {
   global $watch_access_opt;
   $n= 0;
   $and=  $skip ? "AND NOT FIND_IN_SET(user,'$skip')" : '';
-  $html.= '<br><table>';
+  $html= '<br><table>';
   $cond= $sign=='all' ? '1' : "day$sign'$day'";
   $qry= "SELECT org, id_touch, msg, day, time, user, menu, inside
          FROM _touch
@@ -1209,7 +1211,7 @@ function sys_day_errors($skip,$day,$sign='=') {
   $max_len= 512;
   $n= 0;
   $and=  $skip ? "AND NOT FIND_IN_SET(user,'$skip')" : '';
-  $html.= '<dl>';
+  $html= '<dl>';
   $day1= $sign=='=' ? '' : "day,' ',";
   $cond= $sign=='all' ? '1' : "day$sign'$day'";
   $qry= "SELECT max(level) as bug, min(id_touch) as id, msg, inside, after, module,
