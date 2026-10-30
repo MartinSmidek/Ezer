@@ -86,6 +86,7 @@
     ";
   $checks.= "<br>\n<input type='submit' value='PHPinfo' onclick='go_phpinfo();' />";
   $ip= "<br>remote:{$_SERVER["REMOTE_ADDR"]}";
+  $ip.= "<br>server:{$_SERVER["SERVER_ADDR"]}";
   $ip.= isset($_SERVER["HTTP_X_FORWARDED_FOR"]) ? "<br>forwarded:{$_SERVER["HTTP_X_FORWARDED_FOR"]}" : '';
   $ip.= isset($_SERVER["HTTP_CLIENT_IP"]) ? "<br>client:{$_SERVER["HTTP_CLIENT_IP"]}<br>proc:".get_ip_address() : '';
   // východ a západ slunce pro 49°11'33.633"N, 16°31'52.405"E
